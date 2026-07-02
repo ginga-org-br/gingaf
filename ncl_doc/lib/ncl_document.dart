@@ -87,6 +87,9 @@ class NCLDocument {
             }
           }
         }
+        if (!isTimed && node is AVMedia) {
+          isTimed = true;
+        }
         if (isTimed) {
           _timedNodes.add(node);
         }
@@ -195,9 +198,10 @@ class NCLDocument {
             }
           }
 
-          if (node.explicitDurMs != null && t2 >= node.explicitDurMs!) {
+          final limit = node.explicitDurMs;
+          if (limit != null && t2 >= limit) {
             _logger.info(
-              '[Clock: ${(targetTime / 1000).toStringAsFixed(3)}s] Node "${node.id}" reached explicit duration (${node.explicitDurMs}ms)',
+              '[Clock: ${(targetTime / 1000).toStringAsFixed(3)}s] Node "${node.id}" reached duration limit (${limit}ms)',
             );
             _stackMainEvtAction(node, ActionType.STOP);
           }

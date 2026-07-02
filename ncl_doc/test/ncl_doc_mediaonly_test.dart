@@ -285,5 +285,33 @@ void main() {
       expect(changed7b, isNotEmpty);
       expect(doc.getNodeById('m2')?.getMainState(), State.SLEEPING);
     });
+
+    test('AV media nodes are tracked as timed nodes and stop on expected duration', () {
+      const xml = '''
+<ncl>
+  <body>
+    <port id="p1" component="video1"/>
+    <media id="video1" src="v1.mp4" expectedDuration="5s"/>
+  </body>
+</ncl>
+''';
+      final doc = NCLDocument.fromXML(xml);
+      doc.start();
+      final video = doc.getNodeById('video1') as AVMedia;
+      expect(video.getMainState(), State.OCCURRING);
+      expect(video, isA<AVMedia>());
+
+      expect(video.time, 0);
+
+      final changedA = doc.tick(4000);
+      expect(changedA, isEmpty);
+      expect(video.time, 4000);
+      expect(video.getMainState(), State.OCCURRING);
+
+      final changedB = doc.tick(1000);
+      expect(changedB, isNotEmpty);
+      expect(video.time, 5000);
+      expect(video.getMainState(), State.SLEEPING);
+    });
   });
 }

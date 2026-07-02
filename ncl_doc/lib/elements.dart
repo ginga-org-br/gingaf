@@ -107,6 +107,14 @@ class Media extends Node {
   });
 }
 
+class AVMedia extends Media {
+  AVMedia({
+    super.rawAttributes,
+    super.uri,
+    super.mimeType,
+  });
+}
+
 class Settings extends Media {
   Settings({
     super.rawAttributes,

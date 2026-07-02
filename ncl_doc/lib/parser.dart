@@ -34,6 +34,18 @@ class NCLParser {
     return (head, body);
   }
 
+  int? _parseDurStr(String? durStr) {
+    if (durStr == null) return null;
+    if (durStr.endsWith('ms')) {
+      return int.tryParse(durStr.replaceAll('ms', ''));
+    } else if (durStr.endsWith('s')) {
+      final s = double.tryParse(durStr.replaceAll('s', ''));
+      return s != null ? (s * 1000).toInt() : null;
+    }
+    final val = double.tryParse(durStr);
+    return val != null ? (val * 1000).toInt() : null;
+  }
+
   Element? _parseNode(XmlElement node) {
     Map<String, String> attrs = {
       for (var attr in node.attributes) attr.name.local: attr.value,
@@ -41,23 +53,7 @@ class NCLParser {
     final Element element;
     switch (node.name.local) {
       case 'media':
-        final src = attrs['src'] ?? '';
-        final type = attrs['type'] ?? '';
-        if (src.isEmpty && type.isEmpty) {
-          element = Media(rawAttributes: attrs);
-        } else if (type == 'application/x-ncl-settings' ||
-            type == 'application/x-ginga-settings') {
-          element = Settings(rawAttributes: attrs, mimeType: type);
-        } else {
-          final resolvedSrc = src.replaceAll('\\', '/');
-          final uri = src.isNotEmpty
-              ? baseURI.resolve(resolvedSrc).toString()
-              : '';
-          final mimeType = type.isNotEmpty
-              ? type
-              : getMimeTypeFromExtension(src);
-          element = Media(rawAttributes: attrs, uri: uri, mimeType: mimeType);
-        }
+        element = _createMediaElement(attrs);
         break;
       case 'context':
       case 'body':
@@ -120,19 +116,54 @@ class NCLParser {
           .where((p) => p.name == 'explicitDur')
           .firstOrNull;
       if (explicitDurProp != null && explicitDurProp.value != null) {
-        final durStr = explicitDurProp.value!;
-        if (durStr.endsWith('ms')) {
-          element.explicitDurMs = int.tryParse(durStr.replaceAll('ms', ''));
-        } else if (durStr.endsWith('s')) {
-          final s = double.tryParse(durStr.replaceAll('s', ''));
-          if (s != null) {
-            element.explicitDurMs = (s * 1000).toInt();
-          }
+        element.explicitDurMs = _parseDurStr(explicitDurProp.value!);
+      }
+      if (element is AVMedia) {
+        final expectedDurProp = element.children
+            .whereType<Property>()
+            .where((p) => p.name == 'expectedDuration')
+            .firstOrNull;
+        if (expectedDurProp != null && expectedDurProp.value != null) {
+          element.explicitDurMs = _parseDurStr(expectedDurProp.value!);
         }
       }
     }
 
     return element;
+  }
+
+  Media _createMediaElement(Map<String, String> rawAttributes) {
+    final src = rawAttributes['src'] ?? '';
+    final type = rawAttributes['type'] ?? '';
+    if (src.isEmpty && type.isEmpty) {
+      return Media(rawAttributes: rawAttributes);
+    }
+    if (type == 'application/x-ncl-settings' ||
+        type == 'application/x-ginga-settings') {
+      return Settings(rawAttributes: rawAttributes, mimeType: type);
+    }
+    final resolvedSrc = src.replaceAll('\\', '/');
+    final uri = src.isNotEmpty ? baseURI.resolve(resolvedSrc).toString() : '';
+    final mimeType =
+        type.isNotEmpty ? type : getMimeTypeFromExtension(src);
+    if (mimeType.startsWith('video/') || mimeType.startsWith('audio/')) {
+      final avMedia = AVMedia(
+        rawAttributes: rawAttributes,
+        uri: uri,
+        mimeType: mimeType,
+      );
+      final expectedDurMs =
+          _parseDurStr(rawAttributes['expectedDuration']);
+      if (expectedDurMs != null) {
+        avMedia.explicitDurMs = expectedDurMs;
+      }
+      return avMedia;
+    }
+    return Media(
+      rawAttributes: rawAttributes,
+      uri: uri,
+      mimeType: mimeType,
+    );
   }
 
   List<String> validate(String xmlString) {
