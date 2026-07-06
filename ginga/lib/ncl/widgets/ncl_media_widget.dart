@@ -10,11 +10,7 @@ import 'package:ncl_doc/ncl_document.dart' hide State;
 
 import '../../web_utils_stub.dart'
     if (dart.library.html) '../../web_utils_web.dart';
-import 'av.dart';
-import 'image.dart';
-import 'lua.dart';
-import 'ssml.dart';
-import 'text.dart';
+import '../ncl_app.dart';
 
 abstract class MediaWidget extends StatefulWidget {
   final String uri;
@@ -47,19 +43,47 @@ abstract class MediaState<T extends MediaWidget> extends State<T> {
   String heightStr = '100%';
   bool isPositioned = false;
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    parseProperties(widget.media);
+  }
+
+  @override
+  void didUpdateWidget(covariant T oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    parseProperties(widget.media);
+  }
+
   void parseProperties(Media? media) {
     if (media == null) return;
     isPositioned = true;
     id = media.id;
     String? backgroundVal;
     String? boundsVal;
+    String? leftVal;
+    String? topVal;
+    String? widthVal;
+    String? heightVal;
+    String? zIndexVal;
     for (var prop in media.getProperties()) {
       if (prop.name == 'background') {
         backgroundVal = prop.value;
       } else if (prop.name == 'bounds') {
         boundsVal = prop.value;
+      } else if (prop.name == 'left') {
+        leftVal = prop.value;
+      } else if (prop.name == 'top') {
+        topVal = prop.value;
+      } else if (prop.name == 'width') {
+        widthVal = prop.value;
+      } else if (prop.name == 'height') {
+        heightVal = prop.value;
+      } else if (prop.name == 'zIndex' || prop.name == 'zOrder') {
+        zIndexVal = prop.value;
       }
     }
+
     if (boundsVal != null) {
       final boundsParts = boundsVal.split(',');
       if (boundsParts.length == 4) {
@@ -69,10 +93,21 @@ abstract class MediaState<T extends MediaWidget> extends State<T> {
         heightStr = boundsParts[3].trim();
       }
     } else {
-      leftStr = '0%';
-      topStr = '0%';
-      widthStr = '100%';
-      heightStr = '100%';
+      leftStr = media.rawAttributes['resolvedLeft'] ?? '0%';
+      topStr = media.rawAttributes['resolvedTop'] ?? '0%';
+      widthStr = media.rawAttributes['resolvedWidth'] ?? '100%';
+      heightStr = media.rawAttributes['resolvedHeight'] ?? '100%';
+    }
+    if (leftVal != null) leftStr = leftVal;
+    if (topVal != null) topStr = topVal;
+    if (widthVal != null) widthStr = widthVal;
+    if (heightVal != null) heightStr = heightVal;
+    if (zIndexVal != null) {
+      zindex = int.tryParse(zIndexVal) ?? 0;
+    } else if (media.rawAttributes.containsKey('resolvedZIndex')) {
+      zindex = int.tryParse(media.rawAttributes['resolvedZIndex']!) ?? 0;
+    } else {
+      zindex = 0;
     }
     final visibleStr = media.rawAttributes['visible'] ?? 'true';
     visible = visibleStr.toLowerCase() == 'true';
@@ -173,13 +208,14 @@ abstract class MediaState<T extends MediaWidget> extends State<T> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final parentWidth = size.width;
-    final parentHeight = size.height;
+    final screenWidth = size.width;
+    final screenHeight = size.height;
 
-    final left = _resolveDim(leftStr, parentWidth);
-    final top = _resolveDim(topStr, parentHeight);
-    final width = _resolveDim(widthStr, parentWidth);
-    final height = _resolveDim(heightStr, parentHeight);
+    double left, top, width, height;
+    left = _resolveDim(leftStr, screenWidth);
+    top = _resolveDim(topStr, screenHeight);
+    width = _resolveDim(widthStr, screenWidth);
+    height = _resolveDim(heightStr, screenHeight);
     rect = Rect.fromLTWH(left, top, width, height);
 
     final content = Visibility(
@@ -227,7 +263,9 @@ class WidgetFactory {
         }
       } catch (e) {}
     }
-    if (uri.endsWith('.ncl') || mimeType == 'application/x-ncl-NCL' || mimeType == 'application/x-ncl-ncl') {
+    if (uri.endsWith('.ncl') ||
+        mimeType == 'application/x-ncl-NCL' ||
+        mimeType == 'application/x-ncl-ncl') {
       return NCLApp(key: key, uri: uri, media: media);
     }
     if (mimeType.startsWith('video/') ||

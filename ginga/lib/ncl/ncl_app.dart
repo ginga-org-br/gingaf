@@ -8,9 +8,9 @@ import 'package:ncl_doc/ncl_document.dart' hide State;
 import 'widgets/ncl_media_widget.dart';
 
 export 'widgets/av.dart';
-export 'widgets/ncl_media_widget.dart';
 export 'widgets/image.dart';
 export 'widgets/lua.dart';
+export 'widgets/ncl_media_widget.dart';
 export 'widgets/ssml.dart';
 export 'widgets/text.dart';
 
@@ -54,7 +54,8 @@ class NCLAppState extends MediaState<NCLApp> {
       if (!_cachedWidgets.containsKey(id)) {
         final key = GlobalKey<MediaState>();
         _mediaStateKeys[id] = key;
-        _cachedWidgets[id] = WidgetFactory.createMediaWidget(key: key, media: media)!;
+        _cachedWidgets[id] =
+            WidgetFactory.createMediaWidget(key: key, media: media)!;
         changed = true;
       }
     }
@@ -142,6 +143,19 @@ class NCLAppState extends MediaState<NCLApp> {
     }
   }
 
+  void tick(int ms) {
+    if (nclDocument != null) {
+      final changedMedia = nclDocument!.tick(ms);
+      for (var media in changedMedia) {
+        _mediaStateKeys[media.id ?? '']?.currentState?.syncProperties();
+      }
+      _syncActiveMedia(nclDocument!.getActiveMedia());
+      if (mounted) {
+        setState(() {});
+      }
+    }
+  }
+
   @override
   void dispose() {
     _logger.info("Stopping NCL application: ${widget.uri}");
@@ -165,7 +179,26 @@ class NCLAppState extends MediaState<NCLApp> {
       );
     }
 
-    final activeMedia = nclDocument?.getActiveMedia() ?? [];
+    final activeMedia = List<Media>.from(nclDocument?.getActiveMedia() ?? []);
+    activeMedia.sort((a, b) {
+      int getZIndex(Media media) {
+        final zIndexProp = media
+            .getProperties()
+            .where((p) => p.name == 'zIndex' || p.name == 'zOrder')
+            .firstOrNull;
+        if (zIndexProp != null && zIndexProp.value != null) {
+          return int.tryParse(zIndexProp.value!) ?? 0;
+        }
+        final resolvedZ = media.rawAttributes['resolvedZIndex'];
+        if (resolvedZ != null) {
+          return int.tryParse(resolvedZ) ?? 0;
+        }
+        return 0;
+      }
+
+      return getZIndex(a).compareTo(getZIndex(b));
+    });
+
     final List<Widget> children = [];
     for (var media in activeMedia) {
       final widget = _cachedWidgets[media.id ?? ''];
@@ -177,6 +210,7 @@ class NCLAppState extends MediaState<NCLApp> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
+        key: const Key('ncl_app_stack'),
         fit: StackFit.expand,
         children: children,
       ),
