@@ -78,6 +78,9 @@ class NCLParser {
       case 'bind':
         element = Bind(rawAttributes: attrs);
         break;
+      case 'bindParam':
+        element = BindParam(rawAttributes: attrs);
+        break;
       case 'property':
         element = Property(rawAttributes: attrs);
         break;
@@ -94,17 +97,44 @@ class NCLParser {
       case 'regionBase':
       case 'descriptorBase':
       case 'connectorBase':
+      case 'ruleBase':
+      case 'rule':
+      case 'compositeRule':
+      case 'transitionBase':
+      case 'transition':
+      case 'bindRule':
+      case 'defaultComponent':
+      case 'switchPort':
+      case 'mapping':
+      case 'importBase':
+      case 'compoundAction':
+      case 'simpleCondition':
+      case 'compoundCondition':
+      case 'assessmentStatement':
+      case 'attributeAssessment':
+      case 'valueAssessment':
+      case 'simpleAction':
+      case 'descriptorSwitch':
+      case 'importedDocumentBase':
+      case 'importNCL':
+      case 'fontBase':
+      case 'font':
         element = Element(rawAttributes: attrs);
         break;
       default:
         return null;
     }
+    element.xmlTagName = node.name.local;
 
     for (var childNode in node.children.whereType<XmlElement>()) {
       final childElement = _parseNode(childNode);
       if (childElement != null) {
         element.children.add(childElement);
-        if (element is Composition && childElement is Node) {
+        if (childElement is Node) {
+          if (element is Composition) {
+            childElement.parent = element;
+          }
+        } else {
           childElement.parent = element;
         }
       }
@@ -180,4 +210,417 @@ class NCLParser {
     }
     return errors;
   }
+
+  void doNclEditingCommand(NCLDocument doc, String command) {
+    final parsed = _parseCommand(command);
+    if (parsed == null) return;
+
+    Element? parseXml(String xmlStr) {
+      try {
+        final root = XmlDocument.parse(xmlStr).rootElement;
+        return _parseNode(root);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    Element? findElementInHead(bool Function(Element) predicate) {
+      final head = doc.getHead();
+      if (head == null) return null;
+      Element? search(Element el) {
+        if (predicate(el)) return el;
+        for (var child in el.children) {
+          final res = search(child);
+          if (res != null) return res;
+        }
+        return null;
+      }
+
+      for (var el in head) {
+        final res = search(el);
+        if (res != null) return res;
+      }
+      return null;
+    }
+
+    bool removeElementFromHead(String id) {
+      final head = doc.getHead();
+      if (head == null) return false;
+      bool searchAndRemove(Element parent, Element el) {
+        if (el.id == id) {
+          parent.children.remove(el);
+          return true;
+        }
+        for (var child in List<Element>.from(el.children)) {
+          if (searchAndRemove(el, child)) return true;
+        }
+        return false;
+      }
+
+      for (var el in List<Element>.from(head)) {
+        if (el.id == id) {
+          head.remove(el);
+          return true;
+        }
+        for (var child in List<Element>.from(el.children)) {
+          if (searchAndRemove(el, child)) return true;
+        }
+      }
+      return false;
+    }
+
+    switch (parsed.name) {
+      case 'addRegionBase':
+        if (parsed.args.isEmpty) return;
+        final el = parseXml(parsed.args[0]);
+        if (el != null) {
+          doc.getHead()?.add(el);
+        }
+        break;
+      case 'removeRegionBase':
+        if (parsed.args.isEmpty) return;
+        removeElementFromHead(parsed.args[0]);
+        break;
+      case 'addRegion':
+        if (parsed.args.length < 3) return;
+        final regionBaseId = parsed.args[0];
+        final regionId = parsed.args[1];
+        final xmlRegion = parsed.args[2];
+        final newRegion = parseXml(xmlRegion);
+        if (newRegion == null) return;
+        if (regionId != 'null' && regionId.isNotEmpty) {
+          final parent = findElementInHead(
+            (el) => el is Region && el.id == regionId,
+          );
+          if (parent != null) {
+            parent.children.add(newRegion);
+            newRegion.parent = parent;
+          }
+        } else {
+          final parent = findElementInHead(
+            (el) =>
+                el.xmlTagName == 'regionBase' &&
+                (regionBaseId.isEmpty || el.id == regionBaseId),
+          );
+          if (parent != null) {
+            parent.children.add(newRegion);
+            newRegion.parent = parent;
+          }
+        }
+        break;
+      case 'removeRegion':
+        if (parsed.args.isEmpty) return;
+        removeElementFromHead(parsed.args[0]);
+        break;
+      case 'addRuleBase':
+        if (parsed.args.isEmpty) return;
+        final el = parseXml(parsed.args[0]);
+        if (el != null) {
+          doc.getHead()?.add(el);
+        }
+        break;
+      case 'removeRuleBase':
+        if (parsed.args.isEmpty) return;
+        removeElementFromHead(parsed.args[0]);
+        break;
+      case 'addRule':
+        if (parsed.args.isEmpty) return;
+        final newRule = parseXml(parsed.args[0]);
+        if (newRule == null) return;
+        final parent = findElementInHead((el) => el.xmlTagName == 'ruleBase');
+        if (parent != null) {
+          parent.children.add(newRule);
+          newRule.parent = parent;
+        }
+        break;
+      case 'removeRule':
+        if (parsed.args.isEmpty) return;
+        removeElementFromHead(parsed.args[0]);
+        break;
+      case 'addConnectorBase':
+        if (parsed.args.isEmpty) return;
+        final el = parseXml(parsed.args[0]);
+        if (el != null) {
+          doc.getHead()?.add(el);
+        }
+        break;
+      case 'removeConnectorBase':
+        if (parsed.args.isEmpty) return;
+        removeElementFromHead(parsed.args[0]);
+        break;
+      case 'addConnector':
+        if (parsed.args.isEmpty) return;
+        final newConnector = parseXml(parsed.args[0]);
+        if (newConnector == null) return;
+        final parent = findElementInHead(
+          (el) => el.xmlTagName == 'connectorBase',
+        );
+        if (parent != null) {
+          parent.children.add(newConnector);
+          newConnector.parent = parent;
+        }
+        break;
+      case 'removeConnector':
+        if (parsed.args.isEmpty) return;
+        removeElementFromHead(parsed.args[0]);
+        break;
+      case 'addDescriptorBase':
+        if (parsed.args.isEmpty) return;
+        final el = parseXml(parsed.args[0]);
+        if (el != null) {
+          doc.getHead()?.add(el);
+        }
+        break;
+      case 'removeDescriptorBase':
+        if (parsed.args.isEmpty) return;
+        removeElementFromHead(parsed.args[0]);
+        break;
+      case 'addDescriptor':
+        if (parsed.args.isEmpty) return;
+        final newDesc = parseXml(parsed.args[0]);
+        if (newDesc == null) return;
+        final parent = findElementInHead(
+          (el) => el.xmlTagName == 'descriptorBase',
+        );
+        if (parent != null) {
+          parent.children.add(newDesc);
+          newDesc.parent = parent;
+        }
+        break;
+      case 'removeDescriptor':
+        if (parsed.args.isEmpty) return;
+        removeElementFromHead(parsed.args[0]);
+        break;
+      case 'addDescriptorSwitch':
+        if (parsed.args.isEmpty) return;
+        final newDescSwitch = parseXml(parsed.args[0]);
+        if (newDescSwitch == null) return;
+        final parent = findElementInHead(
+          (el) => el.xmlTagName == 'descriptorBase',
+        );
+        if (parent != null) {
+          parent.children.add(newDescSwitch);
+          newDescSwitch.parent = parent;
+        }
+        break;
+      case 'removeDescriptorSwitch':
+        if (parsed.args.isEmpty) return;
+        removeElementFromHead(parsed.args[0]);
+        break;
+      case 'addTransitionBase':
+        if (parsed.args.isEmpty) return;
+        final el = parseXml(parsed.args[0]);
+        if (el != null) {
+          doc.getHead()?.add(el);
+        }
+        break;
+      case 'removeTransitionBase':
+        if (parsed.args.isEmpty) return;
+        removeElementFromHead(parsed.args[0]);
+        break;
+      case 'addTransition':
+        if (parsed.args.isEmpty) return;
+        final newTrans = parseXml(parsed.args[0]);
+        if (newTrans == null) return;
+        final parent = findElementInHead(
+          (el) => el.xmlTagName == 'transitionBase',
+        );
+        if (parent != null) {
+          parent.children.add(newTrans);
+          newTrans.parent = parent;
+        }
+        break;
+      case 'removeTransition':
+        if (parsed.args.isEmpty) return;
+        removeElementFromHead(parsed.args[0]);
+        break;
+      case 'addImportBase':
+        if (parsed.args.isEmpty) return;
+        final newImport = parseXml(parsed.args[0]);
+        if (newImport == null) return;
+        final parent = findElementInHead(
+          (el) => el.xmlTagName == 'importedDocumentBase',
+        );
+        if (parent != null) {
+          parent.children.add(newImport);
+          newImport.parent = parent;
+        }
+        break;
+      case 'removeImportBase':
+        if (parsed.args.isEmpty) return;
+        final docURI = parsed.args[0];
+        final parentImport = findElementInHead(
+          (el) => el.xmlTagName == 'importedDocumentBase',
+        );
+        if (parentImport != null) {
+          parentImport.children.removeWhere(
+            (el) => el.rawAttributes['documentURI'] == docURI,
+          );
+        }
+        break;
+      case 'addImportedDocumentBase':
+        if (parsed.args.isEmpty) return;
+        final el = parseXml(parsed.args[0]);
+        if (el != null) {
+          doc.getHead()?.add(el);
+        }
+        break;
+      case 'removeImportedDocumentBase':
+        if (parsed.args.isEmpty) return;
+        removeElementFromHead(parsed.args[0]);
+        break;
+      case 'addImportNCL':
+        if (parsed.args.isEmpty) return;
+        final newImportNCL = parseXml(parsed.args[0]);
+        if (newImportNCL == null) return;
+        final parentImportNCL = findElementInHead(
+          (el) => el.xmlTagName == 'importedDocumentBase',
+        );
+        if (parentImportNCL != null) {
+          parentImportNCL.children.add(newImportNCL);
+          newImportNCL.parent = parentImportNCL;
+        }
+        break;
+      case 'removeImportNCL':
+        if (parsed.args.isEmpty) return;
+        final docURINcl = parsed.args[0];
+        final parentImportNcl = findElementInHead(
+          (el) => el.xmlTagName == 'importedDocumentBase',
+        );
+        if (parentImportNcl != null) {
+          parentImportNcl.children.removeWhere(
+            (el) => el.rawAttributes['documentURI'] == docURINcl,
+          );
+        }
+        break;
+      case 'addNode':
+        if (parsed.args.length < 2) return;
+        final compositeId = parsed.args[0];
+        final nodeArg = parsed.args[1];
+        final parentComp = doc.getNodeById(compositeId);
+        if (parentComp is Composition) {
+          if (nodeArg.trim().startsWith('<')) {
+            final newNode = parseXml(nodeArg);
+            if (newNode is Node) {
+              parentComp.children.add(newNode);
+              newNode.parent = parentComp;
+            }
+          } else {
+            final nodeId = nodeArg;
+            final docURI = parsed.args.length > 2 ? parsed.args[2] : '';
+            final newNode = Media(
+              rawAttributes: {'id': nodeId, 'refer': docURI},
+            );
+            parentComp.children.add(newNode);
+            newNode.parent = parentComp;
+          }
+        }
+        break;
+      case 'removeNode':
+        if (parsed.args.length < 2) return;
+        final compositeId = parsed.args[0];
+        final nodeId = parsed.args[1];
+        final parentComp = doc.getNodeById(compositeId);
+        if (parentComp is Composition) {
+          parentComp.children.removeWhere(
+            (el) => el is Node && el.id == nodeId,
+          );
+        }
+        break;
+      case 'addInterface':
+        if (parsed.args.length < 2) return;
+        final nodeId = parsed.args[0];
+        final xmlInterface = parsed.args[1];
+        final targetNode = doc.getNodeById(nodeId);
+        if (targetNode != null) {
+          final newInterface = parseXml(xmlInterface);
+          if (newInterface != null) {
+            targetNode.children.add(newInterface);
+            newInterface.parent = targetNode;
+          }
+        }
+        break;
+      case 'removeInterface':
+        if (parsed.args.length < 2) return;
+        final nodeId = parsed.args[0];
+        final interfaceId = parsed.args[1];
+        final targetNode = doc.getNodeById(nodeId);
+        if (targetNode != null) {
+          targetNode.children.removeWhere((el) => el.id == interfaceId);
+        }
+        break;
+      case 'addLink':
+        if (parsed.args.length < 2) return;
+        final compositeId = parsed.args[0];
+        final xmlLink = parsed.args[1];
+        final parentComp = doc.getNodeById(compositeId);
+        if (parentComp is Composition) {
+          final newLink = parseXml(xmlLink);
+          if (newLink is Link) {
+            parentComp.children.add(newLink);
+            newLink.parent = parentComp;
+          }
+        }
+        break;
+      case 'removeLink':
+        if (parsed.args.length < 2) return;
+        final compositeId = parsed.args[0];
+        final linkId = parsed.args[1];
+        final parentComp = doc.getNodeById(compositeId);
+        if (parentComp is Composition) {
+          parentComp.children.removeWhere(
+            (el) => el is Link && el.id == linkId,
+          );
+        }
+        break;
+      case 'setPropertyValue':
+        if (parsed.args.length < 3) return;
+        final nodeId = parsed.args[0];
+        final propertyId = parsed.args[1];
+        final value = parsed.args[2];
+        final targetNode = doc.getNodeById(nodeId);
+        if (targetNode != null) {
+          targetNode.setPropertyValue(propertyId, value);
+        }
+        break;
+      case 'addFontBase':
+        if (parsed.args.isEmpty) return;
+        final el = parseXml(parsed.args[0]);
+        if (el != null) {
+          doc.getHead()?.add(el);
+        }
+        break;
+      case 'removeFontBase':
+        if (parsed.args.isEmpty) return;
+        removeElementFromHead(parsed.args[0]);
+        break;
+      case 'addFont':
+        if (parsed.args.isEmpty) return;
+        final newFont = parseXml(parsed.args[0]);
+        if (newFont != null) {
+          final parent = findElementInHead((el) => el.xmlTagName == 'fontBase');
+          if (parent != null) {
+            parent.children.add(newFont);
+            newFont.parent = parent;
+          }
+        }
+        break;
+      case 'removeFont':
+        if (parsed.args.length < 3) return;
+        final family = parsed.args[0];
+        final style = parsed.args[1];
+        final weight = parsed.args[2];
+        final parent = findElementInHead((el) => el.xmlTagName == 'fontBase');
+        if (parent != null) {
+          parent.children.removeWhere(
+            (el) =>
+                el.rawAttributes['family'] == family &&
+                el.rawAttributes['style'] == style &&
+                el.rawAttributes['weight'] == weight,
+          );
+        }
+        break;
+    }
+  }
+
 }

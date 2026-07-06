@@ -23,6 +23,12 @@ class Bind extends Element {
   Bind({super.rawAttributes});
 }
 
+class BindParam extends Element {
+  String? get name => rawAttributes['name'];
+  String? get value => rawAttributes['value'];
+  BindParam({super.rawAttributes});
+}
+
 class Property extends Element {
   String? get name => rawAttributes['name'];
   String? get value => rawAttributes['value'];

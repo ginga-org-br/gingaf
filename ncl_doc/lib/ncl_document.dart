@@ -56,6 +56,10 @@ class NCLDocument {
     _head = head;
     _body = body;
   }
+  void doNclEditingCommand(String command) {
+    NCLParser(baseURI: baseURI).doNclEditingCommand(this, command);
+  }
+
 
   void _init() {
     _gatherSettings();
