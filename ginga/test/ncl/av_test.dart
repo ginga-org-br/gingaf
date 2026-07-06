@@ -7,7 +7,7 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:video_player/video_player.dart';
 
-class FakeVideoPlayerPlatform extends VideoPlayerPlatform
+class MockVideoPlayer extends VideoPlayerPlatform
     with MockPlatformInterfaceMixin {
   final StreamController<VideoEvent> events =
       StreamController<VideoEvent>.broadcast();
@@ -58,10 +58,10 @@ class FakeVideoPlayerPlatform extends VideoPlayerPlatform
 }
 
 void main() {
-  late FakeVideoPlayerPlatform fakePlatform;
+  late MockVideoPlayer fakePlatform;
 
   setUp(() {
-    fakePlatform = FakeVideoPlayerPlatform();
+    fakePlatform = MockVideoPlayer();
     VideoPlayerPlatform.instance = fakePlatform;
   });
 
