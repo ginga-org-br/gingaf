@@ -165,6 +165,7 @@ class NCLDocument {
       uiQueue.clear();
     }
     _updateTimedNodesClock(incrementMs);
+    _processDelayedActions();
     final changedNodes = _executeActionStack();
     _checkIsPlaying();
 
@@ -219,6 +220,37 @@ class NCLDocument {
     final changedNodes = <Node>{};
     while (_actionStack.isNotEmpty) {
       final actionItem = _actionStack.removeAt(0);
+      if (actionItem.action == ActionType.SET) {
+        if (actionItem.value.isNotEmpty &&
+            actionItem.event.propertyName != null) {
+          actionItem.event.targetNode.setPropertyValue(
+            actionItem.event.propertyName!,
+            actionItem.value,
+          );
+          final referId = actionItem.event.targetNode.rawAttributes['refer'];
+          if (referId != null) {
+            final refNode = getNodeById(referId);
+            if (refNode != null) {
+              refNode.setPropertyValue(
+                actionItem.event.propertyName!,
+                actionItem.value,
+              );
+              changedNodes.add(refNode);
+            }
+          }
+        }
+        final prevState = actionItem.event.state;
+        actionItem.event.state = State.SLEEPING;
+        if (prevState != State.SLEEPING) {
+          _triggerLinks(
+            actionItem.event.targetNode.id,
+            State.SLEEPING,
+            actionItem.event.propertyName,
+          );
+        }
+        changedNodes.add(actionItem.event.targetNode);
+        continue;
+      }
       final prevState = actionItem.event.state;
       actionItem.event.doAction(actionItem.action);
       final newState = actionItem.event.state;
@@ -305,12 +337,102 @@ class NCLDocument {
                   actionStr == 'stop' ||
                   actionStr == 'abort' ||
                   actionStr == 'pause' ||
-                  actionStr == 'resume')) {
+                  actionStr == 'resume' ||
+                  actionStr == 'set')) {
             if (bind.component != null) {
               final bindNode = getNodeById(bind.component!);
               if (bindNode != null) {
                 final actionType = Event.getStringAsActionType(actionStr);
-                _stackMainEvtAction(bindNode, actionType);
+
+                var targetEvent = actionType == ActionType.SET
+                    ? bindNode.getPropertyEvent(bind.interface ?? '')
+                    : bindNode.getMainEvent();
+
+                if (actionType != ActionType.SET &&
+                    bindNode is Context &&
+                    bind.interface != null) {
+                  final ports = bindNode.children.whereType<Port>().where(
+                    (p) => p.id == bind.interface,
+                  );
+                  if (ports.isNotEmpty) {
+                    final port = ports.first;
+                    if (port.component != null) {
+                      final targetNode = getNodeById(port.component!);
+                      if (targetNode != null) {
+                        targetEvent = targetNode.getMainEvent();
+                      }
+                    }
+                  }
+                }
+
+                if (actionType != ActionType.SET && bindNode is Switch) {
+                  final activeNode = resolveSwitch(bindNode);
+                  if (activeNode != null) {
+                    targetEvent = activeNode.getMainEvent();
+                  }
+                }
+
+                int delayMs = 0;
+                int durationMs = 0;
+                for (var child in bind.children) {
+                  if (child is BindParam) {
+                    if (child.name == 'delay') {
+                      delayMs = _parseTimeMs(child.value) ?? 0;
+                    } else if (child.name == 'duration') {
+                      durationMs = _parseTimeMs(child.value) ?? 0;
+                    }
+                  }
+                }
+                if (delayMs == 0) {
+                  for (var child in link.children) {
+                    if (child is BindParam) {
+                      if (child.name == 'delay') {
+                        delayMs = _parseTimeMs(child.value) ?? 0;
+                      } else if (child.name == 'duration') {
+                        durationMs = _parseTimeMs(child.value) ?? 0;
+                      }
+                    }
+                  }
+                }
+                String? setValue;
+                if (actionType == ActionType.SET) {
+                  for (var child in bind.children) {
+                    if (child is BindParam &&
+                        (child.name == 'value' || child.name == 'var')) {
+                      setValue = child.value;
+                      break;
+                    }
+                  }
+                  if (setValue == null &&
+                      bind.rawAttributes.containsKey('value')) {
+                    setValue = bind.rawAttributes['value'];
+                  }
+                  if (setValue == null) {
+                    for (var child in link.children) {
+                      if (child is BindParam &&
+                          (child.name == 'value' || child.name == 'var')) {
+                        setValue = child.value;
+                        break;
+                      }
+                    }
+                  }
+                }
+                if (actionType == ActionType.SET && durationMs > 0) {
+                  _stackAction(targetEvent, ActionType.START, delay: delayMs);
+                  _stackAction(
+                    targetEvent,
+                    ActionType.SET,
+                    delay: delayMs + durationMs,
+                    value: setValue,
+                  );
+                } else {
+                  _stackAction(
+                    targetEvent,
+                    actionType,
+                    delay: delayMs,
+                    value: setValue,
+                  );
+                }
               }
             }
           }
@@ -319,12 +441,39 @@ class NCLDocument {
     }
   }
 
-  void _stackMainEvtAction(Node node, ActionType actionType) {
-    _stackAction(node.getMainEvent(), actionType);
+  void _stackMainEvtAction(Node node, ActionType actionType, {int delay = 0}) {
+    _stackAction(node.getMainEvent(), actionType, delay: delay);
   }
 
-  void _stackAction(Event event, ActionType actionType) {
-    _actionStack.add(Action(event: event, action: actionType));
+  void _stackAction(
+    Event event,
+    ActionType actionType, {
+    int delay = 0,
+    String? value,
+  }) {
+    final action = Action(
+      event: event,
+      action: actionType,
+      delay: delay,
+      value: value ?? '',
+    );
+    if (delay > 0) {
+      _delayedActions.add((action: action, executeTime: virtualClock + delay));
+    } else {
+      _actionStack.add(action);
+    }
+  }
+
+  void _processDelayedActions() {
+    final ready = <Action>[];
+    _delayedActions.removeWhere((item) {
+      if (virtualClock >= item.executeTime) {
+        ready.add(item.action);
+        return true;
+      }
+      return false;
+    });
+    _actionStack.addAll(ready);
   }
 
   void start() {
@@ -356,6 +505,7 @@ class NCLDocument {
 
   void stop() {
     _logger.info('[Clock: ${virtualClock / 1000}s] NCLDocument will stop');
+    _delayedActions.clear();
 
     void stopNode(Node node) {
       if (node.getMainState() == State.OCCURRING ||

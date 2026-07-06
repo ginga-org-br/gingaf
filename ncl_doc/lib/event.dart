@@ -4,7 +4,7 @@ enum State { OCCURRING, PAUSED, SLEEPING }
 
 enum EventType { PRESENTATION, ATTRIBUTION, SELECTION, PREPARATION }
 
-enum ActionType { ABORT, PAUSE, RESUME, START, STOP }
+enum ActionType { ABORT, PAUSE, RESUME, START, STOP, SET }
 
 class Event {
   final EventType type;
@@ -39,6 +39,8 @@ class Event {
       case ActionType.RESUME:
         if (state == State.PAUSED) state = State.OCCURRING;
         break;
+      case ActionType.SET:
+        break;
     }
     return state;
   }
@@ -55,6 +57,8 @@ class Event {
         return ActionType.PAUSE;
       case 'resume':
         return ActionType.RESUME;
+      case 'set':
+        return ActionType.SET;
       default:
         throw ArgumentError('Unknown action string: $str');
     }
