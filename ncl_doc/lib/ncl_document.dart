@@ -24,7 +24,9 @@ class NCLDocument {
 
   int virtualClock = 0;
   bool isPlaying = false;
+  final Map<String, String> systemVariables = {'system.language': 'por'};
   final List<Action> _actionStack = [];
+  final List<({Action action, int executeTime})> _delayedActions = [];
   final List<Action> uiQueue = [];
   final List<Node> _timedNodes = [];
 
@@ -52,14 +54,204 @@ class NCLDocument {
   }
 
   NCLDocument._({Head? head, required Body body, Uri? baseURI})
-      : baseURI = baseURI ?? Uri.parse('.') {
+    : baseURI = baseURI ?? Uri.parse('.') {
     _head = head;
     _body = body;
   }
+
+  Head? getHead() => _head;
+  Context getBody() => _body;
+  State getBodyState() => _body.getMainState();
+
+  Settings getSettings() => _settings;
+
   void doNclEditingCommand(String command) {
     NCLParser(baseURI: baseURI).doNclEditingCommand(this, command);
   }
 
+  Node? getNodeById(String id) {
+    if (_body.id == id) return _body;
+
+    Node? search(Composition comp) {
+      for (var node in comp.getNodes()) {
+        if (node.id == id) return node;
+        if (node is Composition) {
+          final res = search(node);
+          if (res != null) return res;
+        }
+      }
+      return null;
+    }
+
+    return search(_body);
+  }
+
+  Element? getElementById(String id) {
+    Element? search(Element element) {
+      if (element.id == id) return element;
+      for (var child in element.children) {
+        final res = search(child);
+        if (res != null) return res;
+      }
+      return null;
+    }
+
+    for (var el in headChildren) {
+      final res = search(el);
+      if (res != null) return res;
+    }
+    return search(_body);
+  }
+
+  List<Element> get headChildren => _head ?? const [];
+
+  bool evaluateRule(String ruleId) {
+    final ruleBase = headChildren
+        .where((el) => el.xmlTagName == 'ruleBase')
+        .firstOrNull;
+    if (ruleBase == null) return false;
+
+    Element? findRule(Element parent, String id) {
+      if ((parent.xmlTagName == 'rule' ||
+              parent.xmlTagName == 'compositeRule') &&
+          parent.rawAttributes['id'] == id) {
+        return parent;
+      }
+      for (var child in parent.children) {
+        final res = findRule(child, id);
+        if (res != null) return res;
+      }
+      return null;
+    }
+
+    final ruleEl = findRule(ruleBase, ruleId);
+    if (ruleEl == null) return false;
+
+    return _evaluateRuleElement(ruleEl);
+  }
+
+  bool _evaluateRuleElement(Element ruleEl) {
+    if (ruleEl.xmlTagName == 'rule') {
+      final varName = ruleEl.rawAttributes['var'] ?? '';
+      final value = ruleEl.rawAttributes['value'] ?? '';
+      final comparator = ruleEl.rawAttributes['comparator'] ?? 'eq';
+      final systemVal = systemVariables[varName] ?? '';
+
+      switch (comparator) {
+        case 'eq':
+          return systemVal == value;
+        case 'ne':
+          return systemVal != value;
+        case 'gt':
+          final n1 = double.tryParse(systemVal);
+          final n2 = double.tryParse(value);
+          if (n1 != null && n2 != null) return n1 > n2;
+          return systemVal.compareTo(value) > 0;
+        case 'lt':
+          final n1 = double.tryParse(systemVal);
+          final n2 = double.tryParse(value);
+          if (n1 != null && n2 != null) return n1 < n2;
+          return systemVal.compareTo(value) < 0;
+        case 'gte':
+          final n1 = double.tryParse(systemVal);
+          final n2 = double.tryParse(value);
+          if (n1 != null && n2 != null) return n1 >= n2;
+          return systemVal.compareTo(value) >= 0;
+        case 'lte':
+          final n1 = double.tryParse(systemVal);
+          final n2 = double.tryParse(value);
+          if (n1 != null && n2 != null) return n1 <= n2;
+          return systemVal.compareTo(value) <= 0;
+      }
+      return false;
+    } else if (ruleEl.xmlTagName == 'compositeRule') {
+      final operator = ruleEl.rawAttributes['operator'] ?? 'and';
+      final results = ruleEl.children
+          .where(
+            (c) => c.xmlTagName == 'rule' || c.xmlTagName == 'compositeRule',
+          )
+          .map((c) => _evaluateRuleElement(c));
+      if (results.isEmpty) return false;
+      if (operator == 'and') {
+        return results.every((r) => r);
+      } else {
+        return results.any((r) => r);
+      }
+    }
+    return false;
+  }
+
+  Node? resolveSwitch(Switch switchNode) {
+    final bindRules = switchNode.children.where(
+      (c) => c.xmlTagName == 'bindRule',
+    );
+    for (var bindRule in bindRules) {
+      final ruleId = bindRule.rawAttributes['rule'];
+      final constituentId = bindRule.rawAttributes['constituent'];
+      if (ruleId != null && constituentId != null) {
+        if (evaluateRule(ruleId)) {
+          final res = getNodeById(constituentId);
+          if (res != null) return res;
+        }
+      }
+    }
+    final defaultComp = switchNode.children
+        .where((c) => c.xmlTagName == 'defaultComponent')
+        .firstOrNull;
+    if (defaultComp != null) {
+      final compId = defaultComp.rawAttributes['component'];
+      if (compId != null) {
+        return getNodeById(compId);
+      }
+    }
+    return null;
+  }
+
+  List<Media> getActiveMedia() {
+    final active = <Media>[];
+    void search(Composition comp) {
+      for (var node in comp.getNodes()) {
+        if (node is Media && node.getMainState() == State.OCCURRING) {
+          active.add(node);
+        } else if (node is Composition) {
+          search(node);
+        }
+      }
+    }
+
+    search(_body);
+    return active;
+  }
+
+  Element? getConnectorById(String id) {
+    final connBase = headChildren
+        .where((el) => el.xmlTagName == 'connectorBase')
+        .firstOrNull;
+    if (connBase != null) {
+      for (var child in connBase.children) {
+        if (child.rawAttributes['id'] == id) {
+          return child;
+        }
+      }
+    }
+    return null;
+  }
+
+  String? getPropertyValue(Node node, String propertyName) {
+    var currentNode = node;
+    final referId = currentNode.rawAttributes['refer'];
+    if (referId != null) {
+      final refNode = getNodeById(referId);
+      if (refNode != null) {
+        currentNode = refNode;
+      }
+    }
+    final prop = currentNode.children
+        .whereType<Property>()
+        .where((p) => p.name == propertyName)
+        .firstOrNull;
+    return prop?.value;
+  }
 
   void _init() {
     _gatherSettings();
@@ -104,45 +296,6 @@ class NCLDocument {
     }
 
     gather(_body);
-  }
-
-  Head? getHead() => _head;
-  Context getBody() => _body;
-  State getBodyState() => _body.getMainState();
-
-  Settings getSettings() => _settings;
-
-  Node? getNodeById(String id) {
-    if (_body.id == id) return _body;
-
-    Node? search(Composition comp) {
-      for (var node in comp.getNodes()) {
-        if (node.id == id) return node;
-        if (node is Composition) {
-          final res = search(node);
-          if (res != null) return res;
-        }
-      }
-      return null;
-    }
-
-    return search(_body);
-  }
-
-  List<Media> getActiveMedia() {
-    final active = <Media>[];
-    void search(Composition comp) {
-      for (var node in comp.getNodes()) {
-        if (node is Media && node.getMainState() == State.OCCURRING) {
-          active.add(node);
-        } else if (node is Composition) {
-          search(node);
-        }
-      }
-    }
-
-    search(_body);
-    return active;
   }
 
   void _stackPorts(Context comp) {
@@ -268,7 +421,9 @@ class NCLDocument {
           if (newState == State.OCCURRING) {
             actionItem.event.targetNode.time = 0;
             if (actionItem.event.targetNode is Context) {
-              _stackPorts(actionItem.event.targetNode as Context);
+              if ((actionItem.event.targetNode as Context).activeNodes == 0) {
+                _stackPorts(actionItem.event.targetNode as Context);
+              }
             }
           } else if (newState == State.SLEEPING) {
             for (var area in actionItem.event.targetNode.getAreas()) {
@@ -282,8 +437,11 @@ class NCLDocument {
           }
 
           final parent = actionItem.event.targetNode.parent;
-          if (parent is Context) {
+          if (parent is Composition) {
             if (newState == State.OCCURRING) {
+              if (parent.getMainState() == State.SLEEPING) {
+                _stackMainEvtAction(parent, ActionType.START);
+              }
               parent.activeNodes++;
             } else if (newState == State.SLEEPING) {
               if (parent.activeNodes > 0) parent.activeNodes--;
@@ -299,16 +457,82 @@ class NCLDocument {
   }
 
   void _checkIsPlaying() {
-    if (_actionStack.isEmpty && _body.getMainState() == State.SLEEPING) {
+    if (_actionStack.isEmpty &&
+        _delayedActions.isEmpty &&
+        _body.getMainState() == State.SLEEPING) {
       isPlaying = false;
     }
+  }
+
+  bool _evaluateCondition(Element cond, Link link) {
+    if (cond.xmlTagName == 'simpleCondition') {
+      return true;
+    }
+    if (cond.xmlTagName == 'assessmentStatement') {
+      return _evaluateAssessment(cond, link);
+    }
+    if (cond.xmlTagName == 'compoundCondition') {
+      final operator = cond.rawAttributes['operator'] ?? 'and';
+      final results = cond.children
+          .map((c) => _evaluateCondition(c, link))
+          .toList();
+      if (results.isEmpty) return true;
+      if (operator == 'or') {
+        return results.any((r) => r);
+      } else {
+        return results.every((r) => r);
+      }
+    }
+    return true;
+  }
+
+  bool _evaluateAssessment(Element assessment, Link link) {
+    final attrAssess = assessment.children
+        .where((c) => c.xmlTagName == 'attributeAssessment')
+        .firstOrNull;
+    final valueAssess = assessment.children
+        .where((c) => c.xmlTagName == 'valueAssessment')
+        .firstOrNull;
+    if (attrAssess == null || valueAssess == null) return true;
+
+    final role = attrAssess.rawAttributes['role'];
+    final comparator = assessment.rawAttributes['comparator'] ?? 'eq';
+    final targetValue = valueAssess.rawAttributes['value'] ?? '';
+
+    final bind = link.children
+        .whereType<Bind>()
+        .where((b) => b.role == role)
+        .firstOrNull;
+    if (bind == null || bind.component == null) return false;
+
+    final targetNode = getNodeById(bind.component!);
+    if (targetNode == null) return false;
+
+    String currentValue = '';
+    final isProperty =
+        attrAssess.rawAttributes['attributeType'] == 'nodeProperty';
+    if (isProperty && bind.interface != null) {
+      currentValue = getPropertyValue(targetNode, bind.interface!) ?? '';
+    } else {
+      currentValue = Event.getEventStateAsString(
+        targetNode.getMainState(),
+      ).toLowerCase();
+    }
+
+    if (comparator == 'eq') {
+      return currentValue.toLowerCase() == targetValue.toLowerCase();
+    } else if (comparator == 'ne') {
+      return currentValue.toLowerCase() != targetValue.toLowerCase();
+    }
+    return false;
   }
 
   void _triggerLinks(String? targetId, State newState, [String? interfaceId]) {
     if (targetId == null) return;
     final node = getNodeById(targetId);
-    final context = node?.parent;
+    if (node == null) return;
 
+    final context = node.parent;
     final links = context is Context ? context.getLinks() : _body.getLinks();
 
     for (var link in links) {
@@ -327,6 +551,245 @@ class NCLDocument {
               b.component == targetId &&
               b.interface == interfaceId,
         );
+      }
+
+      if (triggered) {
+        final xconn = link.rawAttributes['xconnector'];
+        if (xconn != null) {
+          final connId = xconn.contains('#') ? xconn.split('#')[1] : xconn;
+          final connector = getConnectorById(connId);
+          if (connector != null) {
+            final cond = connector.children.firstWhere(
+              (c) =>
+                  c.xmlTagName == 'compoundCondition' ||
+                  c.xmlTagName == 'simpleCondition' ||
+                  c.xmlTagName == 'assessmentStatement',
+              orElse: () => null as dynamic,
+            );
+            if (!_evaluateCondition(cond, link)) {
+              triggered = false;
+            }
+          }
+        }
+      }
+
+      if (triggered) {
+        for (var bind in link.children.whereType<Bind>()) {
+          final actionStr = bind.role;
+          if (actionStr != null &&
+              (actionStr == 'start' ||
+                  actionStr == 'stop' ||
+                  actionStr == 'abort' ||
+                  actionStr == 'pause' ||
+                  actionStr == 'resume' ||
+                  actionStr == 'set')) {
+            if (bind.component != null) {
+              final bindNode = getNodeById(bind.component!);
+              if (bindNode != null) {
+                final actionType = Event.getStringAsActionType(actionStr);
+                var targetEvent = actionType == ActionType.SET
+                    ? bindNode.getPropertyEvent(bind.interface ?? '')
+                    : bindNode.getMainEvent();
+
+                if (actionType != ActionType.SET &&
+                    bindNode is Context &&
+                    bind.interface != null) {
+                  final ports = bindNode.children.whereType<Port>().where(
+                    (p) => p.id == bind.interface,
+                  );
+                  if (ports.isNotEmpty) {
+                    final port = ports.first;
+                    if (port.component != null) {
+                      final targetNode = getNodeById(port.component!);
+                      if (targetNode != null) {
+                        targetEvent = targetNode.getMainEvent();
+                      }
+                    }
+                  }
+                }
+
+                if (actionType != ActionType.SET && bindNode is Switch) {
+                  final activeNode = resolveSwitch(bindNode);
+                  if (activeNode != null) {
+                    targetEvent = activeNode.getMainEvent();
+                  }
+                }
+
+                int delayMs = 0;
+                int durationMs = 0;
+                for (var child in bind.children) {
+                  if (child is BindParam) {
+                    if (child.name == 'delay') {
+                      delayMs = _parseTimeMs(child.value) ?? 0;
+                    } else if (child.name == 'duration') {
+                      durationMs = _parseTimeMs(child.value) ?? 0;
+                    }
+                  }
+                }
+                if (delayMs == 0) {
+                  for (var child in link.children) {
+                    if (child is BindParam) {
+                      if (child.name == 'delay') {
+                        delayMs = _parseTimeMs(child.value) ?? 0;
+                      } else if (child.name == 'duration') {
+                        durationMs = _parseTimeMs(child.value) ?? 0;
+                      }
+                    }
+                  }
+                }
+                String? setValue;
+                if (actionType == ActionType.SET) {
+                  for (var child in bind.children) {
+                    if (child is BindParam &&
+                        (child.name == 'value' || child.name == 'var')) {
+                      setValue = child.value;
+                      break;
+                    }
+                  }
+                  if (setValue == null &&
+                      bind.rawAttributes.containsKey('value')) {
+                    setValue = bind.rawAttributes['value'];
+                  }
+                  if (setValue == null) {
+                    for (var child in link.children) {
+                      if (child is BindParam &&
+                          (child.name == 'value' || child.name == 'var')) {
+                        setValue = child.value;
+                        break;
+                      }
+                    }
+                  }
+                }
+                if (actionType == ActionType.SET && durationMs > 0) {
+                  _stackAction(targetEvent, ActionType.START, delay: delayMs);
+                  _stackAction(
+                    targetEvent,
+                    ActionType.SET,
+                    delay: delayMs + durationMs,
+                    value: setValue,
+                  );
+                } else {
+                  _stackAction(
+                    targetEvent,
+                    actionType,
+                    delay: delayMs,
+                    value: setValue,
+                  );
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (context is Context && context != _body) {
+      for (var port in context.children.whereType<Port>()) {
+        if (port.component == targetId &&
+            (port.interface == interfaceId ||
+                (interfaceId == null && port.interface == null))) {
+          _triggerLinks(context.id, newState, port.id);
+        }
+      }
+    }
+
+    if (context is Switch) {
+      for (var switchPort in context.children.where(
+        (c) => c.xmlTagName == 'switchPort',
+      )) {
+        final hasMapping = switchPort.children
+            .where((m) => m.xmlTagName == 'mapping')
+            .any((m) => m.rawAttributes['component'] == targetId);
+        if (hasMapping) {
+          _triggerLinks(context.id, newState, switchPort.id);
+        }
+      }
+    }
+
+    final referringNodes = <Node>[];
+    void findReferring(Element el) {
+      if (el is Node && el.rawAttributes['refer'] == targetId) {
+        referringNodes.add(el);
+      }
+      for (var child in el.children) {
+        findReferring(child);
+      }
+    }
+
+    findReferring(_body);
+
+    for (var refNode in referringNodes) {
+      _triggerLinks(refNode.id, newState, interfaceId);
+    }
+  }
+
+  void triggerSelection(String componentId, String keyCode) {
+    _triggerSelectionInternal(componentId, keyCode, null);
+  }
+
+  void _triggerSelectionInternal(
+    String componentId,
+    String keyCode, [
+    String? interfaceId,
+  ]) {
+    final node = getNodeById(componentId);
+    if (node == null || node.getMainState() != State.OCCURRING) return;
+
+    final context = node.parent;
+    final links = context is Context ? context.getLinks() : _body.getLinks();
+
+    for (var link in links) {
+      bool triggered = false;
+      triggered = link.children.whereType<Bind>().any((b) {
+        if ((b.role == 'onSelection' || b.role == 'onSelect') &&
+            b.component == componentId &&
+            (b.interface == interfaceId ||
+                (interfaceId == null && b.interface == null))) {
+          final hasKeyParam =
+              b.children.whereType<BindParam>().any(
+                (bp) => bp.name == 'keyCode' || bp.name == 'key',
+              ) ||
+              link.children.whereType<BindParam>().any(
+                (bp) => bp.name == 'keyCode' || bp.name == 'key',
+              );
+          if (!hasKeyParam) {
+            return true;
+          }
+          bool keyMatches = b.children.whereType<BindParam>().any(
+            (bp) =>
+                (bp.name == 'keyCode' || bp.name == 'key') &&
+                bp.value == keyCode,
+          );
+          if (!keyMatches) {
+            keyMatches = link.children.whereType<BindParam>().any(
+              (bp) =>
+                  (bp.name == 'keyCode' || bp.name == 'key') &&
+                  bp.value == keyCode,
+            );
+          }
+          return keyMatches;
+        }
+        return false;
+      });
+
+      if (triggered) {
+        final xconn = link.rawAttributes['xconnector'];
+        if (xconn != null) {
+          final connId = xconn.contains('#') ? xconn.split('#')[1] : xconn;
+          final connector = getConnectorById(connId);
+          if (connector != null) {
+            final cond = connector.children.firstWhere(
+              (c) =>
+                  c.xmlTagName == 'compoundCondition' ||
+                  c.xmlTagName == 'simpleCondition' ||
+                  c.xmlTagName == 'assessmentStatement',
+              orElse: () => null as dynamic,
+            );
+            if (!_evaluateCondition(cond, link)) {
+              triggered = false;
+            }
+          }
+        }
       }
 
       if (triggered) {
@@ -436,6 +899,16 @@ class NCLDocument {
               }
             }
           }
+        }
+      }
+    }
+
+    if (context is Context && context != _body) {
+      for (var port in context.children.whereType<Port>()) {
+        if (port.component == componentId &&
+            (port.interface == interfaceId ||
+                (interfaceId == null && port.interface == null))) {
+          _triggerSelectionInternal(context.id ?? '', keyCode, port.id);
         }
       }
     }
