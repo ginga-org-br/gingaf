@@ -29,5 +29,5 @@ if __name__ == "__main__":
     folders = ["primeiro-joao", "hrace", "luarocks", "pacman"]
     for folder in folders:
         api_url = f"https://api.github.com/repos/TeleMidia/ginga/contents/examples/{folder}"
-        local_dir = os.path.join("puc-examples", folder)
+        local_dir = os.path.join(".", folder)
         download_dir(api_url, local_dir)

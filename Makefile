@@ -9,6 +9,3 @@ test:
 	$(MAKE) -C ncl_doc test
 	$(MAKE) -C ginga test
 	$(MAKE) -C playground test
-
-download-puc-examples:
-	python examples/download_puc_examples.py
