@@ -214,7 +214,22 @@ abstract class MediaState<T extends MediaWidget> extends State<T> {
 class WidgetFactory {
   static Widget? createMediaWidget({Key? key, required Media media}) {
     final mimeType = media.mimeType;
-    final uri = media.uri;
+    var uri = media.uri;
+    if (kIsWeb) {
+      try {
+        final mockJson = getSessionStorageItem('GINGA_PLAYGROUND_FILES');
+        if (mockJson != null) {
+          final mockFiles = jsonDecode(mockJson);
+          final fileName = Uri.parse(uri).pathSegments.last;
+          if (mockFiles.containsKey(fileName)) {
+            uri = mockFiles[fileName];
+          }
+        }
+      } catch (e) {}
+    }
+    if (uri.endsWith('.ncl') || mimeType == 'application/x-ncl-NCL' || mimeType == 'application/x-ncl-ncl') {
+      return NCLApp(key: key, uri: uri, media: media);
+    }
     if (mimeType.startsWith('video/') ||
         mimeType.startsWith('audio/') ||
         mimeType.contains('video') ||

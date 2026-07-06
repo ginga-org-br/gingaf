@@ -8,5 +8,5 @@ Run the playground locally using the playground Makefile:
 
 ```bash
 cd gingaf/playground
-make run
+make serve
 ```

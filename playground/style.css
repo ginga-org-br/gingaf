@@ -65,6 +65,20 @@ header {
   background-color: #1177bb;
 }
 
+#upload-btn {
+  background-color: #3e3e3e;
+  color: white;
+  border: 1px solid #555;
+  padding: 6px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+#upload-btn:hover {
+  background-color: #4e4e4e;
+}
+
 .split-pane {
   display: flex;
   flex: 1;

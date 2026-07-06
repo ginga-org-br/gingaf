@@ -36,8 +36,20 @@ const examples: Record<string, Example> = {
 const editorContainer = document.getElementById('editor-container');
 const editorTabs = document.getElementById('editor-tabs');
 const runBtn = document.getElementById('run-btn');
+const uploadBtn = document.getElementById('upload-btn');
+const fileInput = document.getElementById('file-input') as HTMLInputElement;
 const selectEl = document.getElementById('example-select') as HTMLSelectElement;
 const iframe = document.getElementById('preview-frame') as HTMLIFrameElement;
+
+const isEditableFile = (fileName: string) => {
+  return fileName.endsWith('.ncl') || 
+         fileName.endsWith('.xml') || 
+         fileName.endsWith('.lua') || 
+         fileName.endsWith('.html') || 
+         fileName.endsWith('.js') || 
+         fileName.endsWith('.css') || 
+         fileName.endsWith('.txt');
+};
 
 if (editorContainer && editorTabs && runBtn && selectEl && iframe) {
   let currentExample = examples['video'];
@@ -56,6 +68,7 @@ if (editorContainer && editorTabs && runBtn && selectEl && iframe) {
   const renderTabs = () => {
     editorTabs.innerHTML = '';
     for (const fileName of Object.keys(currentExample.files)) {
+      if (!isEditableFile(fileName)) continue;
       const tab = document.createElement('div');
       tab.className = 'tab' + (fileName === currentFileName ? ' active' : '');
       tab.textContent = fileName;
@@ -87,6 +100,62 @@ if (editorContainer && editorTabs && runBtn && selectEl && iframe) {
       renderTabs();
     }
   });
+
+  if (uploadBtn && fileInput) {
+    uploadBtn.addEventListener('click', () => {
+      if (!isRunning) {
+        fileInput.click();
+      }
+    });
+
+    fileInput.addEventListener('change', async () => {
+      const files = fileInput.files;
+      if (!files || files.length === 0) return;
+
+      if (!examples['uploaded']) {
+        examples['uploaded'] = {
+          mainFile: '',
+          files: {}
+        };
+      }
+
+      let mainFileCandidate = '';
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (isEditableFile(file.name)) {
+          const text = await file.text();
+          examples['uploaded'].files[file.name] = text;
+        } else {
+          const url = URL.createObjectURL(file);
+          examples['uploaded'].files[file.name] = url;
+        }
+
+        if (file.name.endsWith('.ncl')) {
+          mainFileCandidate = file.name;
+        } else if (file.name.endsWith('.html') && !mainFileCandidate.endsWith('.ncl')) {
+          mainFileCandidate = file.name;
+        } else if (!mainFileCandidate && isEditableFile(file.name)) {
+          mainFileCandidate = file.name;
+        }
+      }
+
+      if (mainFileCandidate) {
+        examples['uploaded'].mainFile = mainFileCandidate;
+      }
+
+      let uploadedOption = Array.from(selectEl.options).find(opt => opt.value === 'uploaded');
+      if (!uploadedOption) {
+        uploadedOption = document.createElement('option');
+        uploadedOption.value = 'uploaded';
+        uploadedOption.textContent = 'Uploaded Files';
+        selectEl.appendChild(uploadedOption);
+      }
+
+      selectEl.value = 'uploaded';
+      selectEl.dispatchEvent(new Event('change'));
+      fileInput.value = '';
+    });
+  }
 
   iframe.src = 'about:blank';
 
