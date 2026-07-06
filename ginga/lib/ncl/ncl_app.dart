@@ -53,10 +53,12 @@ class NCLAppState extends MediaState<NCLApp> {
       final id = media.id ?? '';
       if (!_cachedWidgets.containsKey(id)) {
         final key = GlobalKey<MediaState>();
-        _mediaStateKeys[id] = key;
-        _cachedWidgets[id] =
-            WidgetFactory.createMediaWidget(key: key, media: media)!;
-        changed = true;
+        final widget = WidgetFactory.createMediaWidget(key: key, media: media);
+        if (widget != null) {
+          _mediaStateKeys[id] = key;
+          _cachedWidgets[id] = widget;
+          changed = true;
+        }
       }
     }
     return changed;
