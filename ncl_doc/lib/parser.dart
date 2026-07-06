@@ -623,4 +623,81 @@ class NCLParser {
     }
   }
 
+
+class ParsedCommand {
+  final String name;
+  final List<String> args;
+  ParsedCommand(this.name, this.args);
+}
+
+ParsedCommand? _parseCommand(String commandStr) {
+  commandStr = commandStr.trim();
+  final parenIndex = commandStr.indexOf('(');
+  if (parenIndex == -1 || !commandStr.endsWith(')')) {
+    return null;
+  }
+  final name = commandStr.substring(0, parenIndex).trim();
+  final argsStr = commandStr.substring(parenIndex + 1, commandStr.length - 1);
+
+  final args = <String>[];
+  int i = 0;
+  while (i < argsStr.length) {
+    while (i < argsStr.length &&
+        (argsStr[i] == ' ' ||
+            argsStr[i] == '\t' ||
+            argsStr[i] == '\r' ||
+            argsStr[i] == '\n')) {
+      i++;
+    }
+    if (i >= argsStr.length) break;
+
+    if (argsStr[i] == '"' || argsStr[i] == "'") {
+      final quoteChar = argsStr[i];
+      i++;
+      final buf = StringBuffer();
+      while (i < argsStr.length && argsStr[i] != quoteChar) {
+        if (argsStr[i] == '\\' && i + 1 < argsStr.length) {
+          buf.write(argsStr[i + 1]);
+          i += 2;
+        } else {
+          buf.write(argsStr[i]);
+          i++;
+        }
+      }
+      if (i < argsStr.length) i++;
+      args.add(buf.toString());
+    } else {
+      final buf = StringBuffer();
+      int bracketDepth = 0;
+      bool inDoubleQuote = false;
+      bool inSingleQuote = false;
+      while (i < argsStr.length) {
+        final char = argsStr[i];
+        if (char == '"' && !inSingleQuote) {
+          inDoubleQuote = !inDoubleQuote;
+        } else if (char == "'" && !inDoubleQuote) {
+          inSingleQuote = !inSingleQuote;
+        } else if (char == '<' && !inDoubleQuote && !inSingleQuote) {
+          bracketDepth++;
+        } else if (char == '>' && !inDoubleQuote && !inSingleQuote) {
+          bracketDepth--;
+        }
+
+        if (char == ',' &&
+            !inDoubleQuote &&
+            !inSingleQuote &&
+            bracketDepth == 0) {
+          break;
+        }
+        buf.write(char);
+        i++;
+      }
+      args.add(buf.toString().trim());
+    }
+
+    if (i < argsStr.length && argsStr[i] == ',') {
+      i++;
+    }
+  }
+  return ParsedCommand(name, args);
 }
