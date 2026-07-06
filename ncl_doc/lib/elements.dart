@@ -7,7 +7,10 @@ class Element {
   final Map<String, String> rawAttributes;
   String? get id => rawAttributes['id'];
   final List<Element> children = [];
-  Element({this.rawAttributes = const {}});
+  Element? parent;
+  String? xmlTagName;
+  Element({Map<String, String> rawAttributes = const {}, this.xmlTagName})
+      : rawAttributes = Map<String, String>.from(rawAttributes);
 }
 
 class Port extends Element {
@@ -58,7 +61,10 @@ class Connector extends Element {
 }
 
 abstract class Node extends Element {
-  Composition? parent;
+  @override
+  Composition? get parent => super.parent as Composition?;
+  @override
+  set parent(covariant Composition? value) => super.parent = value;
   int time = 0;
   int? explicitDurMs;
   late final Event _mainEvt = Event(
@@ -67,6 +73,7 @@ abstract class Node extends Element {
     isMain: true,
   );
   final Map<String, Event> _areaEvents = {};
+  final Map<String, Event> _propertyEvents = {};
   Event getMainEvent() => _mainEvt;
   State getMainState() => _mainEvt.state;
   Event getAreaEvent(String areaId) {
@@ -78,6 +85,30 @@ abstract class Node extends Element {
         interfaceId: areaId,
       ),
     );
+  }
+
+  Event getPropertyEvent(String propertyName) {
+    return _propertyEvents.putIfAbsent(
+      propertyName,
+      () => Event(
+        type: EventType.ATTRIBUTION,
+        targetNode: this,
+        propertyName: propertyName,
+      ),
+    );
+  }
+
+  void setPropertyValue(String name, String value) {
+    final existing = children.whereType<Property>().firstWhere(
+      (p) => p.name == name,
+      orElse: () {
+        final newProp = Property(rawAttributes: {'name': name, 'value': value});
+        children.add(newProp);
+        newProp.parent = this;
+        return newProp;
+      },
+    );
+    existing.rawAttributes['value'] = value;
   }
 
   State getAreaEventState(String areaId) => getAreaEvent(areaId).state;

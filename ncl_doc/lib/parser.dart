@@ -31,6 +31,8 @@ class NCLParser {
       }
     }
 
+    _resolveMediaProperties(head, body);
+
     return (head, body);
   }
 
@@ -174,26 +176,20 @@ class NCLParser {
     }
     final resolvedSrc = src.replaceAll('\\', '/');
     final uri = src.isNotEmpty ? baseURI.resolve(resolvedSrc).toString() : '';
-    final mimeType =
-        type.isNotEmpty ? type : getMimeTypeFromExtension(src);
+    final mimeType = type.isNotEmpty ? type : getMimeTypeFromExtension(src);
     if (mimeType.startsWith('video/') || mimeType.startsWith('audio/')) {
       final avMedia = AVMedia(
         rawAttributes: rawAttributes,
         uri: uri,
         mimeType: mimeType,
       );
-      final expectedDurMs =
-          _parseDurStr(rawAttributes['expectedDuration']);
+      final expectedDurMs = _parseDurStr(rawAttributes['expectedDuration']);
       if (expectedDurMs != null) {
         avMedia.explicitDurMs = expectedDurMs;
       }
       return avMedia;
     }
-    return Media(
-      rawAttributes: rawAttributes,
-      uri: uri,
-      mimeType: mimeType,
-    );
+    return Media(rawAttributes: rawAttributes, uri: uri, mimeType: mimeType);
   }
 
   List<String> validate(String xmlString) {
@@ -623,6 +619,149 @@ class NCLParser {
     }
   }
 
+  void _resolveMediaProperties(Head head, Body body) {
+    Descriptor? findDescriptor(String id) {
+      Descriptor? search(Element parent) {
+        if (parent is Descriptor && parent.id == id) {
+          return parent;
+        }
+        for (var child in parent.children) {
+          final res = search(child);
+          if (res != null) return res;
+        }
+        return null;
+      }
+
+      for (var el in head) {
+        final res = search(el);
+        if (res != null) return res;
+      }
+      return null;
+    }
+
+    Region? findRegion(String id) {
+      Region? search(Element parent) {
+        if (parent is Region && parent.id == id) {
+          return parent;
+        }
+        for (var child in parent.children) {
+          final res = search(child);
+          if (res != null) return res;
+        }
+        return null;
+      }
+
+      for (var el in head) {
+        final res = search(el);
+        if (res != null) return res;
+      }
+      return null;
+    }
+
+    double parsePercent(String val) {
+      final trimmed = val.trim();
+      if (trimmed.endsWith('%')) {
+        final num =
+            double.tryParse(trimmed.substring(0, trimmed.length - 1)) ?? 0.0;
+        return num / 100.0;
+      }
+      final num = double.tryParse(trimmed);
+      return num ?? 0.0;
+    }
+
+    (double, double, double, double) resolveRegionRect(Region region) {
+      final parentEl = region.parent;
+      final leftStr = region.rawAttributes['left'] ?? '0%';
+      final topStr = region.rawAttributes['top'] ?? '0%';
+      final widthStr = region.rawAttributes['width'] ?? '100%';
+      final heightStr = region.rawAttributes['height'] ?? '100%';
+
+      final leftVal = parsePercent(leftStr);
+      final topVal = parsePercent(topStr);
+      final widthVal = parsePercent(widthStr);
+      final heightVal = parsePercent(heightStr);
+
+      if (parentEl is Region) {
+        final parentRect = resolveRegionRect(parentEl);
+        final leftAbs = parentRect.$1 + leftVal * parentRect.$3;
+        final topAbs = parentRect.$2 + topVal * parentRect.$4;
+        final widthAbs = widthVal * parentRect.$3;
+        final heightAbs = heightVal * parentRect.$4;
+        return (leftAbs, topAbs, widthAbs, heightAbs);
+      } else {
+        return (leftVal, topVal, widthVal, heightVal);
+      }
+    }
+
+    int resolveRegionZIndex(Region region) {
+      final zIndexStr =
+          region.rawAttributes['zIndex'] ?? region.rawAttributes['zOrder'];
+      if (zIndexStr != null) {
+        return int.tryParse(zIndexStr) ?? 0;
+      }
+      final parentEl = region.parent;
+      if (parentEl is Region) {
+        return resolveRegionZIndex(parentEl);
+      }
+      return 0;
+    }
+
+    void resolveMedia(Element el) {
+      if (el is Media) {
+        final descriptorId = el.rawAttributes['descriptor'];
+        if (descriptorId != null) {
+          final desc = findDescriptor(descriptorId);
+          if (desc != null) {
+            // copy descriptor attributes to media if not already defined
+            desc.rawAttributes.forEach((key, val) {
+              if (key != 'id' && key != 'region') {
+                if (!el.rawAttributes.containsKey(key)) {
+                  el.rawAttributes[key] = val;
+                }
+              }
+            });
+
+            // resolve explicit duration
+            final explicitDurVal =
+                desc.rawAttributes['explicitDur'] ??
+                el.rawAttributes['explicitDur'];
+            if (explicitDurVal != null) {
+              el.explicitDurMs = _parseDurStr(explicitDurVal);
+            }
+
+            final regionId = desc.rawAttributes['region'];
+            if (regionId != null) {
+              final reg = findRegion(regionId);
+              if (reg != null) {
+                // resolve region rect
+                final rect = resolveRegionRect(reg);
+
+                // set region layout properties on media rawAttributes
+                el.rawAttributes['resolvedLeft'] =
+                    '${(rect.$1 * 100).toStringAsFixed(2)}%';
+                el.rawAttributes['resolvedTop'] =
+                    '${(rect.$2 * 100).toStringAsFixed(2)}%';
+                el.rawAttributes['resolvedWidth'] =
+                    '${(rect.$3 * 100).toStringAsFixed(2)}%';
+                el.rawAttributes['resolvedHeight'] =
+                    '${(rect.$4 * 100).toStringAsFixed(2)}%';
+
+                // resolve zIndex
+                final zindex = resolveRegionZIndex(reg);
+                el.rawAttributes['resolvedZIndex'] = zindex.toString();
+              }
+            }
+          }
+        }
+      }
+      for (var child in el.children) {
+        resolveMedia(child);
+      }
+    }
+
+    resolveMedia(body);
+  }
+}
 
 class ParsedCommand {
   final String name;
