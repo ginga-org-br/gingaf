@@ -32,7 +32,8 @@ class GingaConfig {
     if (video == null && !kIsWeb) {
       video = Platform.environment['MAINAV'];
     }
-    return video;
+    return video ??
+        'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4';
   }
 
   static String? _resolve(String? manualPath) {
@@ -120,6 +121,7 @@ class _GingaState extends State<Ginga> {
       } else {
         nclApp = ncl.NCLApp(
           uri: path,
+          mainAVController: mainAVController,
         );
       }
     }

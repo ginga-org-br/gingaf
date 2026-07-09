@@ -194,5 +194,22 @@ void main() {
       final settingsNode = mediaList.firstWhere((e) => e.id == 'settings');
       expect(settingsNode, isA<Settings>());
     });
+
+    test('validate and parse sbtvd:// media with id="mainAV" successfully', () {
+      const xml = '''
+<ncl>
+  <body>
+    <media id="mainAV" src="sbtvd://" />
+  </body>
+</ncl>
+''';
+      final errors = parser.validate(xml);
+      expect(errors, isEmpty);
+
+      final (_, body) = parser.parseString(xml);
+      final media = body.children.whereType<Media>().first;
+      expect(media.id, 'mainAV');
+      expect(media.uri, 'sbtvd://');
+    });
   });
 }

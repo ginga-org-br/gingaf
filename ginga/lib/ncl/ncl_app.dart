@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:ncl_doc/ncl_document.dart' hide State;
 
+import '../main_av.dart';
 import 'widgets/ncl_media_widget.dart';
 
 export 'widgets/av.dart';
@@ -13,16 +14,19 @@ export 'widgets/lua.dart';
 export 'widgets/ncl_media_widget.dart';
 export 'widgets/ssml.dart';
 export 'widgets/text.dart';
+export 'widgets/html.dart';
 
 final _logger = Logger('ginga-ncl');
 
 class NCLAppExitNotification extends Notification {}
 
 class NCLApp extends MediaWidget {
+  final MainAVController? mainAVController;
   const NCLApp({
     super.key,
     required super.uri,
     super.media,
+    this.mainAVController,
   });
 
   @override
@@ -36,10 +40,26 @@ class NCLAppState extends MediaState<NCLApp> {
   Timer? _ticker;
   String errorMsg = "";
   bool _loading = false;
+  String? _initialMainAvUri;
 
   bool _syncActiveMedia(List<Media> activeMedia) {
     bool changed = false;
     final currentIds = activeMedia.map((m) => m.id ?? '').toSet();
+
+    String? sbtvdUri;
+    for (var media in activeMedia) {
+      if (media.uri.startsWith('sbtvd://')) {
+        sbtvdUri = media.uri;
+      }
+    }
+    if (sbtvdUri != null) {
+      widget.mainAVController?.setMainAvUri(sbtvdUri);
+    } else {
+      if (widget.mainAVController != null &&
+          widget.mainAVController!.uri != _initialMainAvUri) {
+        widget.mainAVController!.setMainAvUri(_initialMainAvUri);
+      }
+    }
 
     final toRemove =
         _cachedWidgets.keys.where((id) => !currentIds.contains(id)).toList();
@@ -53,10 +73,14 @@ class NCLAppState extends MediaState<NCLApp> {
       final id = media.id ?? '';
       if (!_cachedWidgets.containsKey(id)) {
         final key = GlobalKey<MediaState>();
-        final widget = WidgetFactory.createMediaWidget(key: key, media: media);
-        if (widget != null) {
+        final mediaWidget = WidgetFactory.createMediaWidget(
+          key: key,
+          media: media,
+          mainAVController: widget.mainAVController,
+        );
+        if (mediaWidget != null) {
           _mediaStateKeys[id] = key;
-          _cachedWidgets[id] = widget;
+          _cachedWidgets[id] = mediaWidget;
           changed = true;
         }
       }
@@ -67,6 +91,7 @@ class NCLAppState extends MediaState<NCLApp> {
   @override
   void initState() {
     super.initState();
+    _initialMainAvUri = widget.mainAVController?.uri;
     _logger.info("Starting NCL application: ${widget.uri}");
     _startApplication();
   }

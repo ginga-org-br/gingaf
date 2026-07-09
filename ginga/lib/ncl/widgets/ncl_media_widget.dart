@@ -11,6 +11,7 @@ import 'package:ncl_doc/ncl_document.dart' hide State;
 import '../../web_utils_stub.dart'
     if (dart.library.html) '../../web_utils_web.dart';
 import '../ncl_app.dart';
+import '../../main_av.dart';
 
 abstract class MediaWidget extends StatefulWidget {
   final String uri;
@@ -246,11 +247,29 @@ abstract class MediaState<T extends MediaWidget> extends State<T> {
 
   Widget buildWidgetContent(BuildContext context);
 }
-
 class WidgetFactory {
-  static Widget? createMediaWidget({Key? key, required Media media}) {
+  static Widget? createMediaWidget({
+    Key? key,
+    required Media media,
+    MainAVController? mainAVController,
+  }) {
     final mimeType = media.mimeType;
     var uri = media.uri;
+    if (uri.startsWith('sbtvd://')) {
+      if (mainAVController != null) {
+        var avUri = mainAVController.uri ?? '';
+        if (avUri.isEmpty || avUri.startsWith('sbtvd://')) {
+          avUri =
+              'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4';
+        }
+        return AVWidget(
+          key: key,
+          uri: avUri,
+          media: media,
+        );
+      }
+      return null;
+    }
     if (kIsWeb) {
       try {
         final mockJson = getSessionStorageItem('GINGA_PLAYGROUND_FILES');
