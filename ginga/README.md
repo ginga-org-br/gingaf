@@ -4,10 +4,6 @@
 
 Technical overview of the Ginga engine architecture and modular implementation.
 
-## ginga/examples link
-
-It is required to create a `ginga/examples` link to `examples` to allow Flutter to find it. You can do this by running `make ginga/examples` at root.
-
 ## Setup
 
 ### Flutter SDK
@@ -84,11 +80,9 @@ flutter test
 
 ## Run Ginga-NCL or Ginga-HTML applications with UI
 
-All example NCL and HTML documents are stored in the `examples/` folder at the root of the workspace.
+All example NCL and HTML documents are stored in the `examples/` folder.
 
 You may run app with UI as below.
-
-> **Note:** It is required to create a `ginga/examples` link to `examples` to allow Flutter to find it. You can do this by running `make examples`.
 
 ```bash
 cd gingaf/ginga

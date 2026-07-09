@@ -25,16 +25,13 @@ build-web:
 clean:
 	flutter clean
 
-examples:
-	-cmd /c "mklink /J examples ..\examples" || ln -s ../examples examples
-
 check-app:
 	$(if $(app),,$(error Please specify app (e.g. app=video.ncl)))
 	$(eval APP_EXAMPLE := $(if $(findstring examples/,$(app)),$(subst examples/,,$(app)),$(app)))
 	$(eval APP_EXAMPLE := $(APP_EXAMPLE)$(if $(filter %.ncl %.html,$(APP_EXAMPLE)),,.ncl))
-	$(if $(wildcard ../examples/$(APP_EXAMPLE)),,$(error File ../examples/$(APP_EXAMPLE) does not exist))
+	$(if $(wildcard examples/$(APP_EXAMPLE)),,$(error File examples/$(APP_EXAMPLE) does not exist))
 
-run-example: check-app examples
+run-example: check-app
 	@echo ======================================================================
 	@echo Running Example: $(APP_EXAMPLE)
 	@echo ======================================================================
