@@ -282,6 +282,8 @@ class WidgetFactory {
         return SsmlWidget(key: key, uri: uri, media: media);
       case 'text/plain':
         return TextWidget(key: key, uri: uri, media: media);
+      case 'text/html':
+        return HtmlWidget(key: key, uri: uri, media: media);
       case 'image/png':
       case 'image/jpeg':
       case 'image/gif':
