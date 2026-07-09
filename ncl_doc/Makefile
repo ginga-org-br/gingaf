@@ -1,6 +1,6 @@
-.PHONY: test setup clean run-example check-app
+.PHONY: test deps clean run-example check-app
 
-setup:
+deps:
 	flutter pub get
 
 test:

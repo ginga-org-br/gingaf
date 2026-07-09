@@ -1,8 +1,8 @@
-.PHONY: test setup build build-windows build-web clean run-example check-app
+.PHONY: test deps build build-windows build-web clean run-example check-app
 
 BASE_HREF ?= /
 
-setup:
+deps:
 	flutter pub get
 
 test:

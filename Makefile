@@ -1,9 +1,9 @@
-.PHONY: test setup download-puc-examples
+.PHONY: test deps download-puc-examples
 
-setup:
-	$(MAKE) -C ncl_doc setup
-	$(MAKE) -C ginga setup
-	$(MAKE) -C playground setup
+deps:
+	$(MAKE) -C ncl_doc deps
+	$(MAKE) -C ginga deps
+	$(MAKE) -C playground deps
 
 test:
 	$(MAKE) -C ncl_doc test
