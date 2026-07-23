@@ -2,9 +2,10 @@ import 'package:ncl_doc/ncl_document.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('joao06switch', () {
-test('NCLDocument executes Switch default (PT) path correctly', () {
-    final doc = NCLDocument.fromXML('''<ncl id="nclSwitch" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+  group('primeiro_joao_06switch', () {
+    test('NCLDocument executes Switch default (PT) path correctly', () {
+      final doc = NCLDocument.fromXML(
+        '''<ncl id="nclSwitch" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <ruleBase>
       <rule id="en" var="system.language" value="eng" comparator="eq"/>
@@ -131,32 +132,43 @@ test('NCLDocument executes Switch default (PT) path correctly', () {
       <bind role="stop" component="mAudio"/>
     </link>
   </body>
-</ncl>''');
+</ncl>''',
+      );
 
-    doc.systemVariables['system.language'] = 'por';
-    doc.start();
-    doc.tick(45000);
-    doc.triggerSelection('mIcon', 'RED');
-    doc.tick(0);
+      doc.systemVariables['system.language'] = 'por';
+      doc.start();
+      final ptForm = doc.getNodeById('ptForm') as Media;
+      final enForm = doc.getNodeById('enForm') as Media;
 
-    var active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('ptForm'));
-    expect(active, isNot(contains('enForm')));
+      expect(ptForm.getMainState(), State.SLEEPING);
+      expect(enForm.getMainState(), State.SLEEPING);
 
-    final mMain = doc.getNodeById('mMain') as Media;
-    final boundsProp = mMain.getProperties().firstWhere((p) => p.name == 'bounds');
-    expect(boundsProp.value, '5%,6.7%,45%,45%');
+      doc.tick(45000);
+      doc.triggerSelection('mIcon', 'RED');
+      doc.tick(0);
 
-    doc.tick(15000);
-    active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, isNot(contains('ptForm')));
-    expect(boundsProp.value, '0,0,100%,100%');
-  });
+      var active = doc.getActiveMedia().map((m) => m.id).toList();
+      expect(active, contains('ptForm'));
+      expect(active, isNot(contains('enForm')));
+      expect(ptForm.getMainState(), State.OCCURRING);
+      expect(enForm.getMainState(), State.SLEEPING);
 
-  
+      final mMain = doc.getNodeById('mMain') as Media;
+      final boundsProp = mMain.getProperties().firstWhere(
+        (p) => p.name == 'bounds',
+      );
+      expect(boundsProp.value, '5%,6.7%,45%,45%');
 
-test('NCLDocument executes Switch English (EN) path correctly', () {
-    final doc = NCLDocument.fromXML('''<ncl id="nclSwitch" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+      doc.tick(15000);
+      active = doc.getActiveMedia().map((m) => m.id).toList();
+      expect(active, isNot(contains('ptForm')));
+      expect(ptForm.getMainState(), State.SLEEPING);
+      expect(boundsProp.value, '0,0,100%,100%');
+    });
+
+    test('NCLDocument executes Switch English (EN) path correctly', () {
+      final doc = NCLDocument.fromXML(
+        '''<ncl id="nclSwitch" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <ruleBase>
       <rule id="en" var="system.language" value="eng" comparator="eq"/>
@@ -283,29 +295,38 @@ test('NCLDocument executes Switch English (EN) path correctly', () {
       <bind role="stop" component="mAudio"/>
     </link>
   </body>
-</ncl>''');
+</ncl>''',
+      );
 
-    doc.systemVariables['system.language'] = 'eng';
-    doc.start();
-    doc.tick(45000);
-    doc.triggerSelection('mIcon', 'RED');
-    doc.tick(0);
+      doc.systemVariables['system.language'] = 'eng';
+      doc.start();
+      final ptForm = doc.getNodeById('ptForm') as Media;
+      final enForm = doc.getNodeById('enForm') as Media;
 
-    var active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('enForm'));
-    expect(active, isNot(contains('ptForm')));
+      expect(ptForm.getMainState(), State.SLEEPING);
+      expect(enForm.getMainState(), State.SLEEPING);
 
-    final mMain = doc.getNodeById('mMain') as Media;
-    final boundsProp = mMain.getProperties().firstWhere((p) => p.name == 'bounds');
-    expect(boundsProp.value, '5%,6.7%,45%,45%');
+      doc.tick(45000);
+      doc.triggerSelection('mIcon', 'RED');
+      doc.tick(0);
 
-    doc.tick(15000);
-    active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, isNot(contains('enForm')));
-    expect(boundsProp.value, '0,0,100%,100%');
-  });
+      var active = doc.getActiveMedia().map((m) => m.id).toList();
+      expect(active, contains('enForm'));
+      expect(active, isNot(contains('ptForm')));
+      expect(enForm.getMainState(), State.OCCURRING);
+      expect(ptForm.getMainState(), State.SLEEPING);
 
-  
+      final mMain = doc.getNodeById('mMain') as Media;
+      final boundsProp = mMain.getProperties().firstWhere(
+        (p) => p.name == 'bounds',
+      );
+      expect(boundsProp.value, '5%,6.7%,45%,45%');
 
+      doc.tick(15000);
+      active = doc.getActiveMedia().map((m) => m.id).toList();
+      expect(active, isNot(contains('enForm')));
+      expect(enForm.getMainState(), State.SLEEPING);
+      expect(boundsProp.value, '0,0,100%,100%');
+    });
   });
 }

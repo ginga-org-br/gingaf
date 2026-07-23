@@ -2,9 +2,10 @@ import 'package:ncl_doc/ncl_document.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('joao00syncProp', () {
-test('NCLDocument delay and property parsing', () {
-    final doc = NCLDocument.fromXML('''<ncl id="mySyncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+  group('primeiro_joao_00syncProp', () {
+    test('NCLDocument delay and property parsing', () {
+      final doc = NCLDocument.fromXML(
+        '''<ncl id="mySyncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <connectorBase>
       <causalConnector id="onBeginStart_delay">
@@ -66,37 +67,37 @@ test('NCLDocument delay and property parsing', () {
       <bind role="stop" component="music"/>
     </link>
   </body>
-</ncl>''');
-    doc.start();
+</ncl>''',
+      );
+      doc.start();
 
-    var active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('animation'));
-    expect(active, isNot(contains('music')));
+      var active = doc.getActiveMedia().map((m) => m.id).toList();
+      expect(active, contains('animation'));
+      expect(active, isNot(contains('music')));
 
-    doc.tick(4000);
-    active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('animation'));
-    expect(active, isNot(contains('music')));
+      doc.tick(4000);
+      active = doc.getActiveMedia().map((m) => m.id).toList();
+      expect(active, contains('animation'));
+      expect(active, isNot(contains('music')));
 
-    doc.tick(1000);
-    active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('animation'));
-    expect(active, contains('music'));
+      doc.tick(1000);
+      active = doc.getActiveMedia().map((m) => m.id).toList();
+      expect(active, contains('animation'));
+      expect(active, contains('music'));
 
-    doc.tick(7000);
-    active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('animation'));
-    expect(active, contains('music'));
-    expect(active, contains('img1'));
+      doc.tick(7000);
+      active = doc.getActiveMedia().map((m) => m.id).toList();
+      expect(active, contains('animation'));
+      expect(active, contains('music'));
+      expect(active, contains('img1'));
 
-    final img1 = doc.getNodeById('img1') as Media;
-    final leftProp = img1.getProperties().firstWhere((p) => p.name == 'left');
-    expect(leftProp.value, '5%');
-    final zIndexProp = img1.getProperties().firstWhere((p) => p.name == 'zIndex');
-    expect(zIndexProp.value, '3');
-  });
-
-  
-
+      final img1 = doc.getNodeById('img1') as Media;
+      final leftProp = img1.getProperties().firstWhere((p) => p.name == 'left');
+      expect(leftProp.value, '5%');
+      final zIndexProp = img1.getProperties().firstWhere(
+        (p) => p.name == 'zIndex',
+      );
+      expect(zIndexProp.value, '3');
+    });
   });
 }

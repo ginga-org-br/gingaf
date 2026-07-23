@@ -2,8 +2,9 @@ import 'package:ncl_doc/ncl_document.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('joao10menu', () {
-    const xml = '''<ncl id="menuEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+  group('primeiro_joao_11nclua', () {
+    const xml =
+        '''<ncl id="ncluaEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <ruleBase>
       <rule id="en" var="system.language" value="en" comparator="eq"/>
@@ -23,6 +24,7 @@ void main() {
         <region id="rockReg" left="25%" top="91.7%" width="11.7%" height="6.51%" zIndex="3"/>
         <region id="technoReg" left="47.5%" top="91.7%" width="11.7%" height="6.51%" zIndex="3"/>
         <region id="cartoonReg" left="70%" top="91.7%" width="11.7%" height="6.51%" zIndex="3"/>
+        <region id="changesReg" left="0%" top="90%" width="100%" height="10%" zIndex="4"/>
       </region>
     </regionBase>
     <descriptorBase>
@@ -39,6 +41,7 @@ void main() {
       <descriptor id="rockDesc" region="rockReg" focusIndex="3" moveRight="4" moveLeft="2"/>
       <descriptor id="technoDesc" region="technoReg" focusIndex="4" moveRight="5" moveLeft="3"/>
       <descriptor id="cartoonDesc" region="cartoonReg" focusIndex="5" moveRight="2" moveLeft="4"/>
+      <descriptor id="changesDesc" region="changesReg"/>
     </descriptorBase>
     <connectorBase>
       <causalConnector id="onBeginStart">
@@ -82,6 +85,7 @@ void main() {
       <area id="segDrible" begin="12s"/>
       <area id="segPhoto" begin="41s"/>
       <area id="segIcon" begin="45s" end="51s"/>
+      <area id="segLua" end="61s"/>
       <area id="segCred" end="64s"/>
     </media>
     <media id="drible" src="media/drible.mp4" descriptor="dribleDesc"/>
@@ -94,6 +98,11 @@ void main() {
       <port id="pRock" component="imgRock"/>
       <port id="pTechno" component="imgTechno"/>
       <port id="pCartoon" component="imgCartoon"/>
+      <port id="pNCLua" component="changes"/>
+      <media id="changes" src="script/counter.lua" descriptor="changesDesc">
+        <area id="print" label="fim"/>
+        <property name="add"/>
+      </media>
       <media id="imgChorinho" src="media/chorinho.png" descriptor="chorinhoDesc"/>
       <media id="imgRock" src="media/rock.png" descriptor="rockDesc"/>
       <media id="imgTechno" src="media/techno.png" descriptor="technoDesc"/>
@@ -111,7 +120,7 @@ void main() {
       </switch>
       <link id="lChoro" xconnector="onSelectionSet_varStop">
         <bind role="onSelection" component="imgChorinho"/>
-        <bind role="set" component="choro" interface="soundLevel">
+        <bind role="set" component="changes" interface="add">
           <bindParam name="var" value="1"/>
         </bind>
         <bind role="stop" component="musics"/>
@@ -120,8 +129,8 @@ void main() {
         <bind role="onSelection" component="imgRock"/>
         <bind role="onSelection" component="imgTechno"/>
         <bind role="onSelection" component="imgCartoon"/>
-        <bind role="set" component="choro" interface="soundLevel">
-          <bindParam name="var" value="0"/>
+        <bind role="set" component="changes" interface="add">
+          <bindParam name="var" value="1"/>
         </bind>
         <bind role="stop" component="musics"/>
         <bind role="start" component="musics"/>
@@ -139,13 +148,24 @@ void main() {
   </body>
 </ncl>''';
 
-    test('NCLDocument parses and runs menu configuration successfully', () {
-      final doc = NCLDocument.fromXML(xml);
-      doc.start();
-      doc.tick(5000);
-      final active = doc.getActiveMedia().map((m) => m.id).toList();
-      expect(active, contains('imgChorinho'));
-      expect(active, contains('imgRock'));
-    });
+    test(
+      'NCLDocument runs lua script configuration and triggers property modifications successfully',
+      () {
+        final doc = NCLDocument.fromXML(xml);
+        doc.start();
+        doc.tick(5000);
+
+        final changesMedia = doc.getNodeById('changes') as Media;
+        final addProp = changesMedia.getProperties().firstWhere(
+          (p) => p.name == 'add',
+        );
+        expect(addProp.value, isNull);
+
+        doc.triggerSelection('imgRock', 'ENTER');
+        doc.tick(0);
+
+        expect(addProp.value, '1');
+      },
+    );
   });
 }

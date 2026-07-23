@@ -2,9 +2,10 @@ import 'package:ncl_doc/ncl_document.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('joao01sync', () {
-test('NCLDocument descriptor duration and region resolution', () {
-    final doc = NCLDocument.fromXML('''<ncl id="syncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+  group('primeiro_joao_01sync', () {
+    test('NCLDocument descriptor duration and region resolution', () {
+      final doc = NCLDocument.fromXML(
+        '''<ncl id="syncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
       <region id="baseRegion" width="100%" height="100%" zIndex="2">
@@ -61,34 +62,44 @@ test('NCLDocument descriptor duration and region resolution', () {
       <bind role="stop" component="bgMusic"/>
     </link>
   </body>
-</ncl>''');
-    doc.start();
+</ncl>''',
+      );
+      doc.start();
 
-    var active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('mainVideo'));
-    expect(active, isNot(contains('bgMusic')));
+      var active = doc.getActiveMedia().map((m) => m.id).toList();
+      expect(active, contains('mainVideo'));
+      expect(active, isNot(contains('bgMusic')));
 
-    doc.tick(4000);
-    active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('mainVideo'));
-    expect(active, isNot(contains('bgMusic')));
+      final mainVideo = doc.getNodeById('mainVideo') as Media;
+      final bgMusic = doc.getNodeById('bgMusic') as Media;
+      final insertVideo = doc.getNodeById('insertVideo') as Media;
+      final popupPic = doc.getNodeById('popupPic') as Media;
 
-    doc.tick(1000);
-    active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('mainVideo'));
-    expect(active, contains('bgMusic'));
+      expect(mainVideo.getMainState(), State.OCCURRING);
+      expect(bgMusic.getMainState(), State.SLEEPING);
+      expect(insertVideo.getMainState(), State.SLEEPING);
+      expect(popupPic.getMainState(), State.SLEEPING);
 
-    doc.tick(7000);
-    active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('mainVideo'));
-    expect(active, contains('bgMusic'));
-    expect(active, contains('insertVideo'));
+      doc.tick(4000);
+      active = doc.getActiveMedia().map((m) => m.id).toList();
+      expect(active, contains('mainVideo'));
+      expect(active, isNot(contains('bgMusic')));
+      expect(bgMusic.getMainState(), State.SLEEPING);
 
-    final popupPic = doc.getNodeById('popupPic') as Media;
-    expect(popupPic.explicitDurMs, 5000);
-  });
+      doc.tick(1000);
+      active = doc.getActiveMedia().map((m) => m.id).toList();
+      expect(active, contains('mainVideo'));
+      expect(active, contains('bgMusic'));
+      expect(bgMusic.getMainState(), State.OCCURRING);
 
-  
+      doc.tick(7000);
+      active = doc.getActiveMedia().map((m) => m.id).toList();
+      expect(active, contains('mainVideo'));
+      expect(active, contains('bgMusic'));
+      expect(active, contains('insertVideo'));
+      expect(insertVideo.getMainState(), State.OCCURRING);
 
+      expect(popupPic.explicitDurMs, 5000);
+    });
   });
 }

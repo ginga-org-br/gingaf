@@ -2,9 +2,10 @@ import 'package:ncl_doc/ncl_document.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('joao04reuse', () {
-test('NCLDocument executes media reuse and refer set logic correctly', () {
-    final doc = NCLDocument.fromXML('''<ncl id="nclReuse" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+  group('primeiro_joao_05return', () {
+    test('NCLDocument executes form return logic correctly', () {
+      final doc = NCLDocument.fromXML(
+        '''<ncl id="nclReturn" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
       <region id="rBg" width="100%" height="100%" zIndex="1"/>
@@ -12,6 +13,7 @@ test('NCLDocument executes media reuse and refer set logic correctly', () {
         <region id="rSub1" left="5%" top="6.7%" width="18.5%" height="18.5%" zIndex="3"/>
         <region id="rSub2" left="87.5%" top="11.7%" width="8.45%" height="6.7%" zIndex="3"/>
         <region id="rSub3" left="15%" top="60%" width="25%" height="25%" zIndex="3"/>
+        <region id="rSub4" left="57.25%" top="9.83%" width="37.75%" height="70.2%" zIndex="3"/>
       </region>
     </regionBase>
     <descriptorBase>
@@ -22,6 +24,7 @@ test('NCLDocument executes media reuse and refer set logic correctly', () {
       <descriptor id="dInsert" region="rSub1"/>
       <descriptor id="dIcon" region="rSub2" explicitDur="6s"/>
       <descriptor id="dPromo" region="rSub3"/>
+      <descriptor id="dForm" region="rSub4" explicitDur="15s"/>
     </descriptorBase>
     <connectorBase>
       <causalConnector id="onBeginStart_delay">
@@ -71,22 +74,24 @@ test('NCLDocument executes media reuse and refer set logic correctly', () {
       </media>
       <media id="mIcon" src="icon.png" descriptor="dIcon"/>
       <media id="mShoes" src="shoes.mp4" descriptor="dPromo"/>
+      <media id="mForm" src="form.html" descriptor="dForm"/>
       <link id="lIcon" xconnector="onBeginStart">
         <bind role="onBegin" component="mReused" interface="sIcon"/>
         <bind role="start" component="mIcon"/>
       </link>
-      <link id="lBegShoes" xconnector="onKeySelectionStopSet_varStart">
+      <link id="lBegingShoes" xconnector="onKeySelectionStopSet_varStart">
         <bind role="onSelection" component="mIcon">
           <bindParam name="keyCode" value="RED"/>
         </bind>
         <bind role="start" component="mShoes"/>
+        <bind role="start" component="mForm"/>
         <bind role="set" component="mReused" interface="bounds">
           <bindParam name="var" value="5%,6.7%,45%,45%"/>
         </bind>
         <bind role="stop" component="mIcon"/>
       </link>
-      <link id="lEndShoes" xconnector="onEndSet_var">
-        <bind role="onEnd" component="mShoes"/>
+      <link id="lEndForm" xconnector="onEndSet_var">
+        <bind role="onEnd" component="mForm"/>
         <bind role="set" component="mReused" interface="bounds">
           <bindParam name="var" value="0,0,100%,100%"/>
         </bind>
@@ -115,42 +120,53 @@ test('NCLDocument executes media reuse and refer set logic correctly', () {
       <bind role="stop" component="mAudio"/>
     </link>
   </body>
-</ncl>''');
+</ncl>''',
+      );
 
-    doc.start();
-    var active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('mMain'));
+      doc.start();
+      final mMain = doc.getNodeById('mMain') as Media;
+      final mIcon = doc.getNodeById('mIcon') as Media;
+      final mShoes = doc.getNodeById('mShoes') as Media;
+      final mForm = doc.getNodeById('mForm') as Media;
 
-    doc.tick(45000);
-    active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('mMain'));
-    expect(active, contains('mIcon'));
+      expect(mMain.getMainState(), State.OCCURRING);
+      expect(mIcon.getMainState(), State.SLEEPING);
+      expect(mShoes.getMainState(), State.SLEEPING);
+      expect(mForm.getMainState(), State.SLEEPING);
 
-    doc.triggerSelection('mIcon', 'RED');
-    doc.tick(0);
+      doc.tick(45000);
+      var active = doc.getActiveMedia().map((m) => m.id).toList();
+      expect(active, contains('mMain'));
+      expect(active, contains('mIcon'));
+      expect(mMain.getMainState(), State.OCCURRING);
+      expect(mIcon.getMainState(), State.OCCURRING);
+      expect(mShoes.getMainState(), State.SLEEPING);
+      expect(mForm.getMainState(), State.SLEEPING);
 
-    active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('mMain'));
-    expect(active, isNot(contains('mIcon')));
-    expect(active, contains('mShoes'));
+      doc.triggerSelection('mIcon', 'RED');
+      doc.tick(0);
 
-    final mMain = doc.getNodeById('mMain') as Media;
-    final boundsProp = mMain.getProperties().firstWhere((p) => p.name == 'bounds');
-    expect(boundsProp.value, '5%,6.7%,45%,45%');
+      active = doc.getActiveMedia().map((m) => m.id).toList();
+      expect(active, contains('mMain'));
+      expect(active, isNot(contains('mIcon')));
+      expect(active, contains('mShoes'));
+      expect(active, contains('mForm'));
+      expect(mMain.getMainState(), State.OCCURRING);
+      expect(mIcon.getMainState(), State.SLEEPING);
+      expect(mShoes.getMainState(), State.OCCURRING);
+      expect(mForm.getMainState(), State.OCCURRING);
 
-    final mShoes = doc.getNodeById('mShoes') as Media;
-    doc.uiQueue.add(
-      Action(
-        event: mShoes.getMainEvent(),
-        action: ActionType.STOP,
-      ),
-    );
-    doc.tick(0);
+      final boundsProp = mMain.getProperties().firstWhere(
+        (p) => p.name == 'bounds',
+      );
+      expect(boundsProp.value, '5%,6.7%,45%,45%');
 
-    expect(boundsProp.value, '0,0,100%,100%');
-  });
-
-  
-
+      doc.tick(15000);
+      active = doc.getActiveMedia().map((m) => m.id).toList();
+      expect(active, contains('mMain'));
+      expect(active, isNot(contains('mForm')));
+      expect(mForm.getMainState(), State.SLEEPING);
+      expect(boundsProp.value, '0,0,100%,100%');
+    });
   });
 }

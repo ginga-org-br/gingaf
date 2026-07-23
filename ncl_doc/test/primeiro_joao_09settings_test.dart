@@ -2,8 +2,9 @@ import 'package:ncl_doc/ncl_document.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('joao09settings', () {
-    const xml = '''<ncl id="settingsEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+  group('primeiro_joao_09settings', () {
+    const xml =
+        '''<ncl id="settingsEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <ruleBase>
       <rule id="en" var="system.language" value="en" comparator="eq"/>
@@ -192,24 +193,33 @@ void main() {
   </body>
 </ncl>''';
 
-    test('NCLDocument evaluates settings conditional triggers correctly when true', () {
-      final doc = NCLDocument.fromXML(xml);
-      doc.start();
-      doc.tick(45000);
-      final active = doc.getActiveMedia().map((m) => m.id).toList();
-      expect(active, contains('icon'));
-    });
+    test(
+      'NCLDocument evaluates settings conditional triggers correctly when true',
+      () {
+        final doc = NCLDocument.fromXML(xml);
+        doc.start();
+        doc.tick(45000);
+        final active = doc.getActiveMedia().map((m) => m.id).toList();
+        expect(active, contains('icon'));
+      },
+    );
 
-    test('NCLDocument evaluates settings conditional triggers correctly when false', () {
-      final doc = NCLDocument.fromXML(xml);
-      doc.start();
-      doc.triggerSelection('intOn', 'INFO');
-      doc.tick(0);
-      final globalVar = doc.getNodeById('globalVar') as Media;
-      expect(doc.getPropertyValue(globalVar, 'service.interactivity'), 'false');
-      doc.tick(45000);
-      final active = doc.getActiveMedia().map((m) => m.id).toList();
-      expect(active, isNot(contains('icon')));
-    });
+    test(
+      'NCLDocument evaluates settings conditional triggers correctly when false',
+      () {
+        final doc = NCLDocument.fromXML(xml);
+        doc.start();
+        doc.triggerSelection('intOn', 'INFO');
+        doc.tick(0);
+        final globalVar = doc.getNodeById('globalVar') as Media;
+        expect(
+          doc.getPropertyValue(globalVar, 'service.interactivity'),
+          'false',
+        );
+        doc.tick(45000);
+        final active = doc.getActiveMedia().map((m) => m.id).toList();
+        expect(active, isNot(contains('icon')));
+      },
+    );
   });
 }

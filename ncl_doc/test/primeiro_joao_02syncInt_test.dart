@@ -2,9 +2,12 @@ import 'package:ncl_doc/ncl_document.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('joao02syncInt', () {
-test('NCLDocument key selection, property SET, and layout change resolution', () {
-    final doc = NCLDocument.fromXML('''<ncl id="joaoSyncIntTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+  group('primeiro_joao_02syncInt', () {
+    test(
+      'NCLDocument key selection, property SET, and layout change resolution',
+      () {
+        final doc = NCLDocument.fromXML(
+          '''<ncl id="joaoSyncIntTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
       <region id="bgRegion" width="100%" height="100%" zIndex="1"/>
@@ -111,51 +114,52 @@ test('NCLDocument key selection, property SET, and layout change resolution', ()
       </bind>
     </link>
   </body>
-</ncl>''');
-    doc.start();
+</ncl>''',
+        );
+        doc.start();
 
-    // Verify mainVideo starts, btnIcon is sleeping
-    var active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('mainVideo'));
-    expect(active, isNot(contains('btnIcon')));
+        final mainVideo = doc.getNodeById('mainVideo') as Media;
+        final btnIcon = doc.getNodeById('btnIcon') as Media;
+        final promoVideo = doc.getNodeById('promoVideo') as Media;
 
-    // Tick to 45s (45000ms), segIcon triggers, starting btnIcon
-    doc.tick(45000);
-    active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('mainVideo'));
-    expect(active, contains('btnIcon'));
-    expect(active, isNot(contains('promoVideo')));
+        expect(mainVideo.getMainState(), State.OCCURRING);
+        expect(btnIcon.getMainState(), State.SLEEPING);
+        expect(promoVideo.getMainState(), State.SLEEPING);
 
-    // Trigger key RED selection on btnIcon
-    doc.triggerSelection('btnIcon', 'RED');
-    doc.tick(0);
+        var active = doc.getActiveMedia().map((m) => m.id).toList();
+        expect(active, contains('mainVideo'));
+        expect(active, isNot(contains('btnIcon')));
 
-    // btnIcon should stop, promoVideo should start, and mainVideo's bounds should be updated
-    active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('mainVideo'));
-    expect(active, isNot(contains('btnIcon')));
-    expect(active, contains('promoVideo'));
+        doc.tick(45000);
+        active = doc.getActiveMedia().map((m) => m.id).toList();
+        expect(active, contains('mainVideo'));
+        expect(active, contains('btnIcon'));
+        expect(active, isNot(contains('promoVideo')));
+        expect(btnIcon.getMainState(), State.OCCURRING);
 
-    final mainVideo = doc.getNodeById('mainVideo') as Media;
-    final boundsProp = mainVideo.getProperties().firstWhere((p) => p.name == 'bounds');
-    expect(boundsProp.value, '5%,6.7%,45%,45%');
+        doc.triggerSelection('btnIcon', 'RED');
+        doc.tick(0);
 
-    // Stop promoVideo (simulate video naturally ending)
-    final promoVideo = doc.getNodeById('promoVideo') as Media;
-    
-    // Simulate end of promoVideo using the uiQueue
-    doc.uiQueue.add(
-      Action(
-        event: promoVideo.getMainEvent(),
-        action: ActionType.STOP,
-      ),
+        active = doc.getActiveMedia().map((m) => m.id).toList();
+        expect(active, contains('mainVideo'));
+        expect(active, isNot(contains('btnIcon')));
+        expect(active, contains('promoVideo'));
+        expect(btnIcon.getMainState(), State.SLEEPING);
+        expect(promoVideo.getMainState(), State.OCCURRING);
+
+        final boundsProp = mainVideo.getProperties().firstWhere(
+          (p) => p.name == 'bounds',
+        );
+        expect(boundsProp.value, '5%,6.7%,45%,45%');
+
+        doc.uiQueue.add(
+          Action(event: promoVideo.getMainEvent(), action: ActionType.STOP),
+        );
+        doc.tick(0);
+
+        expect(promoVideo.getMainState(), State.SLEEPING);
+        expect(boundsProp.value, '0,0,100%,100%');
+      },
     );
-    doc.tick(0); // triggers link7 (onEnd promoVideo -> set mainVideo bounds to 0,0,100%,100%)
-
-    expect(boundsProp.value, '0,0,100%,100%');
-  });
-
-  
-
   });
 }

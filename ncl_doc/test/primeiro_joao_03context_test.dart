@@ -2,9 +2,10 @@ import 'package:ncl_doc/ncl_document.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('joao03context', () {
-test('NCLDocument executes context and port mapping correctly', () {
-    final doc = NCLDocument.fromXML('''<ncl id="nclCtx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+  group('primeiro_joao_03context', () {
+    test('NCLDocument executes context and port mapping correctly', () {
+      final doc = NCLDocument.fromXML(
+        '''<ncl id="nclCtx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
       <region id="rBg" width="100%" height="100%" zIndex="1"/>
@@ -124,44 +125,51 @@ test('NCLDocument executes context and port mapping correctly', () {
       </bind>
     </link>
   </body>
-</ncl>''');
+</ncl>''',
+      );
 
-    doc.start();
-    var active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('mMain'));
-    expect(active, isNot(contains('mIcon')));
+      doc.start();
+      final mMain = doc.getNodeById('mMain') as Media;
+      final mIcon = doc.getNodeById('mIcon') as Media;
+      final mShoes = doc.getNodeById('mShoes') as Media;
 
-    doc.tick(45000);
-    active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('mMain'));
-    expect(active, contains('mIcon'));
-    expect(active, isNot(contains('mShoes')));
+      expect(mMain.getMainState(), State.OCCURRING);
+      expect(mIcon.getMainState(), State.SLEEPING);
+      expect(mShoes.getMainState(), State.SLEEPING);
 
-    doc.triggerSelection('mIcon', 'RED');
-    doc.tick(0);
+      var active = doc.getActiveMedia().map((m) => m.id).toList();
+      expect(active, contains('mMain'));
+      expect(active, isNot(contains('mIcon')));
 
-    active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('mMain'));
-    expect(active, isNot(contains('mIcon')));
-    expect(active, contains('mShoes'));
+      doc.tick(45000);
+      active = doc.getActiveMedia().map((m) => m.id).toList();
+      expect(active, contains('mMain'));
+      expect(active, contains('mIcon'));
+      expect(active, isNot(contains('mShoes')));
+      expect(mIcon.getMainState(), State.OCCURRING);
 
-    final mMain = doc.getNodeById('mMain') as Media;
-    final boundsProp = mMain.getProperties().firstWhere((p) => p.name == 'bounds');
-    expect(boundsProp.value, '5%,6.7%,45%,45%');
+      doc.triggerSelection('mIcon', 'RED');
+      doc.tick(0);
 
-    final mShoes = doc.getNodeById('mShoes') as Media;
-    doc.uiQueue.add(
-      Action(
-        event: mShoes.getMainEvent(),
-        action: ActionType.STOP,
-      ),
-    );
-    doc.tick(0);
+      active = doc.getActiveMedia().map((m) => m.id).toList();
+      expect(active, contains('mMain'));
+      expect(active, isNot(contains('mIcon')));
+      expect(active, contains('mShoes'));
+      expect(mIcon.getMainState(), State.SLEEPING);
+      expect(mShoes.getMainState(), State.OCCURRING);
 
-    expect(boundsProp.value, '0,0,100%,100%');
-  });
+      final boundsProp = mMain.getProperties().firstWhere(
+        (p) => p.name == 'bounds',
+      );
+      expect(boundsProp.value, '5%,6.7%,45%,45%');
 
-  
+      doc.uiQueue.add(
+        Action(event: mShoes.getMainEvent(), action: ActionType.STOP),
+      );
+      doc.tick(0);
 
+      expect(mShoes.getMainState(), State.SLEEPING);
+      expect(boundsProp.value, '0,0,100%,100%');
+    });
   });
 }

@@ -2,9 +2,12 @@ import 'package:ncl_doc/ncl_document.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('joao08animation', () {
-test('NCLDocument executes duration-based SET action property changes correctly', () {
-    final doc = NCLDocument.fromXML('''<ncl id="nclAnimation" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+  group('primeiro_joao_08animation', () {
+    test(
+      'NCLDocument executes duration-based SET action property changes correctly',
+      () {
+        final doc = NCLDocument.fromXML(
+          '''<ncl id="nclAnimation" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <connectorBase>
       <causalConnector id="onBeginStartSet_var_delay_duration">
@@ -37,34 +40,36 @@ test('NCLDocument executes duration-based SET action property changes correctly'
       </bind>
     </link>
   </body>
-</ncl>''');
+</ncl>''',
+        );
 
-    doc.start();
-    doc.tick(10000);
+        doc.start();
+        doc.tick(10000);
 
-    final m2 = doc.getNodeById('m2') as Media;
-    final prop = m2.getPropertyEvent('p');
+        final m2 = doc.getNodeById('m2') as Media;
+        final prop = m2.getPropertyEvent('p');
 
-    expect(m2.getMainState(), State.OCCURRING);
-    expect(prop.state, State.SLEEPING);
+        expect(m2.getMainState(), State.OCCURRING);
+        expect(prop.state, State.SLEEPING);
 
-    doc.tick(1000);
-    expect(prop.state, State.SLEEPING);
+        doc.tick(1000);
+        expect(prop.state, State.SLEEPING);
 
-    doc.tick(1000);
-    expect(prop.state, State.OCCURRING);
-    expect(m2.getProperties().firstWhere((p) => p.name == 'p').value, isNull);
+        doc.tick(1000);
+        expect(prop.state, State.OCCURRING);
+        expect(
+          m2.getProperties().firstWhere((p) => p.name == 'p').value,
+          isNull,
+        );
 
-    doc.tick(4000);
-    expect(prop.state, State.OCCURRING);
+        doc.tick(4000);
+        expect(prop.state, State.OCCURRING);
 
-    doc.tick(1000);
-    expect(prop.state, State.SLEEPING);
-    final pVal = m2.getProperties().firstWhere((p) => p.name == 'p');
-    expect(pVal.value, 'active');
-  });
-
-  
-
+        doc.tick(1000);
+        expect(prop.state, State.SLEEPING);
+        final pVal = m2.getProperties().firstWhere((p) => p.name == 'p');
+        expect(pVal.value, 'active');
+      },
+    );
   });
 }
