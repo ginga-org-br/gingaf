@@ -23,10 +23,31 @@ class CanvasCall {
   String toString() => 'CanvasCall(method: $method, args: $args)';
 }
 
+class LuaTimer {
+  final int id;
+  final int targetUptime;
+  final int luaCallbackRef;
+  Timer? realTimer;
+  bool cancelled = false;
+
+  LuaTimer({
+    required this.id,
+    required this.targetUptime,
+    required this.luaCallbackRef,
+    this.realTimer,
+  });
+}
+
 class NCLua {
   late LuaState _lua;
   final NCLCanvasDelegate? delegate;
   final List<CanvasCall> canvasCalls = [];
+  final List<int> _registeredCallbackRefs = [];
+  final List<LuaTimer> _activeTimers = [];
+  int _nextTimerId = 1;
+  int _startTime = DateTime.now().millisecondsSinceEpoch;
+  int Function()? uptimeProvider;
+  void Function(Map<String, dynamic> event)? onPostEvent;
   final Map<String, String> _persistentVars = {};
   String? Function(String propertyName)? settingsProvider;
   String? Function(String name)? getPersistentVar;
@@ -267,6 +288,101 @@ class NCLua {
       return 2;
     });
 
+    _lua.register("_event_post", (LuaState ls) {
+      final top = ls.getTop();
+      String dst = "out";
+      int tableIdx = 1;
+      if (top >= 2) {
+        dst = ls.toStr(1) ?? "out";
+        tableIdx = 2;
+      } else if (top == 1) {
+        if (ls.isTable(1)) {
+          tableIdx = 1;
+        } else {
+          dst = ls.toStr(1) ?? "out";
+        }
+      }
+      Map<String, dynamic>? evt;
+      if (ls.isTable(tableIdx)) {
+        evt = _readTableToMap(ls, tableIdx);
+      }
+      if (evt != null) {
+        if (dst == "in") {
+          postEvent(evt);
+        } else {
+          onPostEvent?.call(evt);
+        }
+      }
+      return 0;
+    });
+
+    _lua.register("_event_register", (LuaState ls) {
+      final top = ls.getTop();
+      int handlerIdx = 1;
+      if (top >= 2) {
+        handlerIdx = 2;
+      }
+      if (ls.isFunction(handlerIdx)) {
+        ls.pushValue(handlerIdx);
+        final refId = ls.ref(luaRegistryIndex);
+        _registeredCallbackRefs.add(refId);
+      }
+      return 0;
+    });
+
+    _lua.register("_event_unregister", (LuaState ls) {
+      if (ls.isFunction(1)) {
+        for (int i = _registeredCallbackRefs.length - 1; i >= 0; i--) {
+          final refId = _registeredCallbackRefs[i];
+          ls.rawGetI(luaRegistryIndex, refId);
+          final equals = ls.compare(1, -1, CmpOp.luaOpEq);
+          ls.pop(1);
+          if (equals) {
+            ls.unRef(luaRegistryIndex, refId);
+            _registeredCallbackRefs.removeAt(i);
+          }
+        }
+      }
+      return 0;
+    });
+
+    _lua.register("_event_uptime", (LuaState ls) {
+      final t = uptimeProvider != null ? uptimeProvider!() : (DateTime.now().millisecondsSinceEpoch - _startTime);
+      ls.pushInteger(t);
+      return 1;
+    });
+
+    _lua.register("_event_timer", (LuaState ls) {
+      final time = ls.toInteger(1);
+      if (ls.isFunction(2)) {
+        ls.pushValue(2);
+        final refId = ls.ref(luaRegistryIndex);
+        final timerId = _nextTimerId++;
+        final targetUptime = (uptimeProvider != null ? uptimeProvider!() : (DateTime.now().millisecondsSinceEpoch - _startTime)) + time;
+        final luaTimer = LuaTimer(
+          id: timerId,
+          targetUptime: targetUptime,
+          luaCallbackRef: refId,
+        );
+        if (uptimeProvider == null) {
+          luaTimer.realTimer = Timer(Duration(milliseconds: time), () {
+            if (!luaTimer.cancelled) {
+              _triggerTimerCallback(luaTimer);
+            }
+          });
+        }
+        _activeTimers.add(luaTimer);
+        ls.pushInteger(timerId);
+        ls.pushDartClosure((LuaState ls) {
+          final tId = ls.toInteger(luaUpvalueIndex(1));
+          _cancelTimer(tId);
+          return 0;
+        }, 1);
+        return 1;
+      }
+      ls.pushNil();
+      return 1;
+    });
 
     _lua.doString(_ooWrapper);
   }
@@ -274,10 +390,10 @@ class NCLua {
   void execute(String script) {
     try {
       _lua.doString(script);
-    } catch (e) {
-      // ignore
-    }
+    } catch (_) {}
   }
+
+  LuaState get luaState => _lua;
 
   void clearBuffer() {
     canvasCalls.clear();
@@ -297,6 +413,133 @@ class NCLua {
       ls.pop(1);
     }
     return list;
+  }
+
+  Map<String, dynamic> _readTableToMap(LuaState ls, int idx) {
+    final map = <String, dynamic>{};
+    if (!ls.isTable(idx)) return map;
+    final absoluteIdx = idx < 0 ? ls.getTop() + idx + 1 : idx;
+    ls.pushNil();
+    while (ls.next(absoluteIdx)) {
+      final key = ls.toStr(-2);
+      if (key != null) {
+        if (ls.isNumber(-1)) {
+          map[key] = ls.toNumber(-1);
+        } else if (ls.isInteger(-1)) {
+          map[key] = ls.toInteger(-1);
+        } else if (ls.isBoolean(-1)) {
+          map[key] = ls.toBoolean(-1);
+        } else if (ls.isTable(-1)) {
+          map[key] = _readTableToMap(ls, -1);
+        } else {
+          map[key] = ls.toStr(-1);
+        }
+      }
+      ls.pop(1);
+    }
+    return map;
+  }
+
+  void _pushMapAsTable(LuaState ls, Map<String, dynamic> map) {
+    ls.newTable();
+    map.forEach((k, v) {
+      ls.pushString(k);
+      _pushValue(ls, v);
+      ls.setTable(-3);
+    });
+  }
+
+  void _pushValue(LuaState ls, dynamic v) {
+    if (v == null) {
+      ls.pushNil();
+    } else if (v is bool) {
+      ls.pushBoolean(v);
+    } else if (v is int) {
+      ls.pushInteger(v);
+    } else if (v is double) {
+      ls.pushNumber(v);
+    } else if (v is String) {
+      ls.pushString(v);
+    } else if (v is Map<String, dynamic>) {
+      _pushMapAsTable(ls, v);
+    } else if (v is List) {
+      ls.newTable();
+      for (int i = 0; i < v.length; i++) {
+        _pushValue(ls, v[i]);
+        ls.setI(-2, i + 1);
+      }
+    } else {
+      ls.pushString(v.toString());
+    }
+  }
+
+  void postEvent(Map<String, dynamic> event) {
+    for (final refId in List<int>.from(_registeredCallbackRefs)) {
+      _lua.rawGetI(luaRegistryIndex, refId);
+      if (_lua.isFunction(-1)) {
+        _pushMapAsTable(_lua, event);
+        try {
+          _lua.pCall(1, 0, 0);
+        } catch (e) {
+          // ignore
+        }
+      } else {
+        _lua.pop(1);
+      }
+    }
+  }
+
+  void _triggerTimerCallback(LuaTimer timer) {
+    if (timer.cancelled) return;
+    _activeTimers.remove(timer);
+    _lua.rawGetI(luaRegistryIndex, timer.luaCallbackRef);
+    if (_lua.isFunction(-1)) {
+      final evtMap = <String, dynamic>{
+        'class': 'user',
+        'type': 'timer',
+        'action': 'stop',
+      };
+      _pushMapAsTable(_lua, evtMap);
+      try {
+        _lua.pCall(1, 0, 0);
+      } catch (e) {
+        // ignore
+      }
+      _lua.unRef(luaRegistryIndex, timer.luaCallbackRef);
+    } else {
+      _lua.pop(1);
+      _lua.unRef(luaRegistryIndex, timer.luaCallbackRef);
+    }
+  }
+
+  void _cancelTimer(int timerId) {
+    final idx = _activeTimers.indexWhere((t) => t.id == timerId);
+    if (idx != -1) {
+      final timer = _activeTimers[idx];
+      timer.cancelled = true;
+      timer.realTimer?.cancel();
+      _lua.unRef(luaRegistryIndex, timer.luaCallbackRef);
+      _activeTimers.removeAt(idx);
+    }
+  }
+
+  void tickTimers(int currentUptimeMs) {
+    final toTrigger = _activeTimers.where((t) => t.targetUptime <= currentUptimeMs).toList();
+    for (final timer in toTrigger) {
+      _triggerTimerCallback(timer);
+    }
+  }
+
+  void dispose() {
+    for (final timer in _activeTimers) {
+      timer.realTimer?.cancel();
+      _lua.unRef(luaRegistryIndex, timer.luaCallbackRef);
+    }
+    _activeTimers.clear();
+    for (final refId in _registeredCallbackRefs) {
+      _lua.unRef(luaRegistryIndex, refId);
+    }
+    _registeredCallbackRefs.clear();
   }
 }
 
@@ -576,6 +819,39 @@ end
 
 function canvas:measureText(text)
     return _canvas_measureText(text or "")
+end
+
+event = {}
+function event.post(first, second)
+    if second ~= nil then
+        _event_post(first, second)
+    else
+        _event_post(first)
+    end
+end
+
+function event.register(first, second)
+    if second ~= nil then
+        _event_register(first, second)
+    else
+        _event_register(first)
+    end
+end
+
+function event.unregister(handler)
+    _event_unregister(handler)
+end
+
+function event.uptime()
+    return _event_uptime()
+end
+
+function event.timer(time, handler)
+    return _event_timer(time, handler)
+end
+
+package.preload["event"] = function()
+    return event
 end
 
 ''';

@@ -142,5 +142,105 @@ void main() {
       engine.clearBuffer();
       expect(engine.canvasCalls.isEmpty, true);
     });
+    test('Lua script event registration and posting', () {
+      final script = '''
+        local event = require 'event'
+        local received = nil
+        event.register(function(evt)
+          received = evt
+        end)
+        event.post('in', { class = 'user', type = 'custom', value = 'hello' })
+        _G.test_received = received
+      ''';
+      engine.execute(script);
+      engine.luaState.getGlobal('test_received');
+      expect(engine.luaState.isTable(-1), true);
+      engine.luaState.getField(-1, 'class');
+      expect(engine.luaState.toStr(-1), 'user');
+      engine.luaState.pop(1);
+      engine.luaState.getField(-1, 'value');
+      expect(engine.luaState.toStr(-1), 'hello');
+      engine.luaState.pop(2);
+    });
+
+    test('Lua script event unregistration', () {
+      final script = '''
+        local event = require 'event'
+        _G.test_received = nil
+        local function handler(evt)
+          _G.test_received = evt
+        end
+        event.register(handler)
+        event.unregister(handler)
+        event.post('in', { class = 'user', type = 'custom' })
+      ''';
+      engine.execute(script);
+      engine.luaState.getGlobal('test_received');
+      expect(engine.luaState.isNil(-1), true);
+      engine.luaState.pop(1);
+    });
+
+    test('Lua script event classes validation and support', () {
+      final script = '''
+        local event = require 'event'
+        local last_class = nil
+        event.register(function(evt)
+          last_class = evt.class
+        end)
+        local classes = {
+          'key', 'pointer', 'ncl', 'edit', 'tcp', 'udp', 'http', 'sms', 'si',
+          'sectionfilter', 'pesfilter', 'tpfilter', 'zip', 'streambuf',
+          'broadcastfs', 'mediakeysession', 'user'
+        }
+        _G.received_classes = {}
+        for _, cls in ipairs(classes) do
+          event.post('in', { class = cls })
+          table.insert(_G.received_classes, last_class)
+        end
+      ''';
+      engine.execute(script);
+      engine.luaState.getGlobal('received_classes');
+      expect(engine.luaState.isTable(-1), true);
+      final classes = [
+        'key', 'pointer', 'ncl', 'edit', 'tcp', 'udp', 'http', 'sms', 'si',
+        'sectionfilter', 'pesfilter', 'tpfilter', 'zip', 'streambuf',
+        'broadcastfs', 'mediakeysession', 'user'
+      ];
+      for (int i = 0; i < classes.length; i++) {
+        engine.luaState.getI(-1, i + 1);
+        expect(engine.luaState.toStr(-1), classes[i]);
+        engine.luaState.pop(1);
+      }
+      engine.luaState.pop(1);
+    });
+
+    test('Lua script event timer and uptime', () {
+      int mockUptime = 100;
+      engine.uptimeProvider = () => mockUptime;
+      final script = '''
+        local event = require 'event'
+        _G.timer_triggered = false
+        _G.initial_uptime = event.uptime()
+        event.timer(50, function(evt)
+          _G.timer_triggered = true
+        end)
+      ''';
+      engine.execute(script);
+      engine.luaState.getGlobal('initial_uptime');
+      expect(engine.luaState.toInteger(-1), 100);
+      engine.luaState.pop(1);
+
+      engine.luaState.getGlobal('timer_triggered');
+      expect(engine.luaState.toBoolean(-1), false);
+      engine.luaState.pop(1);
+
+      mockUptime = 160;
+      engine.tickTimers(mockUptime);
+
+      engine.luaState.getGlobal('timer_triggered');
+      expect(engine.luaState.toBoolean(-1), true);
+      engine.luaState.pop(1);
+    });
+
   });
 }
