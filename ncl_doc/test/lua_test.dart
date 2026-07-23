@@ -293,5 +293,42 @@ void main() {
       expect(engine.luaState.toInteger(-1), 240);
       engine.luaState.pop(1);
     });
+
+    test('Lua helper module: buffer', () {
+      final script = '''
+        local buffer = require "buffer"
+        local buf = buffer.new(10)
+        _G.test_buf_size = buf:attrSize()
+        buf:at(1, 65)
+        _G.test_buf_at = buf:at(1)
+        buf:copy(2, "BC")
+        _G.test_buf_tostring = buf:toString():sub(1, 3)
+        
+        local buf_from_str = buffer.new("hello")
+        _G.test_buf_str_size = buf_from_str:attrSize()
+        _G.test_buf_str_content = buf_from_str:toString()
+      ''';
+      engine.execute(script);
+
+      engine.luaState.getGlobal('test_buf_size');
+      expect(engine.luaState.toInteger(-1), 10);
+      engine.luaState.pop(1);
+
+      engine.luaState.getGlobal('test_buf_at');
+      expect(engine.luaState.toInteger(-1), 65);
+      engine.luaState.pop(1);
+
+      engine.luaState.getGlobal('test_buf_tostring');
+      expect(engine.luaState.toStr(-1), 'ABC');
+      engine.luaState.pop(1);
+
+      engine.luaState.getGlobal('test_buf_str_size');
+      expect(engine.luaState.toInteger(-1), 5);
+      engine.luaState.pop(1);
+
+      engine.luaState.getGlobal('test_buf_str_content');
+      expect(engine.luaState.toStr(-1), 'hello');
+      engine.luaState.pop(1);
+    });
   });
 }

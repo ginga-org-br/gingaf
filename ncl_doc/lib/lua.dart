@@ -984,6 +984,17 @@ package.preload["event"] = function()
     return event
 end
 
+for _, group in ipairs(persistent_groups) do
+local persistent_mt = {
+    __index = function(t, k)
+        return persistent_groups_data[k]
+    end,
+    __newindex = function(t, k, v)
+        error("persistent groups are read-only")
+    end
+}
+setmetatable(persistent, persistent_mt)
+
 
 bit32 = {}
 function bit32.arshift(x, disp)
@@ -1024,5 +1035,55 @@ function bit32.rshift(x, disp)
 end
 package.preload["bit32"] = function()
     return bit32
+end
+
+buffer = {}
+buffer.__index = buffer
+function buffer.new(init)
+    local self = setmetatable({}, buffer)
+    self.data = {}
+    if type(init) == "number" then
+        for i = 1, init do
+            self.data[i] = 0
+        end
+    elseif type(init) == "string" then
+        for i = 1, string.len(init) do
+            self.data[i] = string.byte(init, i)
+        end
+    end
+    return self
+end
+function buffer:attrSize()
+    return #self.data
+end
+function buffer:at(idx, val)
+    if val then
+        self.data[idx] = val % 256
+    else
+        return self.data[idx]
+    end
+end
+function buffer:copy(offset, src)
+    local src_data = {}
+    if type(src) == "string" then
+        for i = 1, string.len(src) do
+            src_data[i] = string.byte(src, i)
+        end
+    elseif type(src) == "table" and src.data then
+        src_data = src.data
+    end
+    for i = 1, #src_data do
+        self.data[offset + i - 1] = src_data[i]
+    end
+end
+function buffer:toString()
+    local chars = {}
+    for i = 1, #self.data do
+        chars[i] = string.char(self.data[i])
+    end
+    return table.concat(chars)
+end
+package.preload["buffer"] = function()
+    return buffer
 end
 ''';
