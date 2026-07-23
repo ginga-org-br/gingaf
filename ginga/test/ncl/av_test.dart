@@ -102,7 +102,7 @@ void main() {
   </body>
 </ncl>
 ''');
-    final media = doc.getBody().getNodes().first as Media;
+    final media = doc.body.getNodes().first as Media;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -140,7 +140,7 @@ void main() {
   </body>
 </ncl>
 ''');
-    final media = doc.getBody().getNodes().first as Media;
+    final media = doc.body.getNodes().first as Media;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -177,7 +177,7 @@ void main() {
   </body>
 </ncl>
 ''');
-    final media = doc.getBody().getNodes().first as Media;
+    final media = doc.body.getNodes().first as Media;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -216,7 +216,7 @@ void main() {
   </body>
 </ncl>
 ''');
-    final media = doc.getBody().getNodes().first as Media;
+    final media = doc.body.getNodes().first as Media;
 
     await tester.pumpWidget(
       MaterialApp(

@@ -22,8 +22,8 @@ class NCLScheduler {
 
   void _init() {
     _gatherTimedNodes();
-    _stackMainEvtAction(document.getBody(), ActionType.START);
-    _stackPorts(document.getBody());
+    _stackMainEvtAction(document.body, ActionType.START);
+    _stackPorts(document.body);
   }
 
   void _gatherTimedNodes() {
@@ -50,7 +50,7 @@ class NCLScheduler {
       }
     }
 
-    gather(document.getBody());
+    gather(document.body);
   }
 
   void _stackPorts(Context comp) {
@@ -214,7 +214,7 @@ class NCLScheduler {
   void _checkIsPlaying() {
     if (_actionStack.isEmpty &&
         _delayedActions.isEmpty &&
-        document.getBody().getMainState() == State.SLEEPING) {
+        document.body.getMainState() == State.SLEEPING) {
       isPlaying = false;
     }
   }
@@ -288,7 +288,7 @@ class NCLScheduler {
     if (node == null) return;
 
     final context = node.parent;
-    final links = context is Context ? context.getLinks() : document.getBody().getLinks();
+    final links = context is Context ? context.getLinks() : document.body.getLinks();
 
     for (var link in links) {
       bool triggered = false;
@@ -440,7 +440,7 @@ class NCLScheduler {
       }
     }
 
-    if (context is Context && context != document.getBody()) {
+    if (context is Context && context != document.body) {
       for (var port in context.children.whereType<Port>()) {
         if (port.component == targetId &&
             (port.interface == interfaceId ||
@@ -473,7 +473,7 @@ class NCLScheduler {
       }
     }
 
-    findReferring(document.getBody());
+    findReferring(document.body);
 
     for (var refNode in referringNodes) {
       _triggerLinks(refNode.id, newState, interfaceId);
@@ -493,7 +493,7 @@ class NCLScheduler {
     if (node == null || node.getMainState() != State.OCCURRING) return;
 
     final context = node.parent;
-    final links = context is Context ? context.getLinks() : document.getBody().getLinks();
+    final links = context is Context ? context.getLinks() : document.body.getLinks();
 
     for (var link in links) {
       bool triggered = false;
@@ -662,7 +662,7 @@ class NCLScheduler {
       }
     }
 
-    if (context is Context && context != document.getBody()) {
+    if (context is Context && context != document.body) {
       for (var port in context.children.whereType<Port>()) {
         if (port.component == componentId &&
             (port.interface == interfaceId ||
@@ -751,7 +751,7 @@ class NCLScheduler {
       }
     }
 
-    stopNode(document.getBody());
+    stopNode(document.body);
   }
 
   int? _parseTimeMs(String? timeStr) {

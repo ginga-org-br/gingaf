@@ -75,10 +75,10 @@ void main() {
       doc.start();
 
       // Expect 2 because Settings now extends Media and a default_settings is added
-      expect(doc.getBody().getNodes().whereType<Media>().length, 2);
-      expect(doc.getBody().getPorts().length, 1);
-      expect(doc.getBody().getNodes().whereType<Media>().first.id, 'm1');
-      expect(doc.getBody().getPorts().first.id, 'p1');
+      expect(doc.body.getNodes().whereType<Media>().length, 2);
+      expect(doc.body.getPorts().length, 1);
+      expect(doc.body.getNodes().whereType<Media>().first.id, 'm1');
+      expect(doc.body.getPorts().first.id, 'p1');
     });
 
     test('getSettings is returned correctly when provided', () {

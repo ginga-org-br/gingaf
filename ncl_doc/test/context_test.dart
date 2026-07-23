@@ -12,8 +12,8 @@ void main() {
     test('getBody is returned correctly when provided', () {
       final c1 = Context(rawAttributes: const {'id': 'c1'});
       final doc = NCLDocument.fromBodyElements([c1]);
-      expect(doc.getBody().id, 'body');
-      expect(doc.getBody().children.first.id, 'c1');
+      expect(doc.body.id, 'body');
+      expect(doc.body.children.first.id, 'c1');
     });
 
     test('Port Initialization', () {

@@ -68,8 +68,8 @@ class NCLDocument {
     }
   }
 
-  Head? getHead() => _head;
-  Context getBody() => _body;
+  Head? get head => _head;
+  Context get body => _body;
   State getBodyState() => _body.getMainState();
 
   Settings getSettings() => _settings;

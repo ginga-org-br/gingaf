@@ -167,7 +167,7 @@ class NCLParser {
           .where((p) => p.name == 'explicitDur')
           .firstOrNull;
       if (explicitDurProp != null && explicitDurProp.value != null) {
-        element.explicitDurMs = _parseDurStr(explicitDurProp.value!);
+        element.explicitDurMs = parseDurStr(explicitDurProp.value!);
       }
       if (element is AVMedia) {
         final expectedDurProp = element.children
@@ -175,7 +175,7 @@ class NCLParser {
             .where((p) => p.name == 'expectedDuration')
             .firstOrNull;
         if (expectedDurProp != null && expectedDurProp.value != null) {
-          element.explicitDurMs = _parseDurStr(expectedDurProp.value!);
+          element.explicitDurMs = parseDurStr(expectedDurProp.value!);
         }
       }
     }
@@ -202,7 +202,7 @@ class NCLParser {
         uri: uri,
         mimeType: mimeType,
       );
-      final expectedDurMs = _parseDurStr(rawAttributes['expectedDuration']);
+      final expectedDurMs = parseDurStr(rawAttributes['expectedDuration']);
       if (expectedDurMs != null) {
         avMedia.explicitDurMs = expectedDurMs;
       }
@@ -240,7 +240,7 @@ class NCLParser {
     }
 
     Element? findElementInHead(bool Function(Element) predicate) {
-      final head = doc.getHead();
+      final head = doc.head;
       if (head == null) return null;
       Element? search(Element el) {
         if (predicate(el)) return el;
@@ -259,7 +259,7 @@ class NCLParser {
     }
 
     bool removeElementFromHead(String id) {
-      final head = doc.getHead();
+      final head = doc.head;
       if (head == null) return false;
       bool searchAndRemove(Element parent, Element el) {
         if (el.id == id) {
@@ -289,7 +289,7 @@ class NCLParser {
         if (parsed.args.isEmpty) return;
         final el = parseXml(parsed.args[0]);
         if (el != null) {
-          doc.getHead()?.add(el);
+          doc.head?.add(el);
         }
         break;
       case 'removeRegionBase':
@@ -331,7 +331,7 @@ class NCLParser {
         if (parsed.args.isEmpty) return;
         final el = parseXml(parsed.args[0]);
         if (el != null) {
-          doc.getHead()?.add(el);
+          doc.head?.add(el);
         }
         break;
       case 'removeRuleBase':
@@ -356,7 +356,7 @@ class NCLParser {
         if (parsed.args.isEmpty) return;
         final el = parseXml(parsed.args[0]);
         if (el != null) {
-          doc.getHead()?.add(el);
+          doc.head?.add(el);
         }
         break;
       case 'removeConnectorBase':
@@ -383,7 +383,7 @@ class NCLParser {
         if (parsed.args.isEmpty) return;
         final el = parseXml(parsed.args[0]);
         if (el != null) {
-          doc.getHead()?.add(el);
+          doc.head?.add(el);
         }
         break;
       case 'removeDescriptorBase':
@@ -426,7 +426,7 @@ class NCLParser {
         if (parsed.args.isEmpty) return;
         final el = parseXml(parsed.args[0]);
         if (el != null) {
-          doc.getHead()?.add(el);
+          doc.head?.add(el);
         }
         break;
       case 'removeTransitionBase':
@@ -477,7 +477,7 @@ class NCLParser {
         if (parsed.args.isEmpty) return;
         final el = parseXml(parsed.args[0]);
         if (el != null) {
-          doc.getHead()?.add(el);
+          doc.head?.add(el);
         }
         break;
       case 'removeImportedDocumentBase':
@@ -602,7 +602,7 @@ class NCLParser {
         if (parsed.args.isEmpty) return;
         final el = parseXml(parsed.args[0]);
         if (el != null) {
-          doc.getHead()?.add(el);
+          doc.head?.add(el);
         }
         break;
       case 'removeFontBase':
@@ -745,7 +745,7 @@ class NCLParser {
                 desc.rawAttributes['explicitDur'] ??
                 el.rawAttributes['explicitDur'];
             if (explicitDurVal != null) {
-              el.explicitDurMs = _parseDurStr(explicitDurVal);
+              el.explicitDurMs = parseDurStr(explicitDurVal);
             }
 
             final regionId = desc.rawAttributes['region'];
