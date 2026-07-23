@@ -15,7 +15,7 @@ void main() {
 
   testWidgets('MainAVController and MainAVWidget init, start, stop tests',
       (WidgetTester tester) async {
-    final controller = MainAVController()..setMainAvUri('background.mp4');
+    final controller = MainAVController()..setMainAvUri('examples/primeiro-joao/media/animGar.mp4');
 
     await tester.pumpWidget(
       MaterialApp(
@@ -25,7 +25,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Loading Background AV: background.mp4'), findsOneWidget);
+    expect(find.text('Loading Background AV: examples/primeiro-joao/media/animGar.mp4'), findsOneWidget);
 
     fakePlatform.events.add(VideoEvent(
       eventType: VideoEventType.initialized,
@@ -36,7 +36,43 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(VideoPlayer), findsOneWidget);
-    expect(find.text('Loading Background AV: background.mp4'), findsNothing);
+    expect(find.text('Loading Background AV: examples/primeiro-joao/media/animGar.mp4'), findsNothing);
+
+    controller.stop();
+    await tester.pumpAndSettle();
+
+    expect(find.byType(VideoPlayer), findsNothing);
+
+    controller.play();
+    await tester.pumpAndSettle();
+
+    expect(find.byType(VideoPlayer), findsOneWidget);
+  });
+
+  testWidgets('MainAVController and MainAVWidget with online butterfly.mp4 URL tests',
+      (WidgetTester tester) async {
+    final controller = MainAVController()..setMainAvUri('https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: MainAVWidget(controller: controller),
+        ),
+      ),
+    );
+
+    expect(find.text('Loading Background AV: https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4'), findsOneWidget);
+
+    fakePlatform.events.add(VideoEvent(
+      eventType: VideoEventType.initialized,
+      duration: const Duration(seconds: 10),
+      size: const Size(100, 100),
+    ));
+
+    await tester.pumpAndSettle();
+
+    expect(find.byType(VideoPlayer), findsOneWidget);
+    expect(find.text('Loading Background AV: https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4'), findsNothing);
 
     controller.stop();
     await tester.pumpAndSettle();

@@ -54,7 +54,8 @@ class NCLAppState extends MediaState<NCLApp> {
       }
     }
     if (sbtvdUri != null) {
-      widget.mainAVController?.setMainAvUri(sbtvdUri);
+      final resolvedUri = sbtvdUri.startsWith('sbtvd://') ? (_initialMainAvUri ?? sbtvdUri) : sbtvdUri;
+      widget.mainAVController?.setMainAvUri(resolvedUri);
     } else {
       if (widget.mainAVController != null &&
           widget.mainAVController!.uri != _initialMainAvUri) {
