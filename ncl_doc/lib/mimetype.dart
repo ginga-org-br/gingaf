@@ -15,6 +15,13 @@ final Map<String, List<String>> _extensionMap = {
   'mp3': ['audio/mpeg'],
   'mpeg': ['video/mpeg'],
   'avi': ['video/avi'],
+  'wav': ['audio/wav'],
+  'aac': ['audio/aac'],
+  'ogg': ['audio/ogg'],
+  'webm': ['video/webm'],
+  'svg': ['image/svg+xml'],
+  'm4a': ['audio/mp4'],
+  'flac': ['audio/flac'],
 };
 
 String getMimeTypeFromExtension(String fileName) {
