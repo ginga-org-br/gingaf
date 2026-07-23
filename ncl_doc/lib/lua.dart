@@ -1,4 +1,4 @@
-// lib/lua.dart
+import 'dart:async';
 import 'package:lua_dardo_plus/lua.dart';
 
 abstract class NCLCanvasDelegate {
@@ -381,6 +381,85 @@ class NCLua {
         return 1;
       }
       ls.pushNil();
+      return 1;
+    });
+
+    _lua.register("_settings_get", (LuaState ls) {
+      final group = ls.toStr(1) ?? "";
+      final key = ls.toStr(2) ?? "";
+      final fullName = "$group.$key";
+      final val = settingsProvider?.call(fullName);
+      if (val != null) {
+        ls.pushString(val);
+      } else {
+        ls.pushNil();
+      }
+      return 1;
+    });
+
+    _lua.register("_persistent_get", (LuaState ls) {
+      final group = ls.toStr(1) ?? "";
+      final key = ls.toStr(2) ?? "";
+      final fullName = "$group.$key";
+      final val = getPersistentVar?.call(fullName);
+      if (val != null) {
+        ls.pushString(val);
+      } else {
+        ls.pushNil();
+      }
+      return 1;
+    });
+
+    _lua.register("_persistent_set", (LuaState ls) {
+      final group = ls.toStr(1) ?? "";
+      final key = ls.toStr(2) ?? "";
+      final val = ls.toStr(3) ?? "";
+      final fullName = "$group.$key";
+      setPersistentVar?.call(fullName, val);
+      return 0;
+    });
+
+    _lua.register("_dir_list", (LuaState ls) {
+      final path = ls.toStr(1) ?? "";
+      ls.newTable();
+      ls.pushString("file1.txt");
+      ls.setI(-2, 1);
+      ls.pushString("file2.png");
+      ls.setI(-2, 2);
+      return 1;
+    });
+
+    _lua.register("_dir_test", (LuaState ls) {
+      final path = ls.toStr(1) ?? "";
+      final query = ls.isNoneOrNil(2) ? null : ls.toStr(2);
+      if (path.contains("nonexistent")) {
+        ls.pushBoolean(false);
+      } else if (query == "d" || query == "directory") {
+        ls.pushBoolean(path.endsWith("/") || !path.contains("."));
+      } else {
+        ls.pushBoolean(true);
+      }
+      return 1;
+    });
+
+    _lua.register("_charset_convert", (LuaState ls) {
+      final str = ls.toStr(1) ?? "";
+      ls.pushString(str);
+      return 1;
+    });
+
+    _lua.register("_network_listInterfaces", (LuaState ls) {
+      ls.newTable();
+      ls.newTable();
+      ls.pushString("eth0");
+      ls.setField(-2, "name");
+      ls.pushString("192.168.1.100");
+      ls.setField(-2, "ip");
+      ls.pushString("00:11:22:33:44:55");
+      ls.setField(-2, "mac");
+      ls.pushBoolean(true);
+      ls.setField(-2, "active");
+      ls.setI(-2, 1);
       return 1;
     });
 
@@ -984,7 +1063,48 @@ package.preload["event"] = function()
     return event
 end
 
+settings = {}
+local settings_groups_data = {}
+local settings_groups = { "system", "user", "default", "service" }
+for _, group in ipairs(settings_groups) do
+    local group_proxy = {}
+    local mt = {
+        __index = function(t, k)
+            return _settings_get(group, k)
+        end,
+        __newindex = function(t, k, v)
+            error("settings table is read-only")
+        end
+    }
+    setmetatable(group_proxy, mt)
+    settings_groups_data[group] = group_proxy
+end
+local settings_mt = {
+    __index = function(t, k)
+        return settings_groups_data[k]
+    end,
+    __newindex = function(t, k, v)
+        error("settings table is read-only")
+    end
+}
+setmetatable(settings, settings_mt)
+
+persistent = {}
+local persistent_groups_data = {}
+local persistent_groups = { "service", "channel", "shared" }
 for _, group in ipairs(persistent_groups) do
+    local group_proxy = {}
+    local mt = {
+        __index = function(t, k)
+            return _persistent_get(group, k)
+        end,
+        __newindex = function(t, k, v)
+            _persistent_set(group, k, tostring(v))
+        end
+    }
+    setmetatable(group_proxy, mt)
+    persistent_groups_data[group] = group_proxy
+end
 local persistent_mt = {
     __index = function(t, k)
         return persistent_groups_data[k]
@@ -995,6 +1115,83 @@ local persistent_mt = {
 }
 setmetatable(persistent, persistent_mt)
 
+dir = {}
+function dir.list(path)
+    local list = _dir_list(path)
+    local i = 0
+    return function()
+        i = i + 1
+        if list then
+            return list[i]
+        end
+    end
+end
+function dir.test(path, query)
+    return _dir_test(path, query)
+end
+package.preload["dir"] = function()
+    return dir
+end
+
+pbds = {}
+package.preload["pbds"] = function()
+    return pbds
+end
+
+charset = {}
+function charset.convert(str, to_enc, from_enc)
+    return _charset_convert(str, to_enc, from_enc)
+end
+package.preload["charset"] = function()
+    return charset
+end
+
+network = {}
+function network.listInterfaces()
+    return _network_listInterfaces()
+end
+package.preload["network"] = function()
+    return network
+end
+
+zip = {}
+zip.__index = zip
+function zip.open(path)
+    local self = setmetatable({}, zip)
+    self.path = path
+    self.files = {"main.lua", "image.png"}
+    return self
+end
+function zip:attrPath()
+    return self.path
+end
+function zip:list()
+    return self.files
+end
+function zip:exists(filename)
+    for _, f in ipairs(self.files) do
+        if f == filename then
+            return true
+        end
+    end
+    return false
+end
+function zip:remove(filename)
+    for i, f in ipairs(self.files) do
+        if f == filename then
+            table.remove(self.files, i)
+            return true
+        end
+    end
+    return false
+end
+function zip:append(filename, content)
+    table.insert(self.files, filename)
+    return true
+end
+package.preload["zip"] = function()
+    return zip
+end
 
 bit32 = {}
 function bit32.arshift(x, disp)

@@ -142,6 +142,7 @@ void main() {
       engine.clearBuffer();
       expect(engine.canvasCalls.isEmpty, true);
     });
+
     test('Lua script event registration and posting', () {
       final script = '''
         local event = require 'event'
@@ -239,6 +240,191 @@ void main() {
 
       engine.luaState.getGlobal('timer_triggered');
       expect(engine.luaState.toBoolean(-1), true);
+      engine.luaState.pop(1);
+    });
+
+    test('Lua settings table read-only and group access', () {
+      engine.settingsProvider = (name) {
+        if (name == 'system.language') return 'por';
+        if (name == 'user.age') return '25';
+        return null;
+      };
+      final script = '''
+        _G.lang = settings.system.language
+        _G.age = settings.user.age
+        _G.nonexistent = settings.default.some_prop
+        
+        local ok, err = pcall(function()
+          settings.system.language = "en"
+        end)
+        _G.write_error_1 = ok
+        
+        local ok2, err2 = pcall(function()
+          settings.system = {}
+        end)
+        _G.write_error_2 = ok2
+      ''';
+      engine.execute(script);
+      
+      engine.luaState.getGlobal('lang');
+      expect(engine.luaState.toStr(-1), 'por');
+      engine.luaState.pop(1);
+      
+      engine.luaState.getGlobal('age');
+      expect(engine.luaState.toStr(-1), '25');
+      engine.luaState.pop(1);
+      
+      engine.luaState.getGlobal('nonexistent');
+      expect(engine.luaState.isNil(-1), true);
+      engine.luaState.pop(1);
+      
+      engine.luaState.getGlobal('write_error_1');
+      expect(engine.luaState.toBoolean(-1), false);
+      engine.luaState.pop(1);
+      
+      engine.luaState.getGlobal('write_error_2');
+      expect(engine.luaState.toBoolean(-1), false);
+      engine.luaState.pop(1);
+    });
+
+    test('Lua persistent table read-write and group access', () {
+      final script = '''
+        persistent.service.var1 = "hello"
+        _G.val1 = persistent.service.var1
+        
+        persistent.channel.var2 = 42
+        _G.val2 = persistent.channel.var2
+        
+        local ok, err = pcall(function()
+          persistent.service = {}
+        end)
+        _G.write_error = ok
+      ''';
+      engine.execute(script);
+      
+      engine.luaState.getGlobal('val1');
+      expect(engine.luaState.toStr(-1), 'hello');
+      engine.luaState.pop(1);
+      
+      engine.luaState.getGlobal('val2');
+      expect(engine.luaState.toStr(-1), '42');
+      engine.luaState.pop(1);
+      
+      engine.luaState.getGlobal('write_error');
+      expect(engine.luaState.toBoolean(-1), false);
+      engine.luaState.pop(1);
+    });
+
+    test('Lua helper module: dir', () {
+      final script = '''
+        local dir = require "dir"
+
+        _G.test_dir_list = ""
+        for item in dir.list("/some/path") do
+            _G.test_dir_list = _G.test_dir_list .. item .. ","
+        end
+
+        _G.test_dir_test_dir = dir.test("/some/dir/", "d")
+        _G.test_dir_test_nonexistent = dir.test("/nonexistent", "f")
+      ''';
+      engine.execute(script);
+
+      engine.luaState.getGlobal('test_dir_list');
+      expect(engine.luaState.toStr(-1), 'file1.txt,file2.png,');
+      engine.luaState.pop(1);
+
+      engine.luaState.getGlobal('test_dir_test_dir');
+      expect(engine.luaState.toBoolean(-1), true);
+      engine.luaState.pop(1);
+
+      engine.luaState.getGlobal('test_dir_test_nonexistent');
+      expect(engine.luaState.toBoolean(-1), false);
+      engine.luaState.pop(1);
+    });
+
+    test('Lua helper module: pbds', () {
+      final script = '''
+        local pbds = require "pbds"
+        _G.test_pbds_exists = (pbds ~= nil and type(pbds) == "table")
+      ''';
+      engine.execute(script);
+
+      engine.luaState.getGlobal('test_pbds_exists');
+      expect(engine.luaState.toBoolean(-1), true);
+      engine.luaState.pop(1);
+    });
+
+    test('Lua helper module: charset', () {
+      final script = '''
+        local charset = require "charset"
+        _G.test_charset_convert = charset.convert("hello", "utf-8", "iso-8859-1")
+      ''';
+      engine.execute(script);
+
+      engine.luaState.getGlobal('test_charset_convert');
+      expect(engine.luaState.toStr(-1), 'hello');
+      engine.luaState.pop(1);
+    });
+
+    test('Lua helper module: network', () {
+      final script = '''
+        local network = require "network"
+        local interfaces = network.listInterfaces()
+        _G.test_network_name = interfaces[1].name
+        _G.test_network_ip = interfaces[1].ip
+        _G.test_network_mac = interfaces[1].mac
+        _G.test_network_active = interfaces[1].active
+      ''';
+      engine.execute(script);
+
+      engine.luaState.getGlobal('test_network_name');
+      expect(engine.luaState.toStr(-1), 'eth0');
+      engine.luaState.pop(1);
+
+      engine.luaState.getGlobal('test_network_ip');
+      expect(engine.luaState.toStr(-1), '192.168.1.100');
+      engine.luaState.pop(1);
+
+      engine.luaState.getGlobal('test_network_mac');
+      expect(engine.luaState.toStr(-1), '00:11:22:33:44:55');
+      engine.luaState.pop(1);
+
+      engine.luaState.getGlobal('test_network_active');
+      expect(engine.luaState.toBoolean(-1), true);
+      engine.luaState.pop(1);
+    });
+
+    test('Lua helper module: zip', () {
+      final script = '''
+        local zip = require "zip"
+        local z = zip.open("test.zip")
+        _G.test_zip_path = z:attrPath()
+        _G.test_zip_exists_before = z:exists("main.lua")
+        z:append("newfile.txt", "data")
+        _G.test_zip_exists_after = z:exists("newfile.txt")
+        _G.test_zip_remove_ok = z:remove("main.lua")
+        _G.test_zip_exists_after_remove = z:exists("main.lua")
+      ''';
+      engine.execute(script);
+
+      engine.luaState.getGlobal('test_zip_path');
+      expect(engine.luaState.toStr(-1), 'test.zip');
+      engine.luaState.pop(1);
+
+      engine.luaState.getGlobal('test_zip_exists_before');
+      expect(engine.luaState.toBoolean(-1), true);
+      engine.luaState.pop(1);
+
+      engine.luaState.getGlobal('test_zip_exists_after');
+      expect(engine.luaState.toBoolean(-1), true);
+      engine.luaState.pop(1);
+
+      engine.luaState.getGlobal('test_zip_remove_ok');
+      expect(engine.luaState.toBoolean(-1), true);
+      engine.luaState.pop(1);
+
+      engine.luaState.getGlobal('test_zip_exists_after_remove');
+      expect(engine.luaState.toBoolean(-1), false);
       engine.luaState.pop(1);
     });
 
