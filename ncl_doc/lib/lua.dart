@@ -19,10 +19,16 @@ class NCLua {
   late LuaState _lua;
   final NCLCanvasDelegate? delegate;
   final List<CanvasCall> canvasCalls = [];
+  final Map<String, String> _persistentVars = {};
+  String? Function(String propertyName)? settingsProvider;
+  String? Function(String name)? getPersistentVar;
+  void Function(String name, String value)? setPersistentVar;
 
   NCLua({this.delegate}) {
     _lua = LuaState.newState();
     _lua.openLibs();
+    getPersistentVar ??= (name) => _persistentVars[name];
+    setPersistentVar ??= (name, value) => _persistentVars[name] = value;
     _initBindings();
   }
 

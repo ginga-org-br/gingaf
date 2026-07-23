@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ncl_doc/ncl_document.dart' hide State;
+import '../ncl_app.dart';
 import 'ncl_media_widget.dart';
 
 class LuaWidget extends MediaWidget {
@@ -18,6 +19,27 @@ class LuaWidgetState extends MediaState<LuaWidget> {
     super.initState();
     parseProperties(widget.media);
     _engine = NCLua(delegate: canvasState);
+
+    _engine.settingsProvider = (name) {
+      final appState = context.findAncestorStateOfType<NCLAppState>();
+      final doc = appState?.nclDocument;
+      if (doc != null) {
+        return doc.getPropertyValue(doc.getSettings(), name);
+      }
+      return null;
+    };
+
+    _engine.getPersistentVar = (name) {
+      final appState = context.findAncestorStateOfType<NCLAppState>();
+      return appState?.persistentVars[name];
+    };
+
+    _engine.setPersistentVar = (name, value) {
+      final appState = context.findAncestorStateOfType<NCLAppState>();
+      if (appState != null) {
+        appState.persistentVars[name] = value;
+      }
+    };
 
     canvasState.onUpdate = () {
       if (mounted) setState(() {});

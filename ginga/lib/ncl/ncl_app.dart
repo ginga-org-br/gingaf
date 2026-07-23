@@ -41,6 +41,7 @@ class NCLAppState extends MediaState<NCLApp> {
   String errorMsg = "";
   bool _loading = false;
   String? _initialMainAvUri;
+  final Map<String, String> persistentVars = {};
 
   bool _syncActiveMedia(List<Media> activeMedia) {
     bool changed = false;
