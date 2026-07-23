@@ -384,6 +384,136 @@ class NCLua {
       return 1;
     });
 
+    _lua.register("_bit32_arshift", (LuaState ls) {
+      int x = ls.toInteger(1) & 0xFFFFFFFF;
+      final disp = ls.toInteger(2);
+      if (x & 0x80000000 != 0) {
+        x |= ~0xFFFFFFFF;
+      }
+      final res = x >> disp;
+      ls.pushInteger(res & 0xFFFFFFFF);
+      return 1;
+    });
+
+    _lua.register("_bit32_band", (LuaState ls) {
+      int res = 0xFFFFFFFF;
+      final top = ls.getTop();
+      for (int i = 1; i <= top; i++) {
+        res &= ls.toInteger(i);
+      }
+      ls.pushInteger(res & 0xFFFFFFFF);
+      return 1;
+    });
+
+    _lua.register("_bit32_bnot", (LuaState ls) {
+      final x = ls.toInteger(1);
+      ls.pushInteger((~x) & 0xFFFFFFFF);
+      return 1;
+    });
+
+    _lua.register("_bit32_bor", (LuaState ls) {
+      int res = 0;
+      final top = ls.getTop();
+      for (int i = 1; i <= top; i++) {
+        res |= ls.toInteger(i);
+      }
+      ls.pushInteger(res & 0xFFFFFFFF);
+      return 1;
+    });
+
+    _lua.register("_bit32_btest", (LuaState ls) {
+      int res = 0xFFFFFFFF;
+      final top = ls.getTop();
+      for (int i = 1; i <= top; i++) {
+        res &= ls.toInteger(i);
+      }
+      ls.pushBoolean((res & 0xFFFFFFFF) != 0);
+      return 1;
+    });
+
+    _lua.register("_bit32_bxor", (LuaState ls) {
+      int res = 0;
+      final top = ls.getTop();
+      for (int i = 1; i <= top; i++) {
+        res ^= ls.toInteger(i);
+      }
+      ls.pushInteger(res & 0xFFFFFFFF);
+      return 1;
+    });
+
+    _lua.register("_bit32_extract", (LuaState ls) {
+      final n = ls.toInteger(1) & 0xFFFFFFFF;
+      final field = ls.toInteger(2);
+      final width = ls.isNoneOrNil(3) ? 1 : ls.toInteger(3);
+      if (field < 0 || field >= 32 || width <= 0 || field + width > 32) {
+        ls.pushString("invalid field/width");
+        ls.error();
+      }
+      final mask = (1 << width) - 1;
+      final res = (n >> field) & mask;
+      ls.pushInteger(res);
+      return 1;
+    });
+
+    _lua.register("_bit32_replace", (LuaState ls) {
+      final n = ls.toInteger(1) & 0xFFFFFFFF;
+      final v = ls.toInteger(2) & 0xFFFFFFFF;
+      final field = ls.toInteger(3);
+      final width = ls.isNoneOrNil(4) ? 1 : ls.toInteger(4);
+      if (field < 0 || field >= 32 || width <= 0 || field + width > 32) {
+        ls.pushString("invalid field/width");
+        ls.error();
+      }
+      final mask = ((1 << width) - 1) << field;
+      final res = (n & ~mask) | ((v << field) & mask);
+      ls.pushInteger(res);
+      return 1;
+    });
+
+    _lua.register("_bit32_lrotate", (LuaState ls) {
+      final x = ls.toInteger(1) & 0xFFFFFFFF;
+      int disp = ls.toInteger(2) % 32;
+      if (disp < 0) disp += 32;
+      final res = ((x << disp) | (x >> (32 - disp))) & 0xFFFFFFFF;
+      ls.pushInteger(res);
+      return 1;
+    });
+
+    _lua.register("_bit32_lshift", (LuaState ls) {
+      final x = ls.toInteger(1) & 0xFFFFFFFF;
+      final disp = ls.toInteger(2);
+      if (disp < 0) {
+        ls.pushInteger((x >> -disp) & 0xFFFFFFFF);
+      } else if (disp >= 32) {
+        ls.pushInteger(0);
+      } else {
+        ls.pushInteger((x << disp) & 0xFFFFFFFF);
+      }
+      return 1;
+    });
+
+    _lua.register("_bit32_rrotate", (LuaState ls) {
+      final x = ls.toInteger(1) & 0xFFFFFFFF;
+      int disp = ls.toInteger(2) % 32;
+      if (disp < 0) disp += 32;
+      final res = ((x >> disp) | (x << (32 - disp))) & 0xFFFFFFFF;
+      ls.pushInteger(res);
+      return 1;
+    });
+
+    _lua.register("_bit32_rshift", (LuaState ls) {
+      final x = ls.toInteger(1) & 0xFFFFFFFF;
+      final disp = ls.toInteger(2);
+      if (disp < 0) {
+        ls.pushInteger((x << -disp) & 0xFFFFFFFF);
+      } else if (disp >= 32) {
+        ls.pushInteger(0);
+      } else {
+        ls.pushInteger((x >> disp) & 0xFFFFFFFF);
+      }
+      return 1;
+    });
+
     _lua.doString(_ooWrapper);
   }
 
@@ -854,4 +984,45 @@ package.preload["event"] = function()
     return event
 end
 
+
+bit32 = {}
+function bit32.arshift(x, disp)
+    return _bit32_arshift(x, disp)
+end
+function bit32.band(...)
+    return _bit32_band(...)
+end
+function bit32.bnot(x)
+    return _bit32_bnot(x)
+end
+function bit32.bor(...)
+    return _bit32_bor(...)
+end
+function bit32.btest(...)
+    return _bit32_btest(...)
+end
+function bit32.bxor(...)
+    return _bit32_bxor(...)
+end
+function bit32.extract(n, field, width)
+    return _bit32_extract(n, field, width)
+end
+function bit32.replace(n, v, field, width)
+    return _bit32_replace(n, v, field, width)
+end
+function bit32.lrotate(x, disp)
+    return _bit32_lrotate(x, disp)
+end
+function bit32.lshift(x, disp)
+    return _bit32_lshift(x, disp)
+end
+function bit32.rrotate(x, disp)
+    return _bit32_rrotate(x, disp)
+end
+function bit32.rshift(x, disp)
+    return _bit32_rshift(x, disp)
+end
+package.preload["bit32"] = function()
+    return bit32
+end
 ''';

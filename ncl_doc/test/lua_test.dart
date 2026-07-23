@@ -242,5 +242,56 @@ void main() {
       engine.luaState.pop(1);
     });
 
+    test('Lua helper module: bit32', () {
+      final script = '''
+        local bit32 = require "bit32"
+        _G.test_bit32_band = bit32.band(6, 3)
+        _G.test_bit32_bor = bit32.bor(4, 2)
+        _G.test_bit32_bxor = bit32.bxor(5, 3)
+        _G.test_bit32_bnot = bit32.bnot(0)
+        _G.test_bit32_arshift = bit32.arshift(-8, 1)
+        _G.test_bit32_lrotate = bit32.lrotate(1, 4)
+        _G.test_bit32_rrotate = bit32.rrotate(16, 4)
+        _G.test_bit32_extract = bit32.extract(255, 4, 4)
+        _G.test_bit32_replace = bit32.replace(0, 15, 4, 4)
+      ''';
+      engine.execute(script);
+
+      engine.luaState.getGlobal('test_bit32_band');
+      expect(engine.luaState.toInteger(-1), 2);
+      engine.luaState.pop(1);
+
+      engine.luaState.getGlobal('test_bit32_bor');
+      expect(engine.luaState.toInteger(-1), 6);
+      engine.luaState.pop(1);
+
+      engine.luaState.getGlobal('test_bit32_bxor');
+      expect(engine.luaState.toInteger(-1), 6);
+      engine.luaState.pop(1);
+
+      engine.luaState.getGlobal('test_bit32_bnot');
+      expect(engine.luaState.toInteger(-1), 0xFFFFFFFF);
+      engine.luaState.pop(1);
+
+      engine.luaState.getGlobal('test_bit32_arshift');
+      expect(engine.luaState.toInteger(-1), 0xFFFFFFFC);
+      engine.luaState.pop(1);
+
+      engine.luaState.getGlobal('test_bit32_lrotate');
+      expect(engine.luaState.toInteger(-1), 16);
+      engine.luaState.pop(1);
+
+      engine.luaState.getGlobal('test_bit32_rrotate');
+      expect(engine.luaState.toInteger(-1), 1);
+      engine.luaState.pop(1);
+
+      engine.luaState.getGlobal('test_bit32_extract');
+      expect(engine.luaState.toInteger(-1), 15);
+      engine.luaState.pop(1);
+
+      engine.luaState.getGlobal('test_bit32_replace');
+      expect(engine.luaState.toInteger(-1), 240);
+      engine.luaState.pop(1);
+    });
   });
 }
