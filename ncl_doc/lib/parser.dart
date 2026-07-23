@@ -1,5 +1,6 @@
 import 'package:xml/xml.dart';
 
+import 'elements.dart';
 import 'mimetype.dart';
 import 'ncl_document.dart';
 import 'schema.dart';
@@ -36,7 +37,7 @@ class NCLParser {
     return (head, body);
   }
 
-  int? _parseDurStr(String? durStr) {
+  static int? parseDurStr(String? durStr) {
     if (durStr == null) return null;
     if (durStr.endsWith('ms')) {
       return int.tryParse(durStr.replaceAll('ms', ''));
@@ -95,26 +96,44 @@ class NCLParser {
       case 'settings':
         element = Settings(rawAttributes: attrs);
         break;
+      case 'transition':
+        element = Transition(rawAttributes: attrs);
+        break;
+      case 'rule':
+        element = Rule(rawAttributes: attrs);
+        break;
+      case 'descriptorParam':
+      case 'param':
+        element = DescriptorParam(rawAttributes: attrs);
+        break;
+      case 'simpleCondition':
+        element = SimpleCondition(rawAttributes: attrs);
+        break;
+      case 'compoundCondition':
+        element = CompoundCondition(rawAttributes: attrs);
+        break;
+      case 'assessmentStatement':
+        element = AssessmentStatement(rawAttributes: attrs);
+        break;
+      case 'attributeAssessment':
+        element = AttributeAssessment(rawAttributes: attrs);
+        break;
+      case 'valueAssessment':
+        element = ValueAssessment(rawAttributes: attrs);
+        break;
       case 'head':
       case 'regionBase':
       case 'descriptorBase':
       case 'connectorBase':
       case 'ruleBase':
-      case 'rule':
       case 'compositeRule':
       case 'transitionBase':
-      case 'transition':
       case 'bindRule':
       case 'defaultComponent':
       case 'switchPort':
       case 'mapping':
       case 'importBase':
       case 'compoundAction':
-      case 'simpleCondition':
-      case 'compoundCondition':
-      case 'assessmentStatement':
-      case 'attributeAssessment':
-      case 'valueAssessment':
       case 'simpleAction':
       case 'descriptorSwitch':
       case 'importedDocumentBase':

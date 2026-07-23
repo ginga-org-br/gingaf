@@ -1,4 +1,5 @@
 import 'ncl_document.dart';
+import 'parser.dart';
 
 typedef Head = List<Element>;
 typedef Body = Context;
@@ -45,19 +46,117 @@ class Area extends Element {
 }
 
 class Link extends Element {
+  String? get xconnector => rawAttributes['xconnector'];
+  List<Bind> get binds => children.whereType<Bind>().toList();
   Link({super.rawAttributes});
 }
 
+class DescriptorParam extends Element {
+  String? get name => rawAttributes['name'];
+  String? get value => rawAttributes['value'];
+  DescriptorParam({super.rawAttributes});
+}
+
 class Descriptor extends Element {
+  String? get region => rawAttributes['region'];
+  String? get transIn => rawAttributes['transIn'];
+  String? get transOut => rawAttributes['transOut'];
+  String? get focusIndex => rawAttributes['focusIndex'];
+  String? get moveUp => rawAttributes['moveUp'];
+  String? get moveDown => rawAttributes['moveDown'];
+  String? get moveLeft => rawAttributes['moveLeft'];
+  String? get moveRight => rawAttributes['moveRight'];
+  String? get explicitDur => rawAttributes['explicitDur'];
+  int? get explicitDurMs => NCLParser.parseDurStr(explicitDur);
+  String? get focusBorderColor => rawAttributes['focusBorderColor'];
+  String? get focusBorderWidth => rawAttributes['focusBorderWidth'];
+  String? get focusBorderTransparency => rawAttributes['focusBorderTransparency'];
+  String? get focusSrc => rawAttributes['focusSrc'];
+  String? get focusSelSrc => rawAttributes['focusSelSrc'];
+  String? get selectIndex => rawAttributes['selectIndex'];
+  List<DescriptorParam> get descriptorParams =>
+      children.whereType<DescriptorParam>().toList();
   Descriptor({super.rawAttributes});
 }
 
 class Region extends Element {
+  String? get title => rawAttributes['title'];
+  String? get left => rawAttributes['left'];
+  String? get right => rawAttributes['right'];
+  String? get top => rawAttributes['top'];
+  String? get bottom => rawAttributes['bottom'];
+  String? get width => rawAttributes['width'];
+  String? get height => rawAttributes['height'];
+  String? get zIndex => rawAttributes['zIndex'];
   Region({super.rawAttributes});
 }
 
 class Connector extends Element {
   Connector({super.rawAttributes});
+}
+
+class Transition extends Element {
+  String? get type => rawAttributes['type'];
+  String? get subtype => rawAttributes['subtype'];
+  String? get dur => rawAttributes['dur'];
+  int? get durMs => NCLParser.parseDurStr(dur);
+  String? get startProgress => rawAttributes['startProgress'];
+  String? get endProgress => rawAttributes['endProgress'];
+  String? get direction => rawAttributes['direction'];
+  Transition({super.rawAttributes});
+}
+
+class Rule extends Element {
+  String? get varName => rawAttributes['var'];
+  String? get comparator => rawAttributes['comparator'];
+  String? get value => rawAttributes['value'];
+  Rule({super.rawAttributes});
+}
+
+class AssessmentStatement extends Element {
+  String? get comparator => rawAttributes['comparator'];
+  List<AttributeAssessment> get attributeAssessments =>
+      children.whereType<AttributeAssessment>().toList();
+  List<ValueAssessment> get valueAssessments =>
+      children.whereType<ValueAssessment>().toList();
+  AssessmentStatement({super.rawAttributes});
+}
+
+class AttributeAssessment extends Element {
+  String? get role => rawAttributes['role'];
+  String? get eventType => rawAttributes['eventType'];
+  String? get key => rawAttributes['key'];
+  String? get attributeType => rawAttributes['attributeType'];
+  AttributeAssessment({super.rawAttributes});
+}
+
+class ValueAssessment extends Element {
+  String? get value => rawAttributes['value'];
+  ValueAssessment({super.rawAttributes});
+}
+
+class SimpleCondition extends Element {
+  String? get role => rawAttributes['role'];
+  String? get eventType => rawAttributes['eventType'];
+  String? get key => rawAttributes['key'];
+  String? get transition => rawAttributes['transition'];
+  String? get min => rawAttributes['min'];
+  String? get max => rawAttributes['max'];
+  String? get qualifier => rawAttributes['qualifier'];
+  SimpleCondition({super.rawAttributes});
+}
+
+class CompoundCondition extends Element {
+  String? get operator => rawAttributes['operator'];
+  List<Element> get conditions => children
+      .where(
+        (c) =>
+            c is SimpleCondition ||
+            c is CompoundCondition ||
+            c is AssessmentStatement,
+      )
+      .toList();
+  CompoundCondition({super.rawAttributes});
 }
 
 abstract class Node extends Element {
