@@ -1,6 +1,6 @@
 # Ginga Playground
 
-A web-based interactive playground for the [gingaf](https://github.com/alanlivio/gingaf) project.
+A web-based interactive playground for the [gingaf](https://github.com/ginga-org-br/gingaf) project.
 
 ## Development
 

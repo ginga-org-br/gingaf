@@ -2,12 +2,6 @@ name: Deploy Playground
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - "ginga-playground/**"
-      - ".github/workflows/deploy-playground.yml"
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -36,7 +30,7 @@ jobs:
 
       - name: Build Flutter Web
         working-directory: ./ginga
-        run: flutter build web --base-href /gingaf/ginga-playground/player/
+        run: flutter build web --base-href /ginga-playground/player/
 
       - name: Install playground dependencies
         working-directory: ./ginga-playground
@@ -49,7 +43,7 @@ jobs:
 
       - name: Build playground
         working-directory: ./ginga-playground
-        run: npx vite build --base=/gingaf/ginga-playground/
+        run: npx vite build --base=/ginga-playground/
 
       - name: Setup Pages
         id: pages

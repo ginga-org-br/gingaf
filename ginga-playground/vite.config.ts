@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 
 export default defineConfig({
-  base: '/gingaf/ginga-playground/',
+  base: '/ginga-playground/',
   plugins: [
     {
       name: 'ginga-playground',
