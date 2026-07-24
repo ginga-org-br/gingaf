@@ -3,10 +3,10 @@ import path from 'path';
 import fs from 'fs';
 
 export default defineConfig({
-  base: '/gingaf/playground/',
+  base: '/gingaf/ginga-playground/',
   plugins: [
     {
-      name: 'playground',
+      name: 'ginga-playground',
       configureServer(server) {
         server.middlewares.use((req, res, next) => {
           if (req.url?.startsWith('/examples/')) {
