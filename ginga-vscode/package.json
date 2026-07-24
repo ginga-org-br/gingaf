@@ -1,8 +1,8 @@
 {
   "name": "ginga-vscode",
   "displayName": "ginga-vscode",
-  "description": "VS Code extension for interactive execution, step debugging, and visual playback of NCL applications via Ginga",
-  "version": "0.1.0",
+  "description": "VS Code extension for execution of Ginga application",
+  "version": "0.1.1",
   "publisher": "ginga-org-br",
   "icon": "ginga-logo.png",
   "repository": {
@@ -18,7 +18,6 @@
   ],
   "main": "./src/extension.js",
   "activationEvents": [
-    "onCommand:gingaf.openPlayer",
     "onLanguage:xml"
   ],
   "contributes": {
@@ -28,13 +27,6 @@
         "extensions": [
           ".ncl"
         ]
-      }
-    ],
-    "commands": [
-      {
-        "command": "gingaf.openPlayer",
-        "title": "Ginga: Open Visual Player",
-        "category": "Ginga NCL"
       }
     ],
     "configuration": {

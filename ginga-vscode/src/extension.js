@@ -472,24 +472,6 @@ function handleBridgeMessage(message) {
   }
 }
 
-class NclCodeLensProvider {
-  provideCodeLenses(document) {
-    const lenses = [];
-    const text = document.getText();
-    const match = /<(ncl|html)/i.exec(text);
-    if (match) {
-      const position = document.positionAt(match.index);
-      const range = new vscode.Range(position, position);
-      lenses.push(new vscode.CodeLens(range, {
-        title: "▶ Play Ginga application",
-        command: "gingaf.openPlayer",
-        arguments: [document.uri]
-      }));
-    }
-    return lenses;
-  }
-}
-
 function activate(context) {
   extensionContext = context;
   const initialEditor = vscode.window.activeTextEditor;
@@ -503,16 +485,7 @@ function activate(context) {
     }
   });
 
-  const openCmd = vscode.commands.registerCommand('gingaf.openPlayer', (uri) => openPlayer(context, uri));
-
-  const selector = [
-    { language: 'xml', scheme: 'file' },
-    { pattern: '**/*.ncl', scheme: 'file' },
-    { pattern: '**/*.html', scheme: 'file' }
-  ];
-  const codeLensSub = vscode.languages.registerCodeLensProvider(selector, new NclCodeLensProvider());
-
-  context.subscriptions.push(openCmd, changeEditorSub, codeLensSub);
+  context.subscriptions.push(changeEditorSub);
 }
 
 function deactivate() {
