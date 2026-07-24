@@ -207,5 +207,33 @@ void main() {
       expect(desc.descriptorParams[1].name, equals('fontColor'));
       expect(desc.descriptorParams[1].value, equals('yellow'));
     });
+
+    test('NCLParser parses userBase and userProfile elements correctly', () {
+      final xmlString = '''<ncl id="userTestNCL">
+<head>
+  <userBase id="ub1">
+    <userProfile id="up1" name="Alice" age="30" gender="female"/>
+  </userBase>
+</head>
+<body id="body"/>
+</ncl>''';
+
+      final doc = NCLDocument.fromXML(xmlString);
+      final head = doc.head;
+      expect(head, isNotNull);
+
+      final userBase = head!.firstWhere((e) => e.xmlTagName == 'userBase');
+      expect(userBase, isA<UserBase>());
+
+      final ub = userBase as UserBase;
+      expect(ub.id, equals('ub1'));
+      expect(ub.userProfiles.length, equals(1));
+
+      final up = ub.userProfiles.first;
+      expect(up.id, equals('up1'));
+      expect(up.name, equals('Alice'));
+      expect(up.age, equals('30'));
+      expect(up.gender, equals('female'));
+    });
   });
 }

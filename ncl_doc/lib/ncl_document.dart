@@ -9,12 +9,14 @@ import 'elements.dart';
 import 'event.dart';
 import 'parser.dart';
 import 'ncl_scheduler.dart';
+import 'users.dart';
 
 export 'elements.dart';
 export 'event.dart';
 export 'lua.dart';
 export 'parser.dart';
 export 'ncl_scheduler.dart';
+export 'users.dart';
 
 final _logger = Logger('ncl_doc');
 
@@ -25,6 +27,7 @@ class NCLDocument {
   final Uri baseURI;
 
   late final NCLScheduler scheduler = NCLScheduler(this);
+  final Users users = Users();
   final Map<String, String> systemVariables = {'system.language': 'por'};
 
   factory NCLDocument.fromBodyElements(List<Element> elements) {
@@ -55,6 +58,36 @@ class NCLDocument {
     _head = head;
     _body = body;
     _gatherSettings();
+    _gatherUsers();
+  }
+
+  void _gatherUsers() {
+    if (_head == null) return;
+    for (var userBase in _head.whereType<UserBase>()) {
+      for (var up in userBase.userProfiles) {
+        if (up.id != null && up.id!.isNotEmpty) {
+          users.registerUser(up.toNCLUser());
+        }
+      }
+    }
+    for (var el in headChildren) {
+      if (el.xmlTagName == 'userBase' && el is! UserBase) {
+        for (var child in el.children) {
+          if (child.xmlTagName == 'userProfile') {
+            final id = child.rawAttributes['id'];
+            if (id != null && id.isNotEmpty) {
+              users.registerUser(
+                NCLUser(
+                  id: id,
+                  name: child.rawAttributes['name'] ?? id,
+                  initialProperties: child.rawAttributes,
+                ),
+              );
+            }
+          }
+        }
+      }
+    }
   }
 
   void _gatherSettings() {

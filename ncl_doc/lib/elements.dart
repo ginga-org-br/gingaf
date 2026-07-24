@@ -1,5 +1,6 @@
 import 'ncl_document.dart';
 import 'parser.dart';
+import 'users.dart';
 
 typedef Head = List<Element>;
 typedef Body = Context;
@@ -256,4 +257,26 @@ class Settings extends Media {
     super.rawAttributes,
     super.mimeType = 'application/x-ncl-settings',
   });
+}
+
+class UserBase extends Element {
+  List<UserProfile> get userProfiles => children.whereType<UserProfile>().toList();
+  UserBase({super.rawAttributes});
+}
+
+class UserProfile extends Element {
+  String? get name => rawAttributes['name'];
+  String? get age => rawAttributes['age'];
+  String? get gender => rawAttributes['gender'];
+  UserProfile({super.rawAttributes});
+
+  NCLUser toNCLUser() {
+    final idVal = id ?? '';
+    final nameVal = name ?? idVal;
+    return NCLUser(
+      id: idVal,
+      name: nameVal,
+      initialProperties: Map<String, dynamic>.from(rawAttributes),
+    );
+  }
 }

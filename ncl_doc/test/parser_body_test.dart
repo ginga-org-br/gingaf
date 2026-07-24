@@ -172,5 +172,36 @@ void main() {
       expect(media.id, 'mainAV');
       expect(media.uri, 'sbtvd://');
     });
+
+    test('re-parses NCL XML', () {
+      const initialXml = '''
+<ncl id="playground">
+  <body>
+    <port id="p1" component="m1"/>
+    <media id="m1" src="video1.mp4"/>
+  </body>
+</ncl>
+''';
+      final (_, initialBody) = parser.parseString(initialXml);
+      expect(
+        initialBody.children.whereType<Media>().first.uri,
+        equals('video1.mp4'),
+      );
+
+      const editedXml = '''
+<ncl id="playground">
+  <body>
+    <port id="p1" component="m1"/>
+    <media id="m1" src="video2.mp4"/>
+    <media id="m2" src="image.png"/>
+  </body>
+</ncl>
+''';
+      final (_, editedBody) = parser.parseString(editedXml);
+      final mediaNodes = editedBody.children.whereType<Media>().toList();
+      expect(mediaNodes.length, equals(2));
+      expect(mediaNodes[0].uri, equals('video2.mp4'));
+      expect(mediaNodes[1].uri, equals('image.png'));
+    });
   });
 }

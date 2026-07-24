@@ -759,6 +759,27 @@ class Schema {
         },
       ),
     );
+    addElementSyntax(
+      "userBase",
+      const ElementSyntax(
+        possibleParents: ["head"],
+        attributes: {
+          "id": ATTR_OPT_ID,
+        },
+      ),
+    );
+    addElementSyntax(
+      "userProfile",
+      const ElementSyntax(
+        possibleParents: ["userBase"],
+        attributes: {
+          "id": ATTR_ID,
+          "name": ATTR_OPTIONAL,
+          "age": ATTR_OPTIONAL,
+          "gender": ATTR_OPTIONAL,
+        },
+      ),
+    );
   }
 
   List<String> validateElement(dynamic node) {

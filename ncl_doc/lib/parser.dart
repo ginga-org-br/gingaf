@@ -121,6 +121,12 @@ class NCLParser {
       case 'valueAssessment':
         element = ValueAssessment(rawAttributes: attrs);
         break;
+      case 'userBase':
+        element = UserBase(rawAttributes: attrs);
+        break;
+      case 'userProfile':
+        element = UserProfile(rawAttributes: attrs);
+        break;
       case 'head':
       case 'regionBase':
       case 'descriptorBase':
