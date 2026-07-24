@@ -7,30 +7,44 @@ import 'package:logging/logging.dart';
 import 'ginga.dart';
 
 final _logger = Logger('ginga');
-const USAGE = '''
-Usage:
-  flutter run --dart-define="APP=path/to/app.{ncl|html}" 
-  Options:
-    --dart-define="MAINAV=path/to/video.mp4"  Set background video URI
-''';
 
-void main() {
+
+void main(List<String> args) {
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
     debugPrint(
         '[${record.loggerName}] ${record.level.name}: ${record.message}');
   });
 
-  final config = GingaConfig();
-  if (config.isEmpty) {
-    if (kIsWeb) {
-      _logger.info('Running in web without APP. Defaulting to empty playground player.');
-      runApp(Ginga(config: GingaConfig(null, true, null)));
-      return;
-    }
-    stdout.writeln(USAGE);
-    exit(0);
+  String? app = const String.fromEnvironment('APP').isNotEmpty
+      ? const String.fromEnvironment('APP')
+      : null;
+  if (app == null && !kIsWeb) {
+    app = Platform.environment['APP'];
   }
+
+  String? mainav;
+  if (const bool.hasEnvironment('MAINAV')) {
+    final val = const String.fromEnvironment('MAINAV');
+    mainav = (val.isEmpty || val == 'true') ? DEFAULT_VIDEO : val;
+  }
+  if (mainav == null && !kIsWeb) {
+    if (Platform.environment.containsKey('MAINAV')) {
+      final val = Platform.environment['MAINAV'];
+      mainav = (val == null || val.isEmpty || val == 'true') ? DEFAULT_VIDEO : val;
+    }
+  }
+
+  bool ccws = const bool.fromEnvironment('CCWS', defaultValue: true);
+  if (!kIsWeb) {
+    if (Platform.environment.containsKey('CCWS')) {
+      final val = Platform.environment['CCWS'];
+      ccws = val == 'true';
+    }
+  }
+
+  final config = GingaConfig(app, ccws, mainav);
+  runApp(Ginga(config: config));
   _logger.info(config.toString());
 
   if (!kIsWeb) {
@@ -53,9 +67,9 @@ void main() {
 
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (!kIsWeb) {
+  if (!kIsWeb && config.appUri != null) {
     try {
-      final file = File(config.appPath!).absolute;
+      final file = File(config.appUri!).absolute;
       _logger.info('Resolved app path: ${file.path}');
       if (file.existsSync()) {
         Directory.current = file.parent.path;

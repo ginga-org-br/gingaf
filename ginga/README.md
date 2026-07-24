@@ -67,7 +67,7 @@ Write-Output "no" | & "$env:LOCALAPPDATA\Android\Sdk\cmdline-tools\latest\bin\av
 at `ginga` fodler and an created emulator called `emulator-5554`, run:
 
 ```
-flutter run --no-pub -d emulator-5554 --dart-define="APP=examples/video.ncl"
+flutter run --no-pub -d emulator-5554 --dart-define="APP=examples/image.ncl"
 ```
 
 ## Testing
@@ -82,20 +82,41 @@ flutter test
 
 All example NCL and HTML documents are stored in the `examples/` folder.
 
-You may run app with UI as below.
+You can configure and run the application via environment variables or compile-time definitions (`--dart-define`):
+
+- `APP`: Path to the application file (e.g. `examples/image.ncl` or `examples/image.html`).
+- `MAINAV`: Path to the background video URI. Set it to empty or `true` to use the default butterfly video.
+
+### Run with Flutter command
+
+> [!IMPORTANT]
+> When defining multiple parameters at compile time using `--dart-define`, they **must** be passed as separate arguments (e.g. `--dart-define="APP=..." --dart-define="MAINAV=..."`). Combining them with semicolons (e.g., `--dart-define="APP=...;MAINAV=..."`) is invalid and will cause the build or configuration validation to fail.
 
 ```bash
 cd gingaf/ginga
-flutter run -d windows --dart-define="APP=examples/video.ncl"
-flutter run -d windows --dart-define="APP=examples/video.html"
-flutter run -d chrome --dart-define="APP=examples/video.ncl"
-flutter run -d chrome --dart-define="APP=examples/video.html"
+# Using compile-time definitions
+flutter run -d windows --dart-define="APP=examples/image.ncl"
+flutter run -d windows --dart-define="APP=examples/video.ncl" --dart-define="MAINAV=true"
+flutter run -d chrome --dart-define="APP=examples/image.ncl"
 ```
 
-For easy, you can use `make run app=NAME` for current platform, where NAME is a file at `examples`. See below.
+### Run built binary (Windows)
+
+```powershell
+# Using environment variables
+$env:APP="examples/image.ncl"
+.\build\windows\x64\runner\Debug\gingaf.exe
+
+# With default video
+$env:APP="examples/video.ncl"
+$env:MAINAV="true"
+.\build\windows\x64\runner\Debug\gingaf.exe
+```
+
+For convenience, you can use `make run-example` for the current platform:
 
 ```bash
 cd gingaf/ginga
-make run-example app=video.ncl
-make run-example app=video.html
+make run-example app=image.ncl
+make run-example app=image.html
 ```

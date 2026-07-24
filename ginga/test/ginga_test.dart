@@ -8,15 +8,25 @@ void main() {
     test(
         'Constructor should accept .ncl and .html extensions case-insensitively',
         () {
-      expect(GingaConfig('app.ncl').appPath, 'app.ncl');
-      expect(GingaConfig('app.html').appPath, 'app.html');
-      expect(GingaConfig('APP.NCL').appPath, 'APP.NCL');
-      expect(GingaConfig('APP.HTML').appPath, 'APP.HTML');
+      expect(GingaConfig('app.ncl').appUri, 'app.ncl');
+      expect(GingaConfig('app.html').appUri, 'app.html');
+      expect(GingaConfig('APP.NCL').appUri, 'APP.NCL');
+      expect(GingaConfig('APP.HTML').appUri, 'APP.HTML');
     });
 
     test('Constructor should capture CCWS environment (true by default)', () {
       final config = GingaConfig('app.ncl');
       expect(config.enableCCWS, isTrue);
+    });
+
+    test('Constructor should capture enableMainAv (true by default)', () {
+      final config = GingaConfig('app.ncl');
+      expect(config.enableMainAv, isTrue);
+    });
+
+    test('Constructor should support explicit enableMainAv deactivation', () {
+      final config = GingaConfig('app.ncl', true, null, false);
+      expect(config.enableMainAv, isFalse);
     });
 
     test('Constructor should support explicit CCWS deactivation', () {
@@ -27,10 +37,10 @@ void main() {
     test(
         'Constructor should reject unsupported extensions and set appPath to null',
         () {
-      expect(GingaConfig('app.txt').appPath, isNull);
-      expect(GingaConfig('app.lua').appPath, isNull);
-      expect(GingaConfig('app').appPath, isNull);
-      expect(GingaConfig('').appPath, isNull);
+      expect(GingaConfig('app.txt').appUri, isNull);
+      expect(GingaConfig('app.lua').appUri, isNull);
+      expect(GingaConfig('app').appUri, isNull);
+      expect(GingaConfig('').appUri, isNull);
     });
   });
 

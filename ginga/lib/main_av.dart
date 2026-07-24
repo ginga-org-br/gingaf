@@ -45,6 +45,12 @@ class _MainAVWidgetState extends State<MainAVWidget> {
   String? _currentUri;
   VideoPlayerController? _videoController;
 
+  void _videoListener() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -55,7 +61,10 @@ class _MainAVWidgetState extends State<MainAVWidget> {
   @override
   void dispose() {
     widget.controller.removeListener(_onControllerChange);
-    _videoController?.dispose();
+    if (_videoController != null) {
+      _videoController!.removeListener(_videoListener);
+      _videoController!.dispose();
+    }
     super.dispose();
   }
 
@@ -63,8 +72,11 @@ class _MainAVWidgetState extends State<MainAVWidget> {
     if (mounted) {
       if (_currentUri != widget.controller.uri) {
         // URI changed, reinitialize
-        _videoController?.dispose();
-        _videoController = null;
+        if (_videoController != null) {
+          _videoController!.removeListener(_videoListener);
+          _videoController!.dispose();
+          _videoController = null;
+        }
         _initializeVideo();
       } else {
         // Just play/stop state changed
@@ -101,6 +113,8 @@ class _MainAVWidgetState extends State<MainAVWidget> {
       }
 
       await _videoController!.initialize();
+      await _videoController!.setLooping(true);
+      _videoController!.addListener(_videoListener);
 
       if (mounted) {
         setState(() {});

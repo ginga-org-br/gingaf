@@ -8,16 +8,11 @@ deps:
 test:
 	flutter test
 
-build: 
-	flutter build windows
-
-build-windows: build/windows/x64/runner/Release/gingaf.exe
+build-windows: 
+	flutter build windows --debug
 
 rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
 DART_FILES := $(call rwildcard,../ncl_doc .,*.dart)
-
-build/windows/x64/runner/Release/gingaf.exe: $(DART_FILES)
-	flutter build windows
 
 build-web:
 	flutter build web --base-href $(BASE_HREF)

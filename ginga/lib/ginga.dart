@@ -14,45 +14,38 @@ import 'ncl/ncl_app.dart' as ncl;
 
 final _logger = Logger('ginga');
 
+const DEFAULT_VIDEO =
+    'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4';
+
 class GingaConfig {
-  final String? appPath;
+  final String? appUri;
   final String? mainAvUri;
   final bool enableCCWS;
+  final bool enableMainAv;
 
-  GingaConfig([String? manualPath, bool? manualCCWS, String? manualVideo])
-      : appPath = _resolve(manualPath),
-        mainAvUri = manualVideo ?? _resolveVideo(),
-        enableCCWS = manualCCWS ??
-            const bool.fromEnvironment('CCWS', defaultValue: true);
+  GingaConfig([
+    String? manualPath,
+    bool manualCCWS = true,
+    String? manualVideo,
+    bool manualEnableMainAv = true,
+  ])  : appUri = _resolve(manualPath),
+        mainAvUri = (manualVideo == 'false') ? null : (manualVideo ?? _resolveVideo()),
+        enableCCWS = manualCCWS,
+        enableMainAv = (manualVideo == 'false') ? false : manualEnableMainAv;
 
   static String? _resolveVideo() {
-    String? video = const String.fromEnvironment('MAINAV').isNotEmpty
-        ? const String.fromEnvironment('MAINAV')
-        : null;
-    if (video == null && !kIsWeb) {
-      video = Platform.environment['MAINAV'];
-    }
-    return video ??
-        'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4';
+    return null;
   }
 
   static String? _resolve(String? manualPath) {
     String? path = manualPath;
 
     if (path == null) {
-      path = const String.fromEnvironment('APP').isNotEmpty
-          ? const String.fromEnvironment('APP')
-          : null;
-
-      if (path == null && kIsWeb) {
+      if (kIsWeb) {
         path = Uri.base.queryParameters['APP'];
         if (path == null) {
           path = getSessionStorageItem('GINGA_PLAYGROUND_MAIN');
         }
-      }
-
-      if (path == null && !kIsWeb) {
-        path = Platform.environment['APP'];
       }
       if (path == null && !kIsWeb) {
         final file = File('.ginga_app');
@@ -73,11 +66,11 @@ class GingaConfig {
     return path;
   }
 
-  bool get isEmpty => appPath == null && mainAvUri == null;
+  bool get isEmpty => appUri == null && mainAvUri == null;
 
   @override
   String toString() {
-    return 'GingaConfig(appPath: $appPath, mainAvUri: $mainAvUri, enableCCWS: $enableCCWS)';
+    return 'GingaConfig(appUri: $appUri, mainAvUri: $mainAvUri, enableCCWS: $enableCCWS, enableMainAv: $enableMainAv)';
   }
 }
 
@@ -101,16 +94,24 @@ class _GingaState extends State<Ginga> {
   void initState() {
     super.initState();
     _ccws = CCWS();
+    mainAVController = MainAVController()
+      ..setMainAvUri(widget.config.mainAvUri);
+    if (widget.config.enableMainAv) {
+      mainAVWidget = MainAVWidget(controller: mainAVController);
+    }
+
+    if (widget.config.isEmpty && !kIsWeb) {
+      _logger.severe('Both APP and MAINAV are disabled or empty, exiting.');
+      _cleanup();
+      return;
+    }
+
     if (widget.config.enableCCWS) {
       _logger.info('Starting CCWS');
       _ccws.start();
     }
 
-    mainAVController = MainAVController()
-      ..setMainAvUri(widget.config.mainAvUri);
-    mainAVWidget = MainAVWidget(controller: mainAVController);
-
-    final path = widget.config.appPath;
+    final path = widget.config.appUri;
     if (path != null) {
       _logger.info('Starting application $path');
       if (path.toLowerCase().endsWith('.html')) {
