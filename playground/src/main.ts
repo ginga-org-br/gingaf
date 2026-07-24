@@ -2,17 +2,17 @@ import * as monaco from 'monaco-editor';
 import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 
 // @ts-ignore
-import videoNcl from '../../examples/video.ncl?raw';
+import videoNcl from '../../ginga/examples/video.ncl?raw';
 // @ts-ignore
-import luaCanvasNcl from '../../examples/lua_canvas.ncl?raw';
+import luaCanvasNcl from '../../ginga/examples/lua_canvas.ncl?raw';
 // @ts-ignore
-import luaCanvasLua from '../../examples/lua_canvas.lua?raw';
+import luaCanvasLua from '../../ginga/examples/lua_canvas.lua?raw';
 // @ts-ignore
-import imageNcl from '../../examples/image.ncl?raw';
+import imageNcl from '../../ginga/examples/image.ncl?raw';
 // @ts-ignore
-import imageHtml from '../../examples/image.html?raw';
+import imageHtml from '../../ginga/examples/image.html?raw';
 // @ts-ignore
-import currentServiceHtml from '../../examples/current_service.html?raw';
+import currentServiceHtml from '../../ginga/examples/current_service.html?raw';
 
 self.MonacoEnvironment = {
   getWorker(_workerId: string, _label: string) {
@@ -20,18 +20,49 @@ self.MonacoEnvironment = {
   }
 };
 
-interface Example {
+export interface Example {
   mainFile: string;
+  category?: string;
+  description?: string;
   files: Record<string, string>;
 }
 
-const examples: Record<string, Example> = {
-  video: { mainFile: 'video.ncl', files: { 'video.ncl': videoNcl } },
-  lua_canvas: { mainFile: 'lua_canvas.ncl', files: { 'lua_canvas.ncl': luaCanvasNcl, 'lua_canvas.lua': luaCanvasLua } },
-  image: { mainFile: 'image.ncl', files: { 'image.ncl': imageNcl } },
-  image_html: { mainFile: 'image.html', files: { 'image.html': imageHtml } },
-  current_service: { mainFile: 'current_service.html', files: { 'current_service.html': currentServiceHtml } },
+export const examples: Record<string, Example> = {
+  video: { mainFile: 'video.ncl', category: 'media', description: 'Video media presentation example', files: { 'video.ncl': videoNcl } },
+  lua_canvas: { mainFile: 'lua_canvas.ncl', category: 'lua', description: 'Lua canvas graphics example', files: { 'lua_canvas.ncl': luaCanvasNcl, 'lua_canvas.lua': luaCanvasLua } },
+  image: { mainFile: 'image.ncl', category: 'media', description: 'Image presentation example', files: { 'image.ncl': imageNcl } },
+  image_html: { mainFile: 'image.html', category: 'html', description: 'HTML layout image example', files: { 'image.html': imageHtml } },
+  current_service: { mainFile: 'current_service.html', category: 'html', description: 'Current service HTML integration example', files: { 'current_service.html': currentServiceHtml } },
 };
+
+export function resolveExampleKey(requested: string | null, available: Record<string, Example> = examples): string {
+  if (!requested) return 'video';
+  const key = Object.keys(available).find(k =>
+    k === requested ||
+    available[k].mainFile === requested ||
+    available[k].mainFile === requested + '.ncl'
+  );
+  return key || 'video';
+}
+
+export function parseQueryConfig(searchString: string): {
+  requestedExample: string | null;
+  isEmbed: boolean;
+  category: string | null;
+  theme: string | null;
+  playbackRate: number;
+} {
+  const params = new URLSearchParams(searchString);
+  const rateStr = params.get('rate') || params.get('playbackRate');
+  const parsedRate = rateStr ? parseFloat(rateStr) : 1.0;
+  return {
+    requestedExample: params.get('example') || params.get('app'),
+    isEmbed: params.get('embed') === 'true',
+    category: params.get('category'),
+    theme: params.get('theme'),
+    playbackRate: isNaN(parsedRate) || parsedRate <= 0 ? 1.0 : parsedRate,
+  };
+}
 
 const editorContainer = document.getElementById('editor-container');
 const editorTabs = document.getElementById('editor-tabs');
@@ -52,9 +83,18 @@ const isEditableFile = (fileName: string) => {
 };
 
 if (editorContainer && editorTabs && runBtn && selectEl && iframe) {
-  let currentExample = examples['video'];
+  const queryConfig = parseQueryConfig(window.location.search);
+
+  if (queryConfig.isEmbed) {
+    document.body.classList.add('embed-mode');
+  }
+
+  const defaultKey = resolveExampleKey(queryConfig.requestedExample, examples);
+
+  let currentExample = examples[defaultKey];
   let currentFileName = currentExample.mainFile;
   let isRunning = false;
+  selectEl.value = defaultKey;
 
   const editor = monaco.editor.create(editorContainer, {
     value: currentExample.files[currentFileName],
