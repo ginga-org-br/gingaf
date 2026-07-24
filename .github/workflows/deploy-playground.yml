@@ -30,20 +30,20 @@ jobs:
 
       - name: Build Flutter Web
         working-directory: ./ginga
-        run: flutter build web --base-href /gingaf/ginga-playground/player/
+        run: flutter build web --base-href /gingaf/playground/player/
 
       - name: Install playground dependencies
-        working-directory: ./ginga-playground
+        working-directory: ./playground
         run: npm install
 
       - name: Copy Flutter build to Playground public/player
         run: |
-          mkdir -p ginga-playground/public/player
-          cp -r ginga/build/web/* ginga-playground/public/player/
+          mkdir -p playground/public/player
+          cp -r ginga/build/web/* playground/public/player/
 
       - name: Build playground
-        working-directory: ./ginga-playground
-        run: npx vite build --base=/gingaf/ginga-playground/
+        working-directory: ./playground
+        run: npx vite build --base=/gingaf/playground/
 
       - name: Setup Pages
         id: pages
@@ -51,8 +51,8 @@ jobs:
 
       - name: Prepare site directory
         run: |
-          mkdir -p site/ginga-playground
-          cp -r ginga-playground/dist/* site/ginga-playground/
+          mkdir -p site/playground
+          cp -r playground/dist/* site/playground/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
@@ -62,7 +62,7 @@ jobs:
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}ginga-playground/
+      url: ${{ steps.deployment.outputs.page_url }}playground/
     needs: build
     runs-on: ubuntu-latest
     name: Deploy

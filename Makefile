@@ -1,12 +1,13 @@
 .PHONY: test deps
 
-
 deps:
-	$(MAKE) -C ncl_doc deps
+	$(MAKE) -C ncldoc deps
 	$(MAKE) -C ginga deps
-	$(MAKE) -C ginga-playground deps
+	$(MAKE) -C playground deps
+	$(MAKE) -C vscode deps
 
-test:
-	$(MAKE) -C ncl_doc test
+test: deps
+	$(MAKE) -C ncldoc test
 	$(MAKE) -C ginga test
-	$(MAKE) -C ginga-playground test
+	$(MAKE) -C playground test
+	$(MAKE) -C vscode test

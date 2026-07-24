@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:ncl_doc/ncl_document.dart' hide State;
+import 'package:ncldoc/ncl_document.dart' hide State;
 
 import '../../web_utils_stub.dart'
     if (dart.library.html) '../../web_utils_web.dart';

@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart' hide Action;
-import 'package:ncl_doc/event.dart' hide State;
+import 'package:ncldoc/event.dart' hide State;
 import 'package:video_player/video_player.dart';
 
 import '../ncl_app.dart';

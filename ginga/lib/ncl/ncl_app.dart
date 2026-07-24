@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
-import 'package:ncl_doc/ncl_document.dart' hide State;
+import 'package:ncldoc/ncl_document.dart' hide State;
 
 import '../main_av.dart';
 import 'widgets/ncl_media_widget.dart';

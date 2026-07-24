@@ -19,9 +19,9 @@ jobs:
           node-version: "20"
 
       - name: Install dependencies
-        working-directory: ./ginga-vscode
+        working-directory: ./vscode
         run: npm install --no-audit --no-fund
 
       - name: Publish VS Code Extension
-        working-directory: ./ginga-vscode
+        working-directory: ./vscode
         run: npx @vscode/vsce publish -p ${{ secrets.VSCE_PAT }}

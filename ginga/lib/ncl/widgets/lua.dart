@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ncl_doc/ncl_document.dart' hide State;
+import 'package:ncldoc/ncl_document.dart' hide State;
 import '../ncl_app.dart';
 import 'ncl_media_widget.dart';
 

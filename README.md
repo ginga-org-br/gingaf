@@ -4,32 +4,14 @@
 
 `gingaf` is an MIT-licensed, multi-platform implementation of the interactive TV middleware Ginga standardised by ITU-T and SBTVD.
 
-For a web-based evaluation of `gingaf`, see [a github-hosted Ginga Playground](https://alanlivio.github.io/gingaf/playground/).
+For a web-based evaluation of `gingaf`, see [a github-hosted Ginga Playground](https://ginga-org-br.github.io/gingaf/playground/).
 
 The `gingaf` project structure is:
 
-- `ginga/` - flutter-based GUI presentation player for Ginga applications. See [ginga/README.md](ginga/README.md).
-- `ncl_doc/` - Dart-based headless execution engine and core NCL logic. See [ncl_doc/README.md](ncl_doc/README.md).
+- `ginga/` - flutter-based GUI presentation player for Ginga applications (contains the `examples/` subfolder with sample NCL and HTML documents for testing). See how to run application at [ginga/README.md](ginga/README.md).
+- `ncldoc/` - Dart-based headless execution engine and core NCL logic. See [ncldoc/README.md](ncldoc/README.md).
 - `playground/` - web-based interactive playground for evaluating gingaf. See [playground/README.md](playground/README.md).
-- `examples/` - collection of sample NCL and HTML documents for testing.
-
-## local run
-
-First see environment setup at [gingaf/README.md](gingaf/README.md).
-
-To run gingaf, do
-
-```bash
-cd gingaf/ginga
-make run-example app=video.ncl
-```
-
-To run playground, do
-
-```bash
-cd gingaf/ginga
-make run
-```
+- `vscode/` - Visual Studio Code extension. See [vscode/README.md](vscode/README.md).
 
 ## Demonstration Videos
 
