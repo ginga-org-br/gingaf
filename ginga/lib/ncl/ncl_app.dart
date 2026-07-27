@@ -133,11 +133,19 @@ class NCLAppState extends MediaState<NCLApp> {
           : (kIsWeb ? Uri.parse(widget.uri) : Uri.file(localPath));
       NCLDocument.uriResolver = GingaConfig.uriResolver;
       var effectiveUserData = widget.config?.usersDataJson ?? widget.usersDataJson;
-      if (effectiveUserData == null && !kIsWeb) {
-        final userDataFile = File('${File(localPath).parent.path}/user_data.json');
-        if (userDataFile.existsSync()) {
-          effectiveUserData = userDataFile.readAsStringSync();
+      if (effectiveUserData != null) {
+        String? content;
+        try {
+          content = await DefaultAssetBundle.of(context).loadString(effectiveUserData.trim());
+        } catch (_) {}
+        if (content == null) {
+          final parsedUri = Uri.tryParse(effectiveUserData.trim());
+          content = parsedUri != null ? GingaConfig.uriResolver(parsedUri) : null;
         }
+        if (content == null) {
+          throw Exception('GINGA_USERS_DATA file does not exist: $effectiveUserData');
+        }
+        effectiveUserData = content;
       }
       final doc = NCLDocument.fromXML(nclData, baseURI: uri, usersDataJson: effectiveUserData);
 

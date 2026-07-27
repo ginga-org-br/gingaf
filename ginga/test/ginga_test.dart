@@ -11,6 +11,12 @@ class MockGingaTestAssetBundle extends CachingAssetBundle {
 
   @override
   Future<String> loadString(String key, {bool cache = true}) async {
+    if (key == 'test/user_data1.json') {
+      return '[{"id": "u400", "name": "ConfUser"}]';
+    }
+    if (key == 'test/user_data2.json') {
+      return '[{"id": "uConfig", "name": "GingaConfigUser"}]';
+    }
     return '<ncl><body><media id="m1"/></body></ncl>';
   }
 }
@@ -55,8 +61,8 @@ void main() {
       expect(GingaConfig('').appUri, isNull);
     });
     test('Constructor should capture manual usersDataJson', () {
-      final config = GingaConfig('app.ncl', true, null, true, '{"id":"test"}');
-      expect(config.usersDataJson, equals('{"id":"test"}'));
+      final config = GingaConfig('app.ncl', true, null, true, 'test/user_data1.json');
+      expect(config.usersDataJson, equals('test/user_data1.json'));
     });
 
     test('Constructor should accept file path for usersDataJson profile parameter', () {
@@ -84,7 +90,7 @@ void main() {
           bundle: MockGingaTestAssetBundle(),
           child: NCLApp(
             uri: 'test.ncl',
-            usersDataJson: '{"id": "u400", "name": "ConfUser"}',
+            usersDataJson: 'test/user_data1.json',
           ),
         ),
       ));
@@ -100,7 +106,7 @@ void main() {
     });
 
     testWidgets('NCLApp mounts with GingaConfig parameter and resolves usersDataJson', (WidgetTester tester) async {
-      final config = GingaConfig('test.ncl', true, null, true, '{"id": "uConfig", "name": "GingaConfigUser"}');
+      final config = GingaConfig('test.ncl', true, null, true, 'test/user_data2.json');
       await tester.pumpWidget(MaterialApp(
         home: DefaultAssetBundle(
           bundle: MockGingaTestAssetBundle(),
