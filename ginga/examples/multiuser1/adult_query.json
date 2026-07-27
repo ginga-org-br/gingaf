@@ -1,0 +1,5 @@
+{
+  "attribute": "age",
+  "comparator": "gte",
+  "value": "18"
+}

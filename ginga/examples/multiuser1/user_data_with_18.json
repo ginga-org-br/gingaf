@@ -1,0 +1,10 @@
+[
+  {
+    "id": "u2",
+    "name": "User 2",
+    "properties": {
+      "age": 15,
+      "closedCaptioning": false
+    }
+  }
+]
