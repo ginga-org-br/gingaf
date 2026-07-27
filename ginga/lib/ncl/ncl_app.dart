@@ -203,7 +203,7 @@ class NCLAppState extends MediaState<NCLApp> {
   Widget buildWidgetContent(BuildContext context) {
     if (nclDocument == null && _cachedWidgets.isEmpty) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         body: Center(
           child: errorMsg.isNotEmpty
               ? Text(errorMsg, style: const TextStyle(color: Colors.red))
@@ -241,7 +241,7 @@ class NCLAppState extends MediaState<NCLApp> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
       body: Stack(
         key: const Key('ncl_app_stack'),
         fit: StackFit.expand,
