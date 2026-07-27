@@ -180,6 +180,12 @@ class NCLScheduler {
                 _stackPorts(actionItem.event.targetNode as Context);
               }
             }
+            if (actionItem.event.targetNode is Switch) {
+              final activeNode = document.resolveSwitch(actionItem.event.targetNode as Switch);
+              if (activeNode != null) {
+                _stackMainEvtAction(activeNode, ActionType.START);
+              }
+            }
           } else if (newState == State.SLEEPING) {
             for (var area in actionItem.event.targetNode.getAreas()) {
               final areaEvt = actionItem.event.targetNode.getAreaEvent(
@@ -187,6 +193,13 @@ class NCLScheduler {
               );
               if (areaEvt.state != State.SLEEPING) {
                 _stackAction(areaEvt, ActionType.STOP);
+              }
+            }
+            if (actionItem.event.targetNode is Switch) {
+              for (var child in (actionItem.event.targetNode as Switch).children) {
+                if (child is Node && child.getMainState() != State.SLEEPING) {
+                  _stackMainEvtAction(child, ActionType.STOP);
+                }
               }
             }
           }
