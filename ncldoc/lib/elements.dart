@@ -220,6 +220,7 @@ abstract class Node extends Element {
 abstract class Composition extends Node {
   int activeNodes = 0;
   List<Node> getNodes() => children.whereType<Node>().toList();
+  List<Media> getMedias() => children.whereType<Media>().toList();
   Composition({super.rawAttributes});
 }
 

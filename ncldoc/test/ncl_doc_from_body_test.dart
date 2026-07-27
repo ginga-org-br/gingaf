@@ -74,10 +74,10 @@ void main() {
       final doc = NCLDocument.fromBodyElements([media, port]);
       doc.start();
 
-      // Expect 2 because Settings now extends Media and a default_settings is added
-      expect(doc.body.getNodes().whereType<Media>().length, 2);
+      // Expect 3
+      expect(doc.body.getMedias().length, 2);
       expect(doc.body.getPorts().length, 1);
-      expect(doc.body.getNodes().whereType<Media>().first.id, 'm1');
+      expect(doc.body.getMedias().first.id, 'm1');
       expect(doc.body.getPorts().first.id, 'p1');
     });
 
