@@ -6,6 +6,7 @@ import 'package:logging/logging.dart';
 import 'package:ncldoc/ncl_document.dart' hide State;
 
 import '../main_av.dart';
+import '../ginga.dart';
 import 'widgets/ncl_media_widget.dart';
 
 export 'widgets/av.dart';
@@ -113,6 +114,7 @@ class NCLAppState extends MediaState<NCLApp> {
       final uri = widget.uri.startsWith('http')
           ? Uri.parse(widget.uri)
           : (kIsWeb ? Uri.parse(widget.uri) : Uri.file(widget.uri));
+      NCLDocument.uriResolver = GingaConfig.uriResolver;
       final doc = NCLDocument.fromXML(nclData, baseURI: uri, usersDataJson: widget.usersDataJson);
 
       nclDocument = doc;

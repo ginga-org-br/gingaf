@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'web_utils_stub.dart' if (dart.library.html) 'web_utils_web.dart';
 
@@ -30,42 +31,67 @@ class GingaConfig {
     String? manualVideo,
     bool manualEnableMainAv = true,
     this.usersDataJson,
-  ])  : appUri = _resolve(manualPath),
-        mainAvUri = (manualVideo == 'false') ? null : (manualVideo ?? _resolveVideo()),
-        enableCCWS = manualCCWS,
-        enableMainAv = (manualVideo == 'false') ? false : manualEnableMainAv;
+  ])  : appUri = uriResolver(manualPath),
+         mainAvUri = (manualVideo == 'false') ? null : uriResolver(manualVideo ?? DEFAULT_VIDEO),
+         enableCCWS = manualCCWS,
+         enableMainAv = (manualVideo == 'false') ? false : manualEnableMainAv;
 
-  static String? _resolveVideo() {
-    return null;
-  }
-
-  static String? _resolve(String? manualPath) {
-    String? path = manualPath;
-
-    if (path == null) {
+  static String? uriResolver(dynamic input) {
+    if (input is Uri) {
+      final path = input.isScheme('file') ? input.toFilePath() : input.path;
       if (kIsWeb) {
-        path = Uri.base.queryParameters['APP'];
-        if (path == null) {
-          path = getSessionStorageItem('GINGA_PLAYGROUND_MAIN');
-        }
+        try {
+          final mockJson = getSessionStorageItem('GINGA_PLAYGROUND_FILES');
+          if (mockJson != null) {
+            final mockFiles = jsonDecode(mockJson);
+            final fileName = input.pathSegments.last;
+            if (mockFiles.containsKey(fileName)) {
+              return mockFiles[fileName];
+            }
+          }
+        } catch (_) {}
       }
-      if (path == null && !kIsWeb) {
-        final file = File('.ginga_app');
+      if (!kIsWeb) {
+        final file = File(path);
         if (file.existsSync()) {
-          path = file.readAsStringSync().trim();
+          return file.readAsStringSync();
+        }
+        final fileName = path.contains('/') ? path.substring(path.lastIndexOf('/') + 1) : path;
+        final localFile = File(fileName);
+        if (localFile.existsSync()) {
+          return localFile.readAsStringSync();
         }
       }
-    }
-
-    if (path == null || path.isEmpty) return null;
-
-    final lower = path.toLowerCase();
-    if (!lower.endsWith('.ncl') && !lower.endsWith('.html')) {
-      _logger.severe('\nUnsupported format: $path');
       return null;
-    }
+    } else if (input is String?) {
+      String? path = input;
 
-    return path;
+      if (path == null) {
+        if (kIsWeb) {
+          path = Uri.base.queryParameters['APP'];
+          if (path == null) {
+            path = getSessionStorageItem('GINGA_PLAYGROUND_MAIN');
+          }
+        }
+        if (path == null && !kIsWeb) {
+          final file = File('.ginga_app');
+          if (file.existsSync()) {
+            path = file.readAsStringSync().trim();
+          }
+        }
+      }
+
+      if (path == null || path.isEmpty) return null;
+
+      final lower = path.toLowerCase();
+      if (!lower.endsWith('.ncl') && !lower.endsWith('.html') && !lower.endsWith('.mp4') && !lower.endsWith('.mkv') && !lower.endsWith('.avi')) {
+        _logger.severe('\nUnsupported format: $path');
+        return null;
+      }
+
+      return path;
+    }
+    return null;
   }
 
   bool get isEmpty => appUri == null && mainAvUri == null;

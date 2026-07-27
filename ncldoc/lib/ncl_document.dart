@@ -18,6 +18,8 @@ export 'users.dart';
 final _logger = Logger('ncl_doc');
 
 class NCLDocument {
+  static String? Function(Uri uri)? uriResolver;
+
   late final Head? _head;
   late final Context _body;
   late final Settings _settings;
@@ -26,6 +28,11 @@ class NCLDocument {
   late final NCLScheduler scheduler = NCLScheduler(this);
   final NCLUsers users = NCLUsers();
   final Map<String, String> systemVariables = {'system.language': 'por'};
+
+  factory NCLDocument.fromURI(Uri uri, {String? usersDataJson}) {
+    final xml = uriResolver?.call(uri) ?? '';
+    return NCLDocument.fromXML(xml, baseURI: uri, usersDataJson: usersDataJson);
+  }
 
   factory NCLDocument.fromBodyElements(List<Element> elements) {
     final body = Context(rawAttributes: const {'id': 'body'});
