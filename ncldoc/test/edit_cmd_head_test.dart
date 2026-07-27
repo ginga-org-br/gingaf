@@ -3,8 +3,7 @@ import 'package:test/test.dart';
 
 void main() {
   group('NCL Editing Commands Head Tests', () {
-
-test('routes and executes addRegion and removeRegion', () {
+    test('addRegion and removeRegion', () {
       final xmlString = '''
       <ncl id="ncl_doc">
         <head>
@@ -20,14 +19,16 @@ test('routes and executes addRegion and removeRegion', () {
       final doc = NCLDocument.fromXML(xmlString);
       expect(doc.getElementById('reg2'), isNull);
 
-      doc.doNclEditingCommand('addRegion("base1", "reg1", "<region id=\\"reg2\\" />")');
+      doc.doNclEditingCommand(
+        'addRegion("base1", "reg1", "<region id=\\"reg2\\" />")',
+      );
       expect(doc.getElementById('reg2'), isNotNull);
 
       doc.doNclEditingCommand('removeRegion("reg2")');
       expect(doc.getElementById('reg2'), isNull);
     });
 
-test('routes and executes addRegionBase and removeRegionBase', () {
+    test('addRegionBase and removeRegionBase', () {
       final xmlString = '''
       <ncl id="ncl_doc">
         <head />
@@ -37,16 +38,25 @@ test('routes and executes addRegionBase and removeRegionBase', () {
       </ncl>
       ''';
       final doc = NCLDocument.fromXML(xmlString);
-      expect(doc.headChildren.where((e) => e.xmlTagName == 'regionBase').isEmpty, isTrue);
+      expect(
+        doc.headChildren.where((e) => e.xmlTagName == 'regionBase').isEmpty,
+        isTrue,
+      );
 
       doc.doNclEditingCommand('addRegionBase("<regionBase id=\\"base1\\" />")');
-      expect(doc.headChildren.where((e) => e.xmlTagName == 'regionBase').isNotEmpty, isTrue);
+      expect(
+        doc.headChildren.where((e) => e.xmlTagName == 'regionBase').isNotEmpty,
+        isTrue,
+      );
 
       doc.doNclEditingCommand('removeRegionBase("base1")');
-      expect(doc.headChildren.where((e) => e.xmlTagName == 'regionBase').isEmpty, isTrue);
+      expect(
+        doc.headChildren.where((e) => e.xmlTagName == 'regionBase').isEmpty,
+        isTrue,
+      );
     });
 
-test('routes and executes addRuleBase and removeRuleBase', () {
+    test('addRuleBase and removeRuleBase', () {
       final xmlString = '''
       <ncl id="ncl_doc">
         <head />
@@ -56,16 +66,25 @@ test('routes and executes addRuleBase and removeRuleBase', () {
       </ncl>
       ''';
       final doc = NCLDocument.fromXML(xmlString);
-      expect(doc.headChildren.where((e) => e.xmlTagName == 'ruleBase').isEmpty, isTrue);
+      expect(
+        doc.headChildren.where((e) => e.xmlTagName == 'ruleBase').isEmpty,
+        isTrue,
+      );
 
       doc.doNclEditingCommand('addRuleBase("<ruleBase id=\\"base1\\" />")');
-      expect(doc.headChildren.where((e) => e.xmlTagName == 'ruleBase').isNotEmpty, isTrue);
+      expect(
+        doc.headChildren.where((e) => e.xmlTagName == 'ruleBase').isNotEmpty,
+        isTrue,
+      );
 
       doc.doNclEditingCommand('removeRuleBase("base1")');
-      expect(doc.headChildren.where((e) => e.xmlTagName == 'ruleBase').isEmpty, isTrue);
+      expect(
+        doc.headChildren.where((e) => e.xmlTagName == 'ruleBase').isEmpty,
+        isTrue,
+      );
     });
 
-test('routes and executes addRule and removeRule', () {
+    test('addRule and removeRule', () {
       final xmlString = '''
       <ncl id="ncl_doc">
         <head>
@@ -77,17 +96,21 @@ test('routes and executes addRule and removeRule', () {
       </ncl>
       ''';
       final doc = NCLDocument.fromXML(xmlString);
-      final ruleBase = doc.headChildren.where((e) => e.xmlTagName == 'ruleBase').first;
+      final ruleBase = doc.headChildren
+          .where((e) => e.xmlTagName == 'ruleBase')
+          .first;
       expect(ruleBase.children.isEmpty, isTrue);
 
-      doc.doNclEditingCommand('addRule("<rule id=\\"rule1\\" var=\\"system.language\\" value=\\"en\\" comparator=\\"eq\\" />")');
+      doc.doNclEditingCommand(
+        'addRule("<rule id=\\"rule1\\" var=\\"system.language\\" value=\\"en\\" comparator=\\"eq\\" />")',
+      );
       expect(ruleBase.children.isNotEmpty, isTrue);
 
       doc.doNclEditingCommand('removeRule("rule1")');
       expect(ruleBase.children.isEmpty, isTrue);
     });
 
-test('routes and executes addConnectorBase and removeConnectorBase', () {
+    test('addConnectorBase and removeConnectorBase', () {
       final xmlString = '''
       <ncl id="ncl_doc">
         <head />
@@ -97,16 +120,29 @@ test('routes and executes addConnectorBase and removeConnectorBase', () {
       </ncl>
       ''';
       final doc = NCLDocument.fromXML(xmlString);
-      expect(doc.headChildren.where((e) => e.xmlTagName == 'connectorBase').isEmpty, isTrue);
+      expect(
+        doc.headChildren.where((e) => e.xmlTagName == 'connectorBase').isEmpty,
+        isTrue,
+      );
 
-      doc.doNclEditingCommand('addConnectorBase("<connectorBase id=\\"base1\\" />")');
-      expect(doc.headChildren.where((e) => e.xmlTagName == 'connectorBase').isNotEmpty, isTrue);
+      doc.doNclEditingCommand(
+        'addConnectorBase("<connectorBase id=\\"base1\\" />")',
+      );
+      expect(
+        doc.headChildren
+            .where((e) => e.xmlTagName == 'connectorBase')
+            .isNotEmpty,
+        isTrue,
+      );
 
       doc.doNclEditingCommand('removeConnectorBase("base1")');
-      expect(doc.headChildren.where((e) => e.xmlTagName == 'connectorBase').isEmpty, isTrue);
+      expect(
+        doc.headChildren.where((e) => e.xmlTagName == 'connectorBase').isEmpty,
+        isTrue,
+      );
     });
 
-test('routes and executes addConnector and removeConnector', () {
+    test('addConnector and removeConnector', () {
       final xmlString = '''
       <ncl id="ncl_doc">
         <head>
@@ -118,17 +154,21 @@ test('routes and executes addConnector and removeConnector', () {
       </ncl>
       ''';
       final doc = NCLDocument.fromXML(xmlString);
-      final connBase = doc.headChildren.where((e) => e.xmlTagName == 'connectorBase').first;
+      final connBase = doc.headChildren
+          .where((e) => e.xmlTagName == 'connectorBase')
+          .first;
       expect(connBase.children.isEmpty, isTrue);
 
-      doc.doNclEditingCommand('addConnector("<causalConnector id=\\"conn1\\" />")');
+      doc.doNclEditingCommand(
+        'addConnector("<causalConnector id=\\"conn1\\" />")',
+      );
       expect(connBase.children.isNotEmpty, isTrue);
 
       doc.doNclEditingCommand('removeConnector("conn1")');
       expect(connBase.children.isEmpty, isTrue);
     });
 
-test('routes and executes addDescriptorBase and removeDescriptorBase', () {
+    test('addDescriptorBase and removeDescriptorBase', () {
       final xmlString = '''
       <ncl id="ncl_doc">
         <head />
@@ -138,16 +178,29 @@ test('routes and executes addDescriptorBase and removeDescriptorBase', () {
       </ncl>
       ''';
       final doc = NCLDocument.fromXML(xmlString);
-      expect(doc.headChildren.where((e) => e.xmlTagName == 'descriptorBase').isEmpty, isTrue);
+      expect(
+        doc.headChildren.where((e) => e.xmlTagName == 'descriptorBase').isEmpty,
+        isTrue,
+      );
 
-      doc.doNclEditingCommand('addDescriptorBase("<descriptorBase id=\\"base1\\" />")');
-      expect(doc.headChildren.where((e) => e.xmlTagName == 'descriptorBase').isNotEmpty, isTrue);
+      doc.doNclEditingCommand(
+        'addDescriptorBase("<descriptorBase id=\\"base1\\" />")',
+      );
+      expect(
+        doc.headChildren
+            .where((e) => e.xmlTagName == 'descriptorBase')
+            .isNotEmpty,
+        isTrue,
+      );
 
       doc.doNclEditingCommand('removeDescriptorBase("base1")');
-      expect(doc.headChildren.where((e) => e.xmlTagName == 'descriptorBase').isEmpty, isTrue);
+      expect(
+        doc.headChildren.where((e) => e.xmlTagName == 'descriptorBase').isEmpty,
+        isTrue,
+      );
     });
 
-test('routes and executes addDescriptor and removeDescriptor', () {
+    test('addDescriptor and removeDescriptor', () {
       final xmlString = '''
       <ncl id="ncl_doc">
         <head>
@@ -168,7 +221,7 @@ test('routes and executes addDescriptor and removeDescriptor', () {
       expect(doc.getElementById('desc1'), isNull);
     });
 
-test('routes and executes addDescriptorSwitch and removeDescriptorSwitch', () {
+    test('addDescriptorSwitch and removeDescriptorSwitch', () {
       final xmlString = '''
       <ncl id="ncl_doc">
         <head>
@@ -180,17 +233,21 @@ test('routes and executes addDescriptorSwitch and removeDescriptorSwitch', () {
       </ncl>
       ''';
       final doc = NCLDocument.fromXML(xmlString);
-      final descBase = doc.headChildren.where((e) => e.xmlTagName == 'descriptorBase').first;
+      final descBase = doc.headChildren
+          .where((e) => e.xmlTagName == 'descriptorBase')
+          .first;
       expect(descBase.children.isEmpty, isTrue);
 
-      doc.doNclEditingCommand('addDescriptorSwitch("<descriptorSwitch id=\\"dsw1\\" />")');
+      doc.doNclEditingCommand(
+        'addDescriptorSwitch("<descriptorSwitch id=\\"dsw1\\" />")',
+      );
       expect(descBase.children.isNotEmpty, isTrue);
 
       doc.doNclEditingCommand('removeDescriptorSwitch("dsw1")');
       expect(descBase.children.isEmpty, isTrue);
     });
 
-test('routes and executes addTransitionBase and removeTransitionBase', () {
+    test('addTransitionBase and removeTransitionBase', () {
       final xmlString = '''
       <ncl id="ncl_doc">
         <head />
@@ -200,16 +257,29 @@ test('routes and executes addTransitionBase and removeTransitionBase', () {
       </ncl>
       ''';
       final doc = NCLDocument.fromXML(xmlString);
-      expect(doc.headChildren.where((e) => e.xmlTagName == 'transitionBase').isEmpty, isTrue);
+      expect(
+        doc.headChildren.where((e) => e.xmlTagName == 'transitionBase').isEmpty,
+        isTrue,
+      );
 
-      doc.doNclEditingCommand('addTransitionBase("<transitionBase id=\\"base1\\" />")');
-      expect(doc.headChildren.where((e) => e.xmlTagName == 'transitionBase').isNotEmpty, isTrue);
+      doc.doNclEditingCommand(
+        'addTransitionBase("<transitionBase id=\\"base1\\" />")',
+      );
+      expect(
+        doc.headChildren
+            .where((e) => e.xmlTagName == 'transitionBase')
+            .isNotEmpty,
+        isTrue,
+      );
 
       doc.doNclEditingCommand('removeTransitionBase("base1")');
-      expect(doc.headChildren.where((e) => e.xmlTagName == 'transitionBase').isEmpty, isTrue);
+      expect(
+        doc.headChildren.where((e) => e.xmlTagName == 'transitionBase').isEmpty,
+        isTrue,
+      );
     });
 
-test('routes and executes addTransition and removeTransition', () {
+    test('addTransition and removeTransition', () {
       final xmlString = '''
       <ncl id="ncl_doc">
         <head>
@@ -221,17 +291,21 @@ test('routes and executes addTransition and removeTransition', () {
       </ncl>
       ''';
       final doc = NCLDocument.fromXML(xmlString);
-      final transBase = doc.headChildren.where((e) => e.xmlTagName == 'transitionBase').first;
+      final transBase = doc.headChildren
+          .where((e) => e.xmlTagName == 'transitionBase')
+          .first;
       expect(transBase.children.isEmpty, isTrue);
 
-      doc.doNclEditingCommand('addTransition("<transition id=\\"trans1\\" type=\\"fade\\" />")');
+      doc.doNclEditingCommand(
+        'addTransition("<transition id=\\"trans1\\" type=\\"fade\\" />")',
+      );
       expect(transBase.children.isNotEmpty, isTrue);
 
       doc.doNclEditingCommand('removeTransition("trans1")');
       expect(transBase.children.isEmpty, isTrue);
     });
 
-test('routes and executes addImportedDocumentBase and removeImportedDocumentBase', () {
+    test('addImportedDocumentBase and removeImportedDocumentBase', () {
       final xmlString = '''
       <ncl id="ncl_doc">
         <head />
@@ -241,16 +315,33 @@ test('routes and executes addImportedDocumentBase and removeImportedDocumentBase
       </ncl>
       ''';
       final doc = NCLDocument.fromXML(xmlString);
-      expect(doc.headChildren.where((e) => e.xmlTagName == 'importedDocumentBase').isEmpty, isTrue);
+      expect(
+        doc.headChildren
+            .where((e) => e.xmlTagName == 'importedDocumentBase')
+            .isEmpty,
+        isTrue,
+      );
 
-      doc.doNclEditingCommand('addImportedDocumentBase("<importedDocumentBase id=\\"base1\\" />")');
-      expect(doc.headChildren.where((e) => e.xmlTagName == 'importedDocumentBase').isNotEmpty, isTrue);
+      doc.doNclEditingCommand(
+        'addImportedDocumentBase("<importedDocumentBase id=\\"base1\\" />")',
+      );
+      expect(
+        doc.headChildren
+            .where((e) => e.xmlTagName == 'importedDocumentBase')
+            .isNotEmpty,
+        isTrue,
+      );
 
       doc.doNclEditingCommand('removeImportedDocumentBase("base1")');
-      expect(doc.headChildren.where((e) => e.xmlTagName == 'importedDocumentBase').isEmpty, isTrue);
+      expect(
+        doc.headChildren
+            .where((e) => e.xmlTagName == 'importedDocumentBase')
+            .isEmpty,
+        isTrue,
+      );
     });
 
-test('routes and executes addImportBase and removeImportBase', () {
+    test('addImportBase and removeImportBase', () {
       final xmlString = '''
       <ncl id="ncl_doc">
         <head>
@@ -262,17 +353,21 @@ test('routes and executes addImportBase and removeImportBase', () {
       </ncl>
       ''';
       final doc = NCLDocument.fromXML(xmlString);
-      final impBase = doc.headChildren.where((e) => e.xmlTagName == 'importedDocumentBase').first;
+      final impBase = doc.headChildren
+          .where((e) => e.xmlTagName == 'importedDocumentBase')
+          .first;
       expect(impBase.children.isEmpty, isTrue);
 
-      doc.doNclEditingCommand('addImportBase("<importBase documentURI=\\"doc1.ncl\\" alias=\\"alias1\\" />")');
+      doc.doNclEditingCommand(
+        'addImportBase("<importBase documentURI=\\"doc1.ncl\\" alias=\\"alias1\\" />")',
+      );
       expect(impBase.children.isNotEmpty, isTrue);
 
       doc.doNclEditingCommand('removeImportBase("doc1.ncl")');
       expect(impBase.children.isEmpty, isTrue);
     });
 
-test('routes and executes addImportNCL and removeImportNCL', () {
+    test('addImportNCL and removeImportNCL', () {
       final xmlString = '''
       <ncl id="ncl_doc">
         <head>
@@ -284,17 +379,21 @@ test('routes and executes addImportNCL and removeImportNCL', () {
       </ncl>
       ''';
       final doc = NCLDocument.fromXML(xmlString);
-      final impBase = doc.headChildren.where((e) => e.xmlTagName == 'importedDocumentBase').first;
+      final impBase = doc.headChildren
+          .where((e) => e.xmlTagName == 'importedDocumentBase')
+          .first;
       expect(impBase.children.isEmpty, isTrue);
 
-      doc.doNclEditingCommand('addImportNCL("<importNCL documentURI=\\"doc1.ncl\\" alias=\\"alias1\\" />")');
+      doc.doNclEditingCommand(
+        'addImportNCL("<importNCL documentURI=\\"doc1.ncl\\" alias=\\"alias1\\" />")',
+      );
       expect(impBase.children.isNotEmpty, isTrue);
 
       doc.doNclEditingCommand('removeImportNCL("doc1.ncl")');
       expect(impBase.children.isEmpty, isTrue);
     });
 
-test('routes and executes addFontBase and removeFontBase', () {
+    test('addFontBase and removeFontBase', () {
       final xmlString = '''
       <ncl id="ncl_doc">
         <head />
@@ -304,16 +403,25 @@ test('routes and executes addFontBase and removeFontBase', () {
       </ncl>
       ''';
       final doc = NCLDocument.fromXML(xmlString);
-      expect(doc.headChildren.where((e) => e.xmlTagName == 'fontBase').isEmpty, isTrue);
+      expect(
+        doc.headChildren.where((e) => e.xmlTagName == 'fontBase').isEmpty,
+        isTrue,
+      );
 
       doc.doNclEditingCommand('addFontBase("<fontBase id=\\"base1\\" />")');
-      expect(doc.headChildren.where((e) => e.xmlTagName == 'fontBase').isNotEmpty, isTrue);
+      expect(
+        doc.headChildren.where((e) => e.xmlTagName == 'fontBase').isNotEmpty,
+        isTrue,
+      );
 
       doc.doNclEditingCommand('removeFontBase("base1")');
-      expect(doc.headChildren.where((e) => e.xmlTagName == 'fontBase').isEmpty, isTrue);
+      expect(
+        doc.headChildren.where((e) => e.xmlTagName == 'fontBase').isEmpty,
+        isTrue,
+      );
     });
 
-test('routes and executes addFont and removeFont', () {
+    test('addFont and removeFont', () {
       final xmlString = '''
       <ncl id="ncl_doc">
         <head>
@@ -325,10 +433,14 @@ test('routes and executes addFont and removeFont', () {
       </ncl>
       ''';
       final doc = NCLDocument.fromXML(xmlString);
-      final fontBase = doc.headChildren.where((e) => e.xmlTagName == 'fontBase').first;
+      final fontBase = doc.headChildren
+          .where((e) => e.xmlTagName == 'fontBase')
+          .first;
       expect(fontBase.children.isEmpty, isTrue);
 
-      doc.doNclEditingCommand('addFont("<font family=\\"Arial\\" style=\\"normal\\" weight=\\"bold\\" />")');
+      doc.doNclEditingCommand(
+        'addFont("<font family=\\"Arial\\" style=\\"normal\\" weight=\\"bold\\" />")',
+      );
       expect(fontBase.children.isNotEmpty, isTrue);
 
       doc.doNclEditingCommand('removeFont("Arial", "normal", "bold")');

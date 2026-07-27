@@ -1,6 +1,5 @@
 import 'package:xml/xml.dart';
 
-import 'elements.dart';
 import 'mimetype.dart';
 import 'ncl_document.dart';
 import 'schema.dart';
