@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:gingaf/ccws/ccws.dart';
+import 'package:gingaf/ginga.dart';
 import 'package:gingaf/ncl/widgets/ncl_media_widget.dart';
 import 'package:logging/logging.dart';
 import 'package:webview_all/webview_all.dart';
@@ -10,13 +11,15 @@ final _logger = Logger('ginga-html');
 class HTMLApp extends MediaWidget {
   final Map<String, void Function(JavaScriptMessage)>? javaScriptChannels;
   final CCWS? ccws;
+  final GingaConfig? config;
 
   const HTMLApp(
       {super.key,
       required super.uri,
       super.media,
       this.javaScriptChannels,
-      this.ccws});
+      this.ccws,
+      this.config});
 
   @override
   State<HTMLApp> createState() => HTMLAppState();
@@ -54,8 +57,10 @@ class HTMLAppState extends MediaState<HTMLApp> {
     try {
       String content = await loadContent(widget.uri);
 
-      if (widget.ccws != null) {
-        content = widget.ccws!.injectCcwsFetch(content);
+      if (widget.ccws != null || (widget.config?.enableCCWS ?? false)) {
+        if (widget.ccws != null) {
+          content = widget.ccws!.injectCcwsFetch(content);
+        }
       }
 
       await _controller.loadHtmlString(content);
@@ -74,7 +79,9 @@ class HTMLAppState extends MediaState<HTMLApp> {
         </body>
         </html>
       """;
-      await _controller.loadHtmlString(errorHtml);
+      try {
+        await _controller.loadHtmlString(errorHtml);
+      } catch (_) {}
       if (mounted) {
         setState(() => _initialized = true);
       }

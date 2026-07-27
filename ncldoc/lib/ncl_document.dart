@@ -90,7 +90,7 @@ class NCLDocument {
       }
     }
     if (usersDataJson != null) {
-      users.loadUserData(usersDataJson);
+      users.loadUserData(usersDataJson, resolver: uriResolver);
     }
   }
 

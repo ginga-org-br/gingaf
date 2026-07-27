@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -24,12 +25,15 @@ class NCLAppExitNotification extends Notification {}
 class NCLApp extends MediaWidget {
   final MainAVController? mainAVController;
   final String? usersDataJson;
+  final GingaConfig? config;
+
   const NCLApp({
     super.key,
     required super.uri,
     super.media,
     this.mainAVController,
     this.usersDataJson,
+    this.config,
   });
 
   @override
@@ -111,11 +115,31 @@ class NCLAppState extends MediaState<NCLApp> {
 
       String nclData = await loadContent(widget.uri);
 
+      String localPath = widget.uri;
+      if (!kIsWeb && !widget.uri.startsWith('http://') && !widget.uri.startsWith('https://')) {
+        final file = File(widget.uri);
+        if (file.existsSync()) {
+          localPath = file.absolute.path;
+        } else {
+          final fileName = widget.uri.contains('/') ? widget.uri.substring(widget.uri.lastIndexOf('/') + 1) : widget.uri;
+          final localFile = File(fileName);
+          if (localFile.existsSync()) {
+            localPath = localFile.absolute.path;
+          }
+        }
+      }
       final uri = widget.uri.startsWith('http')
           ? Uri.parse(widget.uri)
-          : (kIsWeb ? Uri.parse(widget.uri) : Uri.file(widget.uri));
+          : (kIsWeb ? Uri.parse(widget.uri) : Uri.file(localPath));
       NCLDocument.uriResolver = GingaConfig.uriResolver;
-      final doc = NCLDocument.fromXML(nclData, baseURI: uri, usersDataJson: widget.usersDataJson);
+      var effectiveUserData = widget.config?.usersDataJson ?? widget.usersDataJson;
+      if (effectiveUserData == null && !kIsWeb) {
+        final userDataFile = File('${File(localPath).parent.path}/user_data.json');
+        if (userDataFile.existsSync()) {
+          effectiveUserData = userDataFile.readAsStringSync();
+        }
+      }
+      final doc = NCLDocument.fromXML(nclData, baseURI: uri, usersDataJson: effectiveUserData);
 
       nclDocument = doc;
       doc.start();

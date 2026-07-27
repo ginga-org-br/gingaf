@@ -146,12 +146,14 @@ class _GingaState extends State<Ginga> {
         htmlApp = html.HTMLApp(
           uri: path,
           ccws: _ccws,
+          config: widget.config,
         );
       } else {
         nclApp = ncl.NCLApp(
           uri: path,
           mainAVController: mainAVController,
           usersDataJson: widget.config.usersDataJson,
+          config: widget.config,
         );
       }
     }
