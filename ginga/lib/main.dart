@@ -43,7 +43,18 @@ void main(List<String> args) {
     }
   }
 
-  final config = GingaConfig(app, ccws, mainav);
+  String? usersDataJson = const String.fromEnvironment('GINGA_USERS_DATA').isNotEmpty
+      ? const String.fromEnvironment('GINGA_USERS_DATA')
+      : null;
+  if (usersDataJson == null) {
+    if (kIsWeb) {
+      usersDataJson = Uri.base.queryParameters['GINGA_USERS_DATA'];
+    } else {
+      usersDataJson = Platform.environment['GINGA_USERS_DATA'];
+    }
+  }
+
+  final config = GingaConfig(app, ccws, mainav, true, usersDataJson);
   runApp(Ginga(config: config));
   _logger.info(config.toString());
 

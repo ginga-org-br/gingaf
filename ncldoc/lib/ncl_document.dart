@@ -1,21 +1,18 @@
 library;
 
-import 'dart:async';
-import 'dart:io';
-
 import 'package:logging/logging.dart';
 
 import 'elements.dart';
 import 'event.dart';
-import 'parser.dart';
 import 'ncl_scheduler.dart';
+import 'parser.dart';
 import 'users.dart';
 
 export 'elements.dart';
 export 'event.dart';
 export 'lua.dart';
-export 'parser.dart';
 export 'ncl_scheduler.dart';
+export 'parser.dart';
 export 'users.dart';
 
 final _logger = Logger('ncl_doc');
@@ -27,7 +24,7 @@ class NCLDocument {
   final Uri baseURI;
 
   late final NCLScheduler scheduler = NCLScheduler(this);
-  final Users users = Users();
+  final NCLUsers users = NCLUsers();
   final Map<String, String> systemVariables = {'system.language': 'por'};
 
   factory NCLDocument.fromBodyElements(List<Element> elements) {
@@ -41,52 +38,35 @@ class NCLDocument {
     return NCLDocument._(body: body);
   }
 
-  factory NCLDocument.fromXML(String xml, {Uri? baseURI}) {
+  factory NCLDocument.fromXML(
+    String xml, {
+    Uri? baseURI,
+    String? usersDataJson,
+  }) {
     final (head, body) = NCLParser(baseURI: baseURI).parseString(xml);
-    return NCLDocument._(head: head, body: body, baseURI: baseURI);
+    return NCLDocument._(
+      head: head,
+      body: body,
+      baseURI: baseURI,
+      usersDataJson: usersDataJson,
+    );
   }
 
-  factory NCLDocument.fromURI(Uri uri) {
-    final path = uri.isScheme('file') ? uri.toFilePath() : uri.path;
-    final file = File(path);
-    final xml = file.readAsStringSync();
-    return NCLDocument.fromXML(xml, baseURI: uri);
-  }
-
-  NCLDocument._({Head? head, required Body body, Uri? baseURI})
-    : baseURI = baseURI ?? Uri.parse('.') {
+  NCLDocument._({
+    Head? head,
+    required Body body,
+    Uri? baseURI,
+    String? usersDataJson,
+  }) : baseURI = baseURI ?? Uri.parse('.') {
     _head = head;
     _body = body;
     _gatherSettings();
-    _gatherUsers();
+    _gatherUsers(usersDataJson);
   }
 
-  void _gatherUsers() {
-    if (_head == null) return;
-    for (var userBase in _head.whereType<UserBase>()) {
-      for (var up in userBase.userProfiles) {
-        if (up.id != null && up.id!.isNotEmpty) {
-          users.registerUser(up.toNCLUser());
-        }
-      }
-    }
-    for (var el in headChildren) {
-      if (el.xmlTagName == 'userBase' && el is! UserBase) {
-        for (var child in el.children) {
-          if (child.xmlTagName == 'userProfile') {
-            final id = child.rawAttributes['id'];
-            if (id != null && id.isNotEmpty) {
-              users.registerUser(
-                NCLUser(
-                  id: id,
-                  name: child.rawAttributes['name'] ?? id,
-                  initialProperties: child.rawAttributes,
-                ),
-              );
-            }
-          }
-        }
-      }
+  void _gatherUsers([String? usersDataJson]) {
+    if (usersDataJson != null) {
+      users.loadUserData(usersDataJson);
     }
   }
 

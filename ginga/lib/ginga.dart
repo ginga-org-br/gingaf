@@ -22,12 +22,14 @@ class GingaConfig {
   final String? mainAvUri;
   final bool enableCCWS;
   final bool enableMainAv;
+  final String? usersDataJson;
 
   GingaConfig([
     String? manualPath,
     bool manualCCWS = true,
     String? manualVideo,
     bool manualEnableMainAv = true,
+    this.usersDataJson,
   ])  : appUri = _resolve(manualPath),
         mainAvUri = (manualVideo == 'false') ? null : (manualVideo ?? _resolveVideo()),
         enableCCWS = manualCCWS,
@@ -70,7 +72,7 @@ class GingaConfig {
 
   @override
   String toString() {
-    return 'GingaConfig(appUri: $appUri, mainAvUri: $mainAvUri, enableCCWS: $enableCCWS, enableMainAv: $enableMainAv)';
+    return 'GingaConfig(appUri: $appUri, mainAvUri: $mainAvUri, enableCCWS: $enableCCWS, enableMainAv: $enableMainAv, usersDataJson: $usersDataJson)';
   }
 }
 
@@ -123,6 +125,7 @@ class _GingaState extends State<Ginga> {
         nclApp = ncl.NCLApp(
           uri: path,
           mainAVController: mainAVController,
+          usersDataJson: widget.config.usersDataJson,
         );
       }
     }

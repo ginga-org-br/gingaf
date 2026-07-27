@@ -1,7 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingaf/ginga.dart';
 import 'package:gingaf/ncl/ncl_app.dart';
+
+class MockGingaTestAssetBundle extends CachingAssetBundle {
+  @override
+  Future<ByteData> load(String key) async => ByteData(0);
+
+  @override
+  Future<String> loadString(String key, {bool cache = true}) async {
+    return '<ncl><body><media id="m1"/></body></ncl>';
+  }
+}
 
 void main() {
   group('GingaConfig Logic Tests', () {
@@ -42,6 +53,15 @@ void main() {
       expect(GingaConfig('app').appUri, isNull);
       expect(GingaConfig('').appUri, isNull);
     });
+    test('Constructor should capture manual usersDataJson', () {
+      final config = GingaConfig('app.ncl', true, null, true, '{"id":"test"}');
+      expect(config.usersDataJson, equals('{"id":"test"}'));
+    });
+
+    test('Constructor should accept file path for usersDataJson profile parameter', () {
+      final config = GingaConfig('app.ncl', true, null, true, '/path/to/user_data.json');
+      expect(config.usersDataJson, equals('/path/to/user_data.json'));
+    });
   });
 
   group('Widget Tests', () {
@@ -55,6 +75,27 @@ void main() {
 
       // Assert that NCLApp is in the tree
       expect(find.byType(NCLApp), findsOneWidget);
+    });
+
+    testWidgets('NCLApp mounts with userDataJson', (WidgetTester tester) async {
+      await tester.pumpWidget(MaterialApp(
+        home: DefaultAssetBundle(
+          bundle: MockGingaTestAssetBundle(),
+          child: NCLApp(
+            uri: 'test.ncl',
+            usersDataJson: '{"id": "u400", "name": "ConfUser"}',
+          ),
+        ),
+      ));
+
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 100)));
+      await tester.pump();
+
+      expect(find.byType(NCLApp), findsOneWidget);
+      final nclAppState = tester.state<NCLAppState>(find.byType(NCLApp));
+      expect(nclAppState.nclDocument, isNotNull);
+      expect(nclAppState.nclDocument?.users.getUser('u400'), isNotNull);
+      expect(nclAppState.nclDocument?.users.getUser('u400')?.name, equals('ConfUser'));
     });
   });
 }

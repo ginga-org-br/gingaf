@@ -1,11 +1,12 @@
-library;
 
-class NCLUser {
+import 'dart:convert';
+
+class NCLUserData {
   final String id;
   final String name;
   final Map<String, dynamic> _properties = {};
 
-  NCLUser({
+  NCLUserData({
     required this.id,
     required this.name,
     Map<String, dynamic>? initialProperties,
@@ -37,8 +38,8 @@ class NCLUser {
     };
   }
 
-  factory NCLUser.fromJson(Map<String, dynamic> json) {
-    return NCLUser(
+  factory NCLUserData.fromJson(Map<String, dynamic> json) {
+    return NCLUserData(
       id: json['id'] as String? ?? '',
       name: json['name'] as String? ?? '',
       initialProperties: json['properties'] != null
@@ -48,8 +49,8 @@ class NCLUser {
   }
 }
 
-class Users {
-  final Map<String, NCLUser> _users = {};
+class NCLUsers {
+  final Map<String, NCLUserData> _users = {};
   String? _activeUserId;
 
   void registerUser(NCLUser user) {
@@ -64,11 +65,11 @@ class Users {
     }
   }
 
-  NCLUser? getUser(String id) {
+  NCLUserData? getUser(String id) {
     return _users[id];
   }
 
-  NCLUser? get activeUser {
+  NCLUserData? get activeUser {
     if (_activeUserId == null) return null;
     return _users[_activeUserId];
   }
@@ -79,7 +80,7 @@ class Users {
     }
   }
 
-  List<NCLUser> get allUsers => _users.values.toList();
+  List<NCLUserData> get allUsers => _users.values.toList();
 
   dynamic getUserProperty(String userId, String propertyName) {
     final user = _users[userId];
@@ -96,35 +97,13 @@ class Users {
     return false;
   }
 
-  void syncFrom(Users otherManager) {
-    for (final user in otherManager.allUsers) {
-      if (!_users.containsKey(user.id)) {
-        registerUser(NCLUser(
-          id: user.id,
-          name: user.name,
-          initialProperties: user.properties,
-        ));
-      } else {
-        for (final entry in user.properties.entries) {
-          setUserProperty(user.id, entry.key, entry.value);
-        }
-      }
-    }
-    if (otherManager.activeUser != null) {
-      setActiveUser(otherManager.activeUser!.id);
-    }
-  }
-
-  List<Map<String, dynamic>> exportUsers() {
-    return _users.values.map((user) => user.toJson()).toList();
-  }
 
   void importUsers(List<dynamic> jsonList) {
     for (final item in jsonList) {
       if (item is Map<String, dynamic>) {
-        registerUser(NCLUser.fromJson(item));
+        registerUser(NCLUserData.fromJson(item));
       } else if (item is Map) {
-        registerUser(NCLUser.fromJson(Map<String, dynamic>.from(item)));
+        registerUser(NCLUserData.fromJson(Map<String, dynamic>.from(item)));
       }
     }
   }
@@ -150,10 +129,10 @@ class Users {
     return session.remove(userId);
   }
 
-  List<NCLUser> getUsersSessionUsers(String sessionId) {
+  List<NCLUserData> getUsersSessionUsers(String sessionId) {
     final userIds = _usersSessions[sessionId];
     if (userIds == null) return [];
-    return userIds.map((id) => _users[id]).whereType<NCLUser>().toList();
+    return userIds.map((id) => _users[id]).whereType<NCLUserData>().toList();
   }
 
   List<String> getUsersSessionIds() {
@@ -179,6 +158,48 @@ class Users {
     _users.clear();
     _usersSessions.clear();
     _activeUserId = null;
+  }
+
+  void loadUserData(String usersDataJson, {String? Function(Uri uri)? resolver}) {
+    if (usersDataJson.trim().isEmpty) return;
+
+    try {
+      final content = usersDataJson.trim();
+      if (content.startsWith('{') || content.startsWith('[')) {
+        _parseAndImportUserDataJson(content);
+      } else {
+        final uri = Uri.tryParse(content);
+        if (uri != null && resolver != null) {
+          final fileContent = resolver(uri);
+          if (fileContent != null) {
+            _parseAndImportUserDataJson(fileContent);
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  void _parseAndImportUserDataJson(String jsonStr) {
+    final decoded = json.decode(jsonStr);
+    if (decoded is Map<String, dynamic>) {
+      if (decoded.containsKey('id')) {
+        registerUser(NCLUserData.fromJson(decoded));
+      } else {
+        final defaultUser =
+            activeUser ??
+            NCLUserData(id: 'defaultUser', name: 'Default User');
+        for (var entry in decoded.entries) {
+          defaultUser.setProperty(entry.key, entry.value);
+        }
+        registerUser(defaultUser);
+      }
+    } else if (decoded is List) {
+      for (var item in decoded) {
+        if (item is Map<String, dynamic>) {
+          registerUser(NCLUserData.fromJson(item));
+        }
+      }
+    }
   }
 }
 

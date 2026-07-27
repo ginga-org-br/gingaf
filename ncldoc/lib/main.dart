@@ -42,7 +42,7 @@ void main(List<String> arguments) {
     ticksPerSecond = int.tryParse(arguments[1]) ?? 1;
   }
 
-  var document = NCLDocument.fromURI(Uri.file(arguments[0]));
+  var document = NCLDocument.fromXML(content, baseURI: Uri.file(arguments[0]));
   document.start();
 
   StreamSubscription<ProcessSignal>? sigintSub;

@@ -22,11 +22,13 @@ class NCLAppExitNotification extends Notification {}
 
 class NCLApp extends MediaWidget {
   final MainAVController? mainAVController;
+  final String? usersDataJson;
   const NCLApp({
     super.key,
     required super.uri,
     super.media,
     this.mainAVController,
+    this.usersDataJson,
   });
 
   @override
@@ -111,7 +113,7 @@ class NCLAppState extends MediaState<NCLApp> {
       final uri = widget.uri.startsWith('http')
           ? Uri.parse(widget.uri)
           : (kIsWeb ? Uri.parse(widget.uri) : Uri.file(widget.uri));
-      final doc = NCLDocument.fromXML(nclData, baseURI: uri);
+      final doc = NCLDocument.fromXML(nclData, baseURI: uri, usersDataJson: widget.usersDataJson);
 
       nclDocument = doc;
       doc.start();
