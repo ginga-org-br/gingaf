@@ -224,8 +224,8 @@ void main() {
     });
   });
 
-  group('Platform GINGA_USERS_DATA Environment Tests', () {
-    test('loads single user from inline GINGA_USERS_DATA JSON map with ID', () {
+  group('Platform USERS_DATA Environment Tests', () {
+    test('loads single user from inline USERS_DATA JSON map with ID', () {
       final xml = '<ncl><body><media id="m1"/></body></ncl>';
       final doc = NCLDocument.fromXML(
         xml,
@@ -237,7 +237,7 @@ void main() {
     });
 
     test(
-      'loads user properties from inline GINGA_USERS_DATA JSON map without ID',
+      'loads user properties from inline USERS_DATA JSON map without ID',
       () {
         final xml = '<ncl><body><media id="m1"/></body></ncl>';
         final doc = NCLDocument.fromXML(
@@ -251,7 +251,7 @@ void main() {
       },
     );
 
-    test('loads list of users from inline GINGA_USERS_DATA JSON list', () {
+    test('loads list of users from inline USERS_DATA JSON list', () {
       final xml = '<ncl><body><media id="m1"/></body></ncl>';
       final doc = NCLDocument.fromXML(
         xml,

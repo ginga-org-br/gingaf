@@ -43,14 +43,14 @@ void main(List<String> args) {
     }
   }
 
-  String? usersDataJson = const String.fromEnvironment('GINGA_USERS_DATA').isNotEmpty
-      ? const String.fromEnvironment('GINGA_USERS_DATA')
+  String? usersDataJson = const String.fromEnvironment('USERS_DATA').isNotEmpty
+      ? const String.fromEnvironment('USERS_DATA')
       : null;
   if (usersDataJson == null) {
     if (kIsWeb) {
-      usersDataJson = Uri.base.queryParameters['GINGA_USERS_DATA'];
+      usersDataJson = Uri.base.queryParameters['USERS_DATA'];
     } else {
-      usersDataJson = Platform.environment['GINGA_USERS_DATA'];
+      usersDataJson = Platform.environment['USERS_DATA'];
     }
   }
 

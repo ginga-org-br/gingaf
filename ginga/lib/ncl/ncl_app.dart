@@ -143,7 +143,7 @@ class NCLAppState extends MediaState<NCLApp> {
           content = parsedUri != null ? GingaConfig.uriResolver(parsedUri) : null;
         }
         if (content == null) {
-          throw Exception('GINGA_USERS_DATA file does not exist: $effectiveUserData');
+          throw Exception('USERS_DATA file does not exist: $effectiveUserData');
         }
         effectiveUserData = content;
       }
