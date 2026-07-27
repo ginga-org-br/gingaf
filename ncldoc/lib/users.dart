@@ -34,17 +34,24 @@ class NCLUserData {
     return {
       'id': id,
       'name': name,
-      'properties': Map<String, dynamic>.from(_properties),
+      ..._properties,
     };
   }
 
   factory NCLUserData.fromJson(Map<String, dynamic> json) {
+    final initialProps = Map<String, dynamic>.from(json);
+    initialProps.remove('id');
+    initialProps.remove('name');
+    if (initialProps.containsKey('properties')) {
+      final nestedProps = initialProps.remove('properties');
+      if (nestedProps is Map) {
+        initialProps.addAll(Map<String, dynamic>.from(nestedProps));
+      }
+    }
     return NCLUserData(
       id: json['id'] as String? ?? '',
       name: json['name'] as String? ?? '',
-      initialProperties: json['properties'] != null
-          ? Map<String, dynamic>.from(json['properties'] as Map)
-          : null,
+      initialProperties: initialProps.isNotEmpty ? initialProps : null,
     );
   }
 }

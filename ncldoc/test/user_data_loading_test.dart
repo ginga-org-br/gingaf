@@ -63,8 +63,8 @@ void main() {
       final json = user.toJson();
       expect(json['id'], equals('user1'));
       expect(json['name'], equals('Alice'));
-      expect(json['properties']['age'], equals(25));
-      expect(json['properties']['lang'], equals('pt-BR'));
+      expect(json['age'], equals(25));
+      expect(json['lang'], equals('pt-BR'));
 
       final restoredUser = NCLUserData.fromJson(json);
       expect(restoredUser.id, equals('user1'));
