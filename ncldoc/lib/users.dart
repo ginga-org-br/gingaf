@@ -51,9 +51,29 @@ class NCLUserData {
 
 class NCLUsers {
   final Map<String, NCLUserData> _users = {};
+  final Map<String, NCLUserProfile> _profiles = {};
   String? _activeUserId;
 
-  void registerUser(NCLUser user) {
+  void registerProfile(NCLUserProfile profile) {
+    _profiles[profile.id] = profile;
+  }
+
+  NCLUserProfile? getProfile(String id) {
+    return _profiles[id];
+  }
+
+  bool evaluateProfile(String id) {
+    final profile = _profiles[id];
+    if (profile == null) return false;
+    for (final user in allUsers) {
+      if (profile.matches(user)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void registerUser(NCLUserData user) {
     _users[user.id] = user;
     _activeUserId ??= user.id;
   }
@@ -203,3 +223,90 @@ class NCLUsers {
   }
 }
 
+class NCLUserProfile {
+  final String id;
+  final String? src;
+  final Map<String, dynamic> query;
+
+  NCLUserProfile({
+    required this.id,
+    this.src,
+    required this.query,
+  });
+
+  bool matches(NCLUserData user) {
+    return _evaluate(query, user);
+  }
+
+  bool _evaluate(Map<String, dynamic> expr, NCLUserData user) {
+    var andList = expr['and'] ?? expr['AND'];
+    var orList = expr['or'] ?? expr['OR'];
+    final op = expr['operator']?.toString().toLowerCase();
+    if (op == 'and') andList ??= expr['rules'];
+    if (op == 'or') orList ??= expr['rules'];
+
+    if (andList != null) {
+      if (andList is List) {
+        for (var item in andList) {
+          if (item is Map<String, dynamic>) {
+            if (!_evaluate(item, user)) return false;
+          }
+        }
+        return true;
+      }
+      return false;
+    }
+
+    if (orList != null) {
+      if (orList is List) {
+        for (var item in orList) {
+          if (item is Map<String, dynamic>) {
+            if (_evaluate(item, user)) return true;
+          }
+        }
+        return false;
+      }
+      return false;
+    }
+
+    if (expr.containsKey('attribute')) {
+      final attName = expr['attribute'] as String;
+      final comp = expr['comparator'] as String;
+      final value = expr['value']?.toString() ?? '';
+
+      final userVal = user.getProperty(attName);
+      if (userVal == null) return false;
+
+      final uvStr = userVal.toString();
+
+      switch (comp) {
+        case 'eq':
+          return uvStr == value;
+        case 'ne':
+          return uvStr != value;
+        case 'gt':
+          final n1 = double.tryParse(uvStr);
+          final n2 = double.tryParse(value);
+          if (n1 != null && n2 != null) return n1 > n2;
+          return uvStr.compareTo(value) > 0;
+        case 'gte':
+          final n1 = double.tryParse(uvStr);
+          final n2 = double.tryParse(value);
+          if (n1 != null && n2 != null) return n1 >= n2;
+          return uvStr.compareTo(value) >= 0;
+        case 'lt':
+          final n1 = double.tryParse(uvStr);
+          final n2 = double.tryParse(value);
+          if (n1 != null && n2 != null) return n1 < n2;
+          return uvStr.compareTo(value) < 0;
+        case 'lte':
+          final n1 = double.tryParse(uvStr);
+          final n2 = double.tryParse(value);
+          if (n1 != null && n2 != null) return n1 <= n2;
+          return uvStr.compareTo(value) <= 0;
+      }
+    }
+
+    return false;
+  }
+}
