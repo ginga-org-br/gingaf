@@ -1,13 +1,5 @@
 [
   {
-    "id": "u1",
-    "name": "User 1",
-    "properties": {
-      "age": 20,
-      "closedCaptioning": true
-    }
-  },
-  {
     "id": "u2",
     "name": "User 2",
     "properties": {
