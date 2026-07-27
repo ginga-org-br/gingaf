@@ -346,17 +346,27 @@ class NCLParser {
         break;
       case 'addRule':
         if (parsed.args.isEmpty) return;
-        final newRule = parseXml(parsed.args[0]);
+        final ruleXmlStr = parsed.args.length > 1
+            ? parsed.args[1]
+            : parsed.args[0];
+        final parentId = parsed.args.length > 1 ? parsed.args[0] : null;
+        final newRule = parseXml(ruleXmlStr);
         if (newRule == null) return;
-        final parent = findElementInHead((el) => el.xmlTagName == 'ruleBase');
-        if (parent != null) {
-          parent.children.add(newRule);
-          newRule.parent = parent;
+        final parentRuleBase = findElementInHead(
+          (el) => parentId != null
+              ? el.rawAttributes['id'] == parentId
+              : el.xmlTagName == 'ruleBase',
+        );
+        if (parentRuleBase != null) {
+          parentRuleBase.children.add(newRule);
+          newRule.parent = parentRuleBase;
         }
         break;
       case 'removeRule':
         if (parsed.args.isEmpty) return;
-        removeElementFromHead(parsed.args[0]);
+        removeElementFromHead(
+          parsed.args.length > 1 ? parsed.args[1] : parsed.args[0],
+        );
         break;
       case 'addConnectorBase':
         if (parsed.args.isEmpty) return;
@@ -371,19 +381,27 @@ class NCLParser {
         break;
       case 'addConnector':
         if (parsed.args.isEmpty) return;
-        final newConnector = parseXml(parsed.args[0]);
+        final connXmlStr = parsed.args.length > 1
+            ? parsed.args[1]
+            : parsed.args[0];
+        final parentConnId = parsed.args.length > 1 ? parsed.args[0] : null;
+        final newConnector = parseXml(connXmlStr);
         if (newConnector == null) return;
-        final parent = findElementInHead(
-          (el) => el.xmlTagName == 'connectorBase',
+        final parentConnBase = findElementInHead(
+          (el) => parentConnId != null
+              ? el.rawAttributes['id'] == parentConnId
+              : el.xmlTagName == 'connectorBase',
         );
-        if (parent != null) {
-          parent.children.add(newConnector);
-          newConnector.parent = parent;
+        if (parentConnBase != null) {
+          parentConnBase.children.add(newConnector);
+          newConnector.parent = parentConnBase;
         }
         break;
       case 'removeConnector':
         if (parsed.args.isEmpty) return;
-        removeElementFromHead(parsed.args[0]);
+        removeElementFromHead(
+          parsed.args.length > 1 ? parsed.args[1] : parsed.args[0],
+        );
         break;
       case 'addDescriptorBase':
         if (parsed.args.isEmpty) return;
@@ -398,35 +416,51 @@ class NCLParser {
         break;
       case 'addDescriptor':
         if (parsed.args.isEmpty) return;
-        final newDesc = parseXml(parsed.args[0]);
+        final descXmlStr = parsed.args.length > 1
+            ? parsed.args[1]
+            : parsed.args[0];
+        final parentDescId = parsed.args.length > 1 ? parsed.args[0] : null;
+        final newDesc = parseXml(descXmlStr);
         if (newDesc == null) return;
-        final parent = findElementInHead(
-          (el) => el.xmlTagName == 'descriptorBase',
+        final parentDescBase = findElementInHead(
+          (el) => parentDescId != null
+              ? el.rawAttributes['id'] == parentDescId
+              : el.xmlTagName == 'descriptorBase',
         );
-        if (parent != null) {
-          parent.children.add(newDesc);
-          newDesc.parent = parent;
+        if (parentDescBase != null) {
+          parentDescBase.children.add(newDesc);
+          newDesc.parent = parentDescBase;
         }
         break;
       case 'removeDescriptor':
         if (parsed.args.isEmpty) return;
-        removeElementFromHead(parsed.args[0]);
+        removeElementFromHead(
+          parsed.args.length > 1 ? parsed.args[1] : parsed.args[0],
+        );
         break;
       case 'addDescriptorSwitch':
         if (parsed.args.isEmpty) return;
-        final newDescSwitch = parseXml(parsed.args[0]);
+        final descSwXmlStr = parsed.args.length > 1
+            ? parsed.args[1]
+            : parsed.args[0];
+        final parentDescSwId = parsed.args.length > 1 ? parsed.args[0] : null;
+        final newDescSwitch = parseXml(descSwXmlStr);
         if (newDescSwitch == null) return;
-        final parent = findElementInHead(
-          (el) => el.xmlTagName == 'descriptorBase',
+        final parentDescSwBase = findElementInHead(
+          (el) => parentDescSwId != null
+              ? el.rawAttributes['id'] == parentDescSwId
+              : el.xmlTagName == 'descriptorBase',
         );
-        if (parent != null) {
-          parent.children.add(newDescSwitch);
-          newDescSwitch.parent = parent;
+        if (parentDescSwBase != null) {
+          parentDescSwBase.children.add(newDescSwitch);
+          newDescSwitch.parent = parentDescSwBase;
         }
         break;
       case 'removeDescriptorSwitch':
         if (parsed.args.isEmpty) return;
-        removeElementFromHead(parsed.args[0]);
+        removeElementFromHead(
+          parsed.args.length > 1 ? parsed.args[1] : parsed.args[0],
+        );
         break;
       case 'addTransitionBase':
         if (parsed.args.isEmpty) return;
@@ -441,10 +475,16 @@ class NCLParser {
         break;
       case 'addTransition':
         if (parsed.args.isEmpty) return;
-        final newTrans = parseXml(parsed.args[0]);
+        final transXmlStr = parsed.args.length > 1
+            ? parsed.args[1]
+            : parsed.args[0];
+        final parentTransId = parsed.args.length > 1 ? parsed.args[0] : null;
+        final newTrans = parseXml(transXmlStr);
         if (newTrans == null) return;
         final parent = findElementInHead(
-          (el) => el.xmlTagName == 'transitionBase',
+          (el) => parentTransId != null
+              ? el.rawAttributes['id'] == parentTransId
+              : el.xmlTagName == 'transitionBase',
         );
         if (parent != null) {
           parent.children.add(newTrans);
@@ -453,7 +493,9 @@ class NCLParser {
         break;
       case 'removeTransition':
         if (parsed.args.isEmpty) return;
-        removeElementFromHead(parsed.args[0]);
+        removeElementFromHead(
+          parsed.args.length > 1 ? parsed.args[1] : parsed.args[0],
+        );
         break;
       case 'addImportBase':
         if (parsed.args.isEmpty) return;
@@ -594,6 +636,30 @@ class NCLParser {
           );
         }
         break;
+      case 'addPort':
+        if (parsed.args.length < 2) return;
+        final compositeId = parsed.args[0];
+        final xmlPort = parsed.args[1];
+        final parentComp = doc.getNodeById(compositeId);
+        if (parentComp is Composition) {
+          final newPort = parseXml(xmlPort);
+          if (newPort is Port) {
+            parentComp.children.add(newPort);
+            newPort.parent = parentComp;
+          }
+        }
+        break;
+      case 'removePort':
+        if (parsed.args.length < 2) return;
+        final compositeId = parsed.args[0];
+        final portId = parsed.args[1];
+        final parentComp = doc.getNodeById(compositeId);
+        if (parentComp is Composition) {
+          parentComp.children.removeWhere(
+            (el) => el is Port && el.id == portId,
+          );
+        }
+        break;
       case 'setPropertyValue':
         if (parsed.args.length < 3) return;
         final nodeId = parsed.args[0];
@@ -635,9 +701,12 @@ class NCLParser {
         if (parent != null) {
           parent.children.removeWhere(
             (el) =>
-                el.rawAttributes['family'] == family &&
-                el.rawAttributes['style'] == style &&
-                el.rawAttributes['weight'] == weight,
+                (el.rawAttributes['family'] == family ||
+                    el.rawAttributes['fontFamily'] == family) &&
+                (el.rawAttributes['style'] == style ||
+                    el.rawAttributes['fontStyle'] == style) &&
+                (el.rawAttributes['weight'] == weight ||
+                    el.rawAttributes['fontWeight'] == weight),
           );
         }
         break;
