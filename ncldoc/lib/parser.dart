@@ -94,7 +94,10 @@ class NCLParser {
         element = Switch(rawAttributes: attrs);
         break;
       case 'settings':
-        element = Settings(rawAttributes: attrs);
+        element = Settings(
+          rawAttributes: attrs,
+          mimeType: attrs['type'] ?? 'application/x-ncl-settings',
+        );
         break;
       case 'transition':
         element = Transition(rawAttributes: attrs);
@@ -196,7 +199,8 @@ class NCLParser {
       return Media(rawAttributes: rawAttributes);
     }
     if (type == 'application/x-ncl-settings' ||
-        type == 'application/x-ginga-settings') {
+        type == 'application/x-ginga-settings' ||
+        type == 'application/x-ncl-user-settings') {
       return Settings(rawAttributes: rawAttributes, mimeType: type);
     }
     final resolvedSrc = src.replaceAll('\\', '/');

@@ -1,5 +1,7 @@
 library;
 
+import 'dart:convert';
+import 'dart:io';
 import 'package:logging/logging.dart';
 
 import 'elements.dart';
@@ -72,8 +74,41 @@ class NCLDocument {
   }
 
   void _gatherUsers([String? usersDataJson]) {
+    if (_head != null) {
+      for (var el in headChildren) {
+        if (el.xmlTagName == 'userBase') {
+          for (var child in el.children) {
+            if (child.xmlTagName == 'userProfile') {
+              final id = child.rawAttributes['id'];
+              final src = child.rawAttributes['src'];
+              if (id != null && id.isNotEmpty) {
+                _loadUserProfile(id, src);
+              }
+            }
+          }
+        }
+      }
+    }
     if (usersDataJson != null) {
       users.loadUserData(usersDataJson);
+    }
+  }
+
+  void _loadUserProfile(String id, String? src) {
+    if (src == null) return;
+    final uri = baseURI.resolve(src);
+    String? jsonContent;
+    if (uriResolver != null) {
+      jsonContent = uriResolver!(uri);
+    } else {
+      final file = File(uri.isScheme('file') ? uri.toFilePath() : uri.path);
+      if (file.existsSync()) {
+        jsonContent = file.readAsStringSync();
+      }
+    }
+    if (jsonContent != null) {
+      final query = json.decode(jsonContent);
+      users.registerProfile(NCLUserProfile(id: id, src: src, query: query));
     }
   }
 
@@ -135,10 +170,8 @@ class NCLDocument {
   List<Element> get headChildren => _head ?? const [];
 
   bool evaluateRule(String ruleId) {
-    final ruleBase = headChildren
-        .where((el) => el.xmlTagName == 'ruleBase')
-        .firstOrNull;
-    if (ruleBase == null) return false;
+    final ruleBases = headChildren.where((el) => el.xmlTagName == 'ruleBase');
+    if (ruleBases.isEmpty) return false;
 
     Element? findRule(Element parent, String id) {
       if ((parent.xmlTagName == 'rule' ||
@@ -153,7 +186,11 @@ class NCLDocument {
       return null;
     }
 
-    final ruleEl = findRule(ruleBase, ruleId);
+    Element? ruleEl;
+    for (final rb in ruleBases) {
+      ruleEl = findRule(rb, ruleId);
+      if (ruleEl != null) break;
+    }
     if (ruleEl == null) return false;
 
     return _evaluateRuleElement(ruleEl);
@@ -161,10 +198,35 @@ class NCLDocument {
 
   bool _evaluateRuleElement(Element ruleEl) {
     if (ruleEl.xmlTagName == 'rule') {
+      if (ruleEl.rawAttributes['var'] == null &&
+          ruleEl.rawAttributes['id'] != null) {
+        final refId = ruleEl.rawAttributes['id']!;
+        if (refId != ruleEl.parent?.rawAttributes['id']) {
+          final targetRule = getElementById(refId);
+          if (targetRule != null && targetRule != ruleEl) {
+            return _evaluateRuleElement(targetRule);
+          }
+        }
+      }
+
       final varName = ruleEl.rawAttributes['var'] ?? '';
       final value = ruleEl.rawAttributes['value'] ?? '';
       final comparator = ruleEl.rawAttributes['comparator'] ?? 'eq';
-      final systemVal = systemVariables[varName] ?? '';
+      var systemVal = systemVariables[varName];
+      if (systemVal == null) {
+        for (final s in _body.children.whereType<Settings>()) {
+          var propName = varName;
+          if (s.id != null && varName.startsWith('${s.id}.')) {
+            propName = varName.substring(s.id!.length + 1);
+          }
+          final val = getPropertyValue(s, propName);
+          if (val != null) {
+            systemVal = val;
+            break;
+          }
+        }
+      }
+      systemVal ??= '';
 
       switch (comparator) {
         case 'eq':
@@ -266,7 +328,43 @@ class NCLDocument {
     return null;
   }
 
+  bool _hasUserSettingsMedia(Element root) {
+    if (root.rawAttributes['type'] == 'application/x-ncl-user-settings' &&
+        root.rawAttributes['user'] == 'currentUser') {
+      return true;
+    }
+    for (var child in root.children) {
+      if (_hasUserSettingsMedia(child)) return true;
+    }
+    return false;
+  }
+
   String? getPropertyValue(Node node, String propertyName) {
+    if (node is Settings) {
+      final isUserSetting = node.mimeType == 'application/x-ncl-user-settings' ||
+          node.rawAttributes['type'] == 'application/x-ncl-user-settings';
+      
+      bool hasCurrentUser = node.rawAttributes['user'] == 'currentUser';
+      if (!hasCurrentUser && node == _settings) {
+        hasCurrentUser = _hasUserSettingsMedia(_body);
+      }
+
+      if (isUserSetting || hasCurrentUser) {
+        final hasPropertyDecl = node.children
+            .whereType<Property>()
+            .any((p) => p.name == propertyName);
+        if (hasPropertyDecl) {
+          final user = users.activeUser;
+          if (user != null) {
+            final userVal = user.getProperty(propertyName);
+            if (userVal != null) {
+              return userVal.toString();
+            }
+          }
+        }
+      }
+    }
+
     var currentNode = node;
     final referId = currentNode.rawAttributes['refer'];
     if (referId != null) {
@@ -292,7 +390,10 @@ class NCLDocument {
   void stop() => scheduler.stop();
   Set<Media> tick([int incrementMs = 0]) => scheduler.tick(incrementMs);
   void tickIndefinitely({int ticksPerSecond = 10, void Function()? onStop}) =>
-      scheduler.tickIndefinitely(ticksPerSecond: ticksPerSecond, onStop: onStop);
+      scheduler.tickIndefinitely(
+        ticksPerSecond: ticksPerSecond,
+        onStop: onStop,
+      );
   void triggerSelection(String componentId, String keyCode) =>
       scheduler.triggerSelection(componentId, keyCode);
 }
