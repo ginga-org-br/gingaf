@@ -265,7 +265,25 @@ class NCLScheduler {
 
     final role = attrAssess.rawAttributes['role'];
     final comparator = assessment.rawAttributes['comparator'] ?? 'eq';
-    final targetValue = valueAssess.rawAttributes['value'] ?? '';
+    var targetValue = valueAssess.rawAttributes['value'] ?? '';
+
+    if (targetValue.startsWith('\$')) {
+      final paramName = targetValue.substring(1);
+      final bindParam = link.children
+          .whereType<BindParam>()
+          .where((bp) => bp.name == paramName)
+          .firstOrNull;
+      if (bindParam != null && bindParam.value != null) {
+        targetValue = bindParam.value!;
+      } else {
+        final paramEl = link.children
+            .where((c) => c.rawAttributes['name'] == paramName)
+            .firstOrNull;
+        if (paramEl != null && paramEl.rawAttributes['value'] != null) {
+          targetValue = paramEl.rawAttributes['value']!;
+        }
+      }
+    }
 
     final bind = link.children
         .whereType<Bind>()
