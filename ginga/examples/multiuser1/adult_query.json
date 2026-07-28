@@ -1,5 +1,1 @@
-{
-  "attribute": "age",
-  "comparator": "gte",
-  "value": "18"
-}
+{"attribute": "age", "comparator": "gte", "value": "18"}
