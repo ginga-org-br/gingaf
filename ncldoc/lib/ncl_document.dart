@@ -1,76 +1,85 @@
 library;
 
+import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+
 import 'package:logging/logging.dart';
 
 import 'elements.dart';
 import 'event.dart';
+import 'file_content.dart';
 import 'ncl_scheduler.dart';
 import 'parser.dart';
 import 'users.dart';
 
 export 'elements.dart';
 export 'event.dart';
+export 'file_content.dart';
 export 'lua.dart';
 export 'ncl_scheduler.dart';
 export 'parser.dart';
 export 'users.dart';
 
+
+
 final _logger = Logger('ncl_doc');
 
 class NCLDocument {
-  static String? Function(Uri uri)? uriResolver;
-
   late final Head? _head;
   late final Context _body;
   late final Settings _settings;
-  final Uri baseURI;
+  final Uri docUri;
+  Uri get baseUri => docUri.resolve('.');
+  final ContentLoader contentLoader;
 
   late final NCLScheduler scheduler = NCLScheduler(this);
   final NCLUsers users = NCLUsers();
   final Map<String, String> systemVariables = {'system.language': 'por'};
 
-  factory NCLDocument.fromURI(Uri uri, {String? usersDataJson}) {
-    final xml = uriResolver?.call(uri) ?? '';
-    return NCLDocument.fromXML(xml, baseURI: uri, usersDataJson: usersDataJson);
-  }
-
-  factory NCLDocument.fromBodyElements(List<Element> elements) {
-    final body = Context(rawAttributes: const {'id': 'body'});
-    body.children.addAll(elements);
-    for (var el in elements) {
-      if (el is Node) {
-        el.parent = body;
-      }
-    }
-    return NCLDocument.fromContent(
-      xml,
-      baseURI: uri,
+  static Future<NCLDocument> fromUri(
+    Uri docUri, {
+    Uri? userDataJsonUri,
+    ContentLoader contentLoader = const FileContentLoader(),
+  }) async {
+    final xml = await contentLoader.load(docUri);
+    final resolvedUsersDataJson = userDataJsonUri != null
+        ? await contentLoader.load(userDataJsonUri)
+        : null;
+    final doc = NCLDocument.fromContent(
+      xml ?? '',
+      docUri: docUri,
       usersDataJson: resolvedUsersDataJson,
+      contentLoader: contentLoader,
     );
+    await doc.loadUserProfiles();
+    return doc;
   }
 
   factory NCLDocument.fromContent(
     String xml, {
-    Uri? baseURI,
+    Uri? docUri,
     String? usersDataJson,
+    ContentLoader contentLoader = const FileContentLoader(),
   }) {
-    final (head, body) = NCLParser(baseURI: baseURI).parseString(xml);
+    final effectiveDocUri = docUri ?? Uri.parse('file://main.ncl');
+    final (head, body) = NCLParser(docUri: effectiveDocUri).parseString(xml);
     return NCLDocument._(
       head: head,
       body: body,
-      baseURI: baseURI,
+      docUri: effectiveDocUri,
       usersDataJson: usersDataJson,
+      contentLoader: contentLoader,
     );
   }
 
   NCLDocument._({
     Head? head,
     required Body body,
-    Uri? baseURI,
+    Uri? docUri,
     String? usersDataJson,
-  }) : baseURI = baseURI ?? Uri.parse('.') {
+    ContentLoader contentLoader = const FileContentLoader(),
+  }) : docUri = docUri ?? Uri.parse('file://main.ncl'),
+       contentLoader = contentLoader {
     _head = head;
     _body = body;
     _gatherSettings();
@@ -78,6 +87,13 @@ class NCLDocument {
   }
 
   void _gatherUsers([String? usersDataJson]) {
+    loadUserProfiles();
+    if (usersDataJson != null) {
+      users.loadUserData(usersDataJson);
+    }
+  }
+
+  Future<void> loadUserProfiles() async {
     if (_head != null) {
       for (var el in headChildren) {
         if (el.xmlTagName == 'userBase') {
@@ -86,31 +102,20 @@ class NCLDocument {
               final id = child.rawAttributes['id'];
               final src = child.rawAttributes['src'];
               if (id != null && id.isNotEmpty) {
-                _loadUserProfile(id, src);
+                await _loadUserProfile(id, src);
               }
             }
           }
         }
       }
     }
-    if (usersDataJson != null) {
-      users.loadUserData(usersDataJson, resolver: uriResolver);
-    }
   }
 
-  void _loadUserProfile(String id, String? src) {
+  Future<void> _loadUserProfile(String id, String? src) async {
     if (src == null) return;
-    final uri = baseURI.resolve(src);
-    String? jsonContent;
-    if (uriResolver != null) {
-      jsonContent = uriResolver!(uri);
-    } else {
-      final file = File(uri.isScheme('file') ? uri.toFilePath() : uri.path);
-      if (file.existsSync()) {
-        jsonContent = file.readAsStringSync();
-      }
-    }
-    if (jsonContent != null) {
+    final uri = baseUri.resolve(src);
+    final jsonContent = await contentLoader.load(uri);
+    if (jsonContent != null && jsonContent.isNotEmpty) {
       final query = json.decode(jsonContent);
       users.registerProfile(NCLUserProfile(id: id, src: src, query: query));
     }
@@ -134,7 +139,7 @@ class NCLDocument {
   Settings getSettings() => _settings;
 
   void doNclEditingCommand(String command) {
-    NCLParser(baseURI: baseURI).doNclEditingCommand(this, command);
+    NCLParser(docUri: docUri).doNclEditingCommand(this, command);
   }
 
   Node? getNodeById(String id) {

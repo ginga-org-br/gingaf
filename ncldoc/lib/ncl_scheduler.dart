@@ -741,6 +741,7 @@ class NCLScheduler {
 
   void start() {
     _logger.info('[Clock: ${virtualClock / 1000}s] NCLDocument will start');
+    document.body.getMainEvent().doAction(ActionType.START);
     _init();
     isPlaying = true;
     tick();

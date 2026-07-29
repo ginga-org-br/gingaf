@@ -6,9 +6,10 @@ import 'schema.dart';
 
 class NCLParser {
   final Schema schema = Schema();
-  final Uri baseURI;
+  final Uri? docUri;
+  Uri? get baseUri => docUri?.resolve('.');
 
-  NCLParser({Uri? baseURI}) : baseURI = baseURI ?? Uri.parse('.');
+  NCLParser({this.docUri}) {}
 
   (Head, Body) parseString(String xmlString) {
     final document = XmlDocument.parse(xmlString);
@@ -203,7 +204,7 @@ class NCLParser {
       return Settings(rawAttributes: rawAttributes, mimeType: type);
     }
     final resolvedSrc = src.replaceAll('\\', '/');
-    final uri = src.isNotEmpty ? baseURI.resolve(resolvedSrc).toString() : '';
+    final uri = src.isNotEmpty ? (baseUri?.resolve(resolvedSrc).toString() ?? resolvedSrc) : '';
     final mimeType = type.isNotEmpty ? type : getMimeTypeFromExtension(src);
     if (mimeType.startsWith('video/') || mimeType.startsWith('audio/')) {
       final avMedia = AVMedia(
