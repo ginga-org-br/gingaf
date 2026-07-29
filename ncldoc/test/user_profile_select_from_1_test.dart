@@ -28,7 +28,7 @@ void main() {
 </ncl>
 ''';
 
-        final doc = NCLDocument.fromXML(xml);
+        final doc = NCLDocument.fromContent(xml);
         final user = NCLUserData(
           id: 'u1',
           name: 'Viewer',
@@ -74,7 +74,7 @@ void main() {
       </body>
     </ncl>
     ''';
-      final doc = NCLDocument.fromXML(
+      final doc = NCLDocument.fromContent(
         xml,
         usersDataJson: '''
     {

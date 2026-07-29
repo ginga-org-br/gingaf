@@ -21,7 +21,7 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromXML(xml);
+      final doc = NCLDocument.fromContent(xml);
       doc.start();
       expect(doc.getBodyState(), State.OCCURRING);
       expect(doc.virtualClock, 0);
@@ -63,7 +63,7 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromXML(xml);
+      final doc = NCLDocument.fromContent(xml);
       doc.start();
       expect(doc.getNodeById('c1')?.getMainState(), State.OCCURRING);
       expect(doc.getNodeById('c2')?.getMainState(), State.OCCURRING);
@@ -90,7 +90,7 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromXML(xml);
+      final doc = NCLDocument.fromContent(xml);
       doc.start();
       expect(doc.getBodyState(), State.OCCURRING);
       expect(doc.getNodeById('ctx1')?.getMainState(), State.SLEEPING);
@@ -120,7 +120,7 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromXML(xml);
+      final doc = NCLDocument.fromContent(xml);
       doc.start();
       expect(doc.getBodyState(), State.OCCURRING);
       expect(doc.getNodeById('c1')?.getMainState(), State.SLEEPING);
@@ -154,7 +154,7 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromXML(xml);
+      final doc = NCLDocument.fromContent(xml);
       doc.start();
       expect(doc.getBodyState(), State.OCCURRING);
       expect(doc.getNodeById('ctx1')?.getMainState(), State.OCCURRING);
@@ -190,7 +190,7 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromXML(xml);
+      final doc = NCLDocument.fromContent(xml);
       doc.start();
       expect(doc.getBodyState(), State.OCCURRING);
       expect(doc.getNodeById('ctx1')?.getMainState(), State.OCCURRING);
@@ -220,7 +220,7 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromXML(xml);
+      final doc = NCLDocument.fromContent(xml);
       doc.start();
       expect(doc.getBodyState(), State.OCCURRING);
       expect(doc.getNodeById('ctx1')?.getMainState(), State.SLEEPING);
@@ -251,7 +251,7 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromXML(xml);
+      final doc = NCLDocument.fromContent(xml);
       doc.start();
       expect(doc.getBodyState(), State.OCCURRING);
       expect(doc.getNodeById('ctx1')?.getMainState(), State.SLEEPING);

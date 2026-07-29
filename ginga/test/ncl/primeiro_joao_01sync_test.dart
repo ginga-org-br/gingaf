@@ -91,7 +91,7 @@ void main() {
   });
 
   test('NCLDocument descriptor duration and region resolution', () {
-    final doc = NCLDocument.fromXML('''<ncl id="syncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+    final doc = NCLDocument.fromContent('''<ncl id="syncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
       <region id="baseRegion" width="100%" height="100%" zIndex="2">

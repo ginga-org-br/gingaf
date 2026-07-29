@@ -142,7 +142,7 @@ void main() {
   });
 
   test('NCLDocument executes media reuse and refer set logic correctly', () {
-    final doc = NCLDocument.fromXML('''<ncl id="nclReuse" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+    final doc = NCLDocument.fromContent('''<ncl id="nclReuse" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
       <region id="rBg" width="100%" height="100%" zIndex="1"/>

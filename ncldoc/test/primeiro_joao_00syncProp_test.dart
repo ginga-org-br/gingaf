@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 void main() {
   group('primeiro_joao_00syncProp', () {
     test('NCLDocument delay and property parsing', () {
-      final doc = NCLDocument.fromXML(
+      final doc = NCLDocument.fromContent(
         '''<ncl id="mySyncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <connectorBase>

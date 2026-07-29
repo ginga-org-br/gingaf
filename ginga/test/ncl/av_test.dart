@@ -92,7 +92,7 @@ void main() {
 
   testWidgets('NCLMediaState visual attributes and properties mapping tests',
       (WidgetTester tester) async {
-    final doc = NCLDocument.fromXML('''
+    final doc = NCLDocument.fromContent('''
 <ncl>
   <body>
     <media id="m1" src="video.mp4" focusBorderColor="red" selBorderColor="green">
@@ -133,7 +133,7 @@ void main() {
 
   testWidgets('NCLMediaState default visual attributes when omitted',
       (WidgetTester tester) async {
-    final doc = NCLDocument.fromXML('''
+    final doc = NCLDocument.fromContent('''
 <ncl>
   <body>
     <media id="m1" src="video.mp4"/>
@@ -167,7 +167,7 @@ void main() {
 
   testWidgets('NCLMediaState bounds and background properties mapping tests',
       (WidgetTester tester) async {
-    final doc = NCLDocument.fromXML('''
+    final doc = NCLDocument.fromContent('''
 <ncl>
   <body>
     <media id="m1" src="video.mp4">
@@ -206,7 +206,7 @@ void main() {
 
   testWidgets('ImageWidget rendering without source URI',
       (WidgetTester tester) async {
-    final doc = NCLDocument.fromXML('''
+    final doc = NCLDocument.fromContent('''
 <ncl>
   <body>
     <media id="m1" type="image/png">

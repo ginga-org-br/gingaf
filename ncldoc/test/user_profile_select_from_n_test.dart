@@ -41,7 +41,7 @@ test('verifies multi-user profile evaluation with composite rules', () {
 </ncl>
 ''';
 
-      final docAdultCC = NCLDocument.fromXML(
+      final docAdultCC = NCLDocument.fromContent(
         xml,
         baseURI: Uri.file(Directory.systemTemp.path + '/'),
         usersDataJson: '[{"id": "u1", "name": "AdultCC", "properties": {"age": "25", "closedCaptioning": "true"}}]',
@@ -51,7 +51,7 @@ test('verifies multi-user profile evaluation with composite rules', () {
       expect(docAdultCC.evaluateRule('rAdultWithCC'), isTrue);
       expect(docAdultCC.resolveSwitch(sw1)?.id, equals('mAdultCCAd'));
 
-      final docAdultNoCC = NCLDocument.fromXML(
+      final docAdultNoCC = NCLDocument.fromContent(
         xml,
         baseURI: Uri.file(Directory.systemTemp.path + '/'),
         usersDataJson: '[{"id": "u2", "name": "AdultNoCC", "properties": {"age": "25", "closedCaptioning": "false"}}]',
@@ -86,7 +86,7 @@ test('verifies dynamic user property update and rule re-evaluation', () {
 </ncl>
 ''';
 
-      final doc = NCLDocument.fromXML(
+      final doc = NCLDocument.fromContent(
         xml,
         baseURI: Uri.file(Directory.systemTemp.path + '/'),
         usersDataJson: '[{"id": "u1", "name": "YoungUser", "properties": {"age": "16"}}]',
@@ -124,7 +124,7 @@ test('verifies active user switching in document context and rule re-evaluation'
 </ncl>
 ''';
 
-      final doc = NCLDocument.fromXML(
+      final doc = NCLDocument.fromContent(
         xml,
         baseURI: Uri.file(Directory.systemTemp.path + '/'),
         usersDataJson: '[{"id": "u1", "name": "User PT", "properties": {"lang": "pt-BR"}}, {"id": "u2", "name": "User EN", "properties": {"lang": "en-US"}}]',
@@ -166,7 +166,7 @@ test('verifies multi-user session profile switching and dynamic rule evaluation'
 </ncl>
 ''';
 
-      final doc = NCLDocument.fromXML(xml);
+      final doc = NCLDocument.fromContent(xml);
       final u1 = NCLUserData(id: 'u1', name: 'Adult', initialProperties: {'age': 25});
       final u2 = NCLUserData(id: 'u2', name: 'Child', initialProperties: {'age': 10});
 
@@ -218,7 +218,7 @@ test('verifies multi-user session profile switching and dynamic rule evaluation'
 </ncl>
 ''';
 
-      final doc = NCLDocument.fromXML(xml);
+      final doc = NCLDocument.fromContent(xml);
       final users = doc.users;
       final u1 = NCLUserData(id: 'u1', name: 'Alice', initialProperties: {'age': 25, 'preferredLang': 'en'});
       final u2 = NCLUserData(id: 'u2', name: 'Bob', initialProperties: {'age': 16, 'preferredLang': 'es'});

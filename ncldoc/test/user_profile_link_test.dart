@@ -56,7 +56,7 @@ void main() {
 </ncl>
 ''';
 
-      final doc = NCLDocument.fromXML(
+      final doc = NCLDocument.fromContent(
         xmlString,
         usersDataJson: '[{"id": "u1", "name": "Bob", "gender": "male", "age": 30}]',
       );
@@ -128,7 +128,7 @@ void main() {
 </ncl>
 ''';
 
-      final doc = NCLDocument.fromXML(
+      final doc = NCLDocument.fromContent(
         xmlString,
         usersDataJson: '[{"id": "u2", "name": "Alice", "gender": "female", "age": 30}]',
       );

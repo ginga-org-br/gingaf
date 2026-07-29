@@ -15,7 +15,7 @@ void main() {
       </ncl>
       ''';
 
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       doc.start();
       
       expect(doc.getBodyState(), State.OCCURRING);

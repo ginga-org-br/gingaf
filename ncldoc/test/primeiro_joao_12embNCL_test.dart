@@ -49,7 +49,7 @@ void main() {
 </ncl>''';
 
     test('NCLDocument runs embedded NCL document successfully', () {
-      final doc = NCLDocument.fromXML(xml);
+      final doc = NCLDocument.fromContent(xml);
       doc.start();
       doc.tick(45000);
       final active = doc.getActiveMedia().map((m) => m.id).toList();

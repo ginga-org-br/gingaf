@@ -146,7 +146,7 @@ void main() {
   });
 
   test('NCLDocument executes form return logic correctly', () {
-    final doc = NCLDocument.fromXML('''<ncl id="nclReturn" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+    final doc = NCLDocument.fromContent('''<ncl id="nclReturn" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
       <region id="rBg" width="100%" height="100%" zIndex="1"/>

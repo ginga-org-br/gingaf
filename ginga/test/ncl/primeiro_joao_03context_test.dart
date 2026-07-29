@@ -151,7 +151,7 @@ void main() {
   });
 
   test('NCLDocument executes context and port mapping correctly', () {
-    final doc = NCLDocument.fromXML('''<ncl id="nclCtx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+    final doc = NCLDocument.fromContent('''<ncl id="nclCtx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
       <region id="rBg" width="100%" height="100%" zIndex="1"/>

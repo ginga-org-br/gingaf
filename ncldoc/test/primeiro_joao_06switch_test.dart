@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 void main() {
   group('primeiro_joao_06switch', () {
     test('NCLDocument executes Switch default (PT) path correctly', () {
-      final doc = NCLDocument.fromXML(
+      final doc = NCLDocument.fromContent(
         '''<ncl id="nclSwitch" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <ruleBase>
@@ -167,7 +167,7 @@ void main() {
     });
 
     test('NCLDocument executes Switch English (EN) path correctly', () {
-      final doc = NCLDocument.fromXML(
+      final doc = NCLDocument.fromContent(
         '''<ncl id="nclSwitch" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <ruleBase>

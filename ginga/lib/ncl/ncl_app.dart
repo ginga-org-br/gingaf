@@ -147,7 +147,7 @@ class NCLAppState extends MediaState<NCLApp> {
         }
         effectiveUserData = content;
       }
-      final doc = NCLDocument.fromXML(nclData, baseURI: uri, usersDataJson: effectiveUserData);
+      final doc = NCLDocument.fromContent(nclData, baseURI: uri, usersDataJson: effectiveUserData);
 
       nclDocument = doc;
       doc.start();

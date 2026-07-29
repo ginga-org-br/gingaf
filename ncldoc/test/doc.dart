@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 void main() {
   group('NCLDocument from nodes Tests', () {
     test('tick increments virtual clock', () {
-      final doc = NCLDocument.fromBodyElements([]);
+      final doc = NCLDocument.fromContent('<ncl><body id="body"></body></ncl>');
       expect(doc.virtualClock, 0);
       doc.start();
       final changed1 = doc.tick(10);
@@ -16,7 +16,7 @@ void main() {
     });
 
     test('tick does not go backwards', () {
-      final doc = NCLDocument.fromBodyElements([]);
+      final doc = NCLDocument.fromContent('<ncl><body id="body"></body></ncl>');
       doc.start();
       final changed3 = doc.tick(100);
       expect(changed3, isEmpty);
@@ -27,9 +27,9 @@ void main() {
     });
 
     test('automatic start via Port', () {
-      final media = Media(rawAttributes: const {'id': 'm1'});
-      final port = Port(rawAttributes: const {'id': 'p1', 'component': 'm1'});
-      final doc = NCLDocument.fromBodyElements([media, port]);
+      final doc = NCLDocument.fromContent(
+        '<ncl><body id="body"><media id="m1"/><port id="p1" component="m1"/></body></ncl>',
+      );
       doc.start();
       expect(doc.getBodyState(), State.OCCURRING);
       expect(doc.getNodeById('m1')?.getMainState(), State.OCCURRING);
@@ -39,17 +39,19 @@ void main() {
     });
 
     test('causal link between two media', () {
-      final m1 = Media(rawAttributes: const {'id': 'm1'});
-      final m2 = Media(rawAttributes: const {'id': 'm2'});
-      final port = Port(rawAttributes: const {'id': 'p1', 'component': 'm1'});
-      final link = Link(rawAttributes: const {'id': 'l1'});
-      link.children.add(
-        Bind(rawAttributes: const {'role': 'onBegin', 'component': 'm1'}),
-      );
-      link.children.add(
-        Bind(rawAttributes: const {'role': 'start', 'component': 'm2'}),
-      );
-      final doc = NCLDocument.fromBodyElements([m1, m2, port, link]);
+      final doc = NCLDocument.fromContent('''
+<ncl>
+<body id="body">
+  <media id="m1"/>
+  <media id="m2"/>
+  <port id="p1" component="m1"/>
+  <link id="l1">
+    <bind role="onBegin" component="m1"/>
+    <bind role="start" component="m2"/>
+  </link>
+</body>
+</ncl>
+''');
       doc.start();
       expect(doc.getBodyState(), State.OCCURRING);
       expect(doc.getNodeById('m1')?.getMainState(), State.OCCURRING);
@@ -61,7 +63,7 @@ void main() {
     });
 
     test('default Settings is created if none is provided', () {
-      final doc = NCLDocument.fromBodyElements([]);
+      final doc = NCLDocument.fromContent('<ncl><body id="body"></body></ncl>');
       doc.start();
       final settings = doc.getSettings();
       expect(settings, isNotNull);
@@ -69,12 +71,11 @@ void main() {
     });
 
     test('NCLDocument Composition', () {
-      final media = Media(rawAttributes: const {'id': 'm1', 'src': 'v.mp4'});
-      final port = Port(rawAttributes: const {'id': 'p1', 'component': 'm1'});
-      final doc = NCLDocument.fromBodyElements([media, port]);
+      final doc = NCLDocument.fromContent(
+        '<ncl><body id="body"><media id="m1" src="v.mp4"/><port id="p1" component="m1"/></body></ncl>',
+      );
       doc.start();
 
-      // Expect 3
       expect(doc.body.getMedias().length, 2);
       expect(doc.body.getPorts().length, 1);
       expect(doc.body.getMedias().first.id, 'm1');
@@ -82,26 +83,27 @@ void main() {
     });
 
     test('getSettings is returned correctly when provided', () {
-      final settings = Settings(rawAttributes: const {'id': 's1'});
-      final doc = NCLDocument.fromBodyElements([settings]);
+      final doc = NCLDocument.fromContent(
+        '<ncl><body id="body"><settings id="s1"/></body></ncl>',
+      );
       doc.start();
-      expect(doc.getSettings(), settings);
+      expect(doc.getSettings().id, 's1');
     });
 
-    test('baseURI and fromXML / fromBodyElements', () {
-      final doc1 = NCLDocument.fromXML(
-        '<ncl><body></body></ncl>',
+    test('baseURI and fromContent', () {
+      final doc1 = NCLDocument.fromContent(
+        '<ncl><body id="body"></body></ncl>',
         baseURI: Uri.parse('some_uri/'),
       );
       expect(doc1.baseURI, Uri.parse('some_uri/'));
 
-      final doc2 = NCLDocument.fromBodyElements([]);
+      final doc2 = NCLDocument.fromContent('<ncl><body id="body"></body></ncl>');
       expect(doc2.baseURI, Uri.parse('.'));
     });
 
     test('resolving relative media path against file baseURI', () {
-      final doc = NCLDocument.fromXML(
-        '<ncl><body><media id="m1" src="video.mp4" /></body></ncl>',
+      final doc = NCLDocument.fromContent(
+        '<ncl><body id="body"><media id="m1" src="video.mp4" /></body></ncl>',
         baseURI: Uri.parse('file:///C:/Users/test/video.ncl'),
       );
       final media = doc.getNodeById('m1') as Media;

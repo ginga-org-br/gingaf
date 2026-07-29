@@ -44,10 +44,14 @@ class NCLDocument {
         el.parent = body;
       }
     }
-    return NCLDocument._(body: body);
+    return NCLDocument.fromContent(
+      xml,
+      baseURI: uri,
+      usersDataJson: resolvedUsersDataJson,
+    );
   }
 
-  factory NCLDocument.fromXML(
+  factory NCLDocument.fromContent(
     String xml, {
     Uri? baseURI,
     String? usersDataJson,

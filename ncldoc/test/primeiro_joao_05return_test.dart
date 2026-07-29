@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 void main() {
   group('primeiro_joao_05return', () {
     test('NCLDocument executes form return logic correctly', () {
-      final doc = NCLDocument.fromXML(
+      final doc = NCLDocument.fromContent(
         '''<ncl id="nclReturn" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>

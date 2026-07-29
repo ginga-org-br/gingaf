@@ -11,7 +11,7 @@ void main() {
         </body>
       </ncl>
       ''';
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       expect(doc.getNodeById('m1'), isNull);
 
       doc.doNclEditingCommand(
@@ -33,7 +33,7 @@ void main() {
         </body>
       </ncl>
       ''';
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       final media = doc.getNodeById('m1')!;
       expect(media.children.whereType<Property>().first.value, equals('old'));
 
@@ -49,7 +49,7 @@ void main() {
         </body>
       </ncl>
       ''';
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       final media = doc.getNodeById('m1')!;
       expect(media.children.isEmpty, isTrue);
 
@@ -70,7 +70,7 @@ void main() {
         </body>
       </ncl>
       ''';
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       final context = doc.getNodeById('c1')!;
       expect(context.children.isEmpty, isTrue);
 

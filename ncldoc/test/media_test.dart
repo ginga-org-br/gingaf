@@ -12,7 +12,7 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromXML(xml);
+      final doc = NCLDocument.fromContent(xml);
       doc.start();
       expect(doc.getBodyState(), State.OCCURRING);
       expect(doc.virtualClock, 0);
@@ -31,7 +31,7 @@ void main() {
           </body>
         </ncl>
         ''';
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       doc.start();
       final changed0 = doc.tick(10);
       expect(changed0, isEmpty);
@@ -51,7 +51,7 @@ void main() {
           </body>
         </ncl>
         ''';
-      final doc = NCLDocument.fromXML(imageNcl);
+      final doc = NCLDocument.fromContent(imageNcl);
       doc.start();
       expect(doc.getBodyState(), State.OCCURRING);
       expect(doc.getNodeById('ginga_logo')?.getMainState(), State.OCCURRING);
@@ -70,7 +70,7 @@ void main() {
           </body>
         </ncl>
         ''';
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       doc.start();
       expect(doc.getBodyState(), State.OCCURRING);
       expect(doc.getNodeById('lua_script')?.getMainState(), State.SLEEPING);
@@ -90,7 +90,7 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromXML(xml);
+      final doc = NCLDocument.fromContent(xml);
       doc.start();
       expect(doc.virtualClock, 0);
       expect(doc.getNodeById('m1')?.getMainState(), State.OCCURRING);
@@ -112,7 +112,7 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromXML(xml);
+      final doc = NCLDocument.fromContent(xml);
       doc.start();
       expect(doc.getBodyState(), State.OCCURRING);
       expect(doc.virtualClock, 0);
@@ -134,7 +134,7 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromXML(xml);
+      final doc = NCLDocument.fromContent(xml);
       doc.start();
       expect(doc.getBodyState(), State.OCCURRING);
       expect(doc.virtualClock, 0);
@@ -157,7 +157,7 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       doc.start();
       expect(doc.getBodyState(), State.OCCURRING);
       expect(doc.getNodeById('video_main')?.getMainState(), State.SLEEPING);
@@ -177,7 +177,7 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromXML(xml);
+      final doc = NCLDocument.fromContent(xml);
       doc.start();
       expect(doc.virtualClock, 0);
       expect(doc.getNodeById('video_main')?.getMainState(), State.OCCURRING);
@@ -201,7 +201,7 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromXML(xml);
+      final doc = NCLDocument.fromContent(xml);
       doc.start();
       final video = doc.getNodeById('video_main')!;
       final areaEvent = video.getAreaEvent('seg1');
@@ -241,7 +241,7 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromXML(xml);
+      final doc = NCLDocument.fromContent(xml);
       doc.start();
       expect(doc.getNodeById('video_main')?.getMainState(), State.OCCURRING);
       expect(doc.getNodeById('m2')?.getMainState(), State.SLEEPING);
@@ -272,7 +272,7 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromXML(xml);
+      final doc = NCLDocument.fromContent(xml);
       doc.start();
       expect(doc.getNodeById('video_main')?.getMainState(), State.OCCURRING);
       expect(doc.getNodeById('m2')?.getMainState(), State.OCCURRING);
@@ -295,7 +295,7 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromXML(xml);
+      final doc = NCLDocument.fromContent(xml);
       doc.start();
       final video = doc.getNodeById('video1') as AVMedia;
       expect(video.getMainState(), State.OCCURRING);

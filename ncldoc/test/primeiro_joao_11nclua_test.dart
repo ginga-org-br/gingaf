@@ -151,7 +151,7 @@ void main() {
     test(
       'NCLDocument runs lua script configuration and triggers property modifications successfully',
       () {
-        final doc = NCLDocument.fromXML(xml);
+        final doc = NCLDocument.fromContent(xml);
         doc.start();
         doc.tick(5000);
 

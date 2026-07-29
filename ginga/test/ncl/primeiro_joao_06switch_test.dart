@@ -161,7 +161,7 @@ void main() {
   });
 
   test('NCLDocument executes Switch default (PT) path correctly', () {
-    final doc = NCLDocument.fromXML('''<ncl id="nclSwitch" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+    final doc = NCLDocument.fromContent('''<ncl id="nclSwitch" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <ruleBase>
       <rule id="en" var="system.language" value="eng" comparator="eq"/>
@@ -311,7 +311,7 @@ void main() {
   });
 
   test('NCLDocument executes Switch English (EN) path correctly', () {
-    final doc = NCLDocument.fromXML('''<ncl id="nclSwitch" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+    final doc = NCLDocument.fromContent('''<ncl id="nclSwitch" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <ruleBase>
       <rule id="en" var="system.language" value="eng" comparator="eq"/>

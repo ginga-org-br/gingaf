@@ -16,7 +16,7 @@ void main() {
         </body>
       </ncl>
       ''';
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       expect(doc.getElementById('reg2'), isNull);
 
       doc.doNclEditingCommand(
@@ -37,7 +37,7 @@ void main() {
         </body>
       </ncl>
       ''';
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       expect(
         doc.headChildren.where((e) => e.xmlTagName == 'regionBase').isEmpty,
         isTrue,
@@ -65,7 +65,7 @@ void main() {
         </body>
       </ncl>
       ''';
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       expect(
         doc.headChildren.where((e) => e.xmlTagName == 'ruleBase').isEmpty,
         isTrue,
@@ -95,7 +95,7 @@ void main() {
         </body>
       </ncl>
       ''';
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       final ruleBase = doc.headChildren
           .where((e) => e.xmlTagName == 'ruleBase')
           .first;
@@ -119,7 +119,7 @@ void main() {
         </body>
       </ncl>
       ''';
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       expect(
         doc.headChildren.where((e) => e.xmlTagName == 'connectorBase').isEmpty,
         isTrue,
@@ -153,7 +153,7 @@ void main() {
         </body>
       </ncl>
       ''';
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       final connBase = doc.headChildren
           .where((e) => e.xmlTagName == 'connectorBase')
           .first;
@@ -177,7 +177,7 @@ void main() {
         </body>
       </ncl>
       ''';
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       expect(
         doc.headChildren.where((e) => e.xmlTagName == 'descriptorBase').isEmpty,
         isTrue,
@@ -211,7 +211,7 @@ void main() {
         </body>
       </ncl>
       ''';
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       expect(doc.getElementById('desc1'), isNull);
 
       doc.doNclEditingCommand('addDescriptor("<descriptor id=\\"desc1\\" />")');
@@ -232,7 +232,7 @@ void main() {
         </body>
       </ncl>
       ''';
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       final descBase = doc.headChildren
           .where((e) => e.xmlTagName == 'descriptorBase')
           .first;
@@ -256,7 +256,7 @@ void main() {
         </body>
       </ncl>
       ''';
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       expect(
         doc.headChildren.where((e) => e.xmlTagName == 'transitionBase').isEmpty,
         isTrue,
@@ -290,7 +290,7 @@ void main() {
         </body>
       </ncl>
       ''';
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       final transBase = doc.headChildren
           .where((e) => e.xmlTagName == 'transitionBase')
           .first;
@@ -314,7 +314,7 @@ void main() {
         </body>
       </ncl>
       ''';
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       expect(
         doc.headChildren
             .where((e) => e.xmlTagName == 'importedDocumentBase')
@@ -352,7 +352,7 @@ void main() {
         </body>
       </ncl>
       ''';
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       final impBase = doc.headChildren
           .where((e) => e.xmlTagName == 'importedDocumentBase')
           .first;
@@ -378,7 +378,7 @@ void main() {
         </body>
       </ncl>
       ''';
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       final impBase = doc.headChildren
           .where((e) => e.xmlTagName == 'importedDocumentBase')
           .first;
@@ -402,7 +402,7 @@ void main() {
         </body>
       </ncl>
       ''';
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       expect(
         doc.headChildren.where((e) => e.xmlTagName == 'fontBase').isEmpty,
         isTrue,
@@ -432,7 +432,7 @@ void main() {
         </body>
       </ncl>
       ''';
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       final fontBase = doc.headChildren
           .where((e) => e.xmlTagName == 'fontBase')
           .first;

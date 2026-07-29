@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 void main() {
   group('primeiro_joao_03context', () {
     test('NCLDocument executes context and port mapping correctly', () {
-      final doc = NCLDocument.fromXML(
+      final doc = NCLDocument.fromContent(
         '''<ncl id="nclCtx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>

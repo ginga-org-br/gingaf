@@ -94,7 +94,7 @@ void main() {
     });
 
     test('NCLDocument parses Transition and Rule elements as typed instances', () {
-      final doc = NCLDocument.fromXML('''<ncl id="testDoc" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+      final doc = NCLDocument.fromContent('''<ncl id="testDoc" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <ruleBase>
       <rule id="r1" var="system.language" comparator="eq" value="en"/>
@@ -135,7 +135,7 @@ void main() {
 <body id="body"/>
 </ncl>''';
 
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       final head = doc.head;
       expect(head, isNotNull);
 
@@ -180,7 +180,7 @@ void main() {
 <body id="body"/>
 </ncl>''';
 
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       final head = doc.head;
       expect(head, isNotNull);
 
@@ -218,7 +218,7 @@ void main() {
 <body id="body"/>
 </ncl>''';
 
-      final doc = NCLDocument.fromXML(xmlString);
+      final doc = NCLDocument.fromContent(xmlString);
       final head = doc.head;
       expect(head, isNotNull);
 

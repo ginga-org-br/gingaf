@@ -95,7 +95,7 @@ void main() {
   });
 
   test('NCLDocument delay and property parsing', () {
-    final doc = NCLDocument.fromXML('''<ncl id="mySyncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+    final doc = NCLDocument.fromContent('''<ncl id="mySyncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <connectorBase>
       <causalConnector id="onBeginStart_delay">

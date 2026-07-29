@@ -165,7 +165,7 @@ void main() {
   });
 
   test('NCLDocument parses transitions and transition descriptors correctly', () {
-    final doc = NCLDocument.fromXML('''<ncl id="nclTransition" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+    final doc = NCLDocument.fromContent('''<ncl id="nclTransition" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <transitionBase>
       <transition id="trans1" type="fade" dur="2s"/>

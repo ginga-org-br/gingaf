@@ -227,7 +227,7 @@ void main() {
   group('Platform USERS_DATA Environment Tests', () {
     test('loads single user from inline USERS_DATA JSON map with ID', () {
       final xml = '<ncl><body><media id="m1"/></body></ncl>';
-      final doc = NCLDocument.fromXML(
+      final doc = NCLDocument.fromContent(
         xml,
         usersDataJson:
             '{"id": "u100", "name": "Alice", "properties": {"age": 30}}',
@@ -240,7 +240,7 @@ void main() {
       'loads user properties from inline USERS_DATA JSON map without ID',
       () {
         final xml = '<ncl><body><media id="m1"/></body></ncl>';
-        final doc = NCLDocument.fromXML(
+        final doc = NCLDocument.fromContent(
           xml,
           usersDataJson: '{"age": 45, "preferredLang": "en-US"}',
         );
@@ -253,7 +253,7 @@ void main() {
 
     test('loads list of users from inline USERS_DATA JSON list', () {
       final xml = '<ncl><body><media id="m1"/></body></ncl>';
-      final doc = NCLDocument.fromXML(
+      final doc = NCLDocument.fromContent(
         xml,
         usersDataJson:
             '[{"id": "u201", "name": "Alice"}, {"id": "u202", "name": "Bob"}]',
@@ -265,7 +265,7 @@ void main() {
 
     test('loads all required attributes', () {
       final xml = '<ncl><body><media id="m1"/></body></ncl>';
-      final doc = NCLDocument.fromXML(
+      final doc = NCLDocument.fromContent(
         xml,
         usersDataJson: '''
 {
@@ -310,5 +310,28 @@ void main() {
       expect(user.getProperty('dialogEnhancement'), isFalse);
       expect(user.getProperty('voiceGuidance'), isFalse);
     });
+
+    test('loads user data via URI and custom resolver function', () {
+      final manager = NCLUsers();
+      String? mockResolver(Uri uri) {
+        if (uri.path.endsWith('users.json')) {
+          return '{"id": "uRemote1", "name": "Remote User", "properties": {"level": "premium"}}';
+        }
+        return null;
+      }
+
+      manager.loadUserData('file:///config/users.json', resolver: mockResolver);
+      expect(manager.getUser('uRemote1'), isNotNull);
+      expect(manager.getUserProperty('uRemote1', 'level'), equals('premium'));
+    });
+
+    test('handles invalid or empty JSON gracefully in loadUserData', () {
+      final manager = NCLUsers();
+      expect(() => manager.loadUserData('invalid json format {{{'), returnsNormally);
+      expect(() => manager.loadUserData(''), returnsNormally);
+      expect(() => manager.loadUserData('   '), returnsNormally);
+      expect(manager.allUsers, isEmpty);
+    });
   });
 }
+

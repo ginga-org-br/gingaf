@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 void main() {
   group('primeiro_joao_01sync', () {
     test('NCLDocument descriptor duration and region resolution', () {
-      final doc = NCLDocument.fromXML(
+      final doc = NCLDocument.fromContent(
         '''<ncl id="syncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>

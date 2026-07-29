@@ -178,7 +178,7 @@ void main() {
   });
 
   test('NCLDocument executes duration-based SET action property changes correctly', () {
-    final doc = NCLDocument.fromXML('''<ncl id="nclAnimation" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+    final doc = NCLDocument.fromContent('''<ncl id="nclAnimation" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <connectorBase>
       <causalConnector id="onBeginStartSet_var_delay_duration">

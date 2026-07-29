@@ -6,7 +6,7 @@ void main() {
     test(
       'NCLDocument key selection, property SET, and layout change resolution',
       () {
-        final doc = NCLDocument.fromXML(
+        final doc = NCLDocument.fromContent(
           '''<ncl id="joaoSyncIntTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
