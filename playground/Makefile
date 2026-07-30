@@ -1,7 +1,7 @@
 .PHONY: test deps serve build
 
 deps:
-	npm install
+	npm install --no-audit --no-fund
 
 test:
 	node test/main.test.js

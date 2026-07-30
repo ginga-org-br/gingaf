@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:logging/logging.dart';
 
-import 'ccws/ccws.dart';
+import 'package:ccws/ccws.dart';
 import 'ginga_content.dart';
 import 'html/html_app.dart' as html;
 import 'main_av.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:gingaf/ccws/ccws.dart';
+import 'package:ccws/ccws.dart';
 import 'package:gingaf/ginga.dart';
 import 'package:gingaf/ncl/widgets/ncl_media_widget.dart';
 import 'package:logging/logging.dart';

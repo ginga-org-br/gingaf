@@ -8,10 +8,11 @@ For a web-based evaluation of `gingaf`, see [a github-hosted Ginga Playground](h
 
 The `gingaf` project structure is:
 
-- `ginga/` - flutter-based GUI presentation player for Ginga applications (contains the `examples/` subfolder with sample NCL and HTML documents for testing). See how to run application at [ginga/README.md](ginga/README.md).
 - `ncldoc/` - Dart-based headless execution engine and core NCL logic. See [ncldoc/README.md](ncldoc/README.md).
-- `playground/` - web-based interactive playground for evaluating gingaf. See [playground/README.md](playground/README.md).
-- `vscode/` - Visual Studio Code extension. See [vscode/README.md](vscode/README.md).
+- `ccws/` - Dart-based Complementary Device Web Service library. See [ccws/README.md](ccws/README.md).
+- `ginga/` - Ginga visual of Ginga-NCL and Ginga-HTML5 applications (contains the `examples/` for testing). See how to run application at [ginga/README.md](ginga/README.md). Depends on `ncldoc/` and `ccws/`.
+- `playground/` - web-based interactive playground for evaluating gingaf. See [playground/README.md](playground/README.md). Depends on `ginga`.
+- `vscode/` - Visual Studio Code extension. See [vscode/README.md](vscode/README.md). Depends on `ginga`.
 
 ## Demonstration Videos
 

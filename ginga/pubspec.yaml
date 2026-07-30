@@ -19,6 +19,9 @@ dependencies:
   http: ^1.1.0
   ncldoc:
     path: ../ncldoc
+  ccws:
+    path: ../ccws
+
 
 dev_dependencies:
   flutter_test:
