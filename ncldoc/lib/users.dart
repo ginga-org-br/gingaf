@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 
 class NCLUserData {
@@ -16,27 +15,27 @@ class NCLUserData {
     }
   }
 
-  dynamic getProperty(String name) {
-    return _properties[name];
+  dynamic getProperty(String propertyName) {
+    if (_properties.containsKey(propertyName)) {
+      return _properties[propertyName];
+    }
+    if (propertyName == 'id') return id;
+    if (propertyName == 'name') return name;
+    return null;
   }
 
-  void setProperty(String name, dynamic value) {
-    _properties[name] = value;
+  void setProperty(String propertyName, dynamic value) {
+    _properties[propertyName] = value;
   }
 
-  bool hasProperty(String name) {
-    return _properties.containsKey(name);
+  bool hasProperty(String propertyName) {
+    if (_properties.containsKey(propertyName)) return true;
+    if (propertyName == 'id') return id.isNotEmpty;
+    if (propertyName == 'name') return name.isNotEmpty;
+    return false;
   }
 
   Map<String, dynamic> get properties => Map.unmodifiable(_properties);
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      ..._properties,
-    };
-  }
 
   factory NCLUserData.fromJson(Map<String, dynamic> json) {
     final initialProps = Map<String, dynamic>.from(json);
@@ -61,6 +60,27 @@ class NCLUsers {
   final Map<String, NCLUserProfile> _profiles = {};
   String? _activeUserId;
 
+  void registerUsers(List<NCLUserData> usersList) {
+    for (final user in usersList) {
+      registerUser(user);
+    }
+  }
+
+  List<NCLUserData> getUsersByProperty(String propertyName, dynamic value) {
+    final valStr = value?.toString();
+    return allUsers
+        .where((u) => u.getProperty(propertyName)?.toString() == valStr)
+        .toList();
+  }
+
+  int countMatchingUsers(String profileId) {
+    return getMatchingUsersForProfile(profileId).length;
+  }
+
+  dynamic getActiveUserProperty(String propertyName) {
+    return activeUser?.getProperty(propertyName);
+  }
+
   void registerProfile(NCLUserProfile profile) {
     _profiles[profile.id] = profile;
   }
@@ -68,6 +88,8 @@ class NCLUsers {
   NCLUserProfile? getProfile(String id) {
     return _profiles[id];
   }
+
+  List<NCLUserProfile> get allProfiles => _profiles.values.toList();
 
   bool evaluateProfile(String id) {
     final profile = _profiles[id];
@@ -78,6 +100,39 @@ class NCLUsers {
       }
     }
     return false;
+  }
+
+  bool evaluateProfileForUser(String profileId, String userId) {
+    final profile = _profiles[profileId];
+    final user = _users[userId];
+    if (profile == null || user == null) return false;
+    return profile.matches(user);
+  }
+
+  List<NCLUserData> getMatchingUsersForProfile(String profileId) {
+    final profile = _profiles[profileId];
+    if (profile == null) return [];
+    return allUsers.where((user) => profile.matches(user)).toList();
+  }
+
+  List<NCLUserProfile> findProfilesForUser(NCLUserData user) {
+    return allProfiles.where((profile) => profile.matches(user)).toList();
+  }
+
+  void importProfiles(List<dynamic> jsonList) {
+    for (final item in jsonList) {
+      if (item is Map<String, dynamic>) {
+        registerProfile(NCLUserProfile.fromJson(item));
+      } else if (item is Map) {
+        registerProfile(
+          NCLUserProfile.fromJson(Map<String, dynamic>.from(item)),
+        );
+      }
+    }
+  }
+
+  List<Map<String, dynamic>> exportProfiles() {
+    return _profiles.values.map((profile) => profile.toJson()).toList();
   }
 
   void registerUser(NCLUserData user) {
@@ -124,7 +179,6 @@ class NCLUsers {
     return false;
   }
 
-
   void importUsers(List<dynamic> jsonList) {
     for (final item in jsonList) {
       if (item is Map<String, dynamic>) {
@@ -135,55 +189,9 @@ class NCLUsers {
     }
   }
 
-  final Map<String, Set<String>> _usersSessions = {};
-
-  bool createUsersSession(String sessionId) {
-    if (_usersSessions.containsKey(sessionId)) return false;
-    _usersSessions[sessionId] = {};
-    return true;
-  }
-
-  bool joinUsersSession(String sessionId, String userId) {
-    if (!_users.containsKey(userId)) return false;
-    _usersSessions.putIfAbsent(sessionId, () => {});
-    _usersSessions[sessionId]!.add(userId);
-    return true;
-  }
-
-  bool leaveUsersSession(String sessionId, String userId) {
-    final session = _usersSessions[sessionId];
-    if (session == null) return false;
-    return session.remove(userId);
-  }
-
-  List<NCLUserData> getUsersSessionUsers(String sessionId) {
-    final userIds = _usersSessions[sessionId];
-    if (userIds == null) return [];
-    return userIds.map((id) => _users[id]).whereType<NCLUserData>().toList();
-  }
-
-  List<String> getUsersSessionIds() {
-    return _usersSessions.keys.toList();
-  }
-
-  bool removeUsersSession(String sessionId) {
-    return _usersSessions.remove(sessionId) != null;
-  }
-
-  Map<String, dynamic> getSessionPropertyValues(String sessionId, String propertyName) {
-    final sessionUsers = getUsersSessionUsers(sessionId);
-    final Map<String, dynamic> result = {};
-    for (final user in sessionUsers) {
-      if (user.hasProperty(propertyName)) {
-        result[user.id] = user.getProperty(propertyName);
-      }
-    }
-    return result;
-  }
-
   void clear() {
     _users.clear();
-    _usersSessions.clear();
+    _profiles.clear();
     _activeUserId = null;
   }
 
@@ -213,11 +221,26 @@ class NCLUserProfile {
   final String? src;
   final Map<String, dynamic> query;
 
-  NCLUserProfile({
-    required this.id,
-    this.src,
-    required this.query,
-  });
+  NCLUserProfile({required this.id, this.src, required this.query});
+
+  factory NCLUserProfile.fromJson(Map<String, dynamic> json) {
+    final id = json['id'] as String? ?? '';
+    final src = json['src'] as String?;
+    final Map<String, dynamic> queryMap;
+    if (json.containsKey('query') && json['query'] is Map) {
+      queryMap = Map<String, dynamic>.from(json['query'] as Map);
+    } else {
+      final rest = Map<String, dynamic>.from(json);
+      rest.remove('id');
+      rest.remove('src');
+      queryMap = rest;
+    }
+    return NCLUserProfile(id: id, src: src, query: queryMap);
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'id': id, if (src != null) 'src': src, 'query': query};
+  }
 
   bool matches(NCLUserData user) {
     return _evaluate(query, user);
@@ -257,7 +280,8 @@ class NCLUserProfile {
     if (expr.containsKey('attribute')) {
       final attName = expr['attribute'] as String;
       final comp = expr['comparator'] as String;
-      final value = expr['value']?.toString() ?? '';
+      final rawValue = expr['value'];
+      final value = rawValue?.toString() ?? '';
 
       final userVal = user.getProperty(attName);
       if (userVal == null) return false;
@@ -289,6 +313,8 @@ class NCLUserProfile {
           final n2 = double.tryParse(value);
           if (n1 != null && n2 != null) return n1 <= n2;
           return uvStr.compareTo(value) <= 0;
+        default:
+          return false;
       }
     }
 

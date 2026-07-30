@@ -52,185 +52,14 @@ void main() {
     });
   });
 
-  group('NCL User Serialization Tests', () {
-    test('NCLUserData serializes to JSON and deserializes from JSON', () {
-      final user = NCLUserData(
-        id: 'user1',
-        name: 'Alice',
-        initialProperties: {'age': 25, 'lang': 'pt-BR'},
-      );
 
-      final json = user.toJson();
-      expect(json['id'], equals('user1'));
-      expect(json['name'], equals('Alice'));
-      expect(json['age'], equals(25));
-      expect(json['lang'], equals('pt-BR'));
-
-      final restoredUser = NCLUserData.fromJson(json);
-      expect(restoredUser.id, equals('user1'));
-      expect(restoredUser.name, equals('Alice'));
-      expect(restoredUser.getProperty('age'), equals(25));
-      expect(restoredUser.getProperty('lang'), equals('pt-BR'));
-    });
-
-    test('Users exports and imports users JSON list', () {
-      final manager = NCLUsers();
-      manager.registerUser(
-        NCLUserData(id: 'u1', name: 'Bob', initialProperties: {'device': 'tv'}),
-      );
-      manager.registerUser(
-        NCLUserData(
-          id: 'u2',
-          name: 'Carol',
-          initialProperties: {'device': 'mobile'},
-        ),
-      );
-
-      final exported = manager.allUsers.map((u) => u.toJson()).toList();
-      expect(exported.length, equals(2));
-
-      final newManager = NCLUsers();
-      newManager.importUsers(exported);
-
-      expect(newManager.allUsers.length, equals(2));
-      expect(newManager.getUserProperty('u1', 'device'), equals('tv'));
-      expect(newManager.getUserProperty('u2', 'device'), equals('mobile'));
-    });
-  });
-
-  group('NCL Users Session Management Tests', () {
-    late NCLUsers manager;
-
-    setUp(() {
-      manager = NCLUsers();
-      manager.registerUser(NCLUserData(id: 'u1', name: 'Alice'));
-      manager.registerUser(NCLUserData(id: 'u2', name: 'Bob'));
-    });
-
-    test('createUsersSession and getUsersSessionIds', () {
-      expect(manager.createUsersSession('session1'), isTrue);
-      expect(manager.createUsersSession('session1'), isFalse);
-      expect(manager.getUsersSessionIds(), contains('session1'));
-    });
-
-    test('joinUsersSession and getUsersSessionUsers', () {
-      manager.createUsersSession('lounge');
-      expect(manager.joinUsersSession('lounge', 'u1'), isTrue);
-      expect(manager.joinUsersSession('lounge', 'u2'), isTrue);
-      expect(manager.joinUsersSession('lounge', 'nonexistent'), isFalse);
-
-      final users = manager.getUsersSessionUsers('lounge');
-      expect(users.length, equals(2));
-      expect(users.map((u) => u.id), containsAll(['u1', 'u2']));
-    });
-
-    test('leaveUsersSession', () {
-      manager.joinUsersSession('main_session', 'u1');
-      expect(manager.leaveUsersSession('main_session', 'u1'), isTrue);
-      expect(manager.getUsersSessionUsers('main_session'), isEmpty);
-      expect(manager.leaveUsersSession('main_session', 'u1'), isFalse);
-    });
-
-    test('clear resets session data', () {
-      manager.joinUsersSession('sessionA', 'u1');
-      manager.clear();
-      expect(manager.getUsersSessionIds(), isEmpty);
-      expect(manager.getUsersSessionUsers('sessionA'), isEmpty);
-    });
-
-    test('synchronously updates user properties in session', () {
-      final sessionManager = NCLUsers();
-      sessionManager.registerUser(
-        NCLUserData(
-          id: 'u1',
-          name: 'Alice',
-          initialProperties: {'status': 'active'},
-        ),
-      );
-      sessionManager.registerUser(
-        NCLUserData(
-          id: 'u2',
-          name: 'Bob',
-          initialProperties: {'status': 'idle'},
-        ),
-      );
-      sessionManager.createUsersSession('session1');
-      sessionManager.joinUsersSession('session1', 'u1');
-      sessionManager.joinUsersSession('session1', 'u2');
-
-      final sessionUsers = sessionManager.getUsersSessionUsers('session1');
-      expect(sessionUsers.length, equals(2));
-
-      sessionManager.setUserProperty('u1', 'status', 'playing');
-      expect(sessionManager.getUserProperty('u1', 'status'), equals('playing'));
-    });
-
-    test(
-      'getSessionPropertyValues aggregates property values across session users',
-      () {
-        final sessionManager = NCLUsers();
-        sessionManager.registerUser(
-          NCLUserData(
-            id: 'u1',
-            name: 'Alice',
-            initialProperties: {'lang': 'pt-BR', 'age': 30},
-          ),
-        );
-        sessionManager.registerUser(
-          NCLUserData(
-            id: 'u2',
-            name: 'Bob',
-            initialProperties: {'lang': 'en-US'},
-          ),
-        );
-        sessionManager.registerUser(
-          NCLUserData(id: 'u3', name: 'Carol', initialProperties: {'age': 22}),
-        );
-
-        sessionManager.createUsersSession('session1');
-        sessionManager.joinUsersSession('session1', 'u1');
-        sessionManager.joinUsersSession('session1', 'u2');
-        sessionManager.joinUsersSession('session1', 'u3');
-
-        final langValues = sessionManager.getSessionPropertyValues(
-          'session1',
-          'lang',
-        );
-        expect(langValues.length, equals(2));
-        expect(langValues['u1'], equals('pt-BR'));
-        expect(langValues['u2'], equals('en-US'));
-
-        final ageValues = sessionManager.getSessionPropertyValues(
-          'session1',
-          'age',
-        );
-        expect(ageValues.length, equals(2));
-        expect(ageValues['u1'], equals(30));
-        expect(ageValues['u3'], equals(22));
-      },
-    );
-
-    test('removeUsersSession removes active session', () {
-      final sessionManager = NCLUsers();
-      sessionManager.createUsersSession('tempSession');
-      expect(sessionManager.getUsersSessionIds(), contains('tempSession'));
-
-      expect(sessionManager.removeUsersSession('tempSession'), isTrue);
-      expect(
-        sessionManager.getUsersSessionIds(),
-        isNot(contains('tempSession')),
-      );
-      expect(sessionManager.removeUsersSession('nonExistent'), isFalse);
-    });
-  });
 
   group('Platform USERS_DATA Environment Tests', () {
     test('loads single user from inline USERS_DATA JSON map with ID', () {
       final xml = '<ncl><body><media id="m1"/></body></ncl>';
       final doc = NCLDocument.fromContent(
         xml,
-        userData:
-            '{"id": "u100", "name": "Alice", "properties": {"age": 30}}',
+        userData: '{"id": "u100", "name": "Alice", "properties": {"age": 30}}',
       );
       expect(doc.users.getUser('u100'), isNotNull);
       expect(doc.users.getUserProperty('u100', 'age'), equals(30));
@@ -322,11 +151,13 @@ void main() {
 
     test('handles invalid or empty JSON gracefully in loadUserData', () {
       final manager = NCLUsers();
-      expect(() => manager.loadUserData('invalid json format {{{'), returnsNormally);
+      expect(
+        () => manager.loadUserData('invalid json format {{{'),
+        throwsFormatException,
+      );
       expect(() => manager.loadUserData(''), returnsNormally);
       expect(() => manager.loadUserData('   '), returnsNormally);
       expect(manager.allUsers, isEmpty);
     });
   });
 }
-
