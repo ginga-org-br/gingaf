@@ -14,6 +14,119 @@ import imageHtml from '../../ginga/examples/image.html?raw';
 // @ts-ignore
 import currentServiceHtml from '../../ginga/examples/current_service.html?raw';
 
+// @ts-ignore
+import pjCausalConnBase from '../../ginga/examples/primeiro-joao/causalConnBase.ncl?raw';
+// @ts-ignore
+import pjAdvert from '../../ginga/examples/primeiro-joao/advert.ncl?raw';
+// @ts-ignore
+import pjCounterLua from '../../ginga/examples/primeiro-joao/script/counter.lua?raw';
+
+// @ts-ignore
+import pj00syncProp from '../../ginga/examples/primeiro-joao/00syncProp.ncl?raw';
+// @ts-ignore
+import pj01sync from '../../ginga/examples/primeiro-joao/01sync.ncl?raw';
+// @ts-ignore
+import pj02syncInt from '../../ginga/examples/primeiro-joao/02syncInt.ncl?raw';
+// @ts-ignore
+import pj03context from '../../ginga/examples/primeiro-joao/03context.ncl?raw';
+// @ts-ignore
+import pj04reuse from '../../ginga/examples/primeiro-joao/04reuse.ncl?raw';
+// @ts-ignore
+import pj05return from '../../ginga/examples/primeiro-joao/05return.ncl?raw';
+// @ts-ignore
+import pj06switch from '../../ginga/examples/primeiro-joao/06switch.ncl?raw';
+// @ts-ignore
+import pj07transition from '../../ginga/examples/primeiro-joao/07transition.ncl?raw';
+// @ts-ignore
+import pj08animation from '../../ginga/examples/primeiro-joao/08animation.ncl?raw';
+// @ts-ignore
+import pj09settings from '../../ginga/examples/primeiro-joao/09settings.ncl?raw';
+// @ts-ignore
+import pj10menu from '../../ginga/examples/primeiro-joao/10menu.ncl?raw';
+// @ts-ignore
+import pj11nclua from '../../ginga/examples/primeiro-joao/11nclua.ncl?raw';
+// @ts-ignore
+import pj12embNCL from '../../ginga/examples/primeiro-joao/12embNCL.ncl?raw';
+
+// @ts-ignore
+import pjMediaAnimGar from '../../ginga/examples/primeiro-joao/media/animGar.mp4';
+// @ts-ignore
+import pjMediaBackground from '../../ginga/examples/primeiro-joao/media/background.png';
+// @ts-ignore
+import pjMediaBackgroundPassive from '../../ginga/examples/primeiro-joao/media/backgroundPassive.png';
+// @ts-ignore
+import pjMediaCartoes from '../../ginga/examples/primeiro-joao/media/cartoes.png';
+// @ts-ignore
+import pjMediaCartoonMp4 from '../../ginga/examples/primeiro-joao/media/cartoon.mp4';
+// @ts-ignore
+import pjMediaCartoonPng from '../../ginga/examples/primeiro-joao/media/cartoon.png';
+// @ts-ignore
+import pjMediaChorinhoPng from '../../ginga/examples/primeiro-joao/media/chorinho.png';
+// @ts-ignore
+import pjMediaChoroMp4 from '../../ginga/examples/primeiro-joao/media/choro.mp4';
+// @ts-ignore
+import pjMediaChutPng from '../../ginga/examples/primeiro-joao/media/chut.png';
+// @ts-ignore
+import pjMediaChuteiraModPng from '../../ginga/examples/primeiro-joao/media/chuteira_mod.png';
+// @ts-ignore
+import pjMediaDribleMp4 from '../../ginga/examples/primeiro-joao/media/drible.mp4';
+// @ts-ignore
+import pjMediaEnComprouHtm from '../../ginga/examples/primeiro-joao/media/enComprou.htm?raw';
+// @ts-ignore
+import pjMediaEnFormHtm from '../../ginga/examples/primeiro-joao/media/enForm.htm?raw';
+// @ts-ignore
+import pjMediaIconPng from '../../ginga/examples/primeiro-joao/media/icon.png';
+// @ts-ignore
+import pjMediaIconPassivePng from '../../ginga/examples/primeiro-joao/media/iconPassive.png';
+// @ts-ignore
+import pjMediaIntOffPng from '../../ginga/examples/primeiro-joao/media/intOff.png';
+// @ts-ignore
+import pjMediaIntOnPng from '../../ginga/examples/primeiro-joao/media/intOn.png';
+// @ts-ignore
+import pjMediaPhotoPng from '../../ginga/examples/primeiro-joao/media/photo.png';
+// @ts-ignore
+import pjMediaPtComprouHtm from '../../ginga/examples/primeiro-joao/media/ptComprou.htm?raw';
+// @ts-ignore
+import pjMediaPtFormHtm from '../../ginga/examples/primeiro-joao/media/ptForm.htm?raw';
+// @ts-ignore
+import pjMediaRockMp4 from '../../ginga/examples/primeiro-joao/media/rock.mp4';
+// @ts-ignore
+import pjMediaRockPng from '../../ginga/examples/primeiro-joao/media/rock.png';
+// @ts-ignore
+import pjMediaShoesMp4 from '../../ginga/examples/primeiro-joao/media/shoes.mp4';
+// @ts-ignore
+import pjMediaTechnoMp4 from '../../ginga/examples/primeiro-joao/media/techno.mp4';
+// @ts-ignore
+import pjMediaTechnoPng from '../../ginga/examples/primeiro-joao/media/techno.png';
+
+const pjMediaFiles: Record<string, string> = {
+  'media/animGar.mp4': pjMediaAnimGar,
+  'media/background.png': pjMediaBackground,
+  'media/backgroundPassive.png': pjMediaBackgroundPassive,
+  'media/cartoes.png': pjMediaCartoes,
+  'media/cartoon.mp4': pjMediaCartoonMp4,
+  'media/cartoon.png': pjMediaCartoonPng,
+  'media/chorinho.png': pjMediaChorinhoPng,
+  'media/choro.mp4': pjMediaChoroMp4,
+  'media/chut.png': pjMediaChutPng,
+  'media/chuteira_mod.png': pjMediaChuteiraModPng,
+  'media/drible.mp4': pjMediaDribleMp4,
+  'media/enComprou.htm': pjMediaEnComprouHtm,
+  'media/enForm.htm': pjMediaEnFormHtm,
+  'media/icon.png': pjMediaIconPng,
+  'media/iconPassive.png': pjMediaIconPassivePng,
+  'media/intOff.png': pjMediaIntOffPng,
+  'media/intOn.png': pjMediaIntOnPng,
+  'media/photo.png': pjMediaPhotoPng,
+  'media/ptComprou.htm': pjMediaPtComprouHtm,
+  'media/ptForm.htm': pjMediaPtFormHtm,
+  'media/rock.mp4': pjMediaRockMp4,
+  'media/rock.png': pjMediaRockPng,
+  'media/shoes.mp4': pjMediaShoesMp4,
+  'media/techno.mp4': pjMediaTechnoMp4,
+  'media/techno.png': pjMediaTechnoPng,
+};
+
 self.MonacoEnvironment = {
   getWorker(_workerId: string, _label: string) {
     return new EditorWorker();
@@ -33,6 +146,20 @@ export const examples: Record<string, Example> = {
   image: { mainFile: 'image.ncl', category: 'media', description: 'Image presentation example', files: { 'image.ncl': imageNcl } },
   image_html: { mainFile: 'image.html', category: 'html', description: 'HTML layout image example', files: { 'image.html': imageHtml } },
   current_service: { mainFile: 'current_service.html', category: 'html', description: 'Current service HTML integration example', files: { 'current_service.html': currentServiceHtml } },
+
+  pj_00syncProp: { mainFile: '00syncProp.ncl', category: 'primeiro-joao', description: 'Primeiro João: Property sync example', files: { '00syncProp.ncl': pj00syncProp } },
+  pj_01sync: { mainFile: '01sync.ncl', category: 'primeiro-joao', description: 'Primeiro João: Sync example', files: { '01sync.ncl': pj01sync, 'causalConnBase.ncl': pjCausalConnBase } },
+  pj_02syncInt: { mainFile: '02syncInt.ncl', category: 'primeiro-joao', description: 'Primeiro João: Interactive sync example', files: { '02syncInt.ncl': pj02syncInt, 'causalConnBase.ncl': pjCausalConnBase } },
+  pj_03context: { mainFile: '03context.ncl', category: 'primeiro-joao', description: 'Primeiro João: Context mapping example', files: { '03context.ncl': pj03context, 'causalConnBase.ncl': pjCausalConnBase } },
+  pj_04reuse: { mainFile: '04reuse.ncl', category: 'primeiro-joao', description: 'Primeiro João: Media reuse example', files: { '04reuse.ncl': pj04reuse, 'causalConnBase.ncl': pjCausalConnBase } },
+  pj_05return: { mainFile: '05return.ncl', category: 'primeiro-joao', description: 'Primeiro João: Form return example', files: { '05return.ncl': pj05return, 'causalConnBase.ncl': pjCausalConnBase } },
+  pj_06switch: { mainFile: '06switch.ncl', category: 'primeiro-joao', description: 'Primeiro João: Rule switch example', files: { '06switch.ncl': pj06switch, 'causalConnBase.ncl': pjCausalConnBase } },
+  pj_07transition: { mainFile: '07transition.ncl', category: 'primeiro-joao', description: 'Primeiro João: Transition example', files: { '07transition.ncl': pj07transition, 'causalConnBase.ncl': pjCausalConnBase } },
+  pj_08animation: { mainFile: '08animation.ncl', category: 'primeiro-joao', description: 'Primeiro João: Animation example', files: { '08animation.ncl': pj08animation, 'causalConnBase.ncl': pjCausalConnBase } },
+  pj_09settings: { mainFile: '09settings.ncl', category: 'primeiro-joao', description: 'Primeiro João: Settings example', files: { '09settings.ncl': pj09settings, 'causalConnBase.ncl': pjCausalConnBase } },
+  pj_10menu: { mainFile: '10menu.ncl', category: 'primeiro-joao', description: 'Primeiro João: Menu example', files: { '10menu.ncl': pj10menu, 'causalConnBase.ncl': pjCausalConnBase } },
+  pj_11nclua: { mainFile: '11nclua.ncl', category: 'primeiro-joao', description: 'Primeiro João: NCLua example', files: { '11nclua.ncl': pj11nclua, 'causalConnBase.ncl': pjCausalConnBase, 'script/counter.lua': pjCounterLua } },
+  pj_12embNCL: { mainFile: '12embNCL.ncl', category: 'primeiro-joao', description: 'Primeiro João: Embedded NCL example', files: { '12embNCL.ncl': pj12embNCL, 'advert.ncl': pjAdvert, 'causalConnBase.ncl': pjCausalConnBase } },
 };
 
 export function resolveExampleKey(requested: string | null, available: Record<string, Example> = examples): string {
@@ -73,13 +200,14 @@ const selectEl = document.getElementById('example-select') as HTMLSelectElement;
 const iframe = document.getElementById('preview-frame') as HTMLIFrameElement;
 
 const isEditableFile = (fileName: string) => {
-  return fileName.endsWith('.ncl') || 
-         fileName.endsWith('.xml') || 
-         fileName.endsWith('.lua') || 
-         fileName.endsWith('.html') || 
-         fileName.endsWith('.js') || 
-         fileName.endsWith('.css') || 
-         fileName.endsWith('.txt');
+  return fileName.endsWith('.ncl') ||
+    fileName.endsWith('.xml') ||
+    fileName.endsWith('.lua') ||
+    fileName.endsWith('.html') ||
+    fileName.endsWith('.htm') ||
+    fileName.endsWith('.js') ||
+    fileName.endsWith('.css') ||
+    fileName.endsWith('.txt');
 };
 
 if (editorContainer && editorTabs && runBtn && selectEl && iframe) {
@@ -208,10 +336,14 @@ if (editorContainer && editorTabs && runBtn && selectEl && iframe) {
       isRunning = false;
     } else {
       currentExample.files[currentFileName] = editor.getValue();
-      
-      sessionStorage.setItem('GINGA_PLAYGROUND_FILES', JSON.stringify(currentExample.files));
+
+      const allFiles = currentExample.category === 'primeiro-joao'
+        ? { ...pjMediaFiles, ...currentExample.files }
+        : currentExample.files;
+
+      sessionStorage.setItem('GINGA_PLAYGROUND_FILES', JSON.stringify(allFiles));
       sessionStorage.setItem('GINGA_PLAYGROUND_MAIN', currentExample.mainFile);
-      
+
       editor.updateOptions({ readOnly: true });
       document.getElementById('editor-overlay')?.classList.remove('hidden');
       runBtn.textContent = 'Stop';
