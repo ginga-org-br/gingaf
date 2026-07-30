@@ -20,8 +20,6 @@ export 'ncl_scheduler.dart';
 export 'parser.dart';
 export 'users.dart';
 
-
-
 final _logger = Logger('ncl_doc');
 
 class NCLDocument {
@@ -223,6 +221,9 @@ class NCLDocument {
       final varName = ruleEl.rawAttributes['var'] ?? '';
       final value = ruleEl.rawAttributes['value'] ?? '';
       final comparator = ruleEl.rawAttributes['comparator'] ?? 'eq';
+      // NOT COMPLIANT: <rule> with user
+      final userAttr = ruleEl.rawAttributes['user'];
+      // NOT COMPLIANT ends
       var systemVal = systemVariables[varName];
       if (systemVal == null) {
         for (final s in _body.children.whereType<Settings>()) {
@@ -230,6 +231,17 @@ class NCLDocument {
           if (s.id != null && varName.startsWith('${s.id}.')) {
             propName = varName.substring(s.id!.length + 1);
           }
+          // NOT COMPLIANT: <rule> with user
+          if (userAttr != null && userAttr.isNotEmpty) {
+            final profileId = s.rawAttributes['user'];
+            if (profileId != null &&
+                profileId != userAttr &&
+                profileId != 'currentUser' &&
+                userAttr != 'currentUser') {
+              continue;
+            }
+          }
+          // NOT COMPLIANT ends
           final val = getPropertyValue(s, propName);
           if (val != null) {
             systemVal = val;
@@ -237,6 +249,17 @@ class NCLDocument {
           }
         }
       }
+      // NOT COMPLIANT: <rule> with user
+      if (systemVal == null && userAttr != null && userAttr.isNotEmpty) {
+        final activeUser = users.activeUser;
+        if (activeUser != null) {
+          final userVal = activeUser.getProperty(varName);
+          if (userVal != null) {
+            systemVal = userVal.toString();
+          }
+        }
+      }
+      // NOT COMPLIANT ends
       systemVal ??= '';
 
       switch (comparator) {
@@ -352,18 +375,21 @@ class NCLDocument {
 
   String? getPropertyValue(Node node, String propertyName) {
     if (node is Settings) {
-      final isUserSetting = node.mimeType == 'application/x-ncl-user-settings' ||
+      final isUserSetting =
+          node.mimeType == 'application/x-ncl-user-settings' ||
           node.rawAttributes['type'] == 'application/x-ncl-user-settings';
-      
+
       bool hasCurrentUser = node.rawAttributes['user'] == 'currentUser';
       if (!hasCurrentUser && node == _settings) {
         hasCurrentUser = _hasUserSettingsMedia(_body);
       }
 
       if (isUserSetting || hasCurrentUser) {
-        final hasPropertyDecl = node.children
-            .whereType<Property>()
-            .any((p) => p.name == propertyName);
+        // NOT COMPLIANT: <rule> with user
+        final hasPropertyDecl = node.children.whereType<Property>().any(
+          (p) => p.name == propertyName,
+        );
+        // NOT COMPLIANT ends
         if (hasPropertyDecl) {
           final user = users.activeUser;
           if (user != null) {
