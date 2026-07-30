@@ -5,18 +5,39 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 class MockVideoPlayer extends VideoPlayerPlatform
     with MockPlatformInterfaceMixin {
-  final StreamController<VideoEvent> events =
-      StreamController<VideoEvent>.broadcast();
+  int _nextTextureId = 1;
+  final Map<int, StreamController<VideoEvent>> _controllers = {};
+  final StreamController<VideoEvent> events = StreamController<VideoEvent>.broadcast();
 
   @override
   Future<void> init() async {}
 
   @override
-  Future<void> dispose(int textureId) async {}
+  Future<void> dispose(int textureId) async {
+    await _controllers[textureId]?.close();
+    _controllers.remove(textureId);
+  }
 
   @override
   Future<int?> create(DataSource dataSource) async {
-    return 1;
+    final textureId = _nextTextureId++;
+    final controller = StreamController<VideoEvent>.broadcast();
+    _controllers[textureId] = controller;
+    events.stream.listen((event) {
+      if (!controller.isClosed) {
+        controller.add(event);
+      }
+    });
+    scheduleMicrotask(() {
+      if (!controller.isClosed) {
+        controller.add(VideoEvent(
+          eventType: VideoEventType.initialized,
+          duration: const Duration(seconds: 10),
+          size: const Size(1920, 1080),
+        ));
+      }
+    });
+    return textureId;
   }
 
   @override
@@ -44,7 +65,7 @@ class MockVideoPlayer extends VideoPlayerPlatform
 
   @override
   Stream<VideoEvent> videoEventsFor(int textureId) {
-    return events.stream;
+    return _controllers[textureId]?.stream ?? const Stream.empty();
   }
 
   @override

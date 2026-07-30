@@ -102,19 +102,21 @@ class _MainAVWidgetState extends State<MainAVWidget> {
     }
 
     try {
+      final VideoPlayerController controller;
       if (uriStr.startsWith('http://') || uriStr.startsWith('https://')) {
-        _videoController = VideoPlayerController.networkUrl(Uri.parse(uriStr));
+        controller = VideoPlayerController.networkUrl(Uri.parse(uriStr));
       } else {
         if (kIsWeb) {
-          _videoController = VideoPlayerController.networkUrl(Uri.parse(uriStr));
+          controller = VideoPlayerController.networkUrl(Uri.parse(uriStr));
         } else {
-          _videoController = VideoPlayerController.file(File(uriStr));
+          controller = VideoPlayerController.file(File(uriStr));
         }
       }
 
-      await _videoController!.initialize();
-      await _videoController!.setLooping(true);
-      _videoController!.addListener(_videoListener);
+      _videoController = controller;
+      await controller.initialize();
+      await controller.setLooping(true);
+      controller.addListener(_videoListener);
 
       if (mounted) {
         setState(() {});
@@ -122,13 +124,13 @@ class _MainAVWidgetState extends State<MainAVWidget> {
 
       if (widget.controller.isPlaying) {
         try {
-          await _videoController!.play();
+          await controller.play();
         } catch (playErr) {
           debugPrint("MainAVWidget play error (e.g. autoplay blocked): $playErr");
           if (kIsWeb) {
-            await _videoController!.setVolume(0.0);
+            await controller.setVolume(0.0);
             try {
-              await _videoController!.play();
+              await controller.play();
             } catch (_) {}
           }
         }
