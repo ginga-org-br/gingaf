@@ -291,11 +291,9 @@ class NCLUserProfile {
       switch (comp) {
         case 'eq':
           return uvStr == value;
-        case 'ne':
         case 'neq':
           return uvStr != value;
         case 'gt':
-
           final n1 = double.tryParse(uvStr);
           final n2 = double.tryParse(value);
           if (n1 != null && n2 != null) return n1 > n2;
