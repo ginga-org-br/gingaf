@@ -8,13 +8,24 @@
 #include <iostream>
 
 void CreateAndAttachConsole() {
-  if (::AllocConsole()) {
+  if (::AttachConsole(ATTACH_PARENT_PROCESS) || (::IsDebuggerPresent() && ::AllocConsole())) {
+    HANDLE hOut = ::GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hOut == NULL || hOut == INVALID_HANDLE_VALUE) {
+      hOut = ::CreateFileW(L"CONOUT$", GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+      ::SetStdHandle(STD_OUTPUT_HANDLE, hOut);
+    }
+    HANDLE hErr = ::GetStdHandle(STD_ERROR_HANDLE);
+    if (hErr == NULL || hErr == INVALID_HANDLE_VALUE) {
+      hErr = ::CreateFileW(L"CONOUT$", GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+      ::SetStdHandle(STD_ERROR_HANDLE, hErr);
+    }
+
     FILE *unused;
-    if (freopen_s(&unused, "CONOUT$", "w", stdout)) {
+    if (freopen_s(&unused, "CONOUT$", "w", stdout) == 0) {
       _dup2(_fileno(stdout), 1);
     }
-    if (freopen_s(&unused, "CONOUT$", "w", stderr)) {
-      _dup2(_fileno(stdout), 2);
+    if (freopen_s(&unused, "CONOUT$", "w", stderr) == 0) {
+      _dup2(_fileno(stderr), 2);
     }
     std::ios::sync_with_stdio();
     FlutterDesktopResyncOutputStreams();

@@ -5,12 +5,28 @@ import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 
 import 'ginga.dart';
-
 import 'web_utils_stub.dart' if (dart.library.html) 'web_utils_web.dart';
 
 final _logger = Logger('ginga');
 
 void main(List<String> args) {
+  if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
+    if (args.contains('-h') || args.contains('--help')) {
+      stdout.writeln('Usage: gingaf [options] [APP_FILE]');
+      stdout.writeln('');
+      stdout.writeln('Options:');
+      stdout.writeln('  -h, --help    Show this help message');
+      stdout.writeln('');
+      stdout.writeln('Environment Variables alternatives (mobile, web):');
+      stdout.writeln('  APP         Path to the application file');
+      stdout.writeln('  MAINAV      Main AV media source URL or file path');
+      stdout.writeln('  CCWS        Enable or disable CCWS (true/false, default: true)');
+      stdout.writeln('  USERS_DATA  Path to users data JSON file');
+      stdout.flush();
+      exit(0);
+    }
+  }
+
   WidgetsFlutterBinding.ensureInitialized();
 
   Logger.root.level = Level.ALL;
@@ -19,9 +35,15 @@ void main(List<String> args) {
         '[${record.loggerName}] ${record.level.name}: ${record.message}');
   });
 
-  String? app = const String.fromEnvironment('APP').isNotEmpty
-      ? const String.fromEnvironment('APP')
-      : null;
+  String? app;
+  if (args.isNotEmpty &&
+      args.first.trim().isNotEmpty &&
+      !args.first.startsWith('-')) {
+    app = args.first.trim();
+  }
+  if (app == null && const String.fromEnvironment('APP').isNotEmpty) {
+    app = const String.fromEnvironment('APP');
+  }
   if (app == null && !kIsWeb) {
     app = Platform.environment['APP'];
   }
@@ -57,13 +79,15 @@ void main(List<String> args) {
       if (stdin.hasTerminal) {
         stdin.echoMode = false;
         stdin.lineMode = false;
+        stdin.listen((List<int> codes) {
+          if (codes.contains(27)) {
+            _logger.info('Captured ESC, stopping app.');
+            exit(0);
+          }
+        }, onError: (e) {
+          _logger.warning('stdin error: $e');
+        });
       }
-      stdin.listen((List<int> codes) {
-        if (codes.contains(27)) {
-          _logger.info('Captured ESC, stopping app.');
-          exit(0);
-        }
-      });
     } catch (e) {
       _logger.severe('Failed to setup stdin listener: $e');
     }
@@ -75,10 +99,12 @@ void main(List<String> args) {
   } else if (!kIsWeb && Platform.environment.containsKey('MAINAV')) {
     mainav = Platform.environment['MAINAV'];
   }
-  final mainAvSrc =
-      (mainav != null && mainav.isNotEmpty && mainav != 'true' && mainav != 'false')
-          ? mainav
-          : DEFAULT_VIDEO;
+  final mainAvSrc = (mainav != null &&
+          mainav.isNotEmpty &&
+          mainav != 'true' &&
+          mainav != 'false')
+      ? mainav
+      : DEFAULT_VIDEO;
 
   bool ccws = const bool.fromEnvironment('CCWS', defaultValue: true);
   if (!kIsWeb) {
@@ -98,8 +124,9 @@ void main(List<String> args) {
       usersDataJson = Platform.environment['USERS_DATA'];
     }
   }
-  final usersDataSrc =
-      (usersDataJson != null && usersDataJson.isNotEmpty) ? usersDataJson : null;
+  final usersDataSrc = (usersDataJson != null && usersDataJson.isNotEmpty)
+      ? usersDataJson
+      : null;
 
   final config = GingaConfig(
     effectiveAppSrc,
