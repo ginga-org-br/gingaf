@@ -229,7 +229,7 @@ void main() {
         home: Scaffold(
           body: DefaultAssetBundle(
             bundle: mockBundle,
-            child: NCLApp(uri: 'joao09settings.ncl'),
+            child: NCLApp(src: 'joao09settings.ncl'),
           ),
         ),
       ),
@@ -256,7 +256,7 @@ void main() {
         home: Scaffold(
           body: DefaultAssetBundle(
             bundle: mockBundle,
-            child: NCLApp(uri: 'joao09settings.ncl'),
+            child: NCLApp(src: 'joao09settings.ncl'),
           ),
         ),
       ),

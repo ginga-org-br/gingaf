@@ -4,7 +4,11 @@ import '../ncl_app.dart';
 import 'ncl_media_widget.dart';
 
 class LuaWidget extends MediaWidget {
-  const LuaWidget({super.key, required super.uri, super.media});
+  LuaWidget({
+    super.key,
+    required String src,
+    super.media,
+  }) : super(src: src);
 
   @override
   State<LuaWidget> createState() => LuaWidgetState();
@@ -44,8 +48,17 @@ class LuaWidgetState extends MediaState<LuaWidget> {
     canvasState.onUpdate = () {
       if (mounted) setState(() {});
     };
+  }
 
-    _runScript();
+  bool _scriptRan = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_scriptRan) {
+      _scriptRan = true;
+      _runScript();
+    }
   }
 
   Future<void> _runScript() async {

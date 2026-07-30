@@ -200,7 +200,7 @@ void main() {
         home: Scaffold(
           body: DefaultAssetBundle(
             bundle: mockBundle,
-            child: NCLApp(uri: 'joao07transition.ncl'),
+            child: NCLApp(src: 'joao07transition.ncl'),
           ),
         ),
       ),

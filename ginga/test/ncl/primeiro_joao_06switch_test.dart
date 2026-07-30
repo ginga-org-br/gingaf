@@ -469,7 +469,7 @@ void main() {
         home: Scaffold(
           body: DefaultAssetBundle(
             bundle: mockBundle,
-            child: NCLApp(uri: 'joao06switch.ncl'),
+            child: NCLApp(src: 'joao06switch.ncl'),
           ),
         ),
       ),

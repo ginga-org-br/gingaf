@@ -317,7 +317,7 @@ void main() {
         home: Scaffold(
           body: DefaultAssetBundle(
             bundle: mockBundle,
-            child: NCLApp(uri: 'joao03context.ncl'),
+            child: NCLApp(src: 'joao03context.ncl'),
           ),
         ),
       ),

@@ -3,7 +3,11 @@ import 'package:ncldoc/ncl_document.dart' hide State;
 import 'ncl_media_widget.dart';
 
 class HtmlWidget extends MediaWidget {
-  const HtmlWidget({super.key, required super.uri, super.media});
+  HtmlWidget({
+    super.key,
+    required String src,
+    super.media,
+  }) : super(src: src);
 
   @override
   State<HtmlWidget> createState() => HtmlWidgetState();

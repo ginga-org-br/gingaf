@@ -27,12 +27,12 @@ class NCLApp extends MediaWidget {
 
   NCLApp({
     super.key,
-    required dynamic uri,
+    required String src,
     super.media,
     this.mainAVController,
     GingaConfig? config,
-  })  : config = config ?? GingaConfig(),
-        super(uri: uri is Uri ? uri : Uri.parse(uri.toString()));
+  })  : config = config ?? const GingaConfig(),
+        super(src: src);
 
   @override
   State<NCLApp> createState() => NCLAppState();

@@ -196,7 +196,7 @@ void main() {
         home: Scaffold(
           body: DefaultAssetBundle(
             bundle: mockBundle,
-            child: NCLApp(uri: 'joao00syncProp.ncl'),
+            child: NCLApp(src: 'joao00syncProp.ncl'),
           ),
         ),
       ),

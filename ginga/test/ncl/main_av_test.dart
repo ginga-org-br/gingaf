@@ -44,7 +44,7 @@ void main() {
       'test_bg.ncl': nclData,
     });
 
-    final config = GingaConfig('test_bg.ncl', false, 'examples/primeiro-joao/media/animGar.mp4');
+    final config = GingaConfig('test_bg.ncl', false, true, null, 'examples/primeiro-joao/media/animGar.mp4');
 
     await tester.pumpWidget(
       MaterialApp(
@@ -78,7 +78,7 @@ void main() {
       'test_bg.ncl': nclData,
     });
 
-    final config = GingaConfig('test_bg.ncl', false, 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4');
+    final config = GingaConfig('test_bg.ncl', false, true, null, 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4');
 
     await tester.pumpWidget(
       MaterialApp(

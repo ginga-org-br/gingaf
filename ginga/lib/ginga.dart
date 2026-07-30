@@ -96,13 +96,13 @@ class _GingaState extends State<Ginga> {
         _logger.info('Starting application $appSrc');
         if (appSrc.toLowerCase().endsWith('.html')) {
           htmlApp = html.HTMLApp(
-            uri: appSrc,
+            src: appSrc,
             ccws: _ccws,
             config: widget.config,
           );
         } else {
           nclApp = ncl.NCLApp(
-            uri: appSrc,
+            src: appSrc,
             mainAVController: mainAVController,
             config: widget.config,
           );

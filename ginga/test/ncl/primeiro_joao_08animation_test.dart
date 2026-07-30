@@ -246,7 +246,7 @@ void main() {
         home: Scaffold(
           body: DefaultAssetBundle(
             bundle: mockBundle,
-            child: NCLApp(uri: 'joao08animation.ncl'),
+            child: NCLApp(src: 'joao08animation.ncl'),
           ),
         ),
       ),

@@ -15,14 +15,16 @@ import '../ncl_app.dart';
 import '../../main_av.dart';
 
 abstract class MediaWidget extends StatefulWidget {
-  final String uri;
+  final String src;
   final Media? media;
 
   const MediaWidget({
     super.key,
-    required this.uri,
+    required this.src,
     this.media,
   });
+
+  Uri get uri => Uri.tryParse(src) ?? Uri();
 }
 
 abstract class MediaState<T extends MediaWidget> extends State<T> {
@@ -231,7 +233,7 @@ class WidgetFactory {
         }
         return AVWidget(
           key: key,
-          uri: avUri,
+          src: avUri,
           media: media,
         );
       }
@@ -252,24 +254,24 @@ class WidgetFactory {
     if (uri.endsWith('.ncl') ||
         mimeType == 'application/x-ncl-NCL' ||
         mimeType == 'application/x-ncl-ncl') {
-      return NCLApp(key: key, uri: uri, media: media);
+      return NCLApp(key: key, src: uri, media: media);
     }
     if (mimeType.startsWith('video/') ||
         mimeType.startsWith('audio/') ||
         mimeType.contains('video') ||
         mimeType.contains('audio')) {
-      return AVWidget(key: key, uri: uri, media: media);
+      return AVWidget(key: key, src: uri, media: media);
     }
     switch (mimeType) {
       case 'application/x-ncl-NCLua':
       case 'application/x-ginga-NCLua':
-        return LuaWidget(key: key, uri: uri, media: media);
+        return LuaWidget(key: key, src: uri, media: media);
       case 'application/ssml+xml':
-        return SsmlWidget(key: key, uri: uri, media: media);
+        return SsmlWidget(key: key, src: uri, media: media);
       case 'text/plain':
-        return TextWidget(key: key, uri: uri, media: media);
+        return TextWidget(key: key, src: uri, media: media);
       case 'text/html':
-        return HtmlWidget(key: key, uri: uri, media: media);
+        return HtmlWidget(key: key, src: uri, media: media);
       case 'image/png':
       case 'image/jpeg':
       case 'image/gif':
@@ -278,7 +280,7 @@ class WidgetFactory {
       case 'image/heic':
       case 'application/x-ginga-time':
       case 'application/x-ncl-time':
-        return ImageWidget(key: key, uri: uri, media: media);
+        return ImageWidget(key: key, src: uri, media: media);
       default:
         return null;
     }

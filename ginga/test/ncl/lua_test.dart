@@ -51,7 +51,7 @@ c:drawRect("fill", 110, 110, 20, 20)
       MaterialApp(
         home: DefaultAssetBundle(
           bundle: mockBundle,
-          child: const NCLApp(uri: 'test.ncl'),
+          child: NCLApp(src: 'test.ncl'),
         ),
       ),
     );
@@ -70,7 +70,7 @@ c:drawRect("fill", 110, 110, 20, 20)
         MaterialApp(
           home: DefaultAssetBundle(
             bundle: mockBundle,
-            child: const LuaWidget(uri: 'test.lua'),
+            child: LuaWidget(src: 'test.lua'),
           ),
         ),
       );

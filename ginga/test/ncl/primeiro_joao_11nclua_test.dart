@@ -1,13 +1,10 @@
-import 'dart:async';
 import 'package:flutter/material.dart' hide Action, State;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingaf/ncl/ncl_app.dart';
-import 'package:ncldoc/ncl_document.dart';
 import 'package:ncldoc/elements.dart';
-import 'package:ncldoc/event.dart';
+import 'package:ncldoc/ncl_document.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
-import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import '../mock_video_player.dart';
 
@@ -167,6 +164,45 @@ class MockLuaAssetBundle extends CachingAssetBundle {
   </body>
 </ncl>''';
     }
+    if (key == 'script/counter.lua' || key == 'counter.lua') {
+      return '''local counter = 0
+local dx, dy = canvas:attrSize()
+function handler1 (evt)
+   if evt.class=='ncl' and evt.type=='attribution' and evt.action=='start' and evt.name=='add' then 
+      counter = counter + evt.value
+
+      event.post {
+         class   = 'ncl',
+         type    = 'attribution',
+         name    = 'add',
+         action  = 'stop',
+         value   = counter,
+      }
+   end
+end
+
+function handler2 (evt)
+   if evt.class=='ncl' and evt.type=='presentation' and evt.action=='start' and evt.label=='fim' then 
+      canvas:attrColor ('black')
+      canvas:drawRect('fill',0,0,dx,dy)
+      canvas:attrColor ('yellow')
+      canvas:attrFont ('vera', 24, 'bold')
+      canvas:drawText (10,10, 'O número de vezes que você trocou de ritmo foi: '..counter)
+      canvas:flush()
+
+      event.post {
+         class   = 'ncl',
+         type    = 'presentation',
+         label   = 'fim',
+         action  = 'stop',
+      }
+   end
+end
+
+event.register(handler1)
+event.register(handler2)
+''';
+    }
     return '';
   }
 }
@@ -176,7 +212,9 @@ void main() {
     VideoPlayerPlatform.instance = MockVideoPlayer();
   });
 
-  testWidgets('NCLApp runs lua script configuration and triggers property modifications successfully', (WidgetTester tester) async {
+  testWidgets(
+      'NCLApp runs lua script configuration and triggers property modifications successfully',
+      (WidgetTester tester) async {
     final mockBundle = MockLuaAssetBundle();
 
     await tester.pumpWidget(
@@ -184,7 +222,7 @@ void main() {
         home: Scaffold(
           body: DefaultAssetBundle(
             bundle: mockBundle,
-            child: NCLApp(uri: 'joao11nclua.ncl'),
+            child: NCLApp(src: 'joao11nclua.ncl'),
           ),
         ),
       ),
@@ -200,7 +238,8 @@ void main() {
     await tester.pump();
 
     final changesMedia = nclState.nclDocument!.getNodeById('changes') as Media;
-    final addProp = changesMedia.getProperties().firstWhere((p) => p.name == 'add');
+    final addProp =
+        changesMedia.getProperties().firstWhere((p) => p.name == 'add');
     expect(addProp.value, isNull);
 
     nclState.nclDocument!.triggerSelection('imgRock', 'ENTER');

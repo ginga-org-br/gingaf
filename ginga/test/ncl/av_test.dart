@@ -68,10 +68,10 @@ void main() {
   testWidgets('AVWidget rendering initialization test',
       (WidgetTester tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: Scaffold(
           body: AVWidget(
-            uri: 'video.mp4',
+            src: 'video.mp4',
           ),
         ),
       ),
@@ -110,7 +110,7 @@ void main() {
           body: Stack(
             children: [
               AVWidget(
-                uri: 'video.mp4',
+                src: 'video.mp4',
                 media: media,
               ),
             ],
@@ -148,7 +148,7 @@ void main() {
           body: Stack(
             children: [
               AVWidget(
-                uri: 'video.mp4',
+                src: 'video.mp4',
                 media: media,
               ),
             ],
@@ -185,7 +185,7 @@ void main() {
           body: Stack(
             children: [
               AVWidget(
-                uri: 'video.mp4',
+                src: 'video.mp4',
                 media: media,
               ),
             ],
@@ -224,7 +224,7 @@ void main() {
           body: Stack(
             children: [
               ImageWidget(
-                uri: '',
+                src: '',
                 media: media,
               ),
             ],

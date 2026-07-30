@@ -9,18 +9,18 @@ import '../ncl_app.dart';
 import 'ncl_media_widget.dart';
 
 class AVWidget extends MediaWidget {
-  const AVWidget({
+  AVWidget({
     super.key,
-    required super.uri,
+    required String src,
     super.media,
-  });
+  }) : super(src: src);
 
   @override
   State<AVWidget> createState() => AVWidgetState();
 }
 
 class AVWidgetState extends MediaState<AVWidget> {
-  late VideoPlayerController _controller;
+  VideoPlayerController? _controller;
   bool _initialized = false;
   bool _isCompleted = false;
 
@@ -33,22 +33,25 @@ class AVWidgetState extends MediaState<AVWidget> {
 
   Future<void> _initVideo() async {
     try {
-      final uriStr = widget.uri;
-      if (uriStr.startsWith('http://') || uriStr.startsWith('https://')) {
-        _controller = VideoPlayerController.networkUrl(Uri.parse(uriStr));
+      final uri = widget.uri;
+      final uriStr = uri.toString();
+      final VideoPlayerController controller;
+
+      if (kIsWeb || (uri.hasScheme && uri.scheme != 'file')) {
+        controller = VideoPlayerController.networkUrl(uri);
+      } else if (uri.isScheme('file')) {
+        controller = VideoPlayerController.file(File(uri.toFilePath()));
       } else {
-        if (kIsWeb) {
-          _controller = VideoPlayerController.networkUrl(Uri.parse(uriStr));
-        } else {
-          _controller = VideoPlayerController.file(File(uriStr));
-        }
+        controller = VideoPlayerController.file(File(uriStr));
       }
 
-      _controller.addListener(() {
+      _controller = controller;
+
+      controller.addListener(() {
         if (!_isCompleted &&
-            _controller.value.isInitialized &&
-            _controller.value.duration.inMilliseconds > 0 &&
-            _controller.value.position >= _controller.value.duration) {
+            controller.value.isInitialized &&
+            controller.value.duration.inMilliseconds > 0 &&
+            controller.value.position >= controller.value.duration) {
           _isCompleted = true;
           final media = widget.media;
           if (media != null && mounted) {
@@ -65,7 +68,7 @@ class AVWidgetState extends MediaState<AVWidget> {
         }
       });
 
-      await _controller.initialize();
+      await controller.initialize();
 
       if (mounted) {
         setState(() {
@@ -74,10 +77,10 @@ class AVWidgetState extends MediaState<AVWidget> {
       }
 
       if (kIsWeb) {
-        await _controller.setVolume(0.0);
+        await controller.setVolume(0.0);
       }
       try {
-        await _controller.play();
+        await controller.play();
       } catch (playErr) {
         debugPrint("AVWidget play error (e.g. autoplay blocked): $playErr");
       }
@@ -88,22 +91,23 @@ class AVWidgetState extends MediaState<AVWidget> {
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
   @override
   Widget buildWidgetContent(BuildContext context) {
-    if (!_initialized) {
+    final controller = _controller;
+    if (!_initialized || controller == null) {
       return const Center(child: CircularProgressIndicator());
     }
     return SizedBox.expand(
       child: FittedBox(
         fit: BoxFit.fill,
         child: SizedBox(
-          width: _controller.value.size.width,
-          height: _controller.value.size.height,
-          child: VideoPlayer(_controller),
+          width: controller.value.size.width,
+          height: controller.value.size.height,
+          child: VideoPlayer(controller),
         ),
       ),
     );

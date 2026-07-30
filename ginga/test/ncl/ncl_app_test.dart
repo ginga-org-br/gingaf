@@ -36,7 +36,7 @@ void main() {
         home: Material(
           child: DefaultAssetBundle(
             bundle: mockBundle,
-            child: NCLApp(uri: "test_image.ncl"),
+            child: NCLApp(src: "test_image.ncl"),
           ),
         ),
       ),
@@ -56,7 +56,7 @@ void main() {
           child: DefaultAssetBundle(
             bundle: mockBundle,
             child: NCLApp(
-              uri: "test_image.ncl",
+              src: "test_image.ncl",
               config: config,
             ),
           ),

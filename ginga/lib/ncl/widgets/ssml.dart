@@ -3,7 +3,11 @@ import 'package:ncldoc/ncl_document.dart' hide State;
 import 'ncl_media_widget.dart';
 
 class SsmlWidget extends MediaWidget {
-  const SsmlWidget({super.key, required super.uri, super.media});
+  SsmlWidget({
+    super.key,
+    required String src,
+    super.media,
+  }) : super(src: src);
 
   @override
   State<SsmlWidget> createState() => SsmlWidgetState();

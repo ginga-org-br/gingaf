@@ -13,13 +13,14 @@ class HTMLApp extends MediaWidget {
   final CCWS? ccws;
   final GingaConfig? config;
 
-  const HTMLApp(
+  HTMLApp(
       {super.key,
-      required super.uri,
+      required String src,
       super.media,
       this.javaScriptChannels,
       this.ccws,
-      this.config});
+      this.config})
+      : super(src: src);
 
   @override
   State<HTMLApp> createState() => HTMLAppState();
