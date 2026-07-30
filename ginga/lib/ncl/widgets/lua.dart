@@ -64,7 +64,7 @@ class LuaWidgetState extends MediaState<LuaWidget> {
   Future<void> _runScript() async {
     canvasState.reset();
     try {
-      final script = await loadContent(widget.uri);
+      final script = await loadContent(widget.src);
       _engine.execute(script);
     } catch (e) {
       debugPrint("Lua Runtime Error: $e");

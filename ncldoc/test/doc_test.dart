@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:ncldoc/ncl_document.dart';
 import 'package:test/test.dart';
 
@@ -103,12 +105,17 @@ void main() {
     });
 
     test('resolving relative media path against file docUri', () {
-      final doc = NCLDocument.fromContent(
-        '<ncl><body id="body"><media id="m1" src="video.mp4" /></body></ncl>',
-        docSrc: 'file:///C:/Users/test/video.ncl',
-      );
-      final media = doc.getNodeById('m1') as Media;
-      expect(media.uri, 'file:///C:/Users/test/video.mp4');
+      final dummy = File('video.mp4')..writeAsStringSync('');
+      try {
+        final doc = NCLDocument.fromContent(
+          '<ncl><body id="body"><media id="m1" src="video.mp4" /></body></ncl>',
+          docSrc: 'file:///C:/Users/test/video.ncl',
+        );
+        final media = doc.getNodeById('m1') as Media;
+        expect(media.uri, 'file:///C:/Users/test/video.mp4');
+      } finally {
+        if (dummy.existsSync()) dummy.deleteSync();
+      }
     });
   });
 }

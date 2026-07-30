@@ -22,6 +22,7 @@ void main() {
     test('parses arguments and starts document for valid .ncl file', () async {
       final tempDir = Directory.systemTemp.createTempSync('cli_test_');
       final nclFile = File('${tempDir.path}/test_app.ncl');
+      File('${tempDir.path}/test.mp4').writeAsStringSync('dummy video');
       nclFile.writeAsStringSync('<ncl><body id="body"><media id="m1" src="test.mp4"/></body></ncl>');
 
       int? exitCode;

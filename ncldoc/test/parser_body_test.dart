@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:ncldoc/elements.dart';
 import 'package:ncldoc/parser.dart';
 import 'package:test/test.dart';
@@ -5,9 +7,20 @@ import 'package:test/test.dart';
 void main() {
   group('NCLParser Tests', () {
     late NCLParser parser;
+    final dummyFiles = ['video.mp4', 'video1.mp4', 'video2.mp4', 'image.png', 'a.mp4', 'main.lua', 'index.html'];
 
     setUp(() {
       parser = NCLParser();
+      for (final name in dummyFiles) {
+        File(name).writeAsStringSync('dummy content');
+      }
+    });
+
+    tearDown(() {
+      for (final name in dummyFiles) {
+        final f = File(name);
+        if (f.existsSync()) f.deleteSync();
+      }
     });
 
     test('parseString parses all NCL node types successfully', () {

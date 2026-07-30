@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:xml/xml.dart';
 
 import 'mimetype.dart';
@@ -7,11 +9,18 @@ import 'schema.dart';
 class NCLParser {
   final Schema schema = Schema();
   final Uri? docUri;
+  final ContentLoader contentLoader;
   Uri? get baseUri => docUri?.resolve('.');
 
-  NCLParser({this.docUri}) {}
+  NCLParser({
+    this.docUri,
+    this.contentLoader = const FileContentLoader(),
+  });
 
   (Head, Body) parseString(String xmlString) {
+    if (xmlString.trim().isEmpty) {
+      throw ArgumentError('empty src');
+    }
     final document = XmlDocument.parse(xmlString);
     final root = document.rootElement;
 
@@ -204,7 +213,18 @@ class NCLParser {
       return Settings(rawAttributes: rawAttributes, mimeType: type);
     }
     final resolvedSrc = src.replaceAll('\\', '/');
-    final uri = src.isNotEmpty ? (baseUri?.resolve(resolvedSrc).toString() ?? resolvedSrc) : '';
+    final baseDirSrc = baseUri?.toString();
+    if (src.isNotEmpty && docUri != null) {
+      final isNetworkOrStream = src.startsWith('sbtvd://') ||
+          src.startsWith('http://') ||
+          src.startsWith('https://');
+      if (!isNetworkOrStream && !contentLoader.exists(resolvedSrc, baseDirSrc)) {
+        throw FileSystemException('Media src does not exist: $src', src);
+      }
+    }
+    final uri = src.isNotEmpty
+        ? (baseUri?.resolve(resolvedSrc).toString() ?? resolvedSrc)
+        : '';
     final mimeType = type.isNotEmpty ? type : getMimeTypeFromExtension(src);
     if (mimeType.startsWith('video/') || mimeType.startsWith('audio/')) {
       final avMedia = AVMedia(

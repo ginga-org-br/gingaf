@@ -34,7 +34,7 @@ class HTMLAppState extends MediaState<HTMLApp> {
   @override
   void initState() {
     super.initState();
-    _logger.info("Starting HTML application: ${widget.uri}");
+    _logger.info("Starting HTML application: ${widget.src}");
     _controller = WebViewController()
       ..setBackgroundColor(const Color(0x00000000));
 
@@ -56,7 +56,7 @@ class HTMLAppState extends MediaState<HTMLApp> {
 
   Future<void> _loadHTML() async {
     try {
-      String content = await loadContent(widget.uri);
+      String content = await loadContent(widget.src);
 
       if (widget.ccws != null || (widget.config?.enableCCWS ?? false)) {
         if (widget.ccws != null) {
@@ -69,13 +69,13 @@ class HTMLAppState extends MediaState<HTMLApp> {
         setState(() => _initialized = true);
       }
     } catch (e) {
-      _logger.severe("Error loading ${widget.uri}: $e");
+      _logger.severe("Error loading ${widget.src}: $e");
       final errorHtml = """
         <!DOCTYPE html>
         <html>
         <body>
           <h1>Ginga HTML Runtime</h1>
-          <p>Error loading: ${widget.uri}</p>
+          <p>Error loading: ${widget.src}</p>
           <p style='color: red;'>$e</p>
         </body>
         </html>
@@ -91,7 +91,7 @@ class HTMLAppState extends MediaState<HTMLApp> {
 
   @override
   void dispose() {
-    _logger.info("Stopping HTML application: ${widget.uri}");
+    _logger.info("Stopping HTML application: ${widget.src}");
     super.dispose();
   }
 

@@ -39,9 +39,9 @@ class NCLDocument {
     String? userDataSrc,
     ContentLoader contentLoader = const FileContentLoader(),
   }) async {
-    final xml = await contentLoader.load(Uri.parse(docSrc));
+    final xml = await contentLoader.load(docSrc);
     final userData = userDataSrc != null
-        ? await contentLoader.load(Uri.parse(userDataSrc))
+        ? await contentLoader.load(userDataSrc, docSrc)
         : null;
     final doc = NCLDocument.fromContent(
       xml ?? '',
@@ -59,9 +59,15 @@ class NCLDocument {
     String? userData,
     ContentLoader contentLoader = const FileContentLoader(),
   }) {
+    if (xml.trim().isEmpty) {
+      throw ArgumentError('empty src');
+    }
     final resolvedDocSrc = docSrc ?? 'tmp.ncl';
-    Uri? resolvedUri = Uri.tryParse(resolvedDocSrc);
-    final (head, body) = NCLParser(docUri: resolvedUri).parseString(xml);
+    final Uri? resolvedUri = docSrc != null ? Uri.tryParse(docSrc) : null;
+    final (head, body) = NCLParser(
+      docUri: resolvedUri,
+      contentLoader: contentLoader,
+    ).parseString(xml);
     return NCLDocument._(
       head: head,
       body: body,
@@ -113,12 +119,13 @@ class NCLDocument {
 
   Future<void> _loadUserProfile(String id, String? src) async {
     if (src == null) return;
-    final uri = docUri?.resolve(src) ?? Uri.parse(src);
-    final jsonContent = await contentLoader.load(uri);
-    if (jsonContent != null && jsonContent.isNotEmpty) {
-      final query = json.decode(jsonContent);
-      users.registerProfile(NCLUserProfile(id: id, src: src, query: query));
-    }
+    try {
+      final jsonContent = await contentLoader.load(src, docSrc);
+      if (jsonContent != null && jsonContent.isNotEmpty) {
+        final query = json.decode(jsonContent);
+        users.registerProfile(NCLUserProfile(id: id, src: src, query: query));
+      }
+    } catch (_) {}
   }
 
   void _gatherSettings() {
@@ -139,7 +146,7 @@ class NCLDocument {
   Settings getSettings() => _settings;
 
   void doNclEditingCommand(String command) {
-    NCLParser(docUri: docUri).doNclEditingCommand(this, command);
+    NCLParser(docUri: docUri, contentLoader: contentLoader).doNclEditingCommand(this, command);
   }
 
   Node? getNodeById(String id) {

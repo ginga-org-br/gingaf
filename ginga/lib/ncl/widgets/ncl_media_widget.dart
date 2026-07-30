@@ -20,8 +20,6 @@ abstract class MediaWidget extends StatefulWidget {
     required this.src,
     this.media,
   });
-
-  Uri get uri => Uri.tryParse(src) ?? Uri();
 }
 
 abstract class MediaState<T extends MediaWidget> extends State<T> {
@@ -163,11 +161,11 @@ abstract class MediaState<T extends MediaWidget> extends State<T> {
     return double.tryParse(trimmed) ?? 0.0;
   }
 
-  Future<String> loadContent(Uri uri) async {
+  Future<String> loadContent(String src) async {
     final loader = GingaContentLoader()..setBuildContext(context);
-    final content = await loader.load(uri);
+    final content = await loader.load(src);
     if (content != null) return content;
-    throw Exception('Failed to load content for uri: $uri');
+    throw Exception('Failed to load content for src: $src');
   }
 
   String get playerKey => id ?? '';
@@ -221,8 +219,8 @@ class WidgetFactory {
     MainAVController? mainAVController,
   }) {
     final mimeType = media.mimeType;
-    var uri = media.uri;
-    if (uri.startsWith('sbtvd://')) {
+    var src = media.uri.isNotEmpty ? media.uri : (media.src ?? '');
+    if (src.startsWith('sbtvd://')) {
       if (mainAVController != null) {
         var avUri = mainAVController.uri ?? '';
         if (avUri.isEmpty || avUri.startsWith('sbtvd://')) {
@@ -237,39 +235,27 @@ class WidgetFactory {
       }
       return null;
     }
-    if (kIsWeb) {
-      try {
-        final mockJson = getSessionStorageItem('GINGA_PLAYGROUND_FILES');
-        if (mockJson != null) {
-          final mockFiles = jsonDecode(mockJson);
-          final fileName = Uri.parse(uri).pathSegments.last;
-          if (mockFiles.containsKey(fileName)) {
-            uri = mockFiles[fileName];
-          }
-        }
-      } catch (e) {}
-    }
-    if (uri.endsWith('.ncl') ||
+    if (src.endsWith('.ncl') ||
         mimeType == 'application/x-ncl-NCL' ||
         mimeType == 'application/x-ncl-ncl') {
-      return NCLApp(key: key, src: uri, media: media);
+      return NCLApp(key: key, src: src, media: media);
     }
     if (mimeType.startsWith('video/') ||
         mimeType.startsWith('audio/') ||
         mimeType.contains('video') ||
         mimeType.contains('audio')) {
-      return AVWidget(key: key, src: uri, media: media);
+      return AVWidget(key: key, src: src, media: media);
     }
     switch (mimeType) {
       case 'application/x-ncl-NCLua':
       case 'application/x-ginga-NCLua':
-        return LuaWidget(key: key, src: uri, media: media);
+        return LuaWidget(key: key, src: src, media: media);
       case 'application/ssml+xml':
-        return SsmlWidget(key: key, src: uri, media: media);
+        return SsmlWidget(key: key, src: src, media: media);
       case 'text/plain':
-        return TextWidget(key: key, src: uri, media: media);
+        return TextWidget(key: key, src: src, media: media);
       case 'text/html':
-        return HtmlWidget(key: key, src: uri, media: media);
+        return HtmlWidget(key: key, src: src, media: media);
       case 'image/png':
       case 'image/jpeg':
       case 'image/gif':
@@ -278,7 +264,7 @@ class WidgetFactory {
       case 'image/heic':
       case 'application/x-ginga-time':
       case 'application/x-ncl-time':
-        return ImageWidget(key: key, src: uri, media: media);
+        return ImageWidget(key: key, src: src, media: media);
       default:
         return null;
     }

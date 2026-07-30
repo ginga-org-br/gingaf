@@ -114,7 +114,7 @@ void main() {
       final config = GingaConfig('app.html', true);
       final htmlApp = HTMLApp(src: 'app.html', config: config);
       expect(htmlApp.config, equals(config));
-      expect(htmlApp.uri, equals(Uri.parse('app.html')));
+      expect(htmlApp.src, equals('app.html'));
     });
   });
 }

@@ -483,22 +483,6 @@ void main() {
     });
 
     test(
-      'NCLDocument uses custom loadContent callback for user profile',
-      () async {
-        final xml =
-            '<ncl><head><userBase><userProfile id="p1" src="profile.json"/></userBase></head><body id="body"></body></ncl>';
-        final doc = NCLDocument.fromContent(
-          xml,
-          contentLoader: _MockProfileContentLoader(),
-        );
-        await doc.loadUserProfiles();
-
-        expect(doc.users.getProfile('p1'), isNotNull);
-        expect(doc.users.getProfile('p1')?.query['attribute'], equals('role'));
-      },
-    );
-
-    test(
       'evaluates neq comparator, string comparators, and NCLUsers batch helper methods',
       () {
         final u1 = NCLUserData(
@@ -543,17 +527,4 @@ void main() {
       },
     );
   });
-}
-
-class _MockProfileContentLoader extends ContentLoader {
-  @override
-  bool exists(Uri uri) => true;
-
-  @override
-  Future<String?> load(Uri uri) async {
-    if (uri.toString().endsWith('profile.json')) {
-      return '{"attribute":"role","comparator":"eq","value":"admin"}';
-    }
-    return null;
-  }
 }

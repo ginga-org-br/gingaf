@@ -100,7 +100,7 @@ class NCLAppState extends MediaState<NCLApp> {
   void initState() {
     super.initState();
     _initialMainAvUri = widget.mainAVController?.uri;
-    _logger.info("Starting NCL application: ${widget.uri}");
+    _logger.info("Starting NCL application: ${widget.src}");
     _startApplication();
   }
 
@@ -123,15 +123,12 @@ class NCLAppState extends MediaState<NCLApp> {
         activeLoader = widget.config.contentLoader;
       }
 
-      final uriString = widget.uri.toString();
-      final docUri = uriString.trim().startsWith('<')
-          ? Uri.parse('file://main.ncl')
-          : widget.uri;
+      final srcString = widget.src;
       final String nclData;
-      if (uriString.trim().startsWith('<')) {
-        nclData = uriString;
+      if (srcString.trim().startsWith('<')) {
+        nclData = srcString;
       } else {
-        nclData = await activeLoader.load(docUri) ?? '';
+        nclData = await activeLoader.load(srcString) ?? '';
       }
       if (!mounted) return;
 
@@ -142,7 +139,7 @@ class NCLAppState extends MediaState<NCLApp> {
         if (str.startsWith('[') || str.startsWith('{')) {
           effectiveUserData = str;
         } else {
-          final content = await activeLoader.load(Uri.parse(str));
+          final content = await activeLoader.load(str);
           if (!mounted) return;
           if (content == null) {
             throw Exception('USERS_DATA file does not exist: $usersDataSrc');
@@ -153,7 +150,7 @@ class NCLAppState extends MediaState<NCLApp> {
       if (!mounted) return;
       final doc = NCLDocument.fromContent(
         nclData,
-        docSrc: docUri.toString(),
+        docSrc: srcString,
         userData: effectiveUserData,
         contentLoader: activeLoader,
       );
@@ -229,7 +226,7 @@ class NCLAppState extends MediaState<NCLApp> {
 
   @override
   void dispose() {
-    _logger.info("Stopping NCL application: ${widget.uri}");
+    _logger.info("Stopping NCL application: ${widget.src}");
     _ticker?.cancel();
     _ticker = null;
     final doc = nclDocument;
