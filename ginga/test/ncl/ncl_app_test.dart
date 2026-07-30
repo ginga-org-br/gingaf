@@ -48,7 +48,7 @@ void main() {
   testWidgets('Verify NCLApp receives GingaConfig as parameter and accesses configuration',
       (WidgetTester tester) async {
     final mockBundle = MockNCLAssetBundle();
-    final config = GingaConfig('test_image.ncl', true, null, true, '{"id": "uConfig"}');
+    final config = GingaConfig('test_image.ncl', true, true, '{"id": "uConfig"}');
 
     await tester.pumpWidget(
       MaterialApp(
@@ -67,6 +67,6 @@ void main() {
     expect(find.byType(NCLApp), findsOneWidget);
     final appWidget = tester.widget<NCLApp>(find.byType(NCLApp));
     expect(appWidget.config, equals(config));
-    expect(appWidget.config?.usersDataJson, equals('{"id": "uConfig"}'));
+    expect(appWidget.config.usersDataSrc, equals('{"id": "uConfig"}'));
   });
 }

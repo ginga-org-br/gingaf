@@ -1,7 +1,4 @@
 import 'dart:io';
-import 'dart:convert';
-
-import 'web_utils_stub.dart' if (dart.library.html) 'web_utils_web.dart';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -9,9 +6,11 @@ import 'package:flutter/services.dart';
 import 'package:logging/logging.dart';
 
 import 'ccws/ccws.dart';
+import 'ginga_content.dart';
 import 'html/html_app.dart' as html;
 import 'main_av.dart';
 import 'ncl/ncl_app.dart' as ncl;
+import 'web_utils_stub.dart' if (dart.library.html) 'web_utils_web.dart';
 
 final _logger = Logger('ginga');
 
@@ -19,86 +18,27 @@ const DEFAULT_VIDEO =
     'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4';
 
 class GingaConfig {
-  final String? appUri;
-  final String? mainAvUri;
+  final String? appSrc;
+  final String mainAvSrc;
   final bool enableCCWS;
   final bool enableMainAv;
-  final String? usersDataJson;
+  final String? usersDataSrc;
+  final ContentLoader contentLoader;
 
-  GingaConfig([
-    String? manualPath,
-    bool manualCCWS = true,
-    String? manualVideo,
-    bool manualEnableMainAv = true,
-    this.usersDataJson,
-  ])  : appUri = uriResolver(manualPath),
-         mainAvUri = (manualVideo == 'false') ? null : uriResolver(manualVideo ?? DEFAULT_VIDEO),
-         enableCCWS = manualCCWS,
-         enableMainAv = (manualVideo == 'false') ? false : manualEnableMainAv;
+  const GingaConfig([
+    this.appSrc,
+    this.enableCCWS = true,
+    this.enableMainAv = true,
+    this.usersDataSrc,
+    this.mainAvSrc = DEFAULT_VIDEO,
+    ContentLoader? contentLoader,
+  ]) : contentLoader = contentLoader ?? const FileContentLoader();
 
-  static String? uriResolver(dynamic input) {
-    if (input is Uri) {
-      final path = input.isScheme('file') ? input.toFilePath() : input.path;
-      if (kIsWeb) {
-        try {
-          final mockJson = getSessionStorageItem('GINGA_PLAYGROUND_FILES');
-          if (mockJson != null) {
-            final mockFiles = jsonDecode(mockJson);
-            final fileName = input.pathSegments.last;
-            if (mockFiles.containsKey(fileName)) {
-              return mockFiles[fileName];
-            }
-          }
-        } catch (_) {}
-      }
-      if (!kIsWeb) {
-        final file = File(path);
-        if (file.existsSync()) {
-          return file.readAsStringSync();
-        }
-        final fileName = path.contains('/') ? path.substring(path.lastIndexOf('/') + 1) : path;
-        final localFile = File(fileName);
-        if (localFile.existsSync()) {
-          return localFile.readAsStringSync();
-        }
-      }
-      return null;
-    } else if (input is String?) {
-      String? path = input;
-
-      if (path == null) {
-        if (kIsWeb) {
-          path = Uri.base.queryParameters['APP'];
-          if (path == null) {
-            path = getSessionStorageItem('GINGA_PLAYGROUND_MAIN');
-          }
-        }
-        if (path == null && !kIsWeb) {
-          final file = File('.ginga_app');
-          if (file.existsSync()) {
-            path = file.readAsStringSync().trim();
-          }
-        }
-      }
-
-      if (path == null || path.isEmpty) return null;
-
-      final lower = path.toLowerCase();
-      if (!lower.endsWith('.ncl') && !lower.endsWith('.html') && !lower.endsWith('.mp4') && !lower.endsWith('.mkv') && !lower.endsWith('.avi')) {
-        _logger.severe('\nUnsupported format: $path');
-        return null;
-      }
-
-      return path;
-    }
-    return null;
-  }
-
-  bool get isEmpty => appUri == null && mainAvUri == null;
+  bool get isEmpty => appSrc == null && !enableMainAv;
 
   @override
   String toString() {
-    return 'GingaConfig(appUri: $appUri, mainAvUri: $mainAvUri, enableCCWS: $enableCCWS, enableMainAv: $enableMainAv, usersDataJson: $usersDataJson)';
+    return 'GingaConfig(appSrc: $appSrc, mainAvSrc: $mainAvSrc, enableCCWS: $enableCCWS, enableMainAv: $enableMainAv, usersDataSrc: $usersDataSrc)';
   }
 }
 
@@ -117,13 +57,14 @@ class _GingaState extends State<Ginga> {
   Widget? htmlApp;
   Widget? nclApp;
   bool _isExiting = false;
+  bool _initialized = false;
 
   @override
   void initState() {
     super.initState();
     _ccws = CCWS();
     mainAVController = MainAVController()
-      ..setMainAvUri(widget.config.mainAvUri);
+      ..setMainAvUri(widget.config.mainAvSrc);
     if (widget.config.enableMainAv) {
       mainAVWidget = MainAVWidget(controller: mainAVController);
     }
@@ -138,26 +79,36 @@ class _GingaState extends State<Ginga> {
       _logger.info('Starting CCWS');
       _ccws.start();
     }
+    HardwareKeyboard.instance.addHandler(_handleKeyPress);
+  }
 
-    final path = widget.config.appUri;
-    if (path != null) {
-      _logger.info('Starting application $path');
-      if (path.toLowerCase().endsWith('.html')) {
-        htmlApp = html.HTMLApp(
-          uri: path,
-          ccws: _ccws,
-          config: widget.config,
-        );
-      } else {
-        nclApp = ncl.NCLApp(
-          uri: path,
-          mainAVController: mainAVController,
-          usersDataJson: widget.config.usersDataJson,
-          config: widget.config,
-        );
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (widget.config.contentLoader is GingaContentLoader) {
+      (widget.config.contentLoader as GingaContentLoader)
+          .setBuildContext(context);
+    }
+    if (!_initialized) {
+      _initialized = true;
+      final appSrc = widget.config.appSrc;
+      if (appSrc != null) {
+        _logger.info('Starting application $appSrc');
+        if (appSrc.toLowerCase().endsWith('.html')) {
+          htmlApp = html.HTMLApp(
+            uri: appSrc,
+            ccws: _ccws,
+            config: widget.config,
+          );
+        } else {
+          nclApp = ncl.NCLApp(
+            uri: appSrc,
+            mainAVController: mainAVController,
+            config: widget.config,
+          );
+        }
       }
     }
-    HardwareKeyboard.instance.addHandler(_handleKeyPress);
   }
 
   bool _handleKeyPress(KeyEvent event) {

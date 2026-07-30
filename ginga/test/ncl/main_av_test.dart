@@ -61,7 +61,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     final MainAVWidget mainAV = tester.widget(find.byType(MainAVWidget));
-    expect(mainAV.controller.uri, 'examples/primeiro-joao/media/animGar.mp4');
+    expect(mainAV.controller.uri, config.mainAvSrc);
   });
 
   testWidgets('NCLApp background video resolution with online butterfly.mp4 URL', (WidgetTester tester) async {

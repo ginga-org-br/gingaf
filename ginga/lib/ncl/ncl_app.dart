@@ -1,22 +1,21 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:ncldoc/ncl_document.dart' hide State;
 
-import '../main_av.dart';
 import '../ginga.dart';
+import '../main_av.dart';
+import '../ginga_content.dart';
 import 'widgets/ncl_media_widget.dart';
 
 export 'widgets/av.dart';
+export 'widgets/html.dart';
 export 'widgets/image.dart';
 export 'widgets/lua.dart';
 export 'widgets/ncl_media_widget.dart';
 export 'widgets/ssml.dart';
 export 'widgets/text.dart';
-export 'widgets/html.dart';
 
 final _logger = Logger('ginga-ncl');
 
@@ -24,17 +23,16 @@ class NCLAppExitNotification extends Notification {}
 
 class NCLApp extends MediaWidget {
   final MainAVController? mainAVController;
-  final String? usersDataJson;
-  final GingaConfig? config;
+  final GingaConfig config;
 
-  const NCLApp({
+  NCLApp({
     super.key,
-    required super.uri,
+    required dynamic uri,
     super.media,
     this.mainAVController,
-    this.usersDataJson,
-    this.config,
-  });
+    GingaConfig? config,
+  })  : config = config ?? GingaConfig(),
+        super(uri: uri is Uri ? uri : Uri.parse(uri.toString()));
 
   @override
   State<NCLApp> createState() => NCLAppState();
@@ -61,7 +59,9 @@ class NCLAppState extends MediaState<NCLApp> {
       }
     }
     if (sbtvdUri != null) {
-      final resolvedUri = sbtvdUri.startsWith('sbtvd://') ? (_initialMainAvUri ?? sbtvdUri) : sbtvdUri;
+      final resolvedUri = sbtvdUri.startsWith('sbtvd://')
+          ? (_initialMainAvUri ?? sbtvdUri)
+          : sbtvdUri;
       widget.mainAVController?.setMainAvUri(resolvedUri);
     } else {
       if (widget.mainAVController != null &&
@@ -108,46 +108,57 @@ class NCLAppState extends MediaState<NCLApp> {
   Future<void> _startApplication() async {
     if (_loading) return;
     _loading = true;
+    await Future.microtask(() {});
     try {
       if (mounted) {
         setState(() {});
       }
 
-      String nclData = await loadContent(widget.uri);
+      final ContentLoader activeLoader;
+      if (widget.config.contentLoader is GingaContentLoader) {
+        activeLoader = (widget.config.contentLoader as GingaContentLoader)
+          ..setBuildContext(context);
+      } else if (widget.config.contentLoader == null ||
+          widget.config.contentLoader is FileContentLoader) {
+        activeLoader = GingaContentLoader()..setBuildContext(context);
+      } else {
+        activeLoader = widget.config.contentLoader;
+      }
 
-      String localPath = widget.uri;
-      if (!kIsWeb && !widget.uri.startsWith('http://') && !widget.uri.startsWith('https://')) {
-        final file = File(widget.uri);
-        if (file.existsSync()) {
-          localPath = file.absolute.path;
+      final uriString = widget.uri.toString();
+      final docUri = uriString.trim().startsWith('<')
+          ? Uri.parse('file://main.ncl')
+          : widget.uri;
+      final String nclData;
+      if (uriString.trim().startsWith('<')) {
+        nclData = uriString;
+      } else {
+        nclData = await activeLoader.load(docUri) ?? '';
+      }
+      if (!mounted) return;
+
+      final usersDataSrc = widget.config.usersDataSrc;
+      String? effectiveUserData;
+      if (usersDataSrc != null) {
+        final str = usersDataSrc.trim();
+        if (str.startsWith('[') || str.startsWith('{')) {
+          effectiveUserData = str;
         } else {
-          final fileName = widget.uri.contains('/') ? widget.uri.substring(widget.uri.lastIndexOf('/') + 1) : widget.uri;
-          final localFile = File(fileName);
-          if (localFile.existsSync()) {
-            localPath = localFile.absolute.path;
+          final content = await activeLoader.load(Uri.parse(str));
+          if (!mounted) return;
+          if (content == null) {
+            throw Exception('USERS_DATA file does not exist: $usersDataSrc');
           }
+          effectiveUserData = content;
         }
       }
-      final uri = widget.uri.startsWith('http')
-          ? Uri.parse(widget.uri)
-          : (kIsWeb ? Uri.parse(widget.uri) : Uri.file(localPath));
-      NCLDocument.uriResolver = GingaConfig.uriResolver;
-      var effectiveUserData = widget.config?.usersDataJson ?? widget.usersDataJson;
-      if (effectiveUserData != null) {
-        String? content;
-        try {
-          content = await DefaultAssetBundle.of(context).loadString(effectiveUserData.trim());
-        } catch (_) {}
-        if (content == null) {
-          final parsedUri = Uri.tryParse(effectiveUserData.trim());
-          content = parsedUri != null ? GingaConfig.uriResolver(parsedUri) : null;
-        }
-        if (content == null) {
-          throw Exception('USERS_DATA file does not exist: $effectiveUserData');
-        }
-        effectiveUserData = content;
-      }
-      final doc = NCLDocument.fromContent(nclData, baseURI: uri, usersDataJson: effectiveUserData);
+      if (!mounted) return;
+      final doc = NCLDocument.fromContent(
+        nclData,
+        docUri: docUri,
+        usersDataJson: effectiveUserData,
+        contentLoader: activeLoader,
+      );
 
       nclDocument = doc;
       doc.start();
@@ -161,8 +172,12 @@ class NCLAppState extends MediaState<NCLApp> {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           DateTime lastTick = DateTime.now();
+          _ticker?.cancel();
           _ticker = Timer.periodic(const Duration(milliseconds: 100), (timer) {
-            if (mounted) {
+            if (!mounted || _ticker == null) {
+              timer.cancel();
+              return;
+            }
               final now = DateTime.now();
               final deltaMs = now.difference(lastTick).inMilliseconds;
               lastTick = now;
@@ -186,15 +201,10 @@ class NCLAppState extends MediaState<NCLApp> {
                   _ticker?.cancel();
                   _ticker = null;
                   nclDocument = null;
-                  if (mounted) {
-                    setState(() {});
-                  }
-                  NCLAppExitNotification().dispatch(context);
                 }
               }
-            }
+            });
           });
-        });
       }
     } catch (e, stacktrace) {
       _logger.severe("Error: $e\n$stacktrace");
@@ -225,9 +235,14 @@ class NCLAppState extends MediaState<NCLApp> {
   void dispose() {
     _logger.info("Stopping NCL application: ${widget.uri}");
     _ticker?.cancel();
+    _ticker = null;
     final doc = nclDocument;
     nclDocument = null;
-    doc?.stop();
+    try {
+      doc?.stop();
+    } catch (e) {
+      _logger.warning("Error stopping doc in dispose: $e");
+    }
     super.dispose();
   }
 

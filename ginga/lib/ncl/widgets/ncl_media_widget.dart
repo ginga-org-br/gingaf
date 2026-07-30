@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:ncldoc/ncl_document.dart' hide State;
 
+import '../../ginga_content.dart';
 import '../../web_utils_stub.dart'
     if (dart.library.html) '../../web_utils_web.dart';
 import '../ncl_app.dart';
@@ -163,45 +164,11 @@ abstract class MediaState<T extends MediaWidget> extends State<T> {
     return double.tryParse(trimmed) ?? 0.0;
   }
 
-  Future<String> loadContent(String path) async {
-    if (kIsWeb) {
-      try {
-        final mockJson = getSessionStorageItem('GINGA_PLAYGROUND_FILES');
-        if (mockJson != null) {
-          final mockFiles = jsonDecode(mockJson);
-          final fileName = Uri.parse(path).pathSegments.last;
-          if (mockFiles.containsKey(fileName)) {
-            return mockFiles[fileName];
-          }
-        }
-      } catch (e) {
-        // Ignore JSON errors
-      }
-    }
-
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-      final response = await http.get(Uri.parse(path));
-      if (response.statusCode == 200) {
-        return response.body;
-      }
-      throw Exception('Failed to load $path: ${response.statusCode}');
-    }
-    if (!kIsWeb) {
-      final file = File(path);
-      if (file.existsSync()) {
-        return await file.readAsString();
-      }
-      final fileName =
-          path.contains('/') ? path.substring(path.lastIndexOf('/') + 1) : path;
-      final localFile = File(fileName);
-      if (localFile.existsSync()) {
-        return await localFile.readAsString();
-      }
-    }
-    final bundle =
-        context.getInheritedWidgetOfExactType<DefaultAssetBundle>()?.bundle ??
-            rootBundle;
-    return await bundle.loadString(path);
+  Future<String> loadContent(Uri uri) async {
+    final loader = GingaContentLoader()..setBuildContext(context);
+    final content = await loader.load(uri);
+    if (content != null) return content;
+    throw Exception('Failed to load content for uri: $uri');
   }
 
   String get playerKey => id ?? '';
