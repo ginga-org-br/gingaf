@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- Exemplo de uso e reuso do no settings, e link testando variavel do settings -->
-<ncl id="settingsEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+<ncl id="settingsEx"
+  xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <ruleBase>
       <rule id="en" var="system.language" value="en" comparator="eq"/>
-      <!--                         <rule id="int" var="service.interactivity" value="true" comparator="eq"/> -->
     </ruleBase>
     <transitionBase>
       <transition id="trans1" type="fade" dur="2s"/>
@@ -37,7 +36,6 @@
       <importBase documentURI="causalConnBase.ncl" alias="conEx"/>
     </connectorBase>
   </head>
-
   <body>
     <port id="entry" component="animation"/>
     <media id="background" src="media/background.png" descriptor="backgroundDesc"/>
@@ -103,12 +101,12 @@
         <media id="ptForm" src="media/ptForm.htm" descriptor="formDesc"/>
         <media id="enForm" src="media/enForm.htm" descriptor="formDesc"/>
       </switch>
-      <link  id="lIcon" xconnector="conEx#onBeginVarStart">
+      <link id="lIcon" xconnector="conEx#onBeginVarStart">
         <bind role="onBegin" component="reusedAnimation" interface="segIcon"/>
         <bind role="var" component="reusedGlobalVar" interface="service.interactivity"/>
         <bind role="start" component="icon"/>
       </link>
-      <link  id="lBegingShoes" xconnector="conEx#onKeySelectionStopSet_varStart">
+      <link id="lBegingShoes" xconnector="conEx#onKeySelectionStopSet_varStart">
         <bind role="onSelection" component="icon">
           <bindParam name="keyCode" value="RED"/>
         </bind>
@@ -119,14 +117,14 @@
         </bind>
         <bind role="stop" component="icon"/>
       </link>
-      <link  id="lEndForm" xconnector="conEx#onEndSet_var">
+      <link id="lEndForm" xconnector="conEx#onEndSet_var">
         <bind role="onEnd" component="form" interface="spForm"/>
         <bind role="set" component="reusedAnimation" interface="bounds">
           <bindParam name="var" value="0,0,222.22%,222.22%"/>
         </bind>
       </link>
     </context>
-    <link  id="lMusic" xconnector="conEx#onBeginStart_delay">
+    <link id="lMusic" xconnector="conEx#onBeginStart_delay">
       <bind role="onBegin" component="animation"/>
       <bind role="start" component="background">
         <bindParam name="delay" value="5s"/>
@@ -135,11 +133,11 @@
         <bindParam name="delay" value="5s"/>
       </bind>
     </link>
-    <link  id="lDrible" xconnector="conEx#onBeginStart">
+    <link id="lDrible" xconnector="conEx#onBeginStart">
       <bind role="onBegin" component="animation" interface="segDrible"/>
       <bind role="start" component="drible"/>
     </link>
-    <link  id="lPhoto" xconnector="conEx#onBeginStartSet_var_delay_duration">
+    <link id="lPhoto" xconnector="conEx#onBeginStartSet_var_delay_duration">
       <bind role="onBegin" component="animation" interface="segPhoto"/>
       <bind role="start" component="photo"/>
       <bind role="set" component="photo" interface="top">
@@ -148,7 +146,7 @@
         <bindParam name="duration" value="3s"/>
       </bind>
     </link>
-    <link  id="lEnd" xconnector="conEx#onEndStop">
+    <link id="lEnd" xconnector="conEx#onEndStop">
       <bind role="onEnd" component="animation"/>
       <bind role="stop" component="background"/>
       <bind role="stop" component="choro"/>

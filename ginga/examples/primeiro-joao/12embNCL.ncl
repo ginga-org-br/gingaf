@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- Exemplo de aplicacao NCL embutida-->
 <ncl id="passiveAdvReg"
   xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>

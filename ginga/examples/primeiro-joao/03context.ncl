@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- Exemplo de uso de contexto -->
-<ncl id="contextEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+<ncl id="contextEx"
+  xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
       <region id="backgroundReg" width="100%" height="100%" zIndex="1"/>
@@ -41,7 +41,7 @@
       <port id="pShoes" component="shoes"/>
       <media id="icon" src="media/icon.png" descriptor="iconDesc"/>
       <media id="shoes" src="media/shoes.mp4" descriptor="shoesDesc"/>
-      <link  id="lBegingShoes" xconnector="conEx#onKeySelectionStopStart">
+      <link id="lBegingShoes" xconnector="conEx#onKeySelectionStopStart">
         <bind role="onSelection" component="icon">
           <bindParam name="keyCode" value="RED"/>
         </bind>
@@ -49,7 +49,7 @@
         <bind role="stop" component="icon"/>
       </link>
     </context>
-    <link  id="lMusic" xconnector="conEx#onBeginStart_delay">
+    <link id="lMusic" xconnector="conEx#onBeginStart_delay">
       <bind role="onBegin" component="animation"/>
       <bind role="start" component="background">
         <bindParam name="delay" value="5s"/>
@@ -58,24 +58,24 @@
         <bindParam name="delay" value="5s"/>
       </bind>
     </link>
-    <link  id="lDrible" xconnector="conEx#onBeginStart">
+    <link id="lDrible" xconnector="conEx#onBeginStart">
       <bind role="onBegin" component="animation" interface="segDrible"/>
       <bind role="start" component="drible"/>
     </link>
-    <link  id="lPhoto" xconnector="conEx#onBeginStart">
+    <link id="lPhoto" xconnector="conEx#onBeginStart">
       <bind role="onBegin" component="animation" interface="segPhoto"/>
       <bind role="start" component="photo"/>
     </link>
-    <link  id="lEnd" xconnector="conEx#onEndStop">
+    <link id="lEnd" xconnector="conEx#onEndStop">
       <bind role="onEnd" component="animation"/>
       <bind role="stop" component="background"/>
       <bind role="stop" component="choro"/>
     </link>
-    <link  id="lIcon" xconnector="conEx#onBeginStart">
+    <link id="lIcon" xconnector="conEx#onBeginStart">
       <bind role="onBegin" component="animation" interface="segIcon"/>
       <bind role="start" component="advert" interface="pIcon"/>
     </link>
-    <link  id="lAdvert" xconnector="conEx#onKeySelectionSet_var">
+    <link id="lAdvert" xconnector="conEx#onKeySelectionSet_var">
       <bind role="onSelection" component="advert" interface="pIcon">
         <bindParam name="keyCode" value="RED"/>
       </bind>
@@ -83,7 +83,7 @@
         <bindParam name="var" value="5%,6.67%,45%,45%"/>
       </bind>
     </link>
-    <link  id="lEndAdvert" xconnector="conEx#onEndSet_var">
+    <link id="lEndAdvert" xconnector="conEx#onEndSet_var">
       <bind role="onEnd" component="advert" interface="pShoes"/>
       <bind role="set" component="animation" interface="bounds">
         <bindParam name="var" value="0,0,222.22%,222.22%"/>

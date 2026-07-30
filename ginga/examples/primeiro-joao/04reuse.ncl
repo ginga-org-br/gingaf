@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- Exemplo de Reuso de objetos de midia -->
-<ncl id="reuseEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+<ncl id="reuseEx"
+  xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
       <region id="backgroundReg" width="100%" height="100%" zIndex="1"/>
@@ -41,7 +41,7 @@
       </media>
       <media id="icon" src="media/icon.png" descriptor="iconDesc"/>
       <media id="shoes" src="media/shoes.mp4" descriptor="shoesDesc"/>
-      <link  id="lIcon" xconnector="conEx#onBeginStart">
+      <link id="lIcon" xconnector="conEx#onBeginStart">
         <bind role="onBegin" component="reusedAnimation" interface="segIcon"/>
         <bind role="start" component="icon"/>
       </link>
@@ -55,14 +55,14 @@
         </bind>
         <bind role="stop" component="icon"/>
       </link>
-      <link  id="lEndShoes" xconnector="conEx#onEndSet_var">
+      <link id="lEndShoes" xconnector="conEx#onEndSet_var">
         <bind role="onEnd" component="shoes"/>
         <bind role="set" component="reusedAnimation" interface="bounds">
-           <bindParam name="var" value="0,0,222.22%,222.22%"/>
+          <bindParam name="var" value="0,0,222.22%,222.22%"/>
         </bind>
       </link>
     </context>
-    <link  id="lMusic" xconnector="conEx#onBeginStart_delay">
+    <link id="lMusic" xconnector="conEx#onBeginStart_delay">
       <bind role="onBegin" component="animation"/>
       <bind role="start" component="background">
         <bindParam name="delay" value="5s"/>
@@ -71,15 +71,15 @@
         <bindParam name="delay" value="5s"/>
       </bind>
     </link>
-    <link  id="lDrible" xconnector="conEx#onBeginStart">
+    <link id="lDrible" xconnector="conEx#onBeginStart">
       <bind role="onBegin" component="animation" interface="segDrible"/>
       <bind role="start" component="drible"/>
     </link>
-    <link  id="lPhoto" xconnector="conEx#onBeginStart">
+    <link id="lPhoto" xconnector="conEx#onBeginStart">
       <bind role="onBegin" component="animation" interface="segPhoto"/>
       <bind role="start" component="photo"/>
     </link>
-    <link  id="lEnd" xconnector="conEx#onEndStop">
+    <link id="lEnd" xconnector="conEx#onEndStop">
       <bind role="onEnd" component="animation"/>
       <bind role="stop" component="choro"/>
       <bind role="stop" component="background"/>

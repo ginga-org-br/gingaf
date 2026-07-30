@@ -39,6 +39,7 @@ class NCLDocument {
     String? userDataSrc,
     SrcResolver contentLoader = const FileSrcResolver(),
   }) async {
+    _logger.info('Loading NCL document from src: $docSrc');
     final xml = await contentLoader.load(docSrc);
     final userData = userDataSrc != null
         ? await contentLoader.load(userDataSrc, docSrc)
@@ -63,6 +64,7 @@ class NCLDocument {
       throw ArgumentError('empty src');
     }
     final resolvedDocSrc = docSrc ?? 'tmp.ncl';
+    _logger.fine('Creating NCLDocument from content (src: $resolvedDocSrc)');
     final Uri? resolvedUri = docSrc != null ? Uri.tryParse(docSrc) : null;
     final (head, body) = NCLParser(
       docUri: resolvedUri,
@@ -120,6 +122,7 @@ class NCLDocument {
   Future<void> _loadUserProfile(String id, String? src) async {
     if (src == null) return;
     try {
+      _logger.fine('Loading user profile "$id" from src: $src');
       final jsonContent = await contentLoader.load(src, docSrc);
       if (jsonContent != null && jsonContent.isNotEmpty) {
         final query = json.decode(jsonContent);

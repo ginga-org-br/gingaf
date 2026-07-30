@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- Exemplo de sincronismo sem a interacao do usuario e com reuso apenas de relacoes-->
-<ncl id="syncEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+<ncl id="syncEx"
+  xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <connectorBase>
       <causalConnector id="onBeginStart_delay">
@@ -43,21 +43,21 @@
       <property name="zIndex" value="3"/>
       <property name="explicitDur" value="5s"/>
     </media>
-    <link  id="lMusic" xconnector="onBeginStart_delay">
+    <link id="lMusic" xconnector="onBeginStart_delay">
       <bind role="onBegin" component="animation"/>
       <bind role="start" component="choro">
         <bindParam name="delay" value="5s"/>
       </bind>
     </link>
-    <link  id="lDrible" xconnector="onBeginStart">
+    <link id="lDrible" xconnector="onBeginStart">
       <bind role="onBegin" component="animation" interface="segDrible"/>
       <bind role="start" component="drible"/>
     </link>
-    <link  id="lPhoto" xconnector="onBeginStart">
+    <link id="lPhoto" xconnector="onBeginStart">
       <bind role="onBegin" component="animation" interface="segPhoto"/>
       <bind role="start" component="photo"/>
     </link>
-    <link  id="lEnd" xconnector="onEndStop">
+    <link id="lEnd" xconnector="onEndStop">
       <bind role="onEnd" component="animation"/>
       <bind role="stop" component="choro"/>
     </link>

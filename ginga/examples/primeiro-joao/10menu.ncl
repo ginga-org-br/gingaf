@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- Exemplo de navegacao por teclas -->
-<ncl id="menuEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+<ncl id="menuEx"
+  xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <ruleBase>
       <rule id="en" var="system.language" value="en" comparator="eq"/>
-      <!-- <rule id="int" var="service.interactivity" value="true" comparator="eq"/> -->
       <rule id="rRock" var="service.currentFocus" value="3" comparator="eq"/>
       <rule id="rTechno" var="service.currentFocus" value="4" comparator="eq"/>
       <rule id="rCartoon" var="service.currentFocus" value="5" comparator="eq"/>
@@ -108,12 +107,12 @@
         <media id="ptForm" src="media/ptForm.htm" type="text/html" descriptor="formDesc"/>
         <media id="enForm" src="media/enForm.htm" type="text/html" descriptor="formDesc"/>
       </switch>
-      <link  id="lIcon" xconnector="conEx#onBeginVarStart">
+      <link id="lIcon" xconnector="conEx#onBeginVarStart">
         <bind role="onBegin" component="reusedAnimation" interface="segIcon"/>
         <bind role="var" component="reusedGlobalVar" interface="service.interactivity"/>
         <bind role="start" component="icon"/>
       </link>
-      <link  id="lBegingShoes" xconnector="conEx#onKeySelectionStopSet_varStart">
+      <link id="lBegingShoes" xconnector="conEx#onKeySelectionStopSet_varStart">
         <bind role="onSelection" component="icon">
           <bindParam name="keyCode" value="RED"/>
         </bind>
@@ -176,7 +175,7 @@
         <bind role="start" component="musics"/>
       </link>
     </context>
-    <link  id="lMusic" xconnector="conEx#onBeginStart_delay">
+    <link id="lMusic" xconnector="conEx#onBeginStart_delay">
       <bind role="onBegin" component="animation"/>
       <bind role="start" component="background">
         <bindParam name="delay" value="5s"/>
@@ -185,11 +184,11 @@
         <bindParam name="delay" value="5s"/>
       </bind>
     </link>
-    <link  id="lDrible" xconnector="conEx#onBeginStart">
+    <link id="lDrible" xconnector="conEx#onBeginStart">
       <bind role="onBegin" component="animation" interface="segDrible"/>
       <bind role="start" component="drible"/>
     </link>
-    <link  id="lPhoto" xconnector="conEx#onBeginStartSet_var_delay_duration">
+    <link id="lPhoto" xconnector="conEx#onBeginStartSet_var_delay_duration">
       <bind role="onBegin" component="animation" interface="segPhoto"/>
       <bind role="start" component="photo"/>
       <bind role="set" component="photo" interface="top">
@@ -203,7 +202,7 @@
       <bind role="stop" component="menu"/>
 
     </link>
-    <link  id="lEnd" xconnector="conEx#onEndStop">
+    <link id="lEnd" xconnector="conEx#onEndStop">
       <bind role="onEnd" component="animation"/>
       <bind role="stop" component="background"/>
       <bind role="stop" component="interactivity"/>
