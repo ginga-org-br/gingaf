@@ -122,9 +122,9 @@ void main() {
         final btnIcon = doc.getNodeById('btnIcon') as Media;
         final promoVideo = doc.getNodeById('promoVideo') as Media;
 
-        expect(mainVideo.getMainState(), State.OCCURRING);
-        expect(btnIcon.getMainState(), State.SLEEPING);
-        expect(promoVideo.getMainState(), State.SLEEPING);
+        expect(mainVideo.getMainState(), NCLState.OCCURRING);
+        expect(btnIcon.getMainState(), NCLState.SLEEPING);
+        expect(promoVideo.getMainState(), NCLState.SLEEPING);
 
         var active = doc.getActiveMedia().map((m) => m.id).toList();
         expect(active, contains('mainVideo'));
@@ -135,7 +135,7 @@ void main() {
         expect(active, contains('mainVideo'));
         expect(active, contains('btnIcon'));
         expect(active, isNot(contains('promoVideo')));
-        expect(btnIcon.getMainState(), State.OCCURRING);
+        expect(btnIcon.getMainState(), NCLState.OCCURRING);
 
         doc.triggerSelection('btnIcon', 'RED');
         doc.tick(0);
@@ -144,8 +144,8 @@ void main() {
         expect(active, contains('mainVideo'));
         expect(active, isNot(contains('btnIcon')));
         expect(active, contains('promoVideo'));
-        expect(btnIcon.getMainState(), State.SLEEPING);
-        expect(promoVideo.getMainState(), State.OCCURRING);
+        expect(btnIcon.getMainState(), NCLState.SLEEPING);
+        expect(promoVideo.getMainState(), NCLState.OCCURRING);
 
         final boundsProp = mainVideo.getProperties().firstWhere(
           (p) => p.name == 'bounds',
@@ -153,11 +153,11 @@ void main() {
         expect(boundsProp.value, '5%,6.7%,45%,45%');
 
         doc.uiQueue.add(
-          Action(event: promoVideo.getMainEvent(), action: ActionType.STOP),
+          Action(event: promoVideo.getMainEvent(), action: NCLAction.STOP),
         );
         doc.tick(0);
 
-        expect(promoVideo.getMainState(), State.SLEEPING);
+        expect(promoVideo.getMainState(), NCLState.SLEEPING);
         expect(boundsProp.value, '0,0,100%,100%');
       },
     );

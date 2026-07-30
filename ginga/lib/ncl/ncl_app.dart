@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
-import 'package:ncldoc/ncl_document.dart' hide State;
+import 'package:ncldoc/ncl_document.dart';
 
 import '../ginga.dart';
-import '../main_av.dart';
 import '../ginga_content.dart';
+import '../main_av.dart';
 import 'widgets/ncl_media_widget.dart';
 
 export 'widgets/av.dart';
@@ -25,14 +25,13 @@ class NCLApp extends MediaWidget {
   final MainAVController? mainAVController;
   final GingaConfig config;
 
-  NCLApp({
+  const NCLApp({
     super.key,
-    required String src,
+    required super.src,
     super.media,
     this.mainAVController,
     GingaConfig? config,
-  })  : config = config ?? const GingaConfig(),
-        super(src: src);
+  }) : config = config ?? const GingaConfig();
 
   @override
   State<NCLApp> createState() => NCLAppState();
@@ -118,8 +117,7 @@ class NCLAppState extends MediaState<NCLApp> {
       if (widget.config.contentLoader is GingaContentLoader) {
         activeLoader = (widget.config.contentLoader as GingaContentLoader)
           ..setBuildContext(context);
-      } else if (widget.config.contentLoader == null ||
-          widget.config.contentLoader is FileContentLoader) {
+      } else if (widget.config.contentLoader is FileContentLoader) {
         activeLoader = GingaContentLoader()..setBuildContext(context);
       } else {
         activeLoader = widget.config.contentLoader;
@@ -178,33 +176,31 @@ class NCLAppState extends MediaState<NCLApp> {
               timer.cancel();
               return;
             }
-              final now = DateTime.now();
-              final deltaMs = now.difference(lastTick).inMilliseconds;
-              lastTick = now;
-              final changedMedia = nclDocument?.tick(deltaMs) ?? <Media>{};
+            final now = DateTime.now();
+            final deltaMs = now.difference(lastTick).inMilliseconds;
+            lastTick = now;
+            final changedMedia = nclDocument?.tick(deltaMs) ?? <Media>{};
 
-              if (nclDocument != null) {
-                for (var media in changedMedia) {
-                  _mediaStateKeys[media.id ?? '']
-                      ?.currentState
-                      ?.syncProperties();
-                }
+            if (nclDocument != null) {
+              for (var media in changedMedia) {
+                _mediaStateKeys[media.id ?? '']?.currentState?.syncProperties();
+              }
 
-                final currentActiveMedia = nclDocument!.getActiveMedia();
-                if (_syncActiveMedia(currentActiveMedia)) {
-                  if (mounted) {
-                    setState(() {});
-                  }
-                }
-
-                if (!nclDocument!.isPlaying) {
-                  _ticker?.cancel();
-                  _ticker = null;
-                  nclDocument = null;
+              final currentActiveMedia = nclDocument!.getActiveMedia();
+              if (_syncActiveMedia(currentActiveMedia)) {
+                if (mounted) {
+                  setState(() {});
                 }
               }
-            });
+
+              if (!nclDocument!.isPlaying) {
+                _ticker?.cancel();
+                _ticker = null;
+                nclDocument = null;
+              }
+            }
           });
+        });
       }
     } catch (e, stacktrace) {
       _logger.severe("Error: $e\n$stacktrace");

@@ -1,18 +1,18 @@
 import 'elements.dart';
 
-enum State { OCCURRING, PAUSED, SLEEPING }
+enum NCLState { OCCURRING, PAUSED, SLEEPING }
 
-enum EventType { PRESENTATION, ATTRIBUTION, SELECTION, PREPARATION }
+enum NCLEvent { PRESENTATION, ATTRIBUTION, SELECTION, PREPARATION }
 
-enum ActionType { ABORT, PAUSE, RESUME, START, STOP, SET }
+enum NCLAction { ABORT, PAUSE, RESUME, START, STOP, SET }
 
 class Event {
-  final EventType type;
+  final NCLEvent type;
   final Node targetNode;
   final String? propertyName;
   final String? interfaceId;
   final bool isMain;
-  State state = State.SLEEPING;
+  NCLState state = NCLState.SLEEPING;
 
   Event({
     required this.type,
@@ -22,68 +22,68 @@ class Event {
     this.isMain = false,
   });
 
-  State doAction(ActionType action) {
+  NCLState doAction(NCLAction action) {
     switch (action) {
-      case ActionType.START:
-        if (state == State.SLEEPING) state = State.OCCURRING;
+      case NCLAction.START:
+        if (state == NCLState.SLEEPING) state = NCLState.OCCURRING;
         break;
-      case ActionType.STOP:
-      case ActionType.ABORT:
-        if (state == State.OCCURRING || state == State.PAUSED) {
-          state = State.SLEEPING;
+      case NCLAction.STOP:
+      case NCLAction.ABORT:
+        if (state == NCLState.OCCURRING || state == NCLState.PAUSED) {
+          state = NCLState.SLEEPING;
         }
         break;
-      case ActionType.PAUSE:
-        if (state == State.OCCURRING) state = State.PAUSED;
+      case NCLAction.PAUSE:
+        if (state == NCLState.OCCURRING) state = NCLState.PAUSED;
         break;
-      case ActionType.RESUME:
-        if (state == State.PAUSED) state = State.OCCURRING;
+      case NCLAction.RESUME:
+        if (state == NCLState.PAUSED) state = NCLState.OCCURRING;
         break;
-      case ActionType.SET:
+      case NCLAction.SET:
         break;
     }
     return state;
   }
 
-  static ActionType getStringAsActionType(String str) {
+  static NCLAction getStringAsActionType(String str) {
     switch (str.toLowerCase()) {
       case 'start':
-        return ActionType.START;
+        return NCLAction.START;
       case 'stop':
-        return ActionType.STOP;
+        return NCLAction.STOP;
       case 'abort':
-        return ActionType.ABORT;
+        return NCLAction.ABORT;
       case 'pause':
-        return ActionType.PAUSE;
+        return NCLAction.PAUSE;
       case 'resume':
-        return ActionType.RESUME;
+        return NCLAction.RESUME;
       case 'set':
-        return ActionType.SET;
+        return NCLAction.SET;
       default:
         throw ArgumentError('Unknown action string: $str');
     }
   }
 
-  static String getEventStateAsString(State state) {
+  static String getEventStateAsString(NCLState state) {
     switch (state) {
-      case State.SLEEPING:
+      case NCLState.SLEEPING:
         return 'sleeping';
-      case State.OCCURRING:
+      case NCLState.OCCURRING:
         return 'occurring';
-      case State.PAUSED:
+      case NCLState.PAUSED:
         return 'paused';
     }
   }
 
-  static String getEventTypeAsString(EventType type) {
+  static String getEventTypeAsString(NCLEvent type) {
     switch (type) {
-      case EventType.PRESENTATION:
+      case NCLEvent.PRESENTATION:
         return 'presentation';
-      case EventType.ATTRIBUTION:
+      case NCLEvent.ATTRIBUTION:
         return 'attribution';
-      case EventType.SELECTION:
+      case NCLEvent.SELECTION:
         return 'selection';
-      case EventType.PREPARATION:
+      case NCLEvent.PREPARATION:
         return 'preparation';
     }
   }
@@ -91,7 +91,7 @@ class Event {
 
 class Action {
   final Event event;
-  final ActionType action;
+  final NCLAction action;
   final String value;
   final int duration;
   final int delay;

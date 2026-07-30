@@ -7,7 +7,11 @@ void main() {
     test('Media Node can return its properties and areas', () {
       final media = Media(rawAttributes: const {'id': 'video1'});
       final prop = Property(
-        rawAttributes: const {'id': 'p1', 'name': 'bounds', 'value': '0,0,100,100'},
+        rawAttributes: const {
+          'id': 'p1',
+          'name': 'bounds',
+          'value': '0,0,100,100',
+        },
       );
       final area = Area(rawAttributes: const {'id': 'a1', 'begin': '10s'});
       media.children.addAll([prop, area]);
@@ -23,7 +27,11 @@ void main() {
     test('Context Node can return its properties and areas', () {
       final context = Context(rawAttributes: const {'id': 'ctx1'});
       final prop = Property(
-        rawAttributes: const {'id': 'p1', 'name': 'bounds', 'value': '0,0,100,100'},
+        rawAttributes: const {
+          'id': 'p1',
+          'name': 'bounds',
+          'value': '0,0,100,100',
+        },
       );
       final area = Area(rawAttributes: const {'id': 'a1', 'begin': '10s'});
       context.children.addAll([prop, area]);
@@ -42,28 +50,28 @@ void main() {
       final event2 = media.getMainEvent();
       expect(event1, same(event2));
       expect(event1.targetNode.id, 'm1');
-      expect(event1.type, EventType.PRESENTATION);
+      expect(event1.type, NCLEvent.PRESENTATION);
     });
 
     test('getAreaEventState returns state of the area event', () {
       final media = Media(rawAttributes: const {'id': 'm1'});
-      expect(media.getAreaEventState('a1'), State.SLEEPING);
-      media.getAreaEvent('a1').state = State.OCCURRING;
-      expect(media.getAreaEventState('a1'), State.OCCURRING);
+      expect(media.getAreaEventState('a1'), NCLState.SLEEPING);
+      media.getAreaEvent('a1').state = NCLState.OCCURRING;
+      expect(media.getAreaEventState('a1'), NCLState.OCCURRING);
     });
 
     test('doAction', () {
       final media = Media(rawAttributes: const {'id': 'm1'});
       final event = media.getMainEvent();
-      expect(event.state, State.SLEEPING);
-      expect(event.doAction(ActionType.START), State.OCCURRING);
-      expect(event.state, State.OCCURRING);
-      expect(event.doAction(ActionType.PAUSE), State.PAUSED);
-      expect(event.state, State.PAUSED);
-      expect(event.doAction(ActionType.RESUME), State.OCCURRING);
-      expect(event.state, State.OCCURRING);
-      expect(event.doAction(ActionType.STOP), State.SLEEPING);
-      expect(event.state, State.SLEEPING);
+      expect(event.state, NCLState.SLEEPING);
+      expect(event.doAction(NCLAction.START), NCLState.OCCURRING);
+      expect(event.state, NCLState.OCCURRING);
+      expect(event.doAction(NCLAction.PAUSE), NCLState.PAUSED);
+      expect(event.state, NCLState.PAUSED);
+      expect(event.doAction(NCLAction.RESUME), NCLState.OCCURRING);
+      expect(event.state, NCLState.OCCURRING);
+      expect(event.doAction(NCLAction.STOP), NCLState.SLEEPING);
+      expect(event.state, NCLState.SLEEPING);
     });
 
     test(
@@ -71,12 +79,12 @@ void main() {
       () {
         final media = Media(rawAttributes: const {'id': 'm1'});
         final event = media.getMainEvent();
-        expect(event.state, State.SLEEPING);
-        expect(event.doAction(ActionType.STOP), State.SLEEPING);
-        expect(event.doAction(ActionType.ABORT), State.SLEEPING);
-        expect(event.doAction(ActionType.PAUSE), State.SLEEPING);
-        expect(event.doAction(ActionType.RESUME), State.SLEEPING);
-        expect(event.state, State.SLEEPING);
+        expect(event.state, NCLState.SLEEPING);
+        expect(event.doAction(NCLAction.STOP), NCLState.SLEEPING);
+        expect(event.doAction(NCLAction.ABORT), NCLState.SLEEPING);
+        expect(event.doAction(NCLAction.PAUSE), NCLState.SLEEPING);
+        expect(event.doAction(NCLAction.RESUME), NCLState.SLEEPING);
+        expect(event.state, NCLState.SLEEPING);
       },
     );
 
@@ -85,11 +93,11 @@ void main() {
       () {
         final media = Media(rawAttributes: const {'id': 'm1'});
         final event = media.getMainEvent();
-        event.doAction(ActionType.START);
-        expect(event.state, State.OCCURRING);
-        expect(event.doAction(ActionType.START), State.OCCURRING);
-        expect(event.doAction(ActionType.RESUME), State.OCCURRING);
-        expect(event.state, State.OCCURRING);
+        event.doAction(NCLAction.START);
+        expect(event.state, NCLState.OCCURRING);
+        expect(event.doAction(NCLAction.START), NCLState.OCCURRING);
+        expect(event.doAction(NCLAction.RESUME), NCLState.OCCURRING);
+        expect(event.state, NCLState.OCCURRING);
       },
     );
 
@@ -98,40 +106,35 @@ void main() {
       () {
         final media = Media(rawAttributes: const {'id': 'm1'});
         final event = media.getMainEvent();
-        event.doAction(ActionType.START);
-        event.doAction(ActionType.PAUSE);
-        expect(event.state, State.PAUSED);
-        expect(event.doAction(ActionType.START), State.PAUSED);
-        expect(event.doAction(ActionType.PAUSE), State.PAUSED);
-        expect(event.state, State.PAUSED);
+        event.doAction(NCLAction.START);
+        event.doAction(NCLAction.PAUSE);
+        expect(event.state, NCLState.PAUSED);
+        expect(event.doAction(NCLAction.START), NCLState.PAUSED);
+        expect(event.doAction(NCLAction.PAUSE), NCLState.PAUSED);
+        expect(event.state, NCLState.PAUSED);
       },
     );
 
     test('doAction ABORT behaves like STOP from OCCURRING and PAUSED', () {
       final media = Media(rawAttributes: const {'id': 'm1'});
       final event = media.getMainEvent();
-      event.doAction(ActionType.START);
-      expect(event.doAction(ActionType.ABORT), State.SLEEPING);
+      event.doAction(NCLAction.START);
+      expect(event.doAction(NCLAction.ABORT), NCLState.SLEEPING);
 
-      event.doAction(ActionType.START);
-      event.doAction(ActionType.PAUSE);
-      expect(event.doAction(ActionType.ABORT), State.SLEEPING);
+      event.doAction(NCLAction.START);
+      event.doAction(NCLAction.PAUSE);
+      expect(event.doAction(NCLAction.ABORT), NCLState.SLEEPING);
     });
 
     test('Event helper methods work correctly', () {
-      expect(Event.getStringAsActionType('start'), ActionType.START);
-      expect(Event.getStringAsActionType('stop'), ActionType.STOP);
-      expect(Event.getEventStateAsString(State.OCCURRING), 'occurring');
-      expect(
-        Event.getEventTypeAsString(EventType.PRESENTATION),
-        'presentation',
-      );
+      expect(Event.getStringAsActionType('start'), NCLAction.START);
+      expect(Event.getStringAsActionType('stop'), NCLAction.STOP);
+      expect(Event.getEventStateAsString(NCLState.OCCURRING), 'occurring');
+      expect(Event.getEventTypeAsString(NCLEvent.PRESENTATION), 'presentation');
     });
 
     test('Media Initialization', () {
-      final mediaDefault = Media(
-        rawAttributes: const {'id': 'm1'},
-      );
+      final mediaDefault = Media(rawAttributes: const {'id': 'm1'});
       expect(mediaDefault.id, 'm1');
       expect(mediaDefault.uri, '');
       expect(mediaDefault.mimeType, 'application/x-ginga-time');

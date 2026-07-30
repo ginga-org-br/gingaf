@@ -134,7 +134,7 @@ class NCLDocument {
 
   Head? get head => _head;
   Context get body => _body;
-  State getBodyState() => _body.getMainState();
+  NCLState getBodyState() => _body.getMainState();
 
   Settings getSettings() => _settings;
 
@@ -336,7 +336,7 @@ class NCLDocument {
     final active = <Media>[];
     void search(Composition comp) {
       for (var node in comp.getNodes()) {
-        if (node is Media && node.getMainState() == State.OCCURRING) {
+        if (node is Media && node.getMainState() == NCLState.OCCURRING) {
           active.add(node);
         } else if (node is Composition) {
           search(node);

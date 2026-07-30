@@ -49,24 +49,24 @@ void main() {
         final m2 = doc.getNodeById('m2') as Media;
         final prop = m2.getPropertyEvent('p');
 
-        expect(m2.getMainState(), State.OCCURRING);
-        expect(prop.state, State.SLEEPING);
+        expect(m2.getMainState(), NCLState.OCCURRING);
+        expect(prop.state, NCLState.SLEEPING);
 
         doc.tick(1000);
-        expect(prop.state, State.SLEEPING);
+        expect(prop.state, NCLState.SLEEPING);
 
         doc.tick(1000);
-        expect(prop.state, State.OCCURRING);
+        expect(prop.state, NCLState.OCCURRING);
         expect(
           m2.getProperties().firstWhere((p) => p.name == 'p').value,
           isNull,
         );
 
         doc.tick(4000);
-        expect(prop.state, State.OCCURRING);
+        expect(prop.state, NCLState.OCCURRING);
 
         doc.tick(1000);
-        expect(prop.state, State.SLEEPING);
+        expect(prop.state, NCLState.SLEEPING);
         final pVal = m2.getProperties().firstWhere((p) => p.name == 'p');
         expect(pVal.value, 'active');
       },

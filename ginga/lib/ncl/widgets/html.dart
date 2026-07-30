@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:ncldoc/ncl_document.dart' hide State;
+
 import 'ncl_media_widget.dart';
 
 class HtmlWidget extends MediaWidget {
-  HtmlWidget({
+  const HtmlWidget({
     super.key,
-    required String src,
+    required super.src,
     super.media,
-  }) : super(src: src);
+  });
 
   @override
   State<HtmlWidget> createState() => HtmlWidgetState();

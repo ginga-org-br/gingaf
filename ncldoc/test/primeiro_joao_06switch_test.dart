@@ -140,8 +140,8 @@ void main() {
       final ptForm = doc.getNodeById('ptForm') as Media;
       final enForm = doc.getNodeById('enForm') as Media;
 
-      expect(ptForm.getMainState(), State.SLEEPING);
-      expect(enForm.getMainState(), State.SLEEPING);
+      expect(ptForm.getMainState(), NCLState.SLEEPING);
+      expect(enForm.getMainState(), NCLState.SLEEPING);
 
       doc.tick(45000);
       doc.triggerSelection('mIcon', 'RED');
@@ -150,8 +150,8 @@ void main() {
       var active = doc.getActiveMedia().map((m) => m.id).toList();
       expect(active, contains('ptForm'));
       expect(active, isNot(contains('enForm')));
-      expect(ptForm.getMainState(), State.OCCURRING);
-      expect(enForm.getMainState(), State.SLEEPING);
+      expect(ptForm.getMainState(), NCLState.OCCURRING);
+      expect(enForm.getMainState(), NCLState.SLEEPING);
 
       final mMain = doc.getNodeById('mMain') as Media;
       final boundsProp = mMain.getProperties().firstWhere(
@@ -162,7 +162,7 @@ void main() {
       doc.tick(15000);
       active = doc.getActiveMedia().map((m) => m.id).toList();
       expect(active, isNot(contains('ptForm')));
-      expect(ptForm.getMainState(), State.SLEEPING);
+      expect(ptForm.getMainState(), NCLState.SLEEPING);
       expect(boundsProp.value, '0,0,100%,100%');
     });
 
@@ -303,8 +303,8 @@ void main() {
       final ptForm = doc.getNodeById('ptForm') as Media;
       final enForm = doc.getNodeById('enForm') as Media;
 
-      expect(ptForm.getMainState(), State.SLEEPING);
-      expect(enForm.getMainState(), State.SLEEPING);
+      expect(ptForm.getMainState(), NCLState.SLEEPING);
+      expect(enForm.getMainState(), NCLState.SLEEPING);
 
       doc.tick(45000);
       doc.triggerSelection('mIcon', 'RED');
@@ -313,8 +313,8 @@ void main() {
       var active = doc.getActiveMedia().map((m) => m.id).toList();
       expect(active, contains('enForm'));
       expect(active, isNot(contains('ptForm')));
-      expect(enForm.getMainState(), State.OCCURRING);
-      expect(ptForm.getMainState(), State.SLEEPING);
+      expect(enForm.getMainState(), NCLState.OCCURRING);
+      expect(ptForm.getMainState(), NCLState.SLEEPING);
 
       final mMain = doc.getNodeById('mMain') as Media;
       final boundsProp = mMain.getProperties().firstWhere(
@@ -325,7 +325,7 @@ void main() {
       doc.tick(15000);
       active = doc.getActiveMedia().map((m) => m.id).toList();
       expect(active, isNot(contains('enForm')));
-      expect(enForm.getMainState(), State.SLEEPING);
+      expect(enForm.getMainState(), NCLState.SLEEPING);
       expect(boundsProp.value, '0,0,100%,100%');
     });
   });

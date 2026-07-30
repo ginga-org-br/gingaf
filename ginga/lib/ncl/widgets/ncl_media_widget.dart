@@ -1,18 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
-import 'package:ncldoc/ncl_document.dart' hide State;
+import 'package:ncldoc/ncl_document.dart';
 
 import '../../ginga_content.dart';
+import '../../main_av.dart';
 import '../../web_utils_stub.dart'
     if (dart.library.html) '../../web_utils_web.dart';
 import '../ncl_app.dart';
-import '../../main_av.dart';
 
 abstract class MediaWidget extends StatefulWidget {
   final String src;
@@ -216,6 +213,7 @@ abstract class MediaState<T extends MediaWidget> extends State<T> {
 
   Widget buildWidgetContent(BuildContext context);
 }
+
 class WidgetFactory {
   static Widget? createMediaWidget({
     Key? key,

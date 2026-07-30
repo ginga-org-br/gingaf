@@ -1,5 +1,4 @@
 import 'package:ncldoc/ncl_document.dart';
-import 'package:ncldoc/elements.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -20,15 +19,15 @@ void main() {
 ''';
       final doc = NCLDocument.fromContent(xml);
       doc.start();
-      expect(doc.getBodyState(), State.OCCURRING);
+      expect(doc.getBodyState(), NCLState.OCCURRING);
       expect(doc.virtualClock, 0);
-      expect(doc.getNodeById('m1')?.getMainState(), State.OCCURRING);
+      expect(doc.getNodeById('m1')?.getMainState(), NCLState.OCCURRING);
       final changed1 = doc.tick(1);
       expect(changed1, isEmpty);
       expect(doc.virtualClock, 1);
       doc.stop();
-      expect(doc.getNodeById('m1')?.getMainState(), State.SLEEPING);
-      expect(doc.getBodyState(), State.SLEEPING);
+      expect(doc.getNodeById('m1')?.getMainState(), NCLState.SLEEPING);
+      expect(doc.getBodyState(), NCLState.SLEEPING);
     });
 
     test('link onBegin starts another media', () {
@@ -47,21 +46,23 @@ void main() {
 ''';
       final doc = NCLDocument.fromContent(xml);
       doc.start();
-      expect(doc.getBodyState(), State.OCCURRING);
+      expect(doc.getBodyState(), NCLState.OCCURRING);
       expect(doc.virtualClock, 0);
-      expect(doc.getNodeById('m1')?.getMainState(), State.OCCURRING);
-      expect(doc.getNodeById('m2')?.getMainState(), State.OCCURRING);
+      expect(doc.getNodeById('m1')?.getMainState(), NCLState.OCCURRING);
+      expect(doc.getNodeById('m2')?.getMainState(), NCLState.OCCURRING);
       final changed2 = doc.tick(1);
       expect(changed2, isEmpty);
       expect(doc.virtualClock, 1);
       doc.stop();
-      expect(doc.getNodeById('m1')?.getMainState(), State.SLEEPING);
-      expect(doc.getNodeById('m2')?.getMainState(), State.SLEEPING);
-      expect(doc.getBodyState(), State.SLEEPING);
+      expect(doc.getNodeById('m1')?.getMainState(), NCLState.SLEEPING);
+      expect(doc.getNodeById('m2')?.getMainState(), NCLState.SLEEPING);
+      expect(doc.getBodyState(), NCLState.SLEEPING);
     });
 
-    test('onBeginTestVarStart triggers male ad when system settings gender property is male', () {
-      final xmlString = '''
+    test(
+      'onBeginTestVarStart triggers male ad when system settings gender property is male',
+      () {
+        final xmlString = '''
 <ncl id="sysSettingsDoc">
   <head>
     <regionBase>
@@ -109,25 +110,28 @@ void main() {
 </ncl>
 ''';
 
-      final doc = NCLDocument.fromContent(xmlString);
+        final doc = NCLDocument.fromContent(xmlString);
 
-      doc.start();
-      expect(doc.isPlaying, isTrue);
+        doc.start();
+        expect(doc.isPlaying, isTrue);
 
-      final mMaleAd = doc.getNodeById('mMaleAd') as Media;
-      final mGeneralAd = doc.getNodeById('mGeneralAd') as Media;
+        final mMaleAd = doc.getNodeById('mMaleAd') as Media;
+        final mGeneralAd = doc.getNodeById('mGeneralAd') as Media;
 
-      expect(mMaleAd.getMainState(), equals(State.SLEEPING));
-      expect(mGeneralAd.getMainState(), equals(State.SLEEPING));
+        expect(mMaleAd.getMainState(), equals(NCLState.SLEEPING));
+        expect(mGeneralAd.getMainState(), equals(NCLState.SLEEPING));
 
-      doc.tick(2000);
+        doc.tick(2000);
 
-      expect(mMaleAd.getMainState(), equals(State.OCCURRING));
-      expect(mGeneralAd.getMainState(), equals(State.SLEEPING));
-    });
+        expect(mMaleAd.getMainState(), equals(NCLState.OCCURRING));
+        expect(mGeneralAd.getMainState(), equals(NCLState.SLEEPING));
+      },
+    );
 
-    test('onBeginTestVarStart triggers general ad when system settings gender property is female', () {
-      final xmlString = '''
+    test(
+      'onBeginTestVarStart triggers general ad when system settings gender property is female',
+      () {
+        final xmlString = '''
 <ncl id="sysSettingsDoc">
   <head>
     <regionBase>
@@ -175,21 +179,22 @@ void main() {
 </ncl>
 ''';
 
-      final doc = NCLDocument.fromContent(xmlString);
+        final doc = NCLDocument.fromContent(xmlString);
 
-      doc.start();
-      expect(doc.isPlaying, isTrue);
+        doc.start();
+        expect(doc.isPlaying, isTrue);
 
-      final mMaleAd = doc.getNodeById('mMaleAd') as Media;
-      final mGeneralAd = doc.getNodeById('mGeneralAd') as Media;
+        final mMaleAd = doc.getNodeById('mMaleAd') as Media;
+        final mGeneralAd = doc.getNodeById('mGeneralAd') as Media;
 
-      expect(mMaleAd.getMainState(), equals(State.SLEEPING));
-      expect(mGeneralAd.getMainState(), equals(State.SLEEPING));
+        expect(mMaleAd.getMainState(), equals(NCLState.SLEEPING));
+        expect(mGeneralAd.getMainState(), equals(NCLState.SLEEPING));
 
-      doc.tick(2000);
+        doc.tick(2000);
 
-      expect(mMaleAd.getMainState(), equals(State.SLEEPING));
-      expect(mGeneralAd.getMainState(), equals(State.OCCURRING));
-    });
+        expect(mMaleAd.getMainState(), equals(NCLState.SLEEPING));
+        expect(mGeneralAd.getMainState(), equals(NCLState.OCCURRING));
+      },
+    );
   });
 }

@@ -129,19 +129,19 @@ void main() {
       final mShoes = doc.getNodeById('mShoes') as Media;
       final mForm = doc.getNodeById('mForm') as Media;
 
-      expect(mMain.getMainState(), State.OCCURRING);
-      expect(mIcon.getMainState(), State.SLEEPING);
-      expect(mShoes.getMainState(), State.SLEEPING);
-      expect(mForm.getMainState(), State.SLEEPING);
+      expect(mMain.getMainState(), NCLState.OCCURRING);
+      expect(mIcon.getMainState(), NCLState.SLEEPING);
+      expect(mShoes.getMainState(), NCLState.SLEEPING);
+      expect(mForm.getMainState(), NCLState.SLEEPING);
 
       doc.tick(45000);
       var active = doc.getActiveMedia().map((m) => m.id).toList();
       expect(active, contains('mMain'));
       expect(active, contains('mIcon'));
-      expect(mMain.getMainState(), State.OCCURRING);
-      expect(mIcon.getMainState(), State.OCCURRING);
-      expect(mShoes.getMainState(), State.SLEEPING);
-      expect(mForm.getMainState(), State.SLEEPING);
+      expect(mMain.getMainState(), NCLState.OCCURRING);
+      expect(mIcon.getMainState(), NCLState.OCCURRING);
+      expect(mShoes.getMainState(), NCLState.SLEEPING);
+      expect(mForm.getMainState(), NCLState.SLEEPING);
 
       doc.triggerSelection('mIcon', 'RED');
       doc.tick(0);
@@ -151,10 +151,10 @@ void main() {
       expect(active, isNot(contains('mIcon')));
       expect(active, contains('mShoes'));
       expect(active, contains('mForm'));
-      expect(mMain.getMainState(), State.OCCURRING);
-      expect(mIcon.getMainState(), State.SLEEPING);
-      expect(mShoes.getMainState(), State.OCCURRING);
-      expect(mForm.getMainState(), State.OCCURRING);
+      expect(mMain.getMainState(), NCLState.OCCURRING);
+      expect(mIcon.getMainState(), NCLState.SLEEPING);
+      expect(mShoes.getMainState(), NCLState.OCCURRING);
+      expect(mForm.getMainState(), NCLState.OCCURRING);
 
       final boundsProp = mMain.getProperties().firstWhere(
         (p) => p.name == 'bounds',
@@ -165,7 +165,7 @@ void main() {
       active = doc.getActiveMedia().map((m) => m.id).toList();
       expect(active, contains('mMain'));
       expect(active, isNot(contains('mForm')));
-      expect(mForm.getMainState(), State.SLEEPING);
+      expect(mForm.getMainState(), NCLState.SLEEPING);
       expect(boundsProp.value, '0,0,100%,100%');
     });
   });

@@ -1,12 +1,9 @@
-import 'dart:async';
 import 'package:flutter/material.dart' hide Action;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingaf/ncl/ncl_app.dart';
 import 'package:ncldoc/ncl_document.dart';
-import 'package:ncldoc/elements.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
-import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import '../mock_video_player.dart';
 
@@ -140,8 +137,10 @@ void main() {
     VideoPlayerPlatform.instance = fakePlatform;
   });
 
-  test('NCLDocument key selection, property SET, and layout change resolution', () {
-    final doc = NCLDocument.fromContent('''<ncl id="joaoSyncIntTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+  test('NCLDocument key selection, property SET, and layout change resolution',
+      () {
+    final doc = NCLDocument.fromContent(
+        '''<ncl id="joaoSyncIntTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
       <region id="bgRegion" width="100%" height="100%" zIndex="1"/>
@@ -274,25 +273,28 @@ void main() {
     expect(active, contains('promoVideo'));
 
     final mainVideo = doc.getNodeById('mainVideo') as Media;
-    final boundsProp = mainVideo.getProperties().firstWhere((p) => p.name == 'bounds');
+    final boundsProp =
+        mainVideo.getProperties().firstWhere((p) => p.name == 'bounds');
     expect(boundsProp.value, '5%,6.7%,45%,45%');
 
     // Stop promoVideo (simulate video naturally ending)
     final promoVideo = doc.getNodeById('promoVideo') as Media;
-    
+
     // Simulate end of promoVideo using the uiQueue
     doc.uiQueue.add(
       Action(
         event: promoVideo.getMainEvent(),
-        action: ActionType.STOP,
+        action: NCLAction.STOP,
       ),
     );
-    doc.tick(0); // triggers link7 (onEnd promoVideo -> set mainVideo bounds to 0,0,100%,100%)
+    doc.tick(
+        0); // triggers link7 (onEnd promoVideo -> set mainVideo bounds to 0,0,100%,100%)
 
     expect(boundsProp.value, '0,0,100%,100%');
   });
 
-  testWidgets('NCLApp updates widget sizes and positions in response to SET action from key selection',
+  testWidgets(
+      'NCLApp updates widget sizes and positions in response to SET action from key selection',
       (WidgetTester tester) async {
     final mockBundle = MockSyncIntAssetBundle();
 
@@ -317,7 +319,8 @@ void main() {
     await tester.pump();
 
     // Verify all active widgets are visible
-    final posList = tester.widgetList<Positioned>(find.byType(Positioned)).toList();
+    final posList =
+        tester.widgetList<Positioned>(find.byType(Positioned)).toList();
     expect(posList.length, 6);
 
     // Trigger key RED selection on btnIcon
@@ -326,7 +329,8 @@ void main() {
     await tester.pump();
 
     // After key selection: btnIcon is gone, promoVideo starts
-    final posList2 = tester.widgetList<Positioned>(find.byType(Positioned)).toList();
+    final posList2 =
+        tester.widgetList<Positioned>(find.byType(Positioned)).toList();
     expect(posList2.length, 6);
 
     // Find mainVideo Positioned widget

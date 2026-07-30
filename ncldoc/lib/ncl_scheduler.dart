@@ -2,8 +2,6 @@ import 'dart:async';
 
 import 'package:logging/logging.dart';
 
-import 'elements.dart';
-import 'event.dart';
 import 'ncl_document.dart';
 
 final _logger = Logger('ncl_doc');
@@ -22,7 +20,7 @@ class NCLScheduler {
 
   void _init() {
     _gatherTimedNodes();
-    _stackMainEvtAction(document.body, ActionType.START);
+    _stackMainEvtAction(document.body, NCLAction.START);
     _stackPorts(document.body);
   }
 
@@ -58,7 +56,7 @@ class NCLScheduler {
       if (port.component != null) {
         final node = document.getNodeById(port.component!);
         if (node != null) {
-          _stackMainEvtAction(node, ActionType.START);
+          _stackMainEvtAction(node, NCLAction.START);
           if (node is Context) {
             _stackPorts(node);
           }
@@ -87,7 +85,7 @@ class NCLScheduler {
     int delta = targetTime - virtualClock;
     if (delta > 0) {
       for (var node in _timedNodes) {
-        if (node.getMainState() == State.OCCURRING) {
+        if (node.getMainState() == NCLState.OCCURRING) {
           int t1 = node.time;
           int t2 = t1 + delta;
           node.time = t2;
@@ -98,15 +96,12 @@ class NCLScheduler {
 
             if (beginMs != null) {
               if (t1 < beginMs && t2 >= beginMs) {
-                _stackAction(
-                  node.getAreaEvent(area.id ?? ''),
-                  ActionType.START,
-                );
+                _stackAction(node.getAreaEvent(area.id ?? ''), NCLAction.START);
               }
             }
             if (endMs != null) {
               if (t1 < endMs && t2 >= endMs) {
-                _stackAction(node.getAreaEvent(area.id ?? ''), ActionType.STOP);
+                _stackAction(node.getAreaEvent(area.id ?? ''), NCLAction.STOP);
               }
             }
           }
@@ -116,7 +111,7 @@ class NCLScheduler {
             _logger.info(
               '[Clock: ${(targetTime / 1000).toStringAsFixed(3)}s] Node "${node.id}" reached duration limit (${limit}ms)',
             );
-            _stackMainEvtAction(node, ActionType.STOP);
+            _stackMainEvtAction(node, NCLAction.STOP);
           }
         }
       }
@@ -128,7 +123,7 @@ class NCLScheduler {
     final changedNodes = <Node>{};
     while (_actionStack.isNotEmpty) {
       final actionItem = _actionStack.removeAt(0);
-      if (actionItem.action == ActionType.SET) {
+      if (actionItem.action == NCLAction.SET) {
         if (actionItem.value.isNotEmpty &&
             actionItem.event.propertyName != null) {
           actionItem.event.targetNode.setPropertyValue(
@@ -148,11 +143,11 @@ class NCLScheduler {
           }
         }
         final prevState = actionItem.event.state;
-        actionItem.event.state = State.SLEEPING;
-        if (prevState != State.SLEEPING) {
+        actionItem.event.state = NCLState.SLEEPING;
+        if (prevState != NCLState.SLEEPING) {
           _triggerLinks(
             actionItem.event.targetNode.id,
-            State.SLEEPING,
+            NCLState.SLEEPING,
             actionItem.event.propertyName,
           );
         }
@@ -173,7 +168,7 @@ class NCLScheduler {
         changedNodes.add(actionItem.event.targetNode);
 
         if (actionItem.event.isMain) {
-          if (newState == State.OCCURRING) {
+          if (newState == NCLState.OCCURRING) {
             actionItem.event.targetNode.time = 0;
             if (actionItem.event.targetNode is Context) {
               if ((actionItem.event.targetNode as Context).activeNodes == 0) {
@@ -181,24 +176,28 @@ class NCLScheduler {
               }
             }
             if (actionItem.event.targetNode is Switch) {
-              final activeNode = document.resolveSwitch(actionItem.event.targetNode as Switch);
+              final activeNode = document.resolveSwitch(
+                actionItem.event.targetNode as Switch,
+              );
               if (activeNode != null) {
-                _stackMainEvtAction(activeNode, ActionType.START);
+                _stackMainEvtAction(activeNode, NCLAction.START);
               }
             }
-          } else if (newState == State.SLEEPING) {
+          } else if (newState == NCLState.SLEEPING) {
             for (var area in actionItem.event.targetNode.getAreas()) {
               final areaEvt = actionItem.event.targetNode.getAreaEvent(
                 area.id ?? '',
               );
-              if (areaEvt.state != State.SLEEPING) {
-                _stackAction(areaEvt, ActionType.STOP);
+              if (areaEvt.state != NCLState.SLEEPING) {
+                _stackAction(areaEvt, NCLAction.STOP);
               }
             }
             if (actionItem.event.targetNode is Switch) {
-              for (var child in (actionItem.event.targetNode as Switch).children) {
-                if (child is Node && child.getMainState() != State.SLEEPING) {
-                  _stackMainEvtAction(child, ActionType.STOP);
+              for (var child
+                  in (actionItem.event.targetNode as Switch).children) {
+                if (child is Node &&
+                    child.getMainState() != NCLState.SLEEPING) {
+                  _stackMainEvtAction(child, NCLAction.STOP);
                 }
               }
             }
@@ -206,15 +205,15 @@ class NCLScheduler {
 
           final parent = actionItem.event.targetNode.parent;
           if (parent is Composition) {
-            if (newState == State.OCCURRING) {
-              if (parent.getMainState() == State.SLEEPING) {
-                _stackMainEvtAction(parent, ActionType.START);
+            if (newState == NCLState.OCCURRING) {
+              if (parent.getMainState() == NCLState.SLEEPING) {
+                _stackMainEvtAction(parent, NCLAction.START);
               }
               parent.activeNodes++;
-            } else if (newState == State.SLEEPING) {
+            } else if (newState == NCLState.SLEEPING) {
               if (parent.activeNodes > 0) parent.activeNodes--;
               if (parent.activeNodes == 0) {
-                _stackMainEvtAction(parent, ActionType.STOP);
+                _stackMainEvtAction(parent, NCLAction.STOP);
               }
             }
           }
@@ -227,7 +226,7 @@ class NCLScheduler {
   void _checkIsPlaying() {
     if (_actionStack.isEmpty &&
         _delayedActions.isEmpty &&
-        document.body.getMainState() == State.SLEEPING) {
+        document.body.getMainState() == NCLState.SLEEPING) {
       isPlaying = false;
     }
   }
@@ -298,7 +297,8 @@ class NCLScheduler {
     final isProperty =
         attrAssess.rawAttributes['attributeType'] == 'nodeProperty';
     if (isProperty && bind.interface != null) {
-      currentValue = document.getPropertyValue(targetNode, bind.interface!) ?? '';
+      currentValue =
+          document.getPropertyValue(targetNode, bind.interface!) ?? '';
     } else {
       currentValue = Event.getEventStateAsString(
         targetNode.getMainState(),
@@ -313,24 +313,30 @@ class NCLScheduler {
     return false;
   }
 
-  void _triggerLinks(String? targetId, State newState, [String? interfaceId]) {
+  void _triggerLinks(
+    String? targetId,
+    NCLState newState, [
+    String? interfaceId,
+  ]) {
     if (targetId == null) return;
     final node = document.getNodeById(targetId);
     if (node == null) return;
 
     final context = node.parent;
-    final links = context is Context ? context.getLinks() : document.body.getLinks();
+    final links = context is Context
+        ? context.getLinks()
+        : document.body.getLinks();
 
     for (var link in links) {
       bool triggered = false;
-      if (newState == State.OCCURRING) {
+      if (newState == NCLState.OCCURRING) {
         triggered = link.children.whereType<Bind>().any(
           (b) =>
               b.role == 'onBegin' &&
               b.component == targetId &&
               b.interface == interfaceId,
         );
-      } else if (newState == State.SLEEPING) {
+      } else if (newState == NCLState.SLEEPING) {
         triggered = link.children.whereType<Bind>().any(
           (b) =>
               b.role == 'onEnd' &&
@@ -352,10 +358,8 @@ class NCLScheduler {
                   c.xmlTagName == 'assessmentStatement',
               orElse: () => null as dynamic,
             );
-            if (cond != null) {
-              if (!_evaluateCondition(cond, link)) {
-                triggered = false;
-              }
+            if (!_evaluateCondition(cond, link)) {
+              triggered = false;
             }
           }
         }
@@ -375,11 +379,11 @@ class NCLScheduler {
               final bindNode = document.getNodeById(bind.component!);
               if (bindNode != null) {
                 final actionType = Event.getStringAsActionType(actionStr);
-                var targetEvent = actionType == ActionType.SET
+                var targetEvent = actionType == NCLAction.SET
                     ? bindNode.getPropertyEvent(bind.interface ?? '')
                     : bindNode.getMainEvent();
 
-                if (actionType != ActionType.SET &&
+                if (actionType != NCLAction.SET &&
                     bindNode is Context &&
                     bind.interface != null) {
                   final ports = bindNode.children.whereType<Port>().where(
@@ -396,7 +400,7 @@ class NCLScheduler {
                   }
                 }
 
-                if (actionType != ActionType.SET && bindNode is Switch) {
+                if (actionType != NCLAction.SET && bindNode is Switch) {
                   final activeNode = document.resolveSwitch(bindNode);
                   if (activeNode != null) {
                     targetEvent = activeNode.getMainEvent();
@@ -426,7 +430,7 @@ class NCLScheduler {
                   }
                 }
                 String? setValue;
-                if (actionType == ActionType.SET) {
+                if (actionType == NCLAction.SET) {
                   for (var child in bind.children) {
                     if (child is BindParam &&
                         (child.name == 'value' || child.name == 'var')) {
@@ -448,11 +452,11 @@ class NCLScheduler {
                     }
                   }
                 }
-                if (actionType == ActionType.SET && durationMs > 0) {
-                  _stackAction(targetEvent, ActionType.START, delay: delayMs);
+                if (actionType == NCLAction.SET && durationMs > 0) {
+                  _stackAction(targetEvent, NCLAction.START, delay: delayMs);
                   _stackAction(
                     targetEvent,
-                    ActionType.SET,
+                    NCLAction.SET,
                     delay: delayMs + durationMs,
                     value: setValue,
                   );
@@ -521,10 +525,12 @@ class NCLScheduler {
     String? interfaceId,
   ]) {
     final node = document.getNodeById(componentId);
-    if (node == null || node.getMainState() != State.OCCURRING) return;
+    if (node == null || node.getMainState() != NCLState.OCCURRING) return;
 
     final context = node.parent;
-    final links = context is Context ? context.getLinks() : document.body.getLinks();
+    final links = context is Context
+        ? context.getLinks()
+        : document.body.getLinks();
 
     for (var link in links) {
       bool triggered = false;
@@ -535,25 +541,25 @@ class NCLScheduler {
                 (interfaceId == null && b.interface == null))) {
           final hasKeyParam =
               b.children.whereType<BindParam>().any(
-                    (bp) => bp.name == 'keyCode' || bp.name == 'key',
-                  ) ||
-                  link.children.whereType<BindParam>().any(
-                        (bp) => bp.name == 'keyCode' || bp.name == 'key',
-                      );
+                (bp) => bp.name == 'keyCode' || bp.name == 'key',
+              ) ||
+              link.children.whereType<BindParam>().any(
+                (bp) => bp.name == 'keyCode' || bp.name == 'key',
+              );
           if (!hasKeyParam) {
             return true;
           }
           bool keyMatches = b.children.whereType<BindParam>().any(
-                (bp) =>
-                    (bp.name == 'keyCode' || bp.name == 'key') &&
-                    bp.value == keyCode,
-              );
+            (bp) =>
+                (bp.name == 'keyCode' || bp.name == 'key') &&
+                bp.value == keyCode,
+          );
           if (!keyMatches) {
             keyMatches = link.children.whereType<BindParam>().any(
-                  (bp) =>
-                      (bp.name == 'keyCode' || bp.name == 'key') &&
-                      bp.value == keyCode,
-                );
+              (bp) =>
+                  (bp.name == 'keyCode' || bp.name == 'key') &&
+                  bp.value == keyCode,
+            );
           }
           return keyMatches;
         }
@@ -573,10 +579,8 @@ class NCLScheduler {
                   c.xmlTagName == 'assessmentStatement',
               orElse: () => null as dynamic,
             );
-            if (cond != null) {
-              if (!_evaluateCondition(cond, link)) {
-                triggered = false;
-              }
+            if (!_evaluateCondition(cond, link)) {
+              triggered = false;
             }
           }
         }
@@ -597,16 +601,16 @@ class NCLScheduler {
               if (bindNode != null) {
                 final actionType = Event.getStringAsActionType(actionStr);
 
-                var targetEvent = actionType == ActionType.SET
+                var targetEvent = actionType == NCLAction.SET
                     ? bindNode.getPropertyEvent(bind.interface ?? '')
                     : bindNode.getMainEvent();
 
-                if (actionType != ActionType.SET &&
+                if (actionType != NCLAction.SET &&
                     bindNode is Context &&
                     bind.interface != null) {
                   final ports = bindNode.children.whereType<Port>().where(
-                        (p) => p.id == bind.interface,
-                      );
+                    (p) => p.id == bind.interface,
+                  );
                   if (ports.isNotEmpty) {
                     final port = ports.first;
                     if (port.component != null) {
@@ -618,7 +622,7 @@ class NCLScheduler {
                   }
                 }
 
-                if (actionType != ActionType.SET && bindNode is Switch) {
+                if (actionType != NCLAction.SET && bindNode is Switch) {
                   final activeNode = document.resolveSwitch(bindNode);
                   if (activeNode != null) {
                     targetEvent = activeNode.getMainEvent();
@@ -648,7 +652,7 @@ class NCLScheduler {
                   }
                 }
                 String? setValue;
-                if (actionType == ActionType.SET) {
+                if (actionType == NCLAction.SET) {
                   for (var child in bind.children) {
                     if (child is BindParam &&
                         (child.name == 'value' || child.name == 'var')) {
@@ -670,11 +674,11 @@ class NCLScheduler {
                     }
                   }
                 }
-                if (actionType == ActionType.SET && durationMs > 0) {
-                  _stackAction(targetEvent, ActionType.START, delay: delayMs);
+                if (actionType == NCLAction.SET && durationMs > 0) {
+                  _stackAction(targetEvent, NCLAction.START, delay: delayMs);
                   _stackAction(
                     targetEvent,
-                    ActionType.SET,
+                    NCLAction.SET,
                     delay: delayMs + durationMs,
                     value: setValue,
                   );
@@ -704,13 +708,13 @@ class NCLScheduler {
     }
   }
 
-  void _stackMainEvtAction(Node node, ActionType actionType, {int delay = 0}) {
+  void _stackMainEvtAction(Node node, NCLAction actionType, {int delay = 0}) {
     _stackAction(node.getMainEvent(), actionType, delay: delay);
   }
 
   void _stackAction(
     Event event,
-    ActionType actionType, {
+    NCLAction actionType, {
     int delay = 0,
     String? value,
   }) {
@@ -741,7 +745,7 @@ class NCLScheduler {
 
   void start() {
     _logger.info('[Clock: ${virtualClock / 1000}s] NCLDocument will start');
-    document.body.getMainEvent().doAction(ActionType.START);
+    document.body.getMainEvent().doAction(NCLAction.START);
     _init();
     isPlaying = true;
     tick();
@@ -772,14 +776,14 @@ class NCLScheduler {
     _delayedActions.clear();
 
     void stopNode(Node node) {
-      if (node.getMainState() == State.OCCURRING ||
-          node.getMainState() == State.PAUSED) {
+      if (node.getMainState() == NCLState.OCCURRING ||
+          node.getMainState() == NCLState.PAUSED) {
         if (node is Composition) {
           for (var child in node.getNodes()) {
             stopNode(child);
           }
         }
-        node.getMainEvent().doAction(ActionType.STOP);
+        node.getMainEvent().doAction(NCLAction.STOP);
       }
     }
 

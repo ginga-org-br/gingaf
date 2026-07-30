@@ -1,11 +1,12 @@
 import 'package:ncldoc/ncl_document.dart';
-import 'package:ncldoc/elements.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('NCL User Profile Link Tests', () {
-    test('onBeginTestVarStart triggers male ad when active user gender is male', () {
-      final xmlString = '''
+    test(
+      'onBeginTestVarStart triggers male ad when active user gender is male',
+      () {
+        final xmlString = '''
 <ncl id="multiUserDoc">
   <head>
     <regionBase>
@@ -56,28 +57,32 @@ void main() {
 </ncl>
 ''';
 
-      final doc = NCLDocument.fromContent(
-        xmlString,
-        userData: '[{"id": "u1", "name": "Bob", "gender": "male", "age": 30}]',
-      );
+        final doc = NCLDocument.fromContent(
+          xmlString,
+          userData:
+              '[{"id": "u1", "name": "Bob", "gender": "male", "age": 30}]',
+        );
 
-      doc.start();
-      expect(doc.isPlaying, isTrue);
+        doc.start();
+        expect(doc.isPlaying, isTrue);
 
-      final mMaleAd = doc.getNodeById('mMaleAd') as Media;
-      final mGeneralAd = doc.getNodeById('mGeneralAd') as Media;
+        final mMaleAd = doc.getNodeById('mMaleAd') as Media;
+        final mGeneralAd = doc.getNodeById('mGeneralAd') as Media;
 
-      expect(mMaleAd.getMainState(), equals(State.SLEEPING));
-      expect(mGeneralAd.getMainState(), equals(State.SLEEPING));
+        expect(mMaleAd.getMainState(), equals(NCLState.SLEEPING));
+        expect(mGeneralAd.getMainState(), equals(NCLState.SLEEPING));
 
-      doc.tick(2000);
+        doc.tick(2000);
 
-      expect(mMaleAd.getMainState(), equals(State.OCCURRING));
-      expect(mGeneralAd.getMainState(), equals(State.SLEEPING));
-    });
+        expect(mMaleAd.getMainState(), equals(NCLState.OCCURRING));
+        expect(mGeneralAd.getMainState(), equals(NCLState.SLEEPING));
+      },
+    );
 
-    test('onBeginTestVarStart triggers general ad when active user gender is female', () {
-      final xmlString = '''
+    test(
+      'onBeginTestVarStart triggers general ad when active user gender is female',
+      () {
+        final xmlString = '''
 <ncl id="multiUserDoc">
   <head>
     <regionBase>
@@ -128,24 +133,26 @@ void main() {
 </ncl>
 ''';
 
-      final doc = NCLDocument.fromContent(
-        xmlString,
-        userData: '[{"id": "u2", "name": "Alice", "gender": "female", "age": 30}]',
-      );
+        final doc = NCLDocument.fromContent(
+          xmlString,
+          userData:
+              '[{"id": "u2", "name": "Alice", "gender": "female", "age": 30}]',
+        );
 
-      doc.start();
-      expect(doc.isPlaying, isTrue);
+        doc.start();
+        expect(doc.isPlaying, isTrue);
 
-      final mMaleAd = doc.getNodeById('mMaleAd') as Media;
-      final mGeneralAd = doc.getNodeById('mGeneralAd') as Media;
+        final mMaleAd = doc.getNodeById('mMaleAd') as Media;
+        final mGeneralAd = doc.getNodeById('mGeneralAd') as Media;
 
-      expect(mMaleAd.getMainState(), equals(State.SLEEPING));
-      expect(mGeneralAd.getMainState(), equals(State.SLEEPING));
+        expect(mMaleAd.getMainState(), equals(NCLState.SLEEPING));
+        expect(mGeneralAd.getMainState(), equals(NCLState.SLEEPING));
 
-      doc.tick(2000);
+        doc.tick(2000);
 
-      expect(mMaleAd.getMainState(), equals(State.SLEEPING));
-      expect(mGeneralAd.getMainState(), equals(State.OCCURRING));
-    });
+        expect(mMaleAd.getMainState(), equals(NCLState.SLEEPING));
+        expect(mGeneralAd.getMainState(), equals(NCLState.OCCURRING));
+      },
+    );
   });
 }

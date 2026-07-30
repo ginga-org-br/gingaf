@@ -2,18 +2,17 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart' hide Action;
-import 'package:ncldoc/event.dart' hide State;
+import 'package:ncldoc/event.dart';
 import 'package:video_player/video_player.dart';
 
 import '../ncl_app.dart';
-import 'ncl_media_widget.dart';
 
 class AVWidget extends MediaWidget {
-  AVWidget({
+  const AVWidget({
     super.key,
-    required String src,
+    required super.src,
     super.media,
-  }) : super(src: src);
+  });
 
   @override
   State<AVWidget> createState() => AVWidgetState();
@@ -60,7 +59,7 @@ class AVWidgetState extends MediaState<AVWidget> {
               appState.nclDocument!.uiQueue.add(
                 Action(
                   event: media.getMainEvent(),
-                  action: ActionType.STOP,
+                  action: NCLAction.STOP,
                 ),
               );
             }

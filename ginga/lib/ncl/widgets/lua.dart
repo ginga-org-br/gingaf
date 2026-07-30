@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:ncldoc/ncl_document.dart' hide State;
+import 'package:ncldoc/ncl_document.dart';
+
 import '../ncl_app.dart';
-import 'ncl_media_widget.dart';
 
 class LuaWidget extends MediaWidget {
-  LuaWidget({
+  const LuaWidget({
     super.key,
-    required String src,
+    required super.src,
     super.media,
-  }) : super(src: src);
+  });
 
   @override
   State<LuaWidget> createState() => LuaWidgetState();
@@ -184,7 +184,8 @@ class DrawTextRectCommand extends DrawCommand {
   final Color color;
   final String halign;
   final String valign;
-  DrawTextRectCommand(this.text, this.rect, this.color, this.halign, this.valign);
+  DrawTextRectCommand(
+      this.text, this.rect, this.color, this.halign, this.valign);
 
   @override
   Paint get paint => Paint()..color = color;
@@ -249,8 +250,10 @@ class CanvasState implements NCLCanvasDelegate {
   }
 
   @override
-  void drawRoundRect(String mode, double x, double y, double w, double h, double rx, double ry) {
-    final rrect = RRect.fromRectAndRadius(Rect.fromLTWH(x, y, w, h), Radius.elliptical(rx, ry));
+  void drawRoundRect(String mode, double x, double y, double w, double h,
+      double rx, double ry) {
+    final rrect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(x, y, w, h), Radius.elliptical(rx, ry));
     commands.add(DrawRoundRectCommand(rrect, _buildPaint(mode)));
     onUpdate?.call();
   }
@@ -267,7 +270,8 @@ class CanvasState implements NCLCanvasDelegate {
 
   @override
   void drawEllipse(String mode, double x, double y, double w, double h) {
-    commands.add(DrawEllipseCommand(Rect.fromLTWH(x, y, w, h), _buildPaint(mode)));
+    commands
+        .add(DrawEllipseCommand(Rect.fromLTWH(x, y, w, h), _buildPaint(mode)));
     onUpdate?.call();
   }
 
@@ -278,8 +282,10 @@ class CanvasState implements NCLCanvasDelegate {
   }
 
   @override
-  void drawTextRect(String text, double x, double y, double w, double h, String halign, String valign) {
-    commands.add(DrawTextRectCommand(text, Rect.fromLTWH(x, y, w, h), currentColor, halign, valign));
+  void drawTextRect(String text, double x, double y, double w, double h,
+      String halign, String valign) {
+    commands.add(DrawTextRectCommand(
+        text, Rect.fromLTWH(x, y, w, h), currentColor, halign, valign));
     onUpdate?.call();
   }
 

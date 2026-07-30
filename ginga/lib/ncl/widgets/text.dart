@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:ncldoc/ncl_document.dart' hide State;
+
 import 'ncl_media_widget.dart';
 
 class TextWidget extends MediaWidget {
-  TextWidget({
+  const TextWidget({
     super.key,
-    required String src,
+    required super.src,
     super.media,
-  }) : super(src: src);
+  });
 
   @override
   State<TextWidget> createState() => TextWidgetState();

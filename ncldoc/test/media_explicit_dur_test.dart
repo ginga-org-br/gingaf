@@ -17,16 +17,20 @@ void main() {
 
       final doc = NCLDocument.fromContent(xmlString);
       doc.start();
-      
-      expect(doc.getBodyState(), State.OCCURRING);
+
+      expect(doc.getBodyState(), NCLState.OCCURRING);
       final mediaNode = doc.getNodeById('m1')!;
-      expect(mediaNode.getMainState(), State.OCCURRING);
-      
+      expect(mediaNode.getMainState(), NCLState.OCCURRING);
+
       doc.tick(1000);
-      expect(mediaNode.getMainState(), State.OCCURRING);
-      
+      expect(mediaNode.getMainState(), NCLState.OCCURRING);
+
       doc.tick(1000);
-      expect(mediaNode.getMainState(), State.SLEEPING, reason: 'Media should stop after explicitDur of 2s');
+      expect(
+        mediaNode.getMainState(),
+        NCLState.SLEEPING,
+        reason: 'Media should stop after explicitDur of 2s',
+      );
     });
   });
 }

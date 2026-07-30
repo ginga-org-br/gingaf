@@ -1,13 +1,10 @@
-import 'dart:async';
 import 'package:flutter/material.dart' hide Action, State;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingaf/ncl/ncl_app.dart';
 import 'package:ncldoc/ncl_document.dart';
-import 'package:ncldoc/elements.dart';
-import 'package:ncldoc/event.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
-import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+
 import '../mock_video_player.dart';
 
 class MockAnimationAssetBundle extends CachingAssetBundle {
@@ -177,8 +174,11 @@ void main() {
     VideoPlayerPlatform.instance = MockVideoPlayer();
   });
 
-  test('NCLDocument executes duration-based SET action property changes correctly', () {
-    final doc = NCLDocument.fromContent('''<ncl id="nclAnimation" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+  test(
+      'NCLDocument executes duration-based SET action property changes correctly',
+      () {
+    final doc = NCLDocument.fromContent(
+        '''<ncl id="nclAnimation" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <connectorBase>
       <causalConnector id="onBeginStartSet_var_delay_duration">
@@ -219,26 +219,27 @@ void main() {
     final m2 = doc.getNodeById('m2') as Media;
     final prop = m2.getPropertyEvent('p');
 
-    expect(m2.getMainState(), State.OCCURRING);
-    expect(prop.state, State.SLEEPING);
+    expect(m2.getMainState(), NCLState.OCCURRING);
+    expect(prop.state, NCLState.SLEEPING);
 
     doc.tick(1000);
-    expect(prop.state, State.SLEEPING);
+    expect(prop.state, NCLState.SLEEPING);
 
     doc.tick(1000);
-    expect(prop.state, State.OCCURRING);
+    expect(prop.state, NCLState.OCCURRING);
     expect(m2.getProperties().firstWhere((p) => p.name == 'p').value, isNull);
 
     doc.tick(4000);
-    expect(prop.state, State.OCCURRING);
+    expect(prop.state, NCLState.OCCURRING);
 
     doc.tick(1000);
-    expect(prop.state, State.SLEEPING);
+    expect(prop.state, NCLState.SLEEPING);
     final pVal = m2.getProperties().firstWhere((p) => p.name == 'p');
     expect(pVal.value, 'active');
   });
 
-  testWidgets('NCLApp runs animation example structure successfully', (WidgetTester tester) async {
+  testWidgets('NCLApp runs animation example structure successfully',
+      (WidgetTester tester) async {
     final mockBundle = MockAnimationAssetBundle();
 
     await tester.pumpWidget(
@@ -261,17 +262,18 @@ void main() {
     nclState.tick(41000);
     await tester.pump();
 
-    final activeMedia = nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
+    final activeMedia =
+        nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
     expect(activeMedia, contains('photo'));
 
     final photo = nclState.nclDocument!.getNodeById('photo') as Media;
     final prop = photo.getPropertyEvent('top');
 
     nclState.tick(1000);
-    expect(prop.state, State.OCCURRING);
+    expect(prop.state, NCLState.OCCURRING);
 
     nclState.tick(3000);
-    expect(prop.state, State.SLEEPING);
+    expect(prop.state, NCLState.SLEEPING);
 
     final topVal = photo.getProperties().firstWhere((p) => p.name == 'top');
     expect(topVal.value, '290');

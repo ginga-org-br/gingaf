@@ -127,17 +127,17 @@ void main() {
       final mIcon = doc.getNodeById('mIcon') as Media;
       final mShoes = doc.getNodeById('mShoes') as Media;
 
-      expect(mMain.getMainState(), State.OCCURRING);
-      expect(mIcon.getMainState(), State.SLEEPING);
-      expect(mShoes.getMainState(), State.SLEEPING);
+      expect(mMain.getMainState(), NCLState.OCCURRING);
+      expect(mIcon.getMainState(), NCLState.SLEEPING);
+      expect(mShoes.getMainState(), NCLState.SLEEPING);
 
       doc.tick(45000);
       active = doc.getActiveMedia().map((m) => m.id).toList();
       expect(active, contains('mMain'));
       expect(active, contains('mIcon'));
-      expect(mMain.getMainState(), State.OCCURRING);
-      expect(mIcon.getMainState(), State.OCCURRING);
-      expect(mShoes.getMainState(), State.SLEEPING);
+      expect(mMain.getMainState(), NCLState.OCCURRING);
+      expect(mIcon.getMainState(), NCLState.OCCURRING);
+      expect(mShoes.getMainState(), NCLState.SLEEPING);
 
       doc.triggerSelection('mIcon', 'RED');
       doc.tick(0);
@@ -146,9 +146,9 @@ void main() {
       expect(active, contains('mMain'));
       expect(active, isNot(contains('mIcon')));
       expect(active, contains('mShoes'));
-      expect(mMain.getMainState(), State.OCCURRING);
-      expect(mIcon.getMainState(), State.SLEEPING);
-      expect(mShoes.getMainState(), State.OCCURRING);
+      expect(mMain.getMainState(), NCLState.OCCURRING);
+      expect(mIcon.getMainState(), NCLState.SLEEPING);
+      expect(mShoes.getMainState(), NCLState.OCCURRING);
 
       final boundsProp = mMain.getProperties().firstWhere(
         (p) => p.name == 'bounds',
@@ -156,11 +156,11 @@ void main() {
       expect(boundsProp.value, '5%,6.7%,45%,45%');
 
       doc.uiQueue.add(
-        Action(event: mShoes.getMainEvent(), action: ActionType.STOP),
+        Action(event: mShoes.getMainEvent(), action: NCLAction.STOP),
       );
       doc.tick(0);
 
-      expect(mShoes.getMainState(), State.SLEEPING);
+      expect(mShoes.getMainState(), NCLState.SLEEPING);
       expect(boundsProp.value, '0,0,100%,100%');
     });
   });
