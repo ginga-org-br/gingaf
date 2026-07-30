@@ -11,6 +11,8 @@ import 'web_utils_stub.dart' if (dart.library.html) 'web_utils_web.dart';
 final _logger = Logger('ginga');
 
 void main(List<String> args) {
+  WidgetsFlutterBinding.ensureInitialized();
+
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
     debugPrint(
@@ -23,7 +25,49 @@ void main(List<String> args) {
   if (app == null && !kIsWeb) {
     app = Platform.environment['APP'];
   }
+  if (app == null && kIsWeb) {
+    try {
+      final mainFile = getSessionStorageItem('GINGA_PLAYGROUND_MAIN');
+      if (mainFile != null && mainFile.isNotEmpty) {
+        app = mainFile;
+      }
+    } catch (e) {
+      _logger.warning(
+          'Failed to read GINGA_PLAYGROUND_MAIN from session storage: $e');
+    }
+  }
   final appSrc = (app != null && app.isNotEmpty) ? app : null;
+
+  String? effectiveAppSrc = appSrc;
+  if (!kIsWeb && appSrc != null) {
+    _logger.info('Initial working directory: ${Directory.current.path}');
+    try {
+      final file = File(appSrc).absolute;
+      _logger.info('Resolved app path: ${file.path}');
+      if (file.existsSync()) {
+        Directory.current = file.parent.path;
+        _logger.info('Switched working directory to ${Directory.current.path}');
+        effectiveAppSrc = file.path.split('/').last.split('\\').last;
+      }
+    } catch (e) {
+      _logger.severe('Failed to set working directory: $e');
+    }
+
+    try {
+      if (stdin.hasTerminal) {
+        stdin.echoMode = false;
+        stdin.lineMode = false;
+      }
+      stdin.listen((List<int> codes) {
+        if (codes.contains(27)) {
+          _logger.info('Captured ESC, stopping app.');
+          exit(0);
+        }
+      });
+    } catch (e) {
+      _logger.severe('Failed to setup stdin listener: $e');
+    }
+  }
 
   String? mainav;
   if (const bool.hasEnvironment('MAINAV')) {
@@ -58,48 +102,13 @@ void main(List<String> args) {
       (usersDataJson != null && usersDataJson.isNotEmpty) ? usersDataJson : null;
 
   final config = GingaConfig(
-    appSrc,
+    effectiveAppSrc,
     ccws,
     mainav != null && mainav != 'false',
     usersDataSrc,
     mainAvSrc,
   );
-  runApp(Ginga(config: config));
   _logger.info(config.toString());
-
-  if (!kIsWeb) {
-    _logger.info('Initial working directory: ${Directory.current.path}');
-    try {
-      if (stdin.hasTerminal) {
-        stdin.echoMode = false;
-        stdin.lineMode = false;
-      }
-      stdin.listen((List<int> codes) {
-        if (codes.contains(27)) {
-          _logger.info('Captured ESC, stopping app.');
-          exit(0);
-        }
-      });
-    } catch (e) {
-      _logger.severe('Failed to setup stdin listener: $e');
-    }
-  }
-
-  WidgetsFlutterBinding.ensureInitialized();
-
-  if (!kIsWeb && config.appSrc != null) {
-    try {
-      final appPath = config.appSrc!;
-      final file = File(appPath).absolute;
-      _logger.info('Resolved app path: ${file.path}');
-      if (file.existsSync()) {
-        Directory.current = file.parent.path;
-        _logger.info('Switched working directory to ${Directory.current.path}');
-      }
-    } catch (e) {
-      _logger.severe('Failed to set working directory: $e');
-    }
-  }
 
   runApp(Ginga(config: config));
 }

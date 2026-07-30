@@ -5,6 +5,7 @@ import 'package:flutter/material.dart' hide Action;
 import 'package:ncldoc/event.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../ginga_content.dart';
 import '../ncl_app.dart';
 
 class AVWidget extends MediaWidget {
@@ -32,16 +33,16 @@ class AVWidgetState extends MediaState<AVWidget> {
 
   Future<void> _initVideo() async {
     try {
-      final uri = widget.uri;
-      final uriStr = uri.toString();
+      final src = GingaContentLoader.resolveUri(widget.src);
+      final parsedUri = Uri.tryParse(src);
       final VideoPlayerController controller;
 
-      if (kIsWeb || (uri.hasScheme && uri.scheme != 'file')) {
-        controller = VideoPlayerController.networkUrl(uri);
-      } else if (uri.isScheme('file')) {
-        controller = VideoPlayerController.file(File(uri.toFilePath()));
+      if (kIsWeb || (parsedUri != null && parsedUri.hasScheme && parsedUri.scheme != 'file')) {
+        controller = VideoPlayerController.networkUrl(parsedUri ?? Uri.parse(src));
+      } else if (parsedUri != null && parsedUri.isScheme('file')) {
+        controller = VideoPlayerController.file(File(parsedUri.toFilePath()));
       } else {
-        controller = VideoPlayerController.file(File(uriStr));
+        controller = VideoPlayerController.file(File(src));
       }
 
       _controller = controller;

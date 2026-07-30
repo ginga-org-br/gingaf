@@ -1,7 +1,9 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
+import '../../ginga_content.dart';
 import 'ncl_media_widget.dart';
 
 class ImageWidget extends MediaWidget {
@@ -24,12 +26,17 @@ class ImageWidgetState extends MediaState<ImageWidget> {
 
   @override
   Widget buildWidgetContent(BuildContext context) {
-    final uriStr = widget.uri.toString();
+    var uriStr = GingaContentLoader.resolveUri(widget.src);
     if (uriStr.isEmpty) {
       return const SizedBox.shrink();
     }
-    final isNetwork =
-        widget.uri.scheme == 'http' || widget.uri.scheme == 'https';
+    final parsedUri = Uri.tryParse(uriStr);
+    final isNetwork = kIsWeb ||
+        (parsedUri != null &&
+            (parsedUri.scheme == 'http' ||
+                parsedUri.scheme == 'https' ||
+                parsedUri.scheme == 'data' ||
+                parsedUri.scheme == 'blob'));
     if (isNetwork) {
       return Image.network(
         uriStr,
@@ -47,10 +54,9 @@ class ImageWidgetState extends MediaState<ImageWidget> {
       );
     } else {
       final localPath =
-          widget.uri.isScheme('file') ? widget.uri.toFilePath() : uriStr;
-      final file = File(localPath);
+          (parsedUri != null && parsedUri.isScheme('file')) ? parsedUri.toFilePath() : uriStr;
       return Image.file(
-        file,
+        File(localPath),
         fit: BoxFit.fill,
         width: double.infinity,
         height: double.infinity,

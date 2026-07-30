@@ -19,6 +19,27 @@ class GingaContentLoader extends FileContentLoader {
     _context = context;
   }
 
+  static String resolveUri(String src, [String? baseDirSrc]) {
+    var resolvedSrc = src;
+    if (kIsWeb) {
+      try {
+        final mockJson = getSessionStorageItem('GINGA_PLAYGROUND_FILES');
+        if (mockJson != null) {
+          final mockFiles = jsonDecode(mockJson);
+          final fileName = Uri.parse(resolvedSrc).pathSegments.isNotEmpty
+              ? Uri.parse(resolvedSrc).pathSegments.last
+              : resolvedSrc;
+          if (mockFiles.containsKey(resolvedSrc)) {
+            resolvedSrc = mockFiles[resolvedSrc];
+          } else if (mockFiles.containsKey(fileName)) {
+            resolvedSrc = mockFiles[fileName];
+          }
+        }
+      } catch (_) {}
+    }
+    return resolvedSrc;
+  }
+
   @override
   bool exists(String src, [String? baseDirSrc]) {
     if (!kIsWeb && super.exists(src, baseDirSrc)) {
