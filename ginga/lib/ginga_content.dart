@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/widgets.dart';
@@ -11,7 +10,7 @@ import 'web_utils_stub.dart' if (dart.library.html) 'web_utils_web.dart';
 
 final _logger = Logger('ginga');
 
-class GingaContentLoader extends ContentLoader {
+class GingaContentLoader extends FileContentLoader {
   BuildContext? _context;
 
   GingaContentLoader();
@@ -21,46 +20,44 @@ class GingaContentLoader extends ContentLoader {
   }
 
   @override
-  bool exists(Uri uri) {
-    if (uri.scheme == 'data') return true;
-    final rawPath = Uri.decodeComponent(uri.toString()).trim();
-    if (rawPath.isEmpty) return false;
-    if (rawPath.startsWith('<')) return true;
+  bool exists(String src, [String? baseDirSrc]) {
+    if (!kIsWeb && super.exists(src, baseDirSrc)) {
+      return true;
+    }
 
-    final path = uri.isScheme('file') ? uri.toFilePath() : (uri.hasScheme ? uri.path : rawPath);
+    final rawSrc = src.trim();
+    if (rawSrc.isEmpty || rawSrc.startsWith('<')) return false;
+
+    final uri = Uri.tryParse(rawSrc) ?? Uri(path: rawSrc);
+    final baseUri = baseDirSrc != null ? Uri.tryParse(baseDirSrc) : null;
+    final resolvedUri = baseUri != null ? baseUri.resolveUri(uri) : uri;
+    if (resolvedUri.scheme == 'data') return true;
+    final rawPath = Uri.decodeComponent(resolvedUri.toString()).trim();
+    if (rawPath.isEmpty || rawPath.startsWith('<')) return false;
+
+    final path = resolvedUri.isScheme('file')
+        ? resolvedUri.toFilePath()
+        : (resolvedUri.hasScheme ? resolvedUri.path : rawPath);
 
     if (kIsWeb) {
       try {
         final mockJson = getSessionStorageItem('GINGA_PLAYGROUND_FILES');
         if (mockJson != null) {
           final mockFiles = jsonDecode(mockJson);
-          final fileName = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : path;
-          if (mockFiles.containsKey(fileName)) {
+          final fileName = resolvedUri.pathSegments.isNotEmpty
+              ? resolvedUri.pathSegments.last
+              : path;
+          if (mockFiles.containsKey(fileName) || mockFiles.containsKey(path)) {
             return true;
           }
         }
       } catch (e) {
-        _logger.warning('Failed to read playground files from session storage in exists: $e');
+        _logger.warning(
+            'Failed to read playground files from session storage in exists: $e');
       }
     }
 
-    if (uri.isScheme('file')) {
-      try {
-        final file = File(uri.toFilePath());
-        return file.existsSync();
-      } catch (e, stackTrace) {
-        _logger.severe('Failed to check file existence for ${uri.toFilePath()}: $e', e, stackTrace);
-        rethrow;
-      }
-    }
-
-    if (!uri.isScheme('file') && path.isNotEmpty) {
-      if (!uri.hasScheme) {
-        try {
-          final file = File(path);
-          if (file.existsSync()) return true;
-        } catch (_) {}
-      }
+    if (!resolvedUri.isScheme('file') && path.isNotEmpty) {
       return true;
     }
 
@@ -68,48 +65,55 @@ class GingaContentLoader extends ContentLoader {
   }
 
   @override
-  Future<String?> load(Uri uri) async {
-    if (uri.scheme == 'data') {
-      return uri.data?.contentAsString();
+  Future<String?> load(String src, [String? baseDirSrc]) async {
+    if (!kIsWeb) {
+      try {
+        final fileContent = await super.load(src, baseDirSrc);
+        if (fileContent != null) {
+          return fileContent;
+        }
+      } catch (_) {}
     }
-    final rawPath = Uri.decodeComponent(uri.toString()).trim();
+
+    final uri = Uri.tryParse(src) ?? Uri(path: src);
+    final baseUri = baseDirSrc != null ? Uri.tryParse(baseDirSrc) : null;
+    final resolvedUri = baseUri != null ? baseUri.resolveUri(uri) : uri;
+    if (resolvedUri.scheme == 'data') {
+      return resolvedUri.data?.contentAsString();
+    }
+    final rawPath = Uri.decodeComponent(resolvedUri.toString()).trim();
     if (rawPath.isEmpty) return null;
-    if (rawPath.startsWith('<')) return rawPath;
 
-    final path = uri.isScheme('file') ? uri.toFilePath() : (uri.hasScheme ? uri.path : rawPath);
+    final path = resolvedUri.isScheme('file')
+        ? resolvedUri.toFilePath()
+        : (resolvedUri.hasScheme ? resolvedUri.path : rawPath);
 
-    if (uri.isScheme('file')) {
-      final filePath = uri.toFilePath();
+    if (kIsWeb) {
       try {
-        final file = File(filePath);
-        if (file.existsSync()) {
-          return await file.readAsString();
+        final mockJson = getSessionStorageItem('GINGA_PLAYGROUND_FILES');
+        if (mockJson != null) {
+          final mockFiles = jsonDecode(mockJson);
+          final fileName = resolvedUri.pathSegments.isNotEmpty
+              ? resolvedUri.pathSegments.last
+              : path;
+          if (mockFiles.containsKey(fileName)) {
+            return mockFiles[fileName];
+          }
+          if (mockFiles.containsKey(path)) {
+            return mockFiles[path];
+          }
         }
-      } catch (e, stackTrace) {
-        _logger.severe('Failed to load file content from $filePath: $e', e, stackTrace);
-        rethrow;
-      }
-      return null;
-    }
-
-    if (!uri.hasScheme) {
-      try {
-        final file = File(path);
-        if (file.existsSync()) {
-          return await file.readAsString();
-        }
-      } catch (e, stackTrace) {
-        _logger.severe('Failed to load file content from $path: $e', e, stackTrace);
-        rethrow;
+      } catch (e) {
+        _logger.warning('Failed to read playground files from session storage: $e');
       }
     }
 
     final candidateKeys = <String>[
-      if (uri.pathSegments.length >= 2)
-        '${uri.pathSegments[uri.pathSegments.length - 2]}/${uri.pathSegments.last}',
-      if (uri.pathSegments.isNotEmpty) uri.pathSegments.last,
       path,
       rawPath,
+      if (resolvedUri.pathSegments.length >= 2)
+        '${resolvedUri.pathSegments[resolvedUri.pathSegments.length - 2]}/${resolvedUri.pathSegments.last}',
+      if (resolvedUri.pathSegments.isNotEmpty) resolvedUri.pathSegments.last,
     ];
     if (_context != null) {
       for (final key in candidateKeys) {
@@ -121,21 +125,6 @@ class GingaContentLoader extends ContentLoader {
         } catch (e) {
           _logger.fine('Asset loading skipped for $key: $e');
         }
-      }
-    }
-
-    if (kIsWeb) {
-      try {
-        final mockJson = getSessionStorageItem('GINGA_PLAYGROUND_FILES');
-        if (mockJson != null) {
-          final mockFiles = jsonDecode(mockJson);
-          final fileName = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : path;
-          if (mockFiles.containsKey(fileName)) {
-            return mockFiles[fileName];
-          }
-        }
-      } catch (e) {
-        _logger.warning('Failed to read playground files from session storage: $e');
       }
     }
 

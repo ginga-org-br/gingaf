@@ -4,28 +4,59 @@ import 'dart:io';
 abstract class ContentLoader {
   const ContentLoader();
 
-  bool exists(Uri uri);
-  Future<String?> load(Uri uri);
+  bool exists(String src, [String? baseDirSrc]);
+  Future<String?> load(String src, [String? baseDirSrc]);
 }
 
 class FileContentLoader extends ContentLoader {
   const FileContentLoader();
 
-  @override
-  bool exists(Uri uri) {
-    if (uri.isScheme('file') || !uri.hasScheme) {
-      final file = File(uri.toFilePath());
-      return file.existsSync();
+  File? _resolveFile(String src, [String? baseDirSrc]) {
+    final rawSrc = src.trim();
+    if (rawSrc.isEmpty || rawSrc.startsWith('<')) return null;
+
+    final srcUri = Uri.tryParse(rawSrc) ?? Uri(path: rawSrc);
+    final baseUri = baseDirSrc != null ? Uri.tryParse(baseDirSrc) : null;
+    final resolvedUri = baseUri != null ? baseUri.resolveUri(srcUri) : srcUri;
+
+    final path = resolvedUri.isScheme('file')
+        ? resolvedUri.toFilePath()
+        : (resolvedUri.hasScheme ? resolvedUri.path : Uri.decodeComponent(resolvedUri.toString()));
+
+    if (path.isEmpty) return null;
+
+    final file = File(path);
+    if (file.existsSync()) return file;
+
+    if (path != rawSrc) {
+      final rawFile = File(rawSrc);
+      if (rawFile.existsSync()) return rawFile;
     }
-    return false;
+
+    final normalizedPath = path.replaceAll('\\', '/');
+    final fileName = normalizedPath.split('/').last;
+    if (fileName.isNotEmpty) {
+      final baseNameFile = File(fileName);
+      if (baseNameFile.existsSync()) return baseNameFile;
+    }
+
+    return null;
   }
 
   @override
-  Future<String?> load(Uri uri) async {
-    if (exists(uri)) {
-      final file = File(uri.toFilePath());
+  bool exists(String src, [String? baseDirSrc]) {
+    return _resolveFile(src, baseDirSrc) != null;
+  }
+
+  @override
+  Future<String?> load(String src, [String? baseDirSrc]) async {
+    final rawSrc = src.trim();
+    if (rawSrc.isEmpty) return null;
+
+    final file = _resolveFile(src, baseDirSrc);
+    if (file != null) {
       return await file.readAsString();
     }
-    return null;
+    throw FileSystemException('Cannot read file for src: $src', src);
   }
 }

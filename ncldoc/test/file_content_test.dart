@@ -17,37 +17,46 @@ void main() {
     test('FileContentLoader exists and load for file and non-file URIs', () async {
       const loader = FileContentLoader();
 
-      final httpUri = Uri.parse('http://example.com/file.ncl');
-      expect(loader.exists(httpUri), isFalse);
-      expect(await loader.load(httpUri), isNull);
+      const httpSrc = 'http://example.com/file.ncl';
+      expect(loader.exists(httpSrc), isFalse);
+      expect(() => loader.load(httpSrc), throwsA(isA<FileSystemException>()));
 
       final tempDir = Directory.systemTemp.createTempSync('ncldoc_test_');
       final tempFile = File('${tempDir.path}/sample.ncl');
       tempFile.writeAsStringSync('<ncl>test</ncl>');
 
-      final fileUri = tempFile.absolute.uri;
-      expect(loader.exists(fileUri), isTrue);
+      final fileSrc = tempFile.absolute.uri.toString();
+      expect(loader.exists(fileSrc), isTrue);
 
-      final content = await loader.load(fileUri);
+      final content = await loader.load(fileSrc);
       expect(content, equals('<ncl>test</ncl>'));
 
       tempFile.deleteSync();
-      expect(loader.exists(fileUri), isFalse);
-      expect(await loader.load(fileUri), isNull);
+      expect(loader.exists(fileSrc), isFalse);
+      expect(() => loader.load(fileSrc), throwsA(isA<FileSystemException>()));
 
       tempDir.deleteSync();
     });
 
     test('Custom ContentLoader subclass can override exists and load', () async {
       final customLoader = _CustomTestContentLoader();
-      final customUri = Uri.parse('custom://app/data.xml');
+      const customSrc = 'custom://app/data.xml';
 
-      expect(customLoader.exists(customUri), isTrue);
-      expect(await customLoader.load(customUri), equals('<data>custom</data>'));
+      expect(customLoader.exists(customSrc), isTrue);
+      expect(await customLoader.load(customSrc), equals('<data>custom</data>'));
 
-      final otherUri = Uri.parse('http://example.com/other');
-      expect(customLoader.exists(otherUri), isFalse);
-      expect(await customLoader.load(otherUri), isNull);
+      const otherSrc = 'http://example.com/other';
+      expect(customLoader.exists(otherSrc), isFalse);
+      expect(await customLoader.load(otherSrc), isNull);
+    });
+
+    test('NCLParser with FileContentLoader throws FileSystemException when media src does not exist', () {
+      final parser = NCLParser(
+        docUri: Uri.parse('file:///non_existent_dir/doc.ncl'),
+        contentLoader: const FileContentLoader(),
+      );
+      const xml = '<ncl><body><media id="m1" src="non_existent_file.mp4"/></body></ncl>';
+      expect(() => parser.parseString(xml), throwsA(isA<FileSystemException>()));
     });
   });
 }
@@ -56,11 +65,11 @@ class _CustomTestContentLoader extends ContentLoader {
   const _CustomTestContentLoader();
 
   @override
-  bool exists(Uri uri) => uri.scheme == 'custom';
+  bool exists(String src, [String? baseDirSrc]) => src.startsWith('custom');
 
   @override
-  Future<String?> load(Uri uri) async {
-    if (exists(uri)) {
+  Future<String?> load(String src, [String? baseDirSrc]) async {
+    if (exists(src, baseDirSrc)) {
       return '<data>custom</data>';
     }
     return null;

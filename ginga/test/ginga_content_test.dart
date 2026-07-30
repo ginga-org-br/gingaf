@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -38,13 +40,13 @@ void main() {
         ),
       );
 
-      final dataUri = Uri.dataFromString('hello world', mimeType: 'text/plain');
-      expect(loader.exists(dataUri), isTrue);
-      final content = await loader.load(dataUri);
+      final dataSrc = Uri.dataFromString('hello world', mimeType: 'text/plain').toString();
+      expect(loader.exists(dataSrc), isTrue);
+      final content = await loader.load(dataSrc);
       expect(content, equals('hello world'));
     });
 
-    testWidgets('handles inline XML strings starting with <',
+    testWidgets('handles non-existent file URI sources',
         (WidgetTester tester) async {
       late GingaContentLoader loader;
 
@@ -59,13 +61,13 @@ void main() {
         ),
       );
 
-      final xmlUri = Uri.parse('<ncl><body/></ncl>');
-      expect(loader.exists(xmlUri), isTrue);
-      final content = await loader.load(xmlUri);
-      expect(content, equals('<ncl><body/></ncl>'));
+      const fileUriSrc = 'file:///non_existent_dir/non_existent_file.ncl';
+      expect(loader.exists(fileUriSrc), isFalse);
+      final content = await loader.load(fileUriSrc);
+      expect(content, isNull);
     });
 
-    testWidgets('handles empty URIs', (WidgetTester tester) async {
+    testWidgets('handles empty sources', (WidgetTester tester) async {
       late GingaContentLoader loader;
 
       await tester.pumpWidget(
@@ -79,9 +81,9 @@ void main() {
         ),
       );
 
-      final emptyUri = Uri.parse('');
-      expect(loader.exists(emptyUri), isFalse);
-      final content = await loader.load(emptyUri);
+      const emptySrc = '';
+      expect(loader.exists(emptySrc), isFalse);
+      final content = await loader.load(emptySrc);
       expect(content, isNull);
     });
 
@@ -106,9 +108,9 @@ void main() {
         ),
       );
 
-      final uri = Uri.parse('media/test.ncl');
-      expect(loader.exists(uri), isTrue);
-      final content = await loader.load(uri);
+      const src = 'media/test.ncl';
+      expect(loader.exists(src), isTrue);
+      final content = await loader.load(src);
       expect(content, equals('<ncl></ncl>'));
     });
 
@@ -133,8 +135,8 @@ void main() {
         ),
       );
 
-      final uri = Uri.parse('media/test2.ncl');
-      final content = await loader.load(uri);
+      const src = 'media/test2.ncl';
+      final content = await loader.load(src);
       expect(content, equals('<ncl>test2</ncl>'));
     });
   });
