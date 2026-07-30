@@ -18,7 +18,13 @@
   ],
   "main": "./src/extension.js",
   "activationEvents": [
-    "onLanguage:xml"
+    "onLanguage:xml",
+    "onLanguage:ncl",
+    "onLanguage:html",
+    "onCommand:ginga.openPlayer",
+    "workspaceContains:**/*.ncl",
+    "workspaceContains:**/*.html",
+    "onStartupFinished"
   ],
   "contributes": {
     "languages": [
@@ -27,8 +33,37 @@
         "extensions": [
           ".ncl"
         ]
+      },
+      {
+        "id": "html",
+        "extensions": [
+          ".html"
+        ]
       }
     ],
+    "commands": [
+      {
+        "command": "ginga.openPlayer",
+        "title": "Run Ginga Application",
+        "icon": "$(play)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "ginga.openPlayer",
+          "when": "editorLangId == xml || editorLangId == html || resourceExtname == .ncl || resourceExtname == .html",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "ginga.openPlayer",
+          "when": "editorLangId == xml || editorLangId == html || resourceExtname == .ncl || resourceExtname == .html",
+          "group": "navigation"
+        }
+      ]
+    },
     "configuration": {
       "title": "Ginga Configuration",
       "properties": {

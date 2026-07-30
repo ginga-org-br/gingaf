@@ -67,175 +67,7 @@ let lastActiveEditor = undefined;
 let targetDocumentUri = undefined;
 let extensionContext = undefined;
 
-function getWebviewContent(title, playerUri, cspSource) {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' ${cspSource} https: data: blob: 'unsafe-inline' 'unsafe-eval'; frame-src 'self' ${cspSource} https: data: blob:; connect-src 'self' ${cspSource} https: data: blob:; img-src 'self' ${cspSource} https: data: blob:; media-src 'self' ${cspSource} https: data: blob:; script-src 'self' ${cspSource} https: 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' ${cspSource} 'unsafe-inline';">
-  <title>${title}</title>
-  <style>
-    body {
-      font-family: var(--vscode-font-family, sans-serif);
-      background-color: var(--vscode-editor-background, #1e1e1e);
-      color: var(--vscode-editor-foreground, #d4d4d4);
-      padding: 16px;
-      margin: 0;
-    }
-    .toolbar {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-bottom: 16px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid var(--vscode-widget-border, #454545);
-    }
-    button {
-      background: var(--vscode-button-background, #0e639c);
-      color: var(--vscode-button-foreground, #ffffff);
-      border: none;
-      padding: 6px 12px;
-      cursor: pointer;
-      font-size: 13px;
-      border-radius: 2px;
-    }
-    button:hover {
-      background: var(--vscode-button-hoverBackground, #1177bb);
-    }
-    button:disabled {
-      background: var(--vscode-button-secondaryBackground, #3a3d41);
-      color: var(--vscode-button-secondaryForeground, #cccccc);
-      cursor: not-allowed;
-    }
-    .status-badge {
-      font-size: 12px;
-      padding: 4px 8px;
-      border-radius: 4px;
-      background: var(--vscode-badge-background, #4d4d4d);
-      color: var(--vscode-badge-foreground, #ffffff);
-      margin-left: auto;
-    }
-    #player-frame {
-      width: 100%;
-      height: 480px;
-      border: 1px solid var(--vscode-widget-border, #454545);
-      background: #000;
-    }
-  </style>
-</head>
-<body>
-  <div class="toolbar">
-    <button id="btn-start">Start</button>
-    <button id="btn-stop" disabled>Stop</button>
-    <button id="btn-tick-100">Tick (+100ms)</button>
-    <button id="btn-tick-1s">Tick (+1s)</button>
-    <span class="status-badge" id="status-clock">Clock: 0 ms | Status: STOPPED</span>
-  </div>
-  <div id="player-container">
-    <iframe id="player-frame" src="${playerUri}"></iframe>
-  </div>
 
-  <script>
-    const vscode = acquireVsCodeApi();
-    const btnStart = document.getElementById('btn-start');
-    const btnStop = document.getElementById('btn-stop');
-    const btnTick100 = document.getElementById('btn-tick-100');
-    const btnTick1s = document.getElementById('btn-tick-1s');
-    const statusClock = document.getElementById('status-clock');
-    const iframe = document.getElementById('player-frame');
-
-    let pendingFiles = null;
-    let pendingMain = null;
-
-    function logToExtension(msg) {
-      console.log('[Webview]', msg);
-      vscode.postMessage({ command: 'log', message: msg });
-    }
-
-    let isFirstLoad = true;
-    logToExtension('Webview initialized. Setting up iframe load listener.');
-    iframe.addEventListener('load', () => {
-      logToExtension('Iframe loaded. isFirstLoad = ' + isFirstLoad);
-      if (isFirstLoad) {
-        isFirstLoad = false;
-        logToExtension('Posting playerReady to extension host.');
-        vscode.postMessage({ command: 'playerReady' });
-      }
-
-      if (pendingFiles && pendingMain) {
-        logToExtension('Sending LOAD_PLAYGROUND_FILES to iframe.');
-        iframe.contentWindow.postMessage({
-          type: 'LOAD_PLAYGROUND_FILES',
-          mainFile: pendingMain,
-          files: pendingFiles
-        }, '*');
-        pendingFiles = null;
-        pendingMain = null;
-      }
-    });
-
-    btnStart.addEventListener('click', () => {
-      logToExtension('Start button clicked.');
-      vscode.postMessage({ command: 'start' });
-    });
-
-    btnStop.addEventListener('click', () => {
-      logToExtension('Stop button clicked.');
-      vscode.postMessage({ command: 'stop' });
-    });
-
-    btnTick100.addEventListener('click', () => {
-      logToExtension('Tick 100ms clicked.');
-      vscode.postMessage({ command: 'tick', deltaMs: 100 });
-    });
-
-    btnTick1s.addEventListener('click', () => {
-      logToExtension('Tick 1s clicked.');
-      vscode.postMessage({ command: 'tick', deltaMs: 1000 });
-    });
-
-    window.addEventListener('message', event => {
-      let message = event.data;
-      logToExtension('Webview received window message: ' + (typeof message === 'object' ? JSON.stringify(message) : message));
-      try {
-        if (typeof message === 'string') {
-          message = JSON.parse(message);
-        }
-      } catch (e) {}
-
-      if (message.command === 'updateState') {
-        statusClock.textContent = 'Clock: ' + message.clockMs + ' ms | Status: ' + (message.running ? 'RUNNING' : 'STOPPED');
-        btnStart.disabled = message.running;
-        btnStop.disabled = !message.running;
-      } else if (message.command === 'loadUri') {
-        logToExtension('Webview loading URI: ' + message.uri);
-        if (message.fileContent && message.fileName) {
-          pendingFiles = {};
-          pendingFiles[message.fileName] = message.fileContent;
-          pendingMain = message.fileName;
-        }
-        iframe.src = message.uri;
-      } else if (message.type === 'PLAYER_READY') {
-        logToExtension('Webview received PLAYER_READY from iframe. Forwarding to host.');
-        vscode.postMessage({ command: 'playerReady' });
-      } else if (message.type === 'PLAYER_STATE_UPDATE') {
-        vscode.postMessage({
-          command: 'playerStateUpdate',
-          clockMs: message.clockMs,
-          running: message.running
-        });
-      } else if (message.type === 'PLAYER_LOG') {
-        vscode.postMessage({
-          command: 'log',
-          message: \`[Player \${message.level}] \${message.message}\`
-        });
-      }
-    });
-  </script>
-</body>
-</html>`;
-}
 
 function updateWebviewState() {
   if (currentPanel) {
@@ -273,11 +105,13 @@ function openPlayer(context, targetUri) {
   extensionContext = context;
 
   let documentPath = undefined;
-  if (targetUri) {
+  if (targetUri && typeof targetUri === 'string') {
+    documentPath = targetUri;
+  } else if (targetUri && targetUri.fsPath) {
     documentPath = targetUri.fsPath;
   } else {
     const activeEditor = vscode.window.activeTextEditor || lastActiveEditor;
-    if (activeEditor) {
+    if (activeEditor && activeEditor.document) {
       documentPath = activeEditor.document.fileName;
     }
   }
@@ -294,11 +128,34 @@ function openPlayer(context, targetUri) {
 
   const userConfig = vscode.workspace.getConfiguration('vscode');
   const configuredPath = userConfig ? userConfig.get('gingafExePath') : undefined;
-  if (configuredPath && configuredPath.trim() !== '') {
+  if (configuredPath && configuredPath.trim() !== '' && fs.existsSync(configuredPath.trim())) {
     executable = configuredPath.trim();
-  } else if (vscode.workspace && vscode.workspace.workspaceFolders) {
-    for (const folder of vscode.workspace.workspaceFolders) {
-      const rootPath = folder.uri.fsPath;
+  } else {
+    let candidateSearchRoots = [];
+    if (documentPath) {
+      let curr = path.dirname(documentPath);
+      for (let i = 0; i < 5; i++) {
+        candidateSearchRoots.push(curr);
+        const parent = path.dirname(curr);
+        if (parent === curr) break;
+        curr = parent;
+      }
+    }
+    if (vscode.workspace && vscode.workspace.workspaceFolders) {
+      for (const folder of vscode.workspace.workspaceFolders) {
+        let curr = folder.uri.fsPath;
+        for (let i = 0; i < 3; i++) {
+          if (!candidateSearchRoots.includes(curr)) {
+            candidateSearchRoots.push(curr);
+          }
+          const parent = path.dirname(curr);
+          if (parent === curr) break;
+          curr = parent;
+        }
+      }
+    }
+
+    for (const rootPath of candidateSearchRoots) {
       let possiblePaths = [];
       if (process.platform === 'win32') {
         possiblePaths = [
@@ -306,22 +163,20 @@ function openPlayer(context, targetUri) {
           path.join(rootPath, 'ginga', 'build', 'windows', 'x64', 'runner', 'Release', 'gingaf.exe'),
           path.join(rootPath, 'build', 'windows', 'x64', 'runner', 'Debug', 'gingaf.exe'),
           path.join(rootPath, 'build', 'windows', 'x64', 'runner', 'Release', 'gingaf.exe'),
-          path.join(rootPath, '..', 'ginga', 'build', 'windows', 'x64', 'runner', 'Debug', 'gingaf.exe'),
-          path.join(rootPath, '..', 'ginga', 'build', 'windows', 'x64', 'runner', 'Release', 'gingaf.exe'),
         ];
       } else if (process.platform === 'darwin') {
         possiblePaths = [
           path.join(rootPath, 'ginga', 'build', 'macos', 'Build', 'Products', 'Debug', 'gingaf.app', 'Contents', 'MacOS', 'gingaf'),
           path.join(rootPath, 'ginga', 'build', 'macos', 'Build', 'Products', 'Release', 'gingaf.app', 'Contents', 'MacOS', 'gingaf'),
-          path.join(rootPath, '..', 'ginga', 'build', 'macos', 'Build', 'Products', 'Debug', 'gingaf.app', 'Contents', 'MacOS', 'gingaf'),
-          path.join(rootPath, '..', 'ginga', 'build', 'macos', 'Build', 'Products', 'Release', 'gingaf.app', 'Contents', 'MacOS', 'gingaf'),
+          path.join(rootPath, 'build', 'macos', 'Build', 'Products', 'Debug', 'gingaf.app', 'Contents', 'MacOS', 'gingaf'),
+          path.join(rootPath, 'build', 'macos', 'Build', 'Products', 'Release', 'gingaf.app', 'Contents', 'MacOS', 'gingaf'),
         ];
       } else {
         possiblePaths = [
           path.join(rootPath, 'ginga', 'build', 'linux', 'x64', 'debug', 'bundle', 'gingaf'),
           path.join(rootPath, 'ginga', 'build', 'linux', 'x64', 'release', 'bundle', 'gingaf'),
-          path.join(rootPath, '..', 'ginga', 'build', 'linux', 'x64', 'debug', 'bundle', 'gingaf'),
-          path.join(rootPath, '..', 'ginga', 'build', 'linux', 'x64', 'release', 'bundle', 'gingaf'),
+          path.join(rootPath, 'build', 'linux', 'x64', 'debug', 'bundle', 'gingaf'),
+          path.join(rootPath, 'build', 'linux', 'x64', 'release', 'bundle', 'gingaf'),
         ];
       }
 
@@ -347,15 +202,21 @@ function openPlayer(context, targetUri) {
   }
 
   try {
-    const spawnEnv = { ...process.env, APP: documentPath };
-    const child = cp.spawn(executable, [], {
+    console.log('[Extension] Spawning Ginga player executable:', executable, 'with documentPath:', documentPath);
+    const spawnEnv = Object.assign({}, process.env, { APP: documentPath });
+    const child = cp.spawn(executable, [documentPath], {
       detached: true,
       stdio: 'ignore',
+      cwd: path.dirname(executable),
       env: spawnEnv
+    });
+    child.on('error', (err) => {
+      console.error('[Extension] Failed child process spawn error:', err);
     });
     child.unref();
     vscode.window.showInformationMessage(`Started Ginga player for: ${path.basename(documentPath)}`);
   } catch (err) {
+    console.error('[Extension] Exception during cp.spawn:', err);
     vscode.window.showErrorMessage(`Failed to start Ginga player: ${err.message}`);
   }
 }
@@ -485,7 +346,9 @@ function activate(context) {
     }
   });
 
-  context.subscriptions.push(changeEditorSub);
+  const openPlayerCmd = vscode.commands.registerCommand('ginga.openPlayer', (uri) => openPlayer(context, uri));
+
+  context.subscriptions.push(changeEditorSub, openPlayerCmd);
 }
 
 function deactivate() {
@@ -504,7 +367,6 @@ module.exports = {
   stopExecution,
   tickClock,
   openPlayer,
-  getWebviewContent,
   handleBridgeMessage
 };
 

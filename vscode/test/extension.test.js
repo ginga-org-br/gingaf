@@ -8,17 +8,14 @@ test('Extension exports functions', () => {
   assert.strictEqual(typeof extension.startExecution, 'function');
   assert.strictEqual(typeof extension.stopExecution, 'function');
   assert.strictEqual(typeof extension.tickClock, 'function');
-  assert.strictEqual(typeof extension.getWebviewContent, 'function');
   assert.strictEqual(typeof extension.handleBridgeMessage, 'function');
 });
 
-test('Webview Content Generation', () => {
-  const html = extension.getWebviewContent('Test Panel', 'vscode-resource:/player/index.html');
-  assert.ok(html.includes('<title>Test Panel</title>'));
-  assert.ok(html.includes('id="btn-stop"'));
-  assert.ok(html.includes('id="btn-tick-100"'));
-  assert.ok(html.includes('id="btn-tick-1s"'));
-  assert.ok(html.includes('src="vscode-resource:/player/index.html"'));
+test('Extension activate registers commands', () => {
+  const subscriptions = [];
+  const context = { subscriptions };
+  extension.activate(context);
+  assert.strictEqual(subscriptions.length, 2);
 });
 
 test('Bridge Message Handling - State & Breakpoints', () => {
