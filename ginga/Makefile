@@ -1,6 +1,17 @@
-.PHONY: test deps build build-windows build-web clean run-example check-app
+.PHONY: help test deps build build-windows build-web clean run-example check-app
 
 BASE_HREF ?= /
+
+help:
+	@echo Usage: make [target]
+	@echo.
+	@echo Targets:
+	@echo   deps           Install Flutter dependencies
+	@echo   test           Run Flutter tests
+	@echo   build-windows  Build debug executable for Windows
+	@echo   build-web      Build web release bundle
+	@echo   clean          Clean Flutter build artifacts
+	@echo   run-example    Run NCL example application (e.g. make run-example app=video.ncl)
 
 deps:
 	flutter pub get

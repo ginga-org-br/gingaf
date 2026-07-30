@@ -1,4 +1,13 @@
-.PHONY: test deps clean run-example check-app
+.PHONY: help test deps clean run-example check-app
+
+help:
+	@echo Usage: make [target]
+	@echo.
+	@echo Targets:
+	@echo   deps         Install Flutter/Dart dependencies
+	@echo   test         Run unit tests
+	@echo   clean        Clean build artifacts
+	@echo   run-example  Run headless NCL example (e.g. make run-example app=video.ncl)
 
 deps:
 	flutter pub get

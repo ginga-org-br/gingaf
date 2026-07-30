@@ -1,4 +1,12 @@
-.PHONY: test deps clean
+.PHONY: help test deps clean
+
+help:
+	@echo Usage: make [target]
+	@echo.
+	@echo Targets:
+	@echo   deps   Install Dart dependencies
+	@echo   test   Run Dart tests
+	@echo   clean  Clean Dart tool cache
 
 deps:
 	dart pub get

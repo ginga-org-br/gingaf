@@ -1,15 +1,14 @@
 .PHONY: help deps build package test clean run-vscode-with-extension-only
 
 help:
-	@echo "Usage: make [target]"
-	@echo ""
-	@echo "Targets:"
-	@echo "  deps                              Install npm dependencies"
-	@echo "  build                             Build the VS Code extension package"
-	@echo "  package                           Alias for build"
-	@echo "  test                              Run extension tests"
-	@echo "  clean                             Clean up temporary test and package files"
-	@echo "  run-vscode-with-extension-only   Run VS Code with only this extension loaded"
+	@echo Usage: make [target]
+	@echo.
+	@echo Targets:
+	@echo   deps                              Install npm dependencies
+	@echo   build                             Build the VS Code extension package
+	@echo   test                              Run extension tests
+	@echo   clean                             Clean up temporary test and package files
+	@echo   run-vscode-with-extension-only   Run VS Code with only this extension loaded
 
 deps:
 	npm install --no-audit --no-fund
@@ -17,7 +16,6 @@ deps:
 build:
 	npx @vscode/vsce package
 
-package: build
 
 test:
 	node test/extension.test.js

@@ -1,4 +1,11 @@
-.PHONY: test deps
+.PHONY: help test deps
+
+help:
+	@echo Usage: make [target]
+	@echo.
+	@echo Targets:
+	@echo   deps  Install dependencies for all components
+	@echo   test  Run unit tests for all components
 
 deps:
 	$(MAKE) -C ccws deps
