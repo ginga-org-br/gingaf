@@ -91,20 +91,21 @@ void main() {
     });
 
     test('NCLDocument.fromContent parses NCL XML string correctly', () {
-      final xml = '<ncl><body id="body"><media id="m1" src="m1.mp4"/></body></ncl>';
+      final xml =
+          '<ncl><body id="body"><media id="m1" src="m1.mp4"/></body></ncl>';
       final doc = NCLDocument.fromContent(xml);
       expect(doc.getNodeById('m1'), isNotNull);
     });
 
-    test('docUri default in fromContent', () {
+    test('docSrc default in fromContent', () {
       final doc = NCLDocument.fromContent('<ncl><body id="body"></body></ncl>');
-      expect(doc.docUri, Uri.parse('file://main.ncl'));
+      expect(doc.docSrc, 'tmp.ncl');
     });
 
     test('resolving relative media path against file docUri', () {
       final doc = NCLDocument.fromContent(
         '<ncl><body id="body"><media id="m1" src="video.mp4" /></body></ncl>',
-        docUri: Uri.parse('file:///C:/Users/test/video.ncl'),
+        docSrc: 'file:///C:/Users/test/video.ncl',
       );
       final media = doc.getNodeById('m1') as Media;
       expect(media.uri, 'file:///C:/Users/test/video.mp4');

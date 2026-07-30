@@ -229,7 +229,7 @@ void main() {
       final xml = '<ncl><body><media id="m1"/></body></ncl>';
       final doc = NCLDocument.fromContent(
         xml,
-        usersDataJson:
+        userData:
             '{"id": "u100", "name": "Alice", "properties": {"age": 30}}',
       );
       expect(doc.users.getUser('u100'), isNotNull);
@@ -242,7 +242,7 @@ void main() {
         final xml = '<ncl><body><media id="m1"/></body></ncl>';
         final doc = NCLDocument.fromContent(
           xml,
-          usersDataJson: '{"age": 45, "preferredLang": "en-US"}',
+          userData: '{"age": 45, "preferredLang": "en-US"}',
         );
         final active = doc.users.activeUser;
         expect(active, isNotNull);
@@ -255,7 +255,7 @@ void main() {
       final xml = '<ncl><body><media id="m1"/></body></ncl>';
       final doc = NCLDocument.fromContent(
         xml,
-        usersDataJson:
+        userData:
             '[{"id": "u201", "name": "Alice"}, {"id": "u202", "name": "Bob"}]',
       );
       expect(doc.users.getUser('u201'), isNotNull);
@@ -267,7 +267,7 @@ void main() {
       final xml = '<ncl><body><media id="m1"/></body></ncl>';
       final doc = NCLDocument.fromContent(
         xml,
-        usersDataJson: '''
+        userData: '''
 {
   "id": "uViewer1",
   "name": "Alice",
@@ -311,16 +311,11 @@ void main() {
       expect(user.getProperty('voiceGuidance'), isFalse);
     });
 
-    test('loads user data via URI and custom resolver function', () {
+    test('loads user data via JSON param', () {
       final manager = NCLUsers();
-      String? mockResolver(Uri uri) {
-        if (uri.path.endsWith('users.json')) {
-          return '{"id": "uRemote1", "name": "Remote User", "properties": {"level": "premium"}}';
-        }
-        return null;
-      }
-
-      manager.loadUserData('file:///config/users.json', resolver: mockResolver);
+      const usersDataJson =
+          '{"id": "uRemote1", "name": "Remote User", "properties": {"level": "premium"}}';
+      manager.loadUserData(usersDataJson);
       expect(manager.getUser('uRemote1'), isNotNull);
       expect(manager.getUserProperty('uRemote1', 'level'), equals('premium'));
     });

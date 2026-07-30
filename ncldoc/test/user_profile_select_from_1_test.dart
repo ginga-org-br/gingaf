@@ -76,7 +76,7 @@ void main() {
     ''';
       final doc = NCLDocument.fromContent(
         xml,
-        usersDataJson: '''
+        userData: '''
     {
       "id": "uViewer1",
       "name": "Alice",

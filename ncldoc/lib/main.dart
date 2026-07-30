@@ -49,7 +49,7 @@ Future<int> runCli(
     ticksPerSecond = int.tryParse(arguments[1]) ?? 1;
   }
 
-  var document = await NCLDocument.fromUri(File(arguments[0]).absolute.uri);
+  var document = await NCLDocument.fromSrc(File(arguments[0]).absolute.uri.toString());
   document.start();
 
   StreamSubscription<ProcessSignal>? sigintSub;

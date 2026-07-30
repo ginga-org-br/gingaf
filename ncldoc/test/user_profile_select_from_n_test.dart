@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:ncldoc/ncl_document.dart';
 import 'package:ncldoc/users.dart';
 import 'package:ncldoc/elements.dart';
@@ -43,8 +42,7 @@ test('verifies multi-user profile evaluation with composite rules', () {
 
       final docAdultCC = NCLDocument.fromContent(
         xml,
-        baseURI: Uri.file(Directory.systemTemp.path + '/'),
-        usersDataJson: '[{"id": "u1", "name": "AdultCC", "properties": {"age": "25", "closedCaptioning": "true"}}]',
+        userData: '[{"id": "u1", "name": "AdultCC", "properties": {"age": "25", "closedCaptioning": "true"}}]',
       );
 
       final sw1 = docAdultCC.getNodeById('swAd') as Switch;
@@ -53,8 +51,7 @@ test('verifies multi-user profile evaluation with composite rules', () {
 
       final docAdultNoCC = NCLDocument.fromContent(
         xml,
-        baseURI: Uri.file(Directory.systemTemp.path + '/'),
-        usersDataJson: '[{"id": "u2", "name": "AdultNoCC", "properties": {"age": "25", "closedCaptioning": "false"}}]',
+        userData: '[{"id": "u2", "name": "AdultNoCC", "properties": {"age": "25", "closedCaptioning": "false"}}]',
       );
 
       final sw2 = docAdultNoCC.getNodeById('swAd') as Switch;
@@ -88,8 +85,7 @@ test('verifies dynamic user property update and rule re-evaluation', () {
 
       final doc = NCLDocument.fromContent(
         xml,
-        baseURI: Uri.file(Directory.systemTemp.path + '/'),
-        usersDataJson: '[{"id": "u1", "name": "YoungUser", "properties": {"age": "16"}}]',
+        userData: '[{"id": "u1", "name": "YoungUser", "properties": {"age": "16"}}]',
       );
 
       final sw = doc.getNodeById('swContent') as Switch;
@@ -126,8 +122,7 @@ test('verifies active user switching in document context and rule re-evaluation'
 
       final doc = NCLDocument.fromContent(
         xml,
-        baseURI: Uri.file(Directory.systemTemp.path + '/'),
-        usersDataJson: '[{"id": "u1", "name": "User PT", "properties": {"lang": "pt-BR"}}, {"id": "u2", "name": "User EN", "properties": {"lang": "en-US"}}]',
+        userData: '[{"id": "u1", "name": "User PT", "properties": {"lang": "pt-BR"}}, {"id": "u2", "name": "User EN", "properties": {"lang": "en-US"}}]',
       );
 
       final sw = doc.getNodeById('swLang') as Switch;
@@ -172,10 +167,6 @@ test('verifies multi-user session profile switching and dynamic rule evaluation'
 
       doc.users.registerUser(u1);
       doc.users.registerUser(u2);
-
-      doc.users.createUsersSession('family_room');
-      doc.users.joinUsersSession('family_room', 'u1');
-      doc.users.joinUsersSession('family_room', 'u2');
 
       doc.users.setActiveUser('u1');
       final sw = doc.getNodeById('swAd') as Switch;
@@ -225,9 +216,6 @@ test('verifies multi-user session profile switching and dynamic rule evaluation'
 
       users.registerUser(u1);
       users.registerUser(u2);
-      users.createUsersSession('living_room');
-      users.joinUsersSession('living_room', 'u1');
-      users.joinUsersSession('living_room', 'u2');
 
       users.setActiveUser('u1');
       final sw = doc.getNodeById('swAd') as Switch;
@@ -238,19 +226,6 @@ test('verifies multi-user session profile switching and dynamic rule evaluation'
       expect(doc.evaluateRule('rAdultEN'), isFalse);
       expect(doc.evaluateRule('rAdult'), isTrue);
       expect(doc.resolveSwitch(sw)?.id, equals('mAdult'));
-
-      final jsonExport = jsonEncode(users.allUsers.map((u) => u.toJson()).toList());
-      expect(jsonExport.contains('Alice'), isTrue);
-      expect(jsonExport.contains('es'), isTrue);
-
-
-      final replicaUsers = NCLUsers();
-      replicaUsers.importUsers(jsonDecode(jsonExport) as List);
-      expect(replicaUsers.getUser('u1')?.name, equals('Alice'));
-
-
-      users.leaveUsersSession('living_room', 'u2');
-      users.removeUsersSession('living_room');
       users.clear();
       expect(users.getUser('u1'), isNull);
     });

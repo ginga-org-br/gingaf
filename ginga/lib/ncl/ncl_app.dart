@@ -155,8 +155,8 @@ class NCLAppState extends MediaState<NCLApp> {
       if (!mounted) return;
       final doc = NCLDocument.fromContent(
         nclData,
-        docUri: docUri,
-        usersDataJson: effectiveUserData,
+        docSrc: docUri.toString(),
+        userData: effectiveUserData,
         contentLoader: activeLoader,
       );
 

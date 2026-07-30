@@ -187,45 +187,23 @@ class NCLUsers {
     _activeUserId = null;
   }
 
-  void loadUserData(String usersDataJson, {String? Function(Uri uri)? resolver}) {
+  void loadUserData(String usersDataJson) {
     if (usersDataJson.trim().isEmpty) return;
 
-    try {
-      final content = usersDataJson.trim();
-      if (content.startsWith('{') || content.startsWith('[')) {
-        _parseAndImportUserDataJson(content);
-      } else {
-        final uri = Uri.tryParse(content);
-        if (uri != null && resolver != null) {
-          final fileContent = resolver(uri);
-          if (fileContent != null) {
-            _parseAndImportUserDataJson(fileContent);
-          }
-        }
-      }
-    } catch (_) {}
-  }
-
-  void _parseAndImportUserDataJson(String jsonStr) {
-    final decoded = json.decode(jsonStr);
+    final decoded = json.decode(usersDataJson.trim());
     if (decoded is Map<String, dynamic>) {
       if (decoded.containsKey('id')) {
         registerUser(NCLUserData.fromJson(decoded));
       } else {
         final defaultUser =
-            activeUser ??
-            NCLUserData(id: 'defaultUser', name: 'Default User');
+            activeUser ?? NCLUserData(id: 'defaultUser', name: 'Default User');
         for (var entry in decoded.entries) {
           defaultUser.setProperty(entry.key, entry.value);
         }
         registerUser(defaultUser);
       }
     } else if (decoded is List) {
-      for (var item in decoded) {
-        if (item is Map<String, dynamic>) {
-          registerUser(NCLUserData.fromJson(item));
-        }
-      }
+      importUsers(decoded);
     }
   }
 }

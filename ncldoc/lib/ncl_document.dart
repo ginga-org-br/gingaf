@@ -28,27 +28,27 @@ class NCLDocument {
   late final Head? _head;
   late final Context _body;
   late final Settings _settings;
-  final Uri docUri;
-  Uri get baseUri => docUri.resolve('.');
+  Uri? docUri;
+  final String docSrc;
   final ContentLoader contentLoader;
 
   late final NCLScheduler scheduler = NCLScheduler(this);
   final NCLUsers users = NCLUsers();
   final Map<String, String> systemVariables = {'system.language': 'por'};
 
-  static Future<NCLDocument> fromUri(
-    Uri docUri, {
-    Uri? userDataJsonUri,
+  static Future<NCLDocument> fromSrc(
+    String docSrc, {
+    String? userDataSrc,
     ContentLoader contentLoader = const FileContentLoader(),
   }) async {
-    final xml = await contentLoader.load(docUri);
-    final resolvedUsersDataJson = userDataJsonUri != null
-        ? await contentLoader.load(userDataJsonUri)
+    final xml = await contentLoader.load(Uri.parse(docSrc));
+    final userData = userDataSrc != null
+        ? await contentLoader.load(Uri.parse(userDataSrc))
         : null;
     final doc = NCLDocument.fromContent(
       xml ?? '',
-      docUri: docUri,
-      usersDataJson: resolvedUsersDataJson,
+      docSrc: docSrc,
+      userData: userData,
       contentLoader: contentLoader,
     );
     await doc.loadUserProfiles();
@@ -57,17 +57,19 @@ class NCLDocument {
 
   factory NCLDocument.fromContent(
     String xml, {
-    Uri? docUri,
-    String? usersDataJson,
+    String? docSrc,
+    String? userData,
     ContentLoader contentLoader = const FileContentLoader(),
   }) {
-    final effectiveDocUri = docUri ?? Uri.parse('file://main.ncl');
-    final (head, body) = NCLParser(docUri: effectiveDocUri).parseString(xml);
+    final resolvedDocSrc = docSrc ?? 'tmp.ncl';
+    Uri? resolvedUri = Uri.tryParse(resolvedDocSrc);
+    final (head, body) = NCLParser(docUri: resolvedUri).parseString(xml);
     return NCLDocument._(
       head: head,
       body: body,
-      docUri: effectiveDocUri,
-      usersDataJson: usersDataJson,
+      docSrc: resolvedDocSrc,
+      docUri: resolvedUri,
+      userData: userData,
       contentLoader: contentLoader,
     );
   }
@@ -75,21 +77,21 @@ class NCLDocument {
   NCLDocument._({
     Head? head,
     required Body body,
-    Uri? docUri,
-    String? usersDataJson,
+    required this.docSrc,
+    this.docUri,
+    String? userData,
     ContentLoader contentLoader = const FileContentLoader(),
-  }) : docUri = docUri ?? Uri.parse('file://main.ncl'),
-       contentLoader = contentLoader {
+  }) : contentLoader = contentLoader {
     _head = head;
     _body = body;
     _gatherSettings();
-    _gatherUsers(usersDataJson);
+    _gatherUsers(userData);
   }
 
-  void _gatherUsers([String? usersDataJson]) {
+  void _gatherUsers([String? userData]) {
     loadUserProfiles();
-    if (usersDataJson != null) {
-      users.loadUserData(usersDataJson);
+    if (userData != null) {
+      users.loadUserData(userData);
     }
   }
 
@@ -113,7 +115,7 @@ class NCLDocument {
 
   Future<void> _loadUserProfile(String id, String? src) async {
     if (src == null) return;
-    final uri = baseUri.resolve(src);
+    final uri = docUri?.resolve(src) ?? Uri.parse(src);
     final jsonContent = await contentLoader.load(uri);
     if (jsonContent != null && jsonContent.isNotEmpty) {
       final query = json.decode(jsonContent);

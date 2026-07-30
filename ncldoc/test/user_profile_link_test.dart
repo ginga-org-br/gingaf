@@ -58,7 +58,7 @@ void main() {
 
       final doc = NCLDocument.fromContent(
         xmlString,
-        usersDataJson: '[{"id": "u1", "name": "Bob", "gender": "male", "age": 30}]',
+        userData: '[{"id": "u1", "name": "Bob", "gender": "male", "age": 30}]',
       );
 
       doc.start();
@@ -130,7 +130,7 @@ void main() {
 
       final doc = NCLDocument.fromContent(
         xmlString,
-        usersDataJson: '[{"id": "u2", "name": "Alice", "gender": "female", "age": 30}]',
+        userData: '[{"id": "u2", "name": "Alice", "gender": "female", "age": 30}]',
       );
 
       doc.start();
