@@ -4,7 +4,7 @@ import 'package:ncldoc/ncl_document.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('FileContentLoader and Uri resolution Tests', () {
+  group('FileSrcResolver and Uri resolution Tests', () {
     test('Standard Dart Uri resolves relative and absolute URIs correctly', () {
       final base = Uri.parse('http://example.com/app/main.ncl');
       final relativeUri = base.resolve('video.mp4');
@@ -14,8 +14,8 @@ void main() {
       expect(absoluteUri.toString(), equals('http://other.org/asset.png'));
     });
 
-    test('FileContentLoader exists and load for file and non-file URIs', () async {
-      const loader = FileContentLoader();
+    test('FileSrcResolver exists and load for file and non-file URIs', () async {
+      const loader = FileSrcResolver();
 
       const httpSrc = 'http://example.com/file.ncl';
       expect(loader.exists(httpSrc), isFalse);
@@ -38,8 +38,8 @@ void main() {
       tempDir.deleteSync();
     });
 
-    test('Custom ContentLoader subclass can override exists and load', () async {
-      final customLoader = _CustomTestContentLoader();
+    test('Custom SrcResolver subclass can override exists and load', () async {
+      final customLoader = _CustomTestSrcResolver();
       const customSrc = 'custom://app/data.xml';
 
       expect(customLoader.exists(customSrc), isTrue);
@@ -50,10 +50,10 @@ void main() {
       expect(await customLoader.load(otherSrc), isNull);
     });
 
-    test('NCLParser with FileContentLoader throws FileSystemException when media src does not exist', () {
+    test('NCLParser with FileSrcResolver throws FileSystemException when media src does not exist', () {
       final parser = NCLParser(
         docUri: Uri.parse('file:///non_existent_dir/doc.ncl'),
-        contentLoader: const FileContentLoader(),
+        contentLoader: const FileSrcResolver(),
       );
       const xml = '<ncl><body><media id="m1" src="non_existent_file.mp4"/></body></ncl>';
       expect(() => parser.parseString(xml), throwsA(isA<FileSystemException>()));
@@ -61,8 +61,8 @@ void main() {
   });
 }
 
-class _CustomTestContentLoader extends ContentLoader {
-  const _CustomTestContentLoader();
+class _CustomTestSrcResolver extends SrcResolver {
+  const _CustomTestSrcResolver();
 
   @override
   bool exists(String src, [String? baseDirSrc]) => src.startsWith('custom');

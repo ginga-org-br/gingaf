@@ -1,15 +1,15 @@
 import 'dart:async';
 import 'dart:io';
 
-abstract class ContentLoader {
-  const ContentLoader();
+abstract class SrcResolver {
+  const SrcResolver();
 
   bool exists(String src, [String? baseDirSrc]);
   Future<String?> load(String src, [String? baseDirSrc]);
 }
 
-class FileContentLoader extends ContentLoader {
-  const FileContentLoader();
+class FileSrcResolver extends SrcResolver {
+  const FileSrcResolver();
 
   File? _resolveFile(String src, [String? baseDirSrc]) {
     final rawSrc = src.trim();

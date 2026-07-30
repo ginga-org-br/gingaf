@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:ncldoc/ncl_document.dart';
 
-import '../../ginga_content.dart';
+import '../../ginga_src_resolver.dart';
 import '../../main_av.dart';
 import '../../web_utils_stub.dart'
     if (dart.library.html) '../../web_utils_web.dart';
@@ -162,7 +162,7 @@ abstract class MediaState<T extends MediaWidget> extends State<T> {
   }
 
   Future<String> loadContent(String src) async {
-    final loader = GingaContentLoader()..setBuildContext(context);
+    final loader = GingaSrcResolver()..setBuildContext(context);
     final content = await loader.load(src);
     if (content != null) return content;
     throw Exception('Failed to load content for src: $src');

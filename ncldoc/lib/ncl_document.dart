@@ -7,14 +7,14 @@ import 'package:logging/logging.dart';
 
 import 'elements.dart';
 import 'event.dart';
-import 'file_content.dart';
+import 'src_resolver.dart';
 import 'ncl_scheduler.dart';
 import 'parser.dart';
 import 'users.dart';
 
 export 'elements.dart';
 export 'event.dart';
-export 'file_content.dart';
+export 'src_resolver.dart';
 export 'lua.dart';
 export 'ncl_scheduler.dart';
 export 'parser.dart';
@@ -28,7 +28,7 @@ class NCLDocument {
   late final Settings _settings;
   Uri? docUri;
   final String docSrc;
-  final ContentLoader contentLoader;
+  final SrcResolver contentLoader;
 
   late final NCLScheduler scheduler = NCLScheduler(this);
   final NCLUsers users = NCLUsers();
@@ -37,7 +37,7 @@ class NCLDocument {
   static Future<NCLDocument> fromSrc(
     String docSrc, {
     String? userDataSrc,
-    ContentLoader contentLoader = const FileContentLoader(),
+    SrcResolver contentLoader = const FileSrcResolver(),
   }) async {
     final xml = await contentLoader.load(docSrc);
     final userData = userDataSrc != null
@@ -57,7 +57,7 @@ class NCLDocument {
     String xml, {
     String? docSrc,
     String? userData,
-    ContentLoader contentLoader = const FileContentLoader(),
+    SrcResolver contentLoader = const FileSrcResolver(),
   }) {
     if (xml.trim().isEmpty) {
       throw ArgumentError('empty src');
@@ -84,7 +84,7 @@ class NCLDocument {
     required this.docSrc,
     this.docUri,
     String? userData,
-    ContentLoader contentLoader = const FileContentLoader(),
+    SrcResolver contentLoader = const FileSrcResolver(),
   }) : contentLoader = contentLoader {
     _head = head;
     _body = body;

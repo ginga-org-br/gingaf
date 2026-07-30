@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
-import '../../ginga_content.dart';
+import '../../ginga_src_resolver.dart';
 import 'ncl_media_widget.dart';
 
 class ImageWidget extends MediaWidget {
@@ -26,7 +26,7 @@ class ImageWidgetState extends MediaState<ImageWidget> {
 
   @override
   Widget buildWidgetContent(BuildContext context) {
-    var uriStr = GingaContentLoader.resolveUri(widget.src);
+    var uriStr = GingaSrcResolver.resolveUri(widget.src);
     if (uriStr.isEmpty) {
       return const SizedBox.shrink();
     }

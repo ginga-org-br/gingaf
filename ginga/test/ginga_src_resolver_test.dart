@@ -3,12 +3,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gingaf/ginga_content.dart';
+import 'package:gingaf/ginga_src_resolver.dart';
 
-class MockGingaContentAssetBundle extends AssetBundle {
+class MockGingaSrcAssetBundle extends AssetBundle {
   final Map<String, String> assets;
 
-  MockGingaContentAssetBundle(this.assets);
+  MockGingaSrcAssetBundle(this.assets);
 
   @override
   Future<ByteData> load(String key) async {
@@ -25,15 +25,15 @@ class MockGingaContentAssetBundle extends AssetBundle {
 }
 
 void main() {
-  group('GingaContentLoader Unit Tests', () {
+  group('GingaSrcResolver Unit Tests', () {
     testWidgets('handles data URIs', (WidgetTester tester) async {
-      late GingaContentLoader loader;
+      late GingaSrcResolver loader;
 
       await tester.pumpWidget(
         MaterialApp(
           home: Builder(
             builder: (context) {
-              loader = GingaContentLoader()..setBuildContext(context);
+              loader = GingaSrcResolver()..setBuildContext(context);
               return const SizedBox();
             },
           ),
@@ -48,13 +48,13 @@ void main() {
 
     testWidgets('handles non-existent file URI sources',
         (WidgetTester tester) async {
-      late GingaContentLoader loader;
+      late GingaSrcResolver loader;
 
       await tester.pumpWidget(
         MaterialApp(
           home: Builder(
             builder: (context) {
-              loader = GingaContentLoader()..setBuildContext(context);
+              loader = GingaSrcResolver()..setBuildContext(context);
               return const SizedBox();
             },
           ),
@@ -68,13 +68,13 @@ void main() {
     });
 
     testWidgets('handles empty sources', (WidgetTester tester) async {
-      late GingaContentLoader loader;
+      late GingaSrcResolver loader;
 
       await tester.pumpWidget(
         MaterialApp(
           home: Builder(
             builder: (context) {
-              loader = GingaContentLoader()..setBuildContext(context);
+              loader = GingaSrcResolver()..setBuildContext(context);
               return const SizedBox();
             },
           ),
@@ -89,8 +89,8 @@ void main() {
 
     testWidgets('loads assets from DefaultAssetBundle',
         (WidgetTester tester) async {
-      late GingaContentLoader loader;
-      final mockBundle = MockGingaContentAssetBundle({
+      late GingaSrcResolver loader;
+      final mockBundle = MockGingaSrcAssetBundle({
         'media/test.ncl': '<ncl></ncl>',
       });
 
@@ -100,7 +100,7 @@ void main() {
             bundle: mockBundle,
             child: Builder(
               builder: (context) {
-                loader = GingaContentLoader()..setBuildContext(context);
+                loader = GingaSrcResolver()..setBuildContext(context);
                 return const SizedBox();
               },
             ),
@@ -116,8 +116,8 @@ void main() {
 
     testWidgets('setBuildContext configures loader BuildContext',
         (WidgetTester tester) async {
-      final loader = GingaContentLoader();
-      final mockBundle = MockGingaContentAssetBundle({
+      final loader = GingaSrcResolver();
+      final mockBundle = MockGingaSrcAssetBundle({
         'media/test2.ncl': '<ncl>test2</ncl>',
       });
 

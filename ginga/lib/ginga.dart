@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:logging/logging.dart';
 
 import 'package:ccws/ccws.dart';
-import 'ginga_content.dart';
+import 'ginga_src_resolver.dart';
 import 'html/html_app.dart' as html;
 import 'main_av.dart';
 import 'ncl/ncl_app.dart' as ncl;
@@ -23,7 +23,7 @@ class GingaConfig {
   final bool enableCCWS;
   final bool enableMainAv;
   final String? usersDataSrc;
-  final ContentLoader contentLoader;
+  final SrcResolver contentLoader;
 
   const GingaConfig([
     this.appSrc,
@@ -31,8 +31,8 @@ class GingaConfig {
     this.enableMainAv = true,
     this.usersDataSrc,
     this.mainAvSrc = DEFAULT_VIDEO,
-    ContentLoader? contentLoader,
-  ]) : contentLoader = contentLoader ?? const FileContentLoader();
+    SrcResolver? contentLoader,
+  ]) : contentLoader = contentLoader ?? const FileSrcResolver();
 
   bool get isEmpty => appSrc == null && !enableMainAv;
 
@@ -85,8 +85,8 @@ class _GingaState extends State<Ginga> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (widget.config.contentLoader is GingaContentLoader) {
-      (widget.config.contentLoader as GingaContentLoader)
+    if (widget.config.contentLoader is GingaSrcResolver) {
+      (widget.config.contentLoader as GingaSrcResolver)
           .setBuildContext(context);
     }
     if (!_initialized) {

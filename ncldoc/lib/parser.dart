@@ -9,12 +9,12 @@ import 'schema.dart';
 class NCLParser {
   final Schema schema = Schema();
   final Uri? docUri;
-  final ContentLoader contentLoader;
+  final SrcResolver contentLoader;
   Uri? get baseUri => docUri?.resolve('.');
 
   NCLParser({
     this.docUri,
-    this.contentLoader = const FileContentLoader(),
+    this.contentLoader = const FileSrcResolver(),
   });
 
   (Head, Body) parseString(String xmlString) {

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart' hide Action;
 import 'package:ncldoc/event.dart';
 import 'package:video_player/video_player.dart';
 
-import '../../ginga_content.dart';
+import '../../ginga_src_resolver.dart';
 import '../ncl_app.dart';
 
 class AVWidget extends MediaWidget {
@@ -33,7 +33,7 @@ class AVWidgetState extends MediaState<AVWidget> {
 
   Future<void> _initVideo() async {
     try {
-      final src = GingaContentLoader.resolveUri(widget.src);
+      final src = GingaSrcResolver.resolveUri(widget.src);
       final parsedUri = Uri.tryParse(src);
       final VideoPlayerController controller;
 

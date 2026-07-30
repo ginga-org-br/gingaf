@@ -5,7 +5,7 @@ import 'package:logging/logging.dart';
 import 'package:ncldoc/ncl_document.dart';
 
 import '../ginga.dart';
-import '../ginga_content.dart';
+import '../ginga_src_resolver.dart';
 import '../main_av.dart';
 import 'widgets/ncl_media_widget.dart';
 
@@ -113,12 +113,12 @@ class NCLAppState extends MediaState<NCLApp> {
         setState(() {});
       }
 
-      final ContentLoader activeLoader;
-      if (widget.config.contentLoader is GingaContentLoader) {
-        activeLoader = (widget.config.contentLoader as GingaContentLoader)
+      final SrcResolver activeLoader;
+      if (widget.config.contentLoader is GingaSrcResolver) {
+        activeLoader = (widget.config.contentLoader as GingaSrcResolver)
           ..setBuildContext(context);
-      } else if (widget.config.contentLoader is FileContentLoader) {
-        activeLoader = GingaContentLoader()..setBuildContext(context);
+      } else if (widget.config.contentLoader is FileSrcResolver) {
+        activeLoader = GingaSrcResolver()..setBuildContext(context);
       } else {
         activeLoader = widget.config.contentLoader;
       }

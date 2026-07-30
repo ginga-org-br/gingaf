@@ -3,17 +3,17 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/widgets.dart';
 import 'package:logging/logging.dart';
-import 'package:ncldoc/file_content.dart';
-export 'package:ncldoc/file_content.dart' show ContentLoader, FileContentLoader;
+import 'package:ncldoc/src_resolver.dart';
+export 'package:ncldoc/src_resolver.dart' show FileSrcResolver, SrcResolver;
 
 import 'web_utils_stub.dart' if (dart.library.html) 'web_utils_web.dart';
 
 final _logger = Logger('ginga');
 
-class GingaContentLoader extends FileContentLoader {
+class GingaSrcResolver extends FileSrcResolver {
   BuildContext? _context;
 
-  GingaContentLoader();
+  GingaSrcResolver();
 
   void setBuildContext(BuildContext context) {
     _context = context;
