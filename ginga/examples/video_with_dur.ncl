@@ -1,7 +1,7 @@
 <ncl>
   <body>
-    <port id="init" component="sample_video"/>
-    <media id="sample_video" src="https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4">
+    <port id="init" component="video"/>
+    <media id="video" src="primeiro-joao/media/animGar.mp4">
       <property name="explicitDur" value="2s"/>
     </media>
   </body>
