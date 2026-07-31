@@ -100,19 +100,6 @@ flutter run -d windows --dart-define="APP=examples/video.ncl" --dart-define="MAI
 flutter run -d chrome --dart-define="APP=examples/image.ncl"
 ```
 
-### Run built binary (Windows)
-
-```powershell
-# Using environment variables
-$env:APP="examples/image.ncl"
-.\build\windows\x64\runner\Debug\gingaf.exe
-
-# With default video
-$env:APP="examples/video.ncl"
-$env:MAINAV="true"
-.\build\windows\x64\runner\Debug\gingaf.exe
-```
-
 For convenience, you can use `make run-example` for the current platform:
 
 ```bash

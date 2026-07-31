@@ -57,3 +57,7 @@ https://github.com/user-attachments/assets/3f4aa3f4-5950-4b6e-8a32-50021e8b014f
 ### Playground  Ginga-NCL with Lua (lua.ncl)
 
 https://github.com/user-attachments/assets/b06bf145-4cc2-4431-9f00-98b218cfedde
+
+### Launch Ginga Application from VSCode
+
+https://github.com/user-attachments/assets/717948df-64ab-42c9-8dd6-3a4a2e3603da
