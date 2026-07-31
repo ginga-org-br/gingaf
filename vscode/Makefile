@@ -29,7 +29,7 @@ CODE_CMD := code
 run-vscode-with-extension-only: build
 	rm -rf .vscode-test/exts
 	node -e "const cp = require('child_process'); const fs = require('fs'); const vsix = fs.readdirSync('.').find(f => f.endsWith('.vsix')); cp.spawnSync('$(CODE_CMD)', ['--extensions-dir=.vscode-test/exts', '--install-extension', vsix], { stdio: 'inherit', shell: true });"
-	$(CODE_CMD) --user-data-dir=.vscode-test/user --extensions-dir=.vscode-test/exts
+	$(CODE_CMD) --new-window --user-data-dir=.vscode-test/user --extensions-dir=.vscode-test/exts
 
 
 

@@ -66,8 +66,20 @@ let variables = new Map();
 let lastActiveEditor = undefined;
 let targetDocumentUri = undefined;
 let extensionContext = undefined;
+let outputChannel = undefined;
 
+function getOutputChannel() {
+  if (!outputChannel) {
+    outputChannel = vscode.window.createOutputChannel('Ginga Player');
+  }
+  return outputChannel;
+}
 
+function logToOutput(message) {
+  const channel = getOutputChannel();
+  channel.appendLine(message);
+  channel.show(true);
+}
 
 function updateWebviewState() {
   if (currentPanel) {
@@ -79,25 +91,131 @@ function updateWebviewState() {
   }
 }
 
-function isExecutableAvailable(executable) {
+function getExecutableInStorage(storageDir) {
   const fs = require('fs');
-  if (path.isAbsolute(executable)) {
-    return fs.existsSync(executable);
+  if (process.platform === 'win32') {
+    const exe = path.join(storageDir, 'gingaf.exe');
+    if (fs.existsSync(exe)) return exe;
+  } else if (process.platform === 'darwin') {
+    const macApp = path.join(storageDir, 'gingaf.app', 'Contents', 'MacOS', 'gingaf');
+    if (fs.existsSync(macApp)) return macApp;
+    const bin = path.join(storageDir, 'gingaf');
+    if (fs.existsSync(bin)) return bin;
+  } else {
+    const bin = path.join(storageDir, 'gingaf');
+    if (fs.existsSync(bin)) return bin;
   }
-  const pathDirs = (process.env.PATH || '').split(process.platform === 'win32' ? ';' : ':');
-  const extensions = process.platform === 'win32' ? ['.exe', '.cmd', '.bat', ''] : [''];
-  for (const dir of pathDirs) {
-    for (const ext of extensions) {
-      const fullPath = path.join(dir, executable + ext);
-      if (fs.existsSync(fullPath)) {
-        return true;
-      }
-    }
-  }
-  return false;
+  return undefined;
 }
 
-function openPlayer(context, targetUri) {
+function downloadFile(url, destPath) {
+  return new Promise((resolve, reject) => {
+    const https = require('https');
+    const http = require('http');
+    const fs = require('fs');
+
+    function fetchUrl(currentUrl, redirects = 0) {
+      if (redirects > 5) return reject(new Error('Too many redirects'));
+      const client = currentUrl.startsWith('https') ? https : http;
+      client.get(currentUrl, (res) => {
+        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          return fetchUrl(res.headers.location, redirects + 1);
+        }
+        if (res.statusCode !== 200) {
+          return reject(new Error(`Failed to download: HTTP ${res.statusCode}`));
+        }
+        const fileStream = fs.createWriteStream(destPath);
+        res.pipe(fileStream);
+        fileStream.on('finish', () => {
+          fileStream.close(resolve);
+        });
+        fileStream.on('error', (err) => {
+          fs.unlink(destPath, () => reject(err));
+        });
+      }).on('error', reject);
+    }
+    fetchUrl(url);
+  });
+}
+
+async function resolveOrDownloadExecutable(context, documentPath) {
+  const fs = require('fs');
+
+  logToOutput(`[Ginga Player] Resolving executable for document: ${documentPath}`);
+
+  const userConfig = vscode.workspace.getConfiguration('vscode');
+  const configuredPath = (userConfig.get('gingafExePath') || userConfig.get('gingafExecutable') || '').trim();
+  if (configuredPath && fs.existsSync(configuredPath)) {
+    logToOutput(`[Ginga Player] Using configured executable path: ${configuredPath}`);
+    return configuredPath;
+  }
+
+  const storageDir = context && context.globalStorageUri
+    ? context.globalStorageUri.fsPath
+    : (context ? path.join(context.extensionPath, 'bin') : path.join(__dirname, '..', 'bin'));
+
+  const storageExec = getExecutableInStorage(storageDir);
+  if (storageExec && fs.existsSync(storageExec)) {
+    logToOutput(`[Ginga Player] Using downloaded release executable from storage: ${storageExec}`);
+    return storageExec;
+  }
+
+  const packageJson = require('../package.json');
+  const version = packageJson.version || '0.1.1';
+  let platformName = 'windows-x64';
+  if (process.platform === 'darwin') {
+    const arch = process.arch === 'arm64' ? 'arm64' : 'x64';
+    platformName = `macos-${arch}`;
+  } else if (process.platform === 'linux') {
+    const arch = process.arch === 'arm64' ? 'arm64' : 'x86_64';
+    platformName = `linux-${arch}`;
+  }
+
+  const zipName = `gingaf-v${version}-${platformName}.zip`;
+  const downloadUrl = `https://github.com/ginga-org-br/gingaf/releases/download/v${version}/${zipName}`;
+
+  logToOutput(`[Ginga Player] Release executable not found locally. Downloading release v${version} from: ${downloadUrl}`);
+
+  if (!fs.existsSync(storageDir)) {
+    fs.mkdirSync(storageDir, { recursive: true });
+  }
+
+  const zipPath = path.join(storageDir, 'release.zip');
+
+  await vscode.window.withProgress({
+    location: vscode.ProgressLocation.Notification,
+    title: `Downloading Ginga player release v${version}...`,
+    cancellable: false
+  }, async () => {
+    await downloadFile(downloadUrl, zipPath);
+    logToOutput(`[Ginga Player] Extracting release zip to: ${storageDir}`);
+    const cp = require('child_process');
+    if (process.platform === 'win32') {
+      cp.execSync(`powershell -Command "Expand-Archive -Path '${zipPath}' -DestinationPath '${storageDir}' -Force"`);
+    } else {
+      cp.execSync(`unzip -o "${zipPath}" -d "${storageDir}"`);
+    }
+    if (fs.existsSync(zipPath)) {
+      fs.unlinkSync(zipPath);
+    }
+  });
+
+  const downloadedExec = getExecutableInStorage(storageDir);
+  if (downloadedExec && fs.existsSync(downloadedExec)) {
+    if (process.platform !== 'win32') {
+      try {
+        fs.chmodSync(downloadedExec, 0o755);
+      } catch (e) {}
+    }
+    logToOutput(`[Ginga Player] Successfully downloaded and extracted release executable: ${downloadedExec}`);
+    return downloadedExec;
+  }
+
+  logToOutput(`[Ginga Player] ERROR: Release executable was not found after downloading from ${downloadUrl}`);
+  throw new Error(`Ginga player release executable was not found after downloading from ${downloadUrl}`);
+}
+
+async function openPlayer(context, targetUri) {
   console.log('[Extension] openPlayer called for URI:', targetUri ? targetUri.toString() : 'null');
   if (targetUri) {
     targetDocumentUri = targetUri;
@@ -121,86 +239,15 @@ function openPlayer(context, targetUri) {
     return;
   }
 
-  const cp = require('child_process');
-  const fs = require('fs');
-
-  let executable = 'gingaf';
-
-  const userConfig = vscode.workspace.getConfiguration('vscode');
-  const configuredPath = userConfig ? userConfig.get('gingafExePath') : undefined;
-  if (configuredPath && configuredPath.trim() !== '' && fs.existsSync(configuredPath.trim())) {
-    executable = configuredPath.trim();
-  } else {
-    let candidateSearchRoots = [];
-    if (documentPath) {
-      let curr = path.dirname(documentPath);
-      for (let i = 0; i < 5; i++) {
-        candidateSearchRoots.push(curr);
-        const parent = path.dirname(curr);
-        if (parent === curr) break;
-        curr = parent;
-      }
-    }
-    if (vscode.workspace && vscode.workspace.workspaceFolders) {
-      for (const folder of vscode.workspace.workspaceFolders) {
-        let curr = folder.uri.fsPath;
-        for (let i = 0; i < 3; i++) {
-          if (!candidateSearchRoots.includes(curr)) {
-            candidateSearchRoots.push(curr);
-          }
-          const parent = path.dirname(curr);
-          if (parent === curr) break;
-          curr = parent;
-        }
-      }
-    }
-
-    for (const rootPath of candidateSearchRoots) {
-      let possiblePaths = [];
-      if (process.platform === 'win32') {
-        possiblePaths = [
-          path.join(rootPath, 'ginga', 'build', 'windows', 'x64', 'runner', 'Debug', 'gingaf.exe'),
-          path.join(rootPath, 'ginga', 'build', 'windows', 'x64', 'runner', 'Release', 'gingaf.exe'),
-          path.join(rootPath, 'build', 'windows', 'x64', 'runner', 'Debug', 'gingaf.exe'),
-          path.join(rootPath, 'build', 'windows', 'x64', 'runner', 'Release', 'gingaf.exe'),
-        ];
-      } else if (process.platform === 'darwin') {
-        possiblePaths = [
-          path.join(rootPath, 'ginga', 'build', 'macos', 'Build', 'Products', 'Debug', 'gingaf.app', 'Contents', 'MacOS', 'gingaf'),
-          path.join(rootPath, 'ginga', 'build', 'macos', 'Build', 'Products', 'Release', 'gingaf.app', 'Contents', 'MacOS', 'gingaf'),
-          path.join(rootPath, 'build', 'macos', 'Build', 'Products', 'Debug', 'gingaf.app', 'Contents', 'MacOS', 'gingaf'),
-          path.join(rootPath, 'build', 'macos', 'Build', 'Products', 'Release', 'gingaf.app', 'Contents', 'MacOS', 'gingaf'),
-        ];
-      } else {
-        possiblePaths = [
-          path.join(rootPath, 'ginga', 'build', 'linux', 'x64', 'debug', 'bundle', 'gingaf'),
-          path.join(rootPath, 'ginga', 'build', 'linux', 'x64', 'release', 'bundle', 'gingaf'),
-          path.join(rootPath, 'build', 'linux', 'x64', 'debug', 'bundle', 'gingaf'),
-          path.join(rootPath, 'build', 'linux', 'x64', 'release', 'bundle', 'gingaf'),
-        ];
-      }
-
-      for (const p of possiblePaths) {
-        if (fs.existsSync(p)) {
-          executable = p;
-          break;
-        }
-      }
-      if (executable !== 'gingaf') {
-        break;
-      }
-    }
-  }
-
-  if (!isExecutableAvailable(executable)) {
-    if (configuredPath) {
-      vscode.window.showErrorMessage(`Ginga player executable was not found at configured path '${configuredPath}'. Please correct the 'vscode.gingafExePath' setting.`);
-    } else {
-      vscode.window.showErrorMessage(`Ginga player executable '${executable}' was not found in the workspace or system PATH. Please configure the setting 'vscode.gingafExePath' in VS Code.`);
-    }
+  let executable;
+  try {
+    executable = await resolveOrDownloadExecutable(context, documentPath);
+  } catch (err) {
+    vscode.window.showErrorMessage(`Failed to resolve Ginga player executable: ${err.message}`);
     return;
   }
 
+  const cp = require('child_process');
   try {
     console.log('[Extension] Spawning Ginga player executable:', executable, 'with documentPath:', documentPath);
     const spawnEnv = Object.assign({}, process.env, { APP: documentPath });
@@ -358,6 +405,10 @@ function deactivate() {
   breakpoints.clear();
   activeEvents.clear();
   variables.clear();
+  if (outputChannel) {
+    outputChannel.dispose();
+    outputChannel = undefined;
+  }
 }
 
 module.exports = {
