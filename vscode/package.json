@@ -1,6 +1,6 @@
 {
-  "name": "vscode",
-  "displayName": "vscode",
+  "name": "ginga-code",
+  "displayName": "Ginga Code",
   "description": "VS Code extension for execution of Ginga application",
   "version": "0.1.1",
   "publisher": "ginga-org-br",
