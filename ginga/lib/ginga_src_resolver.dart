@@ -36,6 +36,11 @@ class GingaSrcResolver extends FileSrcResolver {
           }
         }
       } catch (_) {}
+    } else {
+      final file = const FileSrcResolver().resolveFile(src, baseDirSrc);
+      if (file != null) {
+        return file.absolute.path;
+      }
     }
     return resolvedSrc;
   }

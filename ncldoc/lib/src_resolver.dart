@@ -11,7 +11,7 @@ abstract class SrcResolver {
 class FileSrcResolver extends SrcResolver {
   const FileSrcResolver();
 
-  File? _resolveFile(String src, [String? baseDirSrc]) {
+  File? resolveFile(String src, [String? baseDirSrc]) {
     final rawSrc = src.trim();
     if (rawSrc.isEmpty || rawSrc.startsWith('<')) return null;
 
@@ -23,21 +23,21 @@ class FileSrcResolver extends SrcResolver {
         ? resolvedUri.toFilePath()
         : (resolvedUri.hasScheme ? resolvedUri.path : Uri.decodeComponent(resolvedUri.toString()));
 
-    if (path.isEmpty) return null;
-
-    final file = File(path);
-    if (file.existsSync()) return file;
-
-    if (path != rawSrc) {
-      final rawFile = File(rawSrc);
-      if (rawFile.existsSync()) return rawFile;
+    if (path.isNotEmpty) {
+      final file = File(path);
+      if (file.existsSync()) return file.absolute;
     }
 
-    final normalizedPath = path.replaceAll('\\', '/');
+    if (path != rawSrc && rawSrc.isNotEmpty) {
+      final rawFile = File(rawSrc);
+      if (rawFile.existsSync()) return rawFile.absolute;
+    }
+
+    final normalizedPath = (path.isNotEmpty ? path : rawSrc).replaceAll('\\', '/');
     final fileName = normalizedPath.split('/').last;
     if (fileName.isNotEmpty) {
       final baseNameFile = File(fileName);
-      if (baseNameFile.existsSync()) return baseNameFile;
+      if (baseNameFile.existsSync()) return baseNameFile.absolute;
     }
 
     return null;
@@ -45,7 +45,7 @@ class FileSrcResolver extends SrcResolver {
 
   @override
   bool exists(String src, [String? baseDirSrc]) {
-    return _resolveFile(src, baseDirSrc) != null;
+    return resolveFile(src, baseDirSrc) != null;
   }
 
   @override
@@ -53,7 +53,7 @@ class FileSrcResolver extends SrcResolver {
     final rawSrc = src.trim();
     if (rawSrc.isEmpty) return null;
 
-    final file = _resolveFile(src, baseDirSrc);
+    final file = resolveFile(src, baseDirSrc);
     if (file != null) {
       return await file.readAsString();
     }
