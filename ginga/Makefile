@@ -74,4 +74,4 @@ run-example: check-app
 	@echo ======================================================================
 	@echo Running Example: $(APP_EXAMPLE)
 	@echo ======================================================================
-	flutter run --no-pub -d windows --dart-define="APP=examples/$(APP_EXAMPLE)"
+	flutter run -d windows --dart-define="APP=examples/$(APP_EXAMPLE)" || true

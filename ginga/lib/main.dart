@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 
+import 'package:video_player_media_kit/video_player_media_kit.dart';
+
 import 'ginga.dart';
 import 'web_utils_stub.dart' if (dart.library.html) 'web_utils_web.dart';
 
@@ -28,6 +30,9 @@ void main(List<String> args) {
   }
 
   WidgetsFlutterBinding.ensureInitialized();
+  if (!kIsWeb && Platform.isWindows) {
+    VideoPlayerMediaKit.ensureInitialized(windows: true);
+  }
 
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
