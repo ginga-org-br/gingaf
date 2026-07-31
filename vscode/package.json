@@ -2,7 +2,7 @@
   "name": "vscode",
   "displayName": "vscode",
   "description": "VS Code extension for execution of Ginga application",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "ginga-org-br",
   "icon": "ginga-logo.png",
   "repository": {
