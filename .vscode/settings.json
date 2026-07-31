@@ -1,0 +1,9 @@
+{
+    "search.exclude": {
+        "playground/public/**": true,
+        "ginga/build/**": true,
+        "ginga/android/**": true,
+        "ginga/windows/**": true,
+        "ginga/web/**": true,
+    }
+}
