@@ -40,12 +40,12 @@ void main() {
       expect(GingaConfig('APP.HTML').appSrc, 'APP.HTML');
     });
     test('Constructor should capture manual usersDataSrc', () {
-      final config = GingaConfig('app.ncl', true, true, 'test/user_data1.json');
+      final config = GingaConfig('app.ncl', true, 'test/user_data1.json');
       expect(config.usersDataSrc, equals('test/user_data1.json'));
     });
 
     test('Constructor should accept file path for usersDataSrc profile parameter', () {
-      final config = GingaConfig('app.ncl', true, true, '/path/to/user_data.json');
+      final config = GingaConfig('app.ncl', true, '/path/to/user_data.json');
       expect(config.usersDataSrc, equals('/path/to/user_data.json'));
     });
   });
@@ -73,7 +73,7 @@ void main() {
           bundle: MockGingaTestAssetBundle(),
           child: NCLApp(
             src: 'test.ncl',
-            config: GingaConfig('test.ncl', true, false, 'test/user_data1.json'),
+            config: GingaConfig('test.ncl', true, 'test/user_data1.json'),
           ),
         ),
       ));
@@ -89,7 +89,7 @@ void main() {
     });
 
     testWidgets('NCLApp mounts with GingaConfig parameter and resolves usersDataJson', (WidgetTester tester) async {
-      final config = GingaConfig('test.ncl', true, false, 'test/user_data2.json');
+      final config = GingaConfig('test.ncl', true, 'test/user_data2.json');
       await tester.pumpWidget(MaterialApp(
         home: DefaultAssetBundle(
           bundle: MockGingaTestAssetBundle(),

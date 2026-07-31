@@ -109,7 +109,7 @@ void main(List<String> args) {
           mainav != 'true' &&
           mainav != 'false')
       ? mainav
-      : DEFAULT_VIDEO;
+      : null;
 
   bool ccws = const bool.fromEnvironment('CCWS', defaultValue: true);
   if (!kIsWeb) {
@@ -136,7 +136,6 @@ void main(List<String> args) {
   final config = GingaConfig(
     effectiveAppSrc,
     ccws,
-    mainav != null && mainav != 'false',
     usersDataSrc,
     mainAvSrc,
   );

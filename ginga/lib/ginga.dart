@@ -14,31 +14,27 @@ import 'web_utils_stub.dart' if (dart.library.html) 'web_utils_web.dart';
 
 final _logger = Logger('ginga');
 
-const DEFAULT_VIDEO =
-    'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4';
-
 class GingaConfig {
   final String? appSrc;
-  final String mainAvSrc;
+  final String? mainAvSrc;
   final bool enableCCWS;
-  final bool enableMainAv;
   final String? usersDataSrc;
   final SrcResolver contentLoader;
 
   const GingaConfig([
     this.appSrc,
     this.enableCCWS = true,
-    this.enableMainAv = true,
     this.usersDataSrc,
-    this.mainAvSrc = DEFAULT_VIDEO,
+    this.mainAvSrc,
     SrcResolver? contentLoader,
   ]) : contentLoader = contentLoader ?? const FileSrcResolver();
 
-  bool get isEmpty => appSrc == null && !enableMainAv;
+  bool get isEmpty =>
+      appSrc == null && (mainAvSrc == null || mainAvSrc!.isEmpty);
 
   @override
   String toString() {
-    return 'GingaConfig(appSrc: $appSrc, mainAvSrc: $mainAvSrc, enableCCWS: $enableCCWS, enableMainAv: $enableMainAv, usersDataSrc: $usersDataSrc)';
+    return 'GingaConfig(appSrc: $appSrc, mainAvSrc: $mainAvSrc, enableCCWS: $enableCCWS, usersDataSrc: $usersDataSrc)';
   }
 }
 

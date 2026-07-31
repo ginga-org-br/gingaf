@@ -48,7 +48,7 @@ void main() {
   testWidgets('Verify NCLApp receives GingaConfig as parameter and accesses configuration',
       (WidgetTester tester) async {
     final mockBundle = MockNCLAssetBundle();
-    final config = GingaConfig('test_image.ncl', true, true, '{"id": "uConfig"}');
+    final config = GingaConfig('test_image.ncl', true, '{"id": "uConfig"}');
 
     await tester.pumpWidget(
       MaterialApp(

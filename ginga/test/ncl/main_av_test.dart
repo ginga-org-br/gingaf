@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingaf/ginga.dart';
 import 'package:gingaf/main_av.dart';
+import 'package:gingaf/ncl/ncl_app.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 import '../mock_video_player.dart';
 
@@ -44,7 +45,7 @@ void main() {
       'test_bg.ncl': nclData,
     });
 
-    final config = GingaConfig('test_bg.ncl', false, true, null, 'examples/primeiro-joao/media/animGar.mp4');
+    final config = GingaConfig('test_bg.ncl', false, null, 'examples/primeiro-joao/media/animGar.mp4');
 
     await tester.pumpWidget(
       MaterialApp(
@@ -60,8 +61,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    final MainAVWidget mainAV = tester.widget(find.byType(MainAVWidget));
-    expect(mainAV.controller.uri, config.mainAvSrc);
+    final AVWidget av = tester.widget(find.byType(AVWidget));
+    expect(av.src, config.mainAvSrc);
   });
 
   testWidgets('NCLApp background video resolution with online butterfly.mp4 URL', (WidgetTester tester) async {
@@ -78,7 +79,7 @@ void main() {
       'test_bg.ncl': nclData,
     });
 
-    final config = GingaConfig('test_bg.ncl', false, true, null, 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4');
+    final config = GingaConfig('test_bg.ncl', false, null, 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4');
 
     await tester.pumpWidget(
       MaterialApp(
@@ -94,7 +95,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    final MainAVWidget mainAV = tester.widget(find.byType(MainAVWidget));
-    expect(mainAV.controller.uri, 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4');
+    final AVWidget av = tester.widget(find.byType(AVWidget));
+    expect(av.src, 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4');
   });
 }
