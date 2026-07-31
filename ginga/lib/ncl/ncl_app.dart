@@ -38,13 +38,23 @@ class NCLApp extends MediaWidget {
 }
 
 class NCLAppState extends MediaState<NCLApp> {
+  NCLDocument? nclDocument;
   final Map<String, GlobalKey<MediaState>> _mediaStateKeys = {};
   final Map<String, Widget> _cachedWidgets = {};
-  NCLDocument? nclDocument;
   Timer? _ticker;
   String errorMsg = "";
   bool _loading = false;
   String? _initialMainAvUri;
+
+  bool get hasSbtvdMedia {
+    if (nclDocument == null) return false;
+    final activeMedia = nclDocument!.getActiveMedia();
+    return activeMedia.any((m) {
+      final src = m.uri.isNotEmpty ? m.uri : (m.src ?? '');
+      return src.startsWith('sbtvd://');
+    });
+  }
+
   final Map<String, String> persistentVars = {};
 
   bool _syncActiveMedia(List<Media> activeMedia) {
@@ -82,10 +92,10 @@ class NCLAppState extends MediaState<NCLApp> {
       if (!_cachedWidgets.containsKey(id)) {
         final key = GlobalKey<MediaState>();
         final mediaWidget = WidgetFactory.createMediaWidget(
-          key: key,
-          media: media,
-          mainAVController: widget.mainAVController,
-        );
+            key: key,
+            media: media,
+            mainAVController: widget.mainAVController,
+            config: widget.config);
         if (mediaWidget != null) {
           _mediaStateKeys[id] = key;
           _cachedWidgets[id] = mediaWidget;
@@ -194,6 +204,9 @@ class NCLAppState extends MediaState<NCLApp> {
                 _ticker?.cancel();
                 _ticker = null;
                 nclDocument = null;
+                if (mounted) {
+                  NCLAppExitNotification().dispatch(context);
+                }
               }
             }
           });
@@ -201,6 +214,9 @@ class NCLAppState extends MediaState<NCLApp> {
       }
     } catch (e, stacktrace) {
       _logger.severe("Error: $e\n$stacktrace");
+      nclDocument = null;
+      _cachedWidgets.clear();
+      _mediaStateKeys.clear();
       if (mounted) {
         setState(() {
           errorMsg = "Error: $e";
@@ -241,6 +257,25 @@ class NCLAppState extends MediaState<NCLApp> {
 
   @override
   Widget buildWidgetContent(BuildContext context) {
+    if (errorMsg.isNotEmpty) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              errorMsg,
+              style: const TextStyle(
+                  color: Colors.red,
+                  fontSize: 16.0,
+                  fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
+
     if (nclDocument == null && _cachedWidgets.isEmpty) {
       return Scaffold(
         backgroundColor: Colors.transparent,

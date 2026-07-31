@@ -1,14 +1,11 @@
 import 'dart:async';
-import 'dart:convert';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:ncldoc/ncl_document.dart';
 
+import '../../ginga.dart';
 import '../../ginga_src_resolver.dart';
 import '../../main_av.dart';
-import '../../web_utils_stub.dart'
-    if (dart.library.html) '../../web_utils_web.dart';
 import '../ncl_app.dart';
 
 abstract class MediaWidget extends StatefulWidget {
@@ -217,23 +214,23 @@ class WidgetFactory {
     Key? key,
     required Media media,
     MainAVController? mainAVController,
+    GingaConfig? config,
   }) {
     final mimeType = media.mimeType;
     var src = media.uri.isNotEmpty ? media.uri : (media.src ?? '');
     if (src.startsWith('sbtvd://')) {
-      if (mainAVController != null) {
-        var avUri = mainAVController.uri ?? '';
-        if (avUri.isEmpty || avUri.startsWith('sbtvd://')) {
-          avUri =
-              'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4';
-        }
-        return AVWidget(
-          key: key,
-          src: avUri,
-          media: media,
-        );
+      final avUri = (config?.mainAvSrc != null && config!.mainAvSrc!.isNotEmpty)
+          ? config.mainAvSrc!
+          : (mainAVController?.uri ?? '');
+      if (avUri.isEmpty || avUri.startsWith('sbtvd://')) {
+        throw ArgumentError(
+            'mainAvSrc must be provided in GingaConfig when media uses sbtvd:// scheme');
       }
-      return null;
+      return AVWidget(
+        key: key,
+        src: avUri,
+        media: media,
+      );
     }
     if (src.endsWith('.ncl') ||
         mimeType == 'application/x-ncl-NCL' ||

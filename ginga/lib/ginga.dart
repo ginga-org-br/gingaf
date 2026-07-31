@@ -48,21 +48,33 @@ class Ginga extends StatefulWidget {
 
 class _GingaState extends State<Ginga> {
   late final CCWS _ccws;
-  late final MainAVController mainAVController;
+  MainAVController? mainAVController;
   Widget? mainAVWidget;
   Widget? htmlApp;
   Widget? nclApp;
   bool _isExiting = false;
   bool _initialized = false;
 
+  final GlobalKey<ncl.NCLAppState> _nclAppKey = GlobalKey<ncl.NCLAppState>();
+
+  bool get _isSbtvdActiveInNcl {
+    final state = _nclAppKey.currentState;
+    return state?.hasSbtvdMedia ?? false;
+  }
+
   @override
   void initState() {
     super.initState();
     _ccws = CCWS();
-    mainAVController = MainAVController()
-      ..setMainAvUri(widget.config.mainAvSrc);
-    if (widget.config.enableMainAv) {
-      mainAVWidget = MainAVWidget(controller: mainAVController);
+    final appSrc = widget.config.appSrc;
+    if (widget.config.mainAvSrc != null &&
+        widget.config.mainAvSrc!.isNotEmpty) {
+      final controller = MainAVController()
+        ..setMainAvUri(widget.config.mainAvSrc);
+      mainAVController = controller;
+      if (appSrc == null || appSrc.isEmpty) {
+        mainAVWidget = MainAVWidget(controller: controller);
+      }
     }
 
     if (widget.config.isEmpty && !kIsWeb) {
@@ -98,6 +110,7 @@ class _GingaState extends State<Ginga> {
           );
         } else {
           nclApp = ncl.NCLApp(
+            key: _nclAppKey,
             src: appSrc,
             mainAVController: mainAVController,
             config: widget.config,
@@ -119,7 +132,7 @@ class _GingaState extends State<Ginga> {
   }
 
   void _stopServices() {
-    mainAVController.stop();
+    mainAVController?.stop();
     if (widget.config.enableCCWS) {
       _ccws.stop();
     }
