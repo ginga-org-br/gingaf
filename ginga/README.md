@@ -58,13 +58,18 @@ Project configure (once per machine):
 
 ```powershell
 flutter config --enable-android
+
 # Download an Android 34 system image (requires accepting licenses)
 Write-Output "y" | & "$env:LOCALAPPDATA\Android\Sdk\cmdline-tools\latest\bin\sdkmanager.bat" "system-images;android-34;google_apis_playstore;x86_64"
+
 # Create the Android Virtual Device (AVD)
 Write-Output "no" | & "$env:LOCALAPPDATA\Android\Sdk\cmdline-tools\latest\bin\avdmanager.bat" create avd -n flutter_emulator -k "system-images;android-34;google_apis_playstore;x86_64" --device "pixel"
+
+# Launch the emulator (or start via Android Studio > "Virtual Device Manager"):
+flutter emulators --launch flutter_emulator
 ```
 
-at `ginga` fodler and an created emulator called `emulator-5554`, run:
+at `ginga` folder and an created emulator called `emulator-5554`, run:
 
 ```
 flutter run --no-pub -d emulator-5554 --dart-define="APP=examples/image.ncl"
