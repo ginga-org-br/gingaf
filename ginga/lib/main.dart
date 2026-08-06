@@ -54,13 +54,12 @@ void main(List<String> args) {
   }
   if (app == null && kIsWeb) {
     try {
-      final mainFile = getSessionStorageItem('GINGA_PLAYGROUND_MAIN');
+      final mainFile = getGingaAppPath();
       if (mainFile != null && mainFile.isNotEmpty) {
         app = mainFile;
       }
     } catch (e) {
-      _logger.warning(
-          'Failed to read GINGA_PLAYGROUND_MAIN from session storage: $e');
+      _logger.warning('Failed to read app path on web: $e');
     }
   }
   final appSrc = (app != null && app.isNotEmpty) ? app : null;

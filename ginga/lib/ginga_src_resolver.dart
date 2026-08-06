@@ -23,9 +23,8 @@ class GingaSrcResolver extends FileSrcResolver {
     var resolvedSrc = src;
     if (kIsWeb) {
       try {
-        final mockJson = getSessionStorageItem('GINGA_PLAYGROUND_FILES');
-        if (mockJson != null) {
-          final mockFiles = jsonDecode(mockJson);
+        final mockFiles = getGingaAppFiles();
+        if (mockFiles != null) {
           final fileName = Uri.parse(resolvedSrc).pathSegments.isNotEmpty
               ? Uri.parse(resolvedSrc).pathSegments.last
               : resolvedSrc;
@@ -67,9 +66,8 @@ class GingaSrcResolver extends FileSrcResolver {
 
     if (kIsWeb) {
       try {
-        final mockJson = getSessionStorageItem('GINGA_PLAYGROUND_FILES');
-        if (mockJson != null) {
-          final mockFiles = jsonDecode(mockJson);
+        final mockFiles = getGingaAppFiles();
+        if (mockFiles != null) {
           final fileName = resolvedUri.pathSegments.isNotEmpty
               ? resolvedUri.pathSegments.last
               : path;
@@ -78,8 +76,7 @@ class GingaSrcResolver extends FileSrcResolver {
           }
         }
       } catch (e) {
-        _logger.warning(
-            'Failed to read playground files from session storage in exists: $e');
+        _logger.warning('Failed to read files in exists: $e');
       }
     }
 
@@ -116,9 +113,8 @@ class GingaSrcResolver extends FileSrcResolver {
 
     if (kIsWeb) {
       try {
-        final mockJson = getSessionStorageItem('GINGA_PLAYGROUND_FILES');
-        if (mockJson != null) {
-          final mockFiles = jsonDecode(mockJson);
+        final mockFiles = getGingaAppFiles();
+        if (mockFiles != null) {
           final fileName = resolvedUri.pathSegments.isNotEmpty
               ? resolvedUri.pathSegments.last
               : path;
@@ -130,7 +126,7 @@ class GingaSrcResolver extends FileSrcResolver {
           }
         }
       } catch (e) {
-        _logger.warning('Failed to read playground files from session storage: $e');
+        _logger.warning('Failed to read files: $e');
       }
     }
 

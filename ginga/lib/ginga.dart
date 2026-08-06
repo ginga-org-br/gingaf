@@ -19,7 +19,7 @@ class GingaConfig {
   final String? mainAvSrc;
   final bool enableCCWS;
   final String? usersDataSrc;
-  final SrcResolver contentLoader;
+  final SrcResolver _contentLoader;
 
   const GingaConfig([
     this.appSrc,
@@ -27,7 +27,12 @@ class GingaConfig {
     this.usersDataSrc,
     this.mainAvSrc,
     SrcResolver? contentLoader,
-  ]) : contentLoader = contentLoader ?? const FileSrcResolver();
+  ]) : _contentLoader = contentLoader ?? const FileSrcResolver();
+
+  SrcResolver get contentLoader =>
+      (kIsWeb && _contentLoader is FileSrcResolver)
+          ? GingaSrcResolver()
+          : _contentLoader;
 
   bool get isEmpty =>
       appSrc == null && (mainAvSrc == null || mainAvSrc!.isEmpty);
