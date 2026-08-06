@@ -1,0 +1,23 @@
+{
+  "name": "@gingaf/node",
+  "version": "0.1.0",
+  "description": "Node.js middleware and static asset distribution package for GingaF Flutter Web",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "flutter:build": "cd ../ginga && flutter build web --release",
+    "copy:assets": "node -e \"const fs=require('fs'); const path=require('path'); const src='../ginga/build/web'; const dest='./assets'; if (fs.existsSync(dest)) fs.rmSync(dest, { recursive: true, force: true }); fs.mkdirSync(dest, { recursive: true }); fs.cpSync(src, dest, { recursive: true });\"",
+    "build": "npm run flutter:build && npm run copy:assets && tsc",
+    "serve": "node dist/index.js",
+    "serve:vite": "vite preview --outDir assets --open"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.12.7",
+    "typescript": "^5.4.5",
+    "vite": "^5.4.0"
+  }
+}
