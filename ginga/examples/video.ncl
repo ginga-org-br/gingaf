@@ -1,8 +1,7 @@
 <ncl>
   <body>
     <port id="init" component="video"/>
-    <media id="video" src="primeiro-joao/media/animGar.mp4">
-      <!-- <media id="video" src="https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4"> -->
+    <media id="video" src="https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4">
       <area id="a1" begin="2s" end="4s"/>
     </media>
     <media id="green_bg">
