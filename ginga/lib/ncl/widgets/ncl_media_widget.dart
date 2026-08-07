@@ -4,19 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:ncldoc/ncl_document.dart';
 
 import '../../ginga.dart';
-import '../../ginga_src_resolver.dart';
 import '../../main_av.dart';
 import '../ncl_app.dart';
 
 abstract class MediaWidget extends StatefulWidget {
   final String src;
   final Media? media;
+  final GingaConfig config;
 
-  const MediaWidget({
+  MediaWidget({
     super.key,
     required this.src,
     this.media,
-  });
+    GingaConfig? config,
+  }) : config = config ?? GingaConfig();
 }
 
 abstract class MediaState<T extends MediaWidget> extends State<T> {
@@ -159,8 +160,9 @@ abstract class MediaState<T extends MediaWidget> extends State<T> {
   }
 
   Future<String> loadContent(String src) async {
-    final loader = GingaSrcResolver()..setBuildContext(context);
-    final content = await loader.load(src);
+    final loader = widget.config.contentLoader..setBuildContext(context);
+    final uri = loader.resolveUri(src);
+    final content = await loader.load(uri);
     if (content != null) return content;
     throw Exception('Failed to load content for src: $src');
   }
@@ -230,29 +232,30 @@ class WidgetFactory {
         key: key,
         src: avUri,
         media: media,
+        config: config,
       );
     }
     if (src.endsWith('.ncl') ||
         mimeType == 'application/x-ncl-NCL' ||
         mimeType == 'application/x-ncl-ncl') {
-      return NCLApp(key: key, src: src, media: media);
+      return NCLApp(key: key, src: src, media: media, config: config);
     }
     if (mimeType.startsWith('video/') ||
         mimeType.startsWith('audio/') ||
         mimeType.contains('video') ||
         mimeType.contains('audio')) {
-      return AVWidget(key: key, src: src, media: media);
+      return AVWidget(key: key, src: src, media: media, config: config);
     }
     switch (mimeType) {
       case 'application/x-ncl-NCLua':
       case 'application/x-ginga-NCLua':
-        return LuaWidget(key: key, src: src, media: media);
+        return LuaWidget(key: key, src: src, media: media, config: config);
       case 'application/ssml+xml':
-        return SsmlWidget(key: key, src: src, media: media);
+        return SsmlWidget(key: key, src: src, media: media, config: config);
       case 'text/plain':
-        return TextWidget(key: key, src: src, media: media);
+        return TextWidget(key: key, src: src, media: media, config: config);
       case 'text/html':
-        return HtmlWidget(key: key, src: src, media: media);
+        return HtmlWidget(key: key, src: src, media: media, config: config);
       case 'image/png':
       case 'image/jpeg':
       case 'image/gif':
@@ -261,7 +264,7 @@ class WidgetFactory {
       case 'image/heic':
       case 'application/x-ginga-time':
       case 'application/x-ncl-time':
-        return ImageWidget(key: key, src: src, media: media);
+        return ImageWidget(key: key, src: src, media: media, config: config);
       default:
         return null;
     }

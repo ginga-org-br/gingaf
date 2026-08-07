@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'ncl_media_widget.dart';
 
 class TextWidget extends MediaWidget {
-  const TextWidget({
+  TextWidget({
     super.key,
     required super.src,
     super.media,
+    super.config,
   });
 
   @override

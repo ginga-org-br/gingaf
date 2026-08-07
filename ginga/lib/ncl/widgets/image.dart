@@ -2,14 +2,15 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
-import '../../ginga_src_resolver.dart';
+import '../../assets_src_resolver.dart';
 import 'ncl_media_widget.dart';
 
 class ImageWidget extends MediaWidget {
-  const ImageWidget({
+  ImageWidget({
     super.key,
     required super.src,
     super.media,
+    super.config,
   });
 
   @override
@@ -25,16 +26,15 @@ class ImageWidgetState extends MediaState<ImageWidget> {
 
   @override
   Widget buildWidgetContent(BuildContext context) {
-    var uriStr = GingaSrcResolver.resolveUri(widget.src);
+    final parsedUri = widget.config.contentLoader.resolveUri(widget.src);
+    final uriStr = parsedUri.toString();
     if (uriStr.isEmpty) {
       return const SizedBox.shrink();
     }
-    final parsedUri = Uri.tryParse(uriStr);
-    final isHttpOrData = parsedUri != null &&
-        (parsedUri.scheme == 'http' ||
-            parsedUri.scheme == 'https' ||
-            parsedUri.scheme == 'data' ||
-            parsedUri.scheme == 'blob');
+    final isHttpOrData = parsedUri.scheme == 'http' ||
+        parsedUri.scheme == 'https' ||
+        parsedUri.scheme == 'data' ||
+        parsedUri.scheme == 'blob';
 
     if (isHttpOrData) {
       return Image.network(

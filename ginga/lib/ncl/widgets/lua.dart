@@ -4,10 +4,11 @@ import 'package:ncldoc/ncl_document.dart';
 import '../ncl_app.dart';
 
 class LuaWidget extends MediaWidget {
-  const LuaWidget({
+  LuaWidget({
     super.key,
     required super.src,
     super.media,
+    super.config,
   });
 
   @override

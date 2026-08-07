@@ -11,15 +11,14 @@ final _logger = Logger('ginga-html');
 class HTMLApp extends MediaWidget {
   final Map<String, void Function(JavaScriptMessage)>? javaScriptChannels;
   final CCWS? ccws;
-  final GingaConfig? config;
 
-  const HTMLApp(
+  HTMLApp(
       {super.key,
       required super.src,
       super.media,
       this.javaScriptChannels,
       this.ccws,
-      this.config});
+      super.config});
 
   @override
   State<HTMLApp> createState() => HTMLAppState();

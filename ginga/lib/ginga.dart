@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:logging/logging.dart';
 
-import 'ginga_src_resolver.dart';
+import 'assets_src_resolver.dart';
 import 'html/html_app.dart' as html;
 import 'main_av.dart';
 import 'ncl/ncl_app.dart' as ncl;
@@ -19,19 +19,15 @@ class GingaConfig {
   final String? mainAvSrc;
   final bool enableCCWS;
   final String? usersDataSrc;
-  final SrcResolver _contentLoader;
+  final AssetsSrcResolver contentLoader;
 
-  const GingaConfig([
+  GingaConfig([
     this.appSrc,
     this.enableCCWS = true,
     this.usersDataSrc,
     this.mainAvSrc,
-    SrcResolver? contentLoader,
-  ]) : _contentLoader = contentLoader ?? const FileSrcResolver();
-
-  SrcResolver get contentLoader => (kIsWeb && _contentLoader is FileSrcResolver)
-      ? GingaSrcResolver()
-      : _contentLoader;
+    AssetsSrcResolver? contentLoader,
+  ]) : contentLoader = contentLoader ?? AssetsSrcResolver();
 
   bool get isEmpty =>
       appSrc == null && (mainAvSrc == null || mainAvSrc!.isEmpty);
@@ -96,10 +92,7 @@ class _GingaState extends State<Ginga> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (widget.config.contentLoader is GingaSrcResolver) {
-      (widget.config.contentLoader as GingaSrcResolver)
-          .setBuildContext(context);
-    }
+    widget.config.contentLoader.setBuildContext(context);
     if (!_initialized) {
       _initialized = true;
       final appSrc = widget.config.appSrc;

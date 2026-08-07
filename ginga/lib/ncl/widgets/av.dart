@@ -5,14 +5,15 @@ import 'package:flutter/material.dart' hide Action;
 import 'package:ncldoc/event.dart';
 import 'package:video_player/video_player.dart';
 
-import '../../ginga_src_resolver.dart';
+import '../../assets_src_resolver.dart';
 import '../ncl_app.dart';
 
 class AVWidget extends MediaWidget {
-  const AVWidget({
+  AVWidget({
     super.key,
     required super.src,
     super.media,
+    super.config,
   });
 
   @override
@@ -33,13 +34,13 @@ class AVWidgetState extends MediaState<AVWidget> {
 
   Future<void> _initVideo() async {
     try {
-      final src = GingaSrcResolver.resolveUri(widget.src);
-      final parsedUri = Uri.tryParse(src);
+      final parsedUri = widget.config.contentLoader.resolveUri(widget.src);
+      final src = parsedUri.toString();
       final VideoPlayerController controller;
 
-      if (kIsWeb || (parsedUri != null && parsedUri.hasScheme && parsedUri.scheme != 'file')) {
-        controller = VideoPlayerController.networkUrl(parsedUri ?? Uri.parse(src));
-      } else if (parsedUri != null && parsedUri.isScheme('file')) {
+      if (kIsWeb || (parsedUri.hasScheme && parsedUri.scheme != 'file')) {
+        controller = VideoPlayerController.networkUrl(parsedUri);
+      } else if (parsedUri.isScheme('file')) {
         controller = VideoPlayerController.file(File(parsedUri.toFilePath()));
       } else {
         controller = VideoPlayerController.file(File(src));

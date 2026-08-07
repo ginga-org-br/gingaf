@@ -14,8 +14,8 @@ class NCLParser {
 
   NCLParser({
     this.docUri,
-    this.contentLoader = const FileSrcResolver(),
-  });
+    SrcResolver? contentLoader,
+  }) : contentLoader = contentLoader ?? const BaseSrcResolver();
 
   (Head, Body) parseString(String xmlString) {
     if (xmlString.trim().isEmpty) {
@@ -212,18 +212,18 @@ class NCLParser {
         type == 'application/x-ncl-user-settings') {
       return Settings(rawAttributes: rawAttributes, mimeType: type);
     }
-    final resolvedSrc = src.replaceAll('\\', '/');
     final baseDirSrc = baseUri?.toString();
     if (src.isNotEmpty && docUri != null) {
       final isNetworkOrStream = src.startsWith('sbtvd://') ||
           src.startsWith('http://') ||
           src.startsWith('https://');
-      if (!isNetworkOrStream && !contentLoader.exists(resolvedSrc, baseDirSrc)) {
+      final resolvedMediaUri = contentLoader.resolveUri(src, baseDirSrc);
+      if (!isNetworkOrStream && !contentLoader.exists(resolvedMediaUri)) {
         throw FileSystemException('Media src does not exist: $src', src);
       }
     }
     final uri = src.isNotEmpty
-        ? (baseUri?.resolve(resolvedSrc).toString() ?? resolvedSrc)
+        ? (baseUri?.resolve(src).toString() ?? src)
         : '';
     final mimeType = type.isNotEmpty ? type : getMimeTypeFromExtension(src);
     if (mimeType.startsWith('video/') || mimeType.startsWith('audio/')) {

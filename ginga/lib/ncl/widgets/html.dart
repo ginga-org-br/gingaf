@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'ncl_media_widget.dart';
 
 class HtmlWidget extends MediaWidget {
-  const HtmlWidget({
+  HtmlWidget({
     super.key,
     required super.src,
     super.media,
+    super.config,
   });
 
   @override

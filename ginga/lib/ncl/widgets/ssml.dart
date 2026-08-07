@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'ncl_media_widget.dart';
 
 class SsmlWidget extends MediaWidget {
-  const SsmlWidget({
+  SsmlWidget({
     super.key,
     required super.src,
     super.media,
+    super.config,
   });
 
   @override

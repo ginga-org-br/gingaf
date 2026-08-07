@@ -5,7 +5,7 @@ import 'package:logging/logging.dart';
 import 'package:ncldoc/ncl_document.dart';
 
 import '../ginga.dart';
-import '../ginga_src_resolver.dart';
+import '../assets_src_resolver.dart';
 import '../main_av.dart';
 import 'widgets/ncl_media_widget.dart';
 
@@ -23,15 +23,14 @@ class NCLAppExitNotification extends Notification {}
 
 class NCLApp extends MediaWidget {
   final MainAVController? mainAVController;
-  final GingaConfig config;
 
-  const NCLApp({
+  NCLApp({
     super.key,
     required super.src,
     super.media,
     this.mainAVController,
-    GingaConfig? config,
-  }) : config = config ?? const GingaConfig();
+    super.config,
+  });
 
   @override
   State<NCLApp> createState() => NCLAppState();
@@ -123,22 +122,15 @@ class NCLAppState extends MediaState<NCLApp> {
         setState(() {});
       }
 
-      final SrcResolver activeLoader;
-      if (widget.config.contentLoader is GingaSrcResolver) {
-        activeLoader = (widget.config.contentLoader as GingaSrcResolver)
-          ..setBuildContext(context);
-      } else if (widget.config.contentLoader is FileSrcResolver) {
-        activeLoader = GingaSrcResolver()..setBuildContext(context);
-      } else {
-        activeLoader = widget.config.contentLoader;
-      }
+      final activeLoader = widget.config.contentLoader..setBuildContext(context);
 
       final srcString = widget.src;
       final String nclData;
       if (srcString.trim().startsWith('<')) {
         nclData = srcString;
       } else {
-        nclData = await activeLoader.load(srcString) ?? '';
+        final uri = activeLoader.resolveUri(srcString);
+        nclData = await activeLoader.load(uri) ?? '';
       }
       if (!mounted) return;
 
@@ -149,7 +141,8 @@ class NCLAppState extends MediaState<NCLApp> {
         if (str.startsWith('[') || str.startsWith('{')) {
           effectiveUserData = str;
         } else {
-          final content = await activeLoader.load(str);
+          final uri = activeLoader.resolveUri(str);
+          final content = await activeLoader.load(uri);
           if (!mounted) return;
           if (content == null) {
             throw Exception('USERS_DATA file does not exist: $usersDataSrc');
