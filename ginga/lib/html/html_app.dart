@@ -1,6 +1,6 @@
+import 'package:ccws/ccws.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:ccws/ccws.dart';
 import 'package:gingaf/ginga.dart';
 import 'package:gingaf/ncl/widgets/ncl_media_widget.dart';
 import 'package:logging/logging.dart';
@@ -13,14 +13,13 @@ class HTMLApp extends MediaWidget {
   final CCWS? ccws;
   final GingaConfig? config;
 
-  HTMLApp(
+  const HTMLApp(
       {super.key,
-      required String src,
+      required super.src,
       super.media,
       this.javaScriptChannels,
       this.ccws,
-      this.config})
-      : super(src: src);
+      this.config});
 
   @override
   State<HTMLApp> createState() => HTMLAppState();

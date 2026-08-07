@@ -1,11 +1,11 @@
 import 'dart:io';
 
+import 'package:ccws/ccws.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:logging/logging.dart';
 
-import 'package:ccws/ccws.dart';
 import 'ginga_src_resolver.dart';
 import 'html/html_app.dart' as html;
 import 'main_av.dart';
@@ -29,10 +29,9 @@ class GingaConfig {
     SrcResolver? contentLoader,
   ]) : _contentLoader = contentLoader ?? const FileSrcResolver();
 
-  SrcResolver get contentLoader =>
-      (kIsWeb && _contentLoader is FileSrcResolver)
-          ? GingaSrcResolver()
-          : _contentLoader;
+  SrcResolver get contentLoader => (kIsWeb && _contentLoader is FileSrcResolver)
+      ? GingaSrcResolver()
+      : _contentLoader;
 
   bool get isEmpty =>
       appSrc == null && (mainAvSrc == null || mainAvSrc!.isEmpty);
@@ -89,7 +88,6 @@ class _GingaState extends State<Ginga> {
     }
 
     if (widget.config.enableCCWS) {
-      _logger.info('Starting CCWS');
       _ccws.start();
     }
     HardwareKeyboard.instance.addHandler(_handleKeyPress);
@@ -106,7 +104,6 @@ class _GingaState extends State<Ginga> {
       _initialized = true;
       final appSrc = widget.config.appSrc;
       if (appSrc != null) {
-        _logger.info('Starting application $appSrc');
         if (appSrc.toLowerCase().endsWith('.html')) {
           htmlApp = html.HTMLApp(
             src: appSrc,
