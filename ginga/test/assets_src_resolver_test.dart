@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gingaf/ginga_src_resolver.dart';
+import 'package:gingaf/assets_src_resolver.dart';
 
 class MockGingaSrcAssetBundle extends AssetBundle {
   final Map<String, String> assets;
@@ -25,15 +25,15 @@ class MockGingaSrcAssetBundle extends AssetBundle {
 }
 
 void main() {
-  group('GingaSrcResolver Unit Tests', () {
+  group('AssetsSrcResolver Unit Tests', () {
     testWidgets('handles data URIs', (WidgetTester tester) async {
-      late GingaSrcResolver loader;
+      late AssetsSrcResolver loader;
 
       await tester.pumpWidget(
         MaterialApp(
           home: Builder(
             builder: (context) {
-              loader = GingaSrcResolver()..setBuildContext(context);
+              loader = AssetsSrcResolver()..setBuildContext(context);
               return const SizedBox();
             },
           ),
@@ -41,20 +41,21 @@ void main() {
       );
 
       final dataSrc = Uri.dataFromString('hello world', mimeType: 'text/plain').toString();
-      expect(loader.exists(dataSrc), isTrue);
-      final content = await loader.load(dataSrc);
+      final dataUri = loader.resolveUri(dataSrc);
+      expect(loader.exists(dataUri), isTrue);
+      final content = await loader.load(dataUri);
       expect(content, equals('hello world'));
     });
 
     testWidgets('handles non-existent file URI sources',
         (WidgetTester tester) async {
-      late GingaSrcResolver loader;
+      late AssetsSrcResolver loader;
 
       await tester.pumpWidget(
         MaterialApp(
           home: Builder(
             builder: (context) {
-              loader = GingaSrcResolver()..setBuildContext(context);
+              loader = AssetsSrcResolver()..setBuildContext(context);
               return const SizedBox();
             },
           ),
@@ -62,19 +63,20 @@ void main() {
       );
 
       const fileUriSrc = 'file:///non_existent_dir/non_existent_file.ncl';
-      expect(loader.exists(fileUriSrc), isFalse);
-      final content = await loader.load(fileUriSrc);
+      final fileUri = loader.resolveUri(fileUriSrc);
+      expect(loader.exists(fileUri), isFalse);
+      final content = await loader.load(fileUri);
       expect(content, isNull);
     });
 
     testWidgets('handles empty sources', (WidgetTester tester) async {
-      late GingaSrcResolver loader;
+      late AssetsSrcResolver loader;
 
       await tester.pumpWidget(
         MaterialApp(
           home: Builder(
             builder: (context) {
-              loader = GingaSrcResolver()..setBuildContext(context);
+              loader = AssetsSrcResolver()..setBuildContext(context);
               return const SizedBox();
             },
           ),
@@ -82,14 +84,15 @@ void main() {
       );
 
       const emptySrc = '';
-      expect(loader.exists(emptySrc), isFalse);
-      final content = await loader.load(emptySrc);
+      final emptyUri = loader.resolveUri(emptySrc);
+      expect(loader.exists(emptyUri), isFalse);
+      final content = await loader.load(emptyUri);
       expect(content, isNull);
     });
 
     testWidgets('loads assets from DefaultAssetBundle',
         (WidgetTester tester) async {
-      late GingaSrcResolver loader;
+      late AssetsSrcResolver loader;
       final mockBundle = MockGingaSrcAssetBundle({
         'media/test.ncl': '<ncl></ncl>',
       });
@@ -100,7 +103,7 @@ void main() {
             bundle: mockBundle,
             child: Builder(
               builder: (context) {
-                loader = GingaSrcResolver()..setBuildContext(context);
+                loader = AssetsSrcResolver()..setBuildContext(context);
                 return const SizedBox();
               },
             ),
@@ -109,14 +112,15 @@ void main() {
       );
 
       const src = 'media/test.ncl';
-      expect(loader.exists(src), isTrue);
-      final content = await loader.load(src);
+      final uri = loader.resolveUri(src);
+      expect(loader.exists(uri), isTrue);
+      final content = await loader.load(uri);
       expect(content, equals('<ncl></ncl>'));
     });
 
     testWidgets('setBuildContext configures loader BuildContext',
         (WidgetTester tester) async {
-      final loader = GingaSrcResolver();
+      final loader = AssetsSrcResolver();
       final mockBundle = MockGingaSrcAssetBundle({
         'media/test2.ncl': '<ncl>test2</ncl>',
       });
@@ -136,8 +140,51 @@ void main() {
       );
 
       const src = 'media/test2.ncl';
-      final content = await loader.load(src);
+      final uri = loader.resolveUri(src);
+      final content = await loader.load(uri);
       expect(content, equals('<ncl>test2</ncl>'));
+    });
+
+    test('resolveUri leaves http and https URIs unchanged', () {
+      expect(
+        AssetsSrcResolver()
+            .resolveUri(
+                'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/ginga/examples/video.ncl')
+            .toString(),
+        equals(
+            'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/ginga/examples/video.ncl'),
+      );
+      expect(
+        AssetsSrcResolver().resolveUri('http://example.com/test.ncl').toString(),
+        equals('http://example.com/test.ncl'),
+      );
+    });
+
+    testWidgets('does not query asset bundle for HTTP/HTTPS URIs',
+        (WidgetTester tester) async {
+      late AssetsSrcResolver loader;
+      final requestedKeys = <String>[];
+      final mockBundle = MockGingaSrcAssetBundle({});
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: DefaultAssetBundle(
+            bundle: mockBundle,
+            child: Builder(
+              builder: (context) {
+                loader = AssetsSrcResolver()..setBuildContext(context);
+                return const SizedBox();
+              },
+            ),
+          ),
+        ),
+      );
+
+      const httpUrl =
+          'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/ginga/examples/video.ncl';
+      final httpUri = loader.resolveUri(httpUrl);
+      expect(loader.exists(httpUri), isTrue);
+      expect(requestedKeys, isEmpty);
     });
   });
 }

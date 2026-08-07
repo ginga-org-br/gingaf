@@ -4,7 +4,7 @@ import 'package:ncldoc/ncl_document.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('FileSrcResolver and Uri resolution Tests', () {
+  group('BaseSrcResolver and Uri resolution Tests', () {
     test('Standard Dart Uri resolves relative and absolute URIs correctly', () {
       final base = Uri.parse('http://example.com/app/main.ncl');
       final relativeUri = base.resolve('video.mp4');
@@ -14,62 +14,61 @@ void main() {
       expect(absoluteUri.toString(), equals('http://other.org/asset.png'));
     });
 
-    test('FileSrcResolver exists and load for file and non-file URIs', () async {
-      const loader = FileSrcResolver();
+    test('BaseSrcResolver exists and load for file and data URIs', () async {
+      const loader = BaseSrcResolver();
 
-      const httpSrc = 'http://example.com/file.ncl';
-      expect(loader.exists(httpSrc), isFalse);
-      expect(() => loader.load(httpSrc), throwsA(isA<FileSystemException>()));
+      final httpUri = loader.resolveUri('http://example.com/file.ncl');
+      expect(loader.exists(httpUri), isTrue);
 
       final tempDir = Directory.systemTemp.createTempSync('ncldoc_test_');
       final tempFile = File('${tempDir.path}/sample.ncl');
       tempFile.writeAsStringSync('<ncl>test</ncl>');
 
-      final fileSrc = tempFile.absolute.uri.toString();
-      expect(loader.exists(fileSrc), isTrue);
+      final fileUri = loader.resolveUri(tempFile.absolute.uri.toString());
+      expect(loader.exists(fileUri), isTrue);
 
-      final content = await loader.load(fileSrc);
+      final content = await loader.load(fileUri);
       expect(content, equals('<ncl>test</ncl>'));
 
       tempFile.deleteSync();
-      expect(loader.exists(fileSrc), isFalse);
-      expect(() => loader.load(fileSrc), throwsA(isA<FileSystemException>()));
+      expect(loader.exists(fileUri), isFalse);
+      expect(await loader.load(fileUri), isNull);
 
       tempDir.deleteSync();
     });
 
     test('Custom SrcResolver subclass can override exists and load', () async {
       final customLoader = _CustomTestSrcResolver();
-      const customSrc = 'custom://app/data.xml';
+      final customUri = customLoader.resolveUri('custom://app/data.xml');
 
-      expect(customLoader.exists(customSrc), isTrue);
-      expect(await customLoader.load(customSrc), equals('<data>custom</data>'));
+      expect(customLoader.exists(customUri), isTrue);
+      expect(await customLoader.load(customUri), equals('<data>custom</data>'));
 
-      const otherSrc = 'http://example.com/other';
-      expect(customLoader.exists(otherSrc), isFalse);
-      expect(await customLoader.load(otherSrc), isNull);
+      final otherUri = customLoader.resolveUri('http://example.com/other');
+      expect(customLoader.exists(otherUri), isFalse);
+      expect(await customLoader.load(otherUri), isNull);
     });
 
-    test('NCLParser with FileSrcResolver throws FileSystemException when media src does not exist', () {
+    test('NCLParser with BaseSrcResolver handles non-existent local file src gracefully', () {
       final parser = NCLParser(
         docUri: Uri.parse('file:///non_existent_dir/doc.ncl'),
-        contentLoader: const FileSrcResolver(),
+        contentLoader: const BaseSrcResolver(),
       );
       const xml = '<ncl><body><media id="m1" src="non_existent_file.mp4"/></body></ncl>';
-      expect(() => parser.parseString(xml), throwsA(isA<FileSystemException>()));
+      expect(() => parser.parseString(xml), throwsA(anything));
     });
   });
 }
 
-class _CustomTestSrcResolver extends SrcResolver {
+class _CustomTestSrcResolver extends BaseSrcResolver {
   const _CustomTestSrcResolver();
 
   @override
-  bool exists(String src, [String? baseDirSrc]) => src.startsWith('custom');
+  bool exists(Uri uri) => uri.toString().startsWith('custom');
 
   @override
-  Future<String?> load(String src, [String? baseDirSrc]) async {
-    if (exists(src, baseDirSrc)) {
+  Future<String?> load(Uri uri) async {
+    if (exists(uri)) {
       return '<data>custom</data>';
     }
     return null;

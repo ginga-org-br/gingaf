@@ -1,27 +1,40 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:http/http.dart' as http;
+import 'package:logging/logging.dart';
+
+final _logger = Logger('ncldoc');
+
 abstract class SrcResolver {
   const SrcResolver();
 
-  bool exists(String src, [String? baseDirSrc]);
-  Future<String?> load(String src, [String? baseDirSrc]);
+  Uri resolveUri(String src, [String? baseDirSrc]);
+  bool exists(Uri uri);
+  Future<String?> load(Uri uri);
 }
 
-class FileSrcResolver extends SrcResolver {
-  const FileSrcResolver();
+class BaseSrcResolver extends SrcResolver {
+  const BaseSrcResolver();
 
-  File? resolveFile(String src, [String? baseDirSrc]) {
+  @override
+  Uri resolveUri(String src, [String? baseDirSrc]) {
     final rawSrc = src.trim();
-    if (rawSrc.isEmpty || rawSrc.startsWith('<')) return null;
-
     final srcUri = Uri.tryParse(rawSrc) ?? Uri(path: rawSrc);
     final baseUri = baseDirSrc != null ? Uri.tryParse(baseDirSrc) : null;
-    final resolvedUri = baseUri != null ? baseUri.resolveUri(srcUri) : srcUri;
+    return baseUri != null ? baseUri.resolveUri(srcUri) : srcUri;
+  }
 
-    final path = resolvedUri.isScheme('file')
-        ? resolvedUri.toFilePath()
-        : (resolvedUri.hasScheme ? resolvedUri.path : Uri.decodeComponent(resolvedUri.toString()));
+  File? resolveFile(Uri uri) {
+    if (kIsWeb) return null;
+
+    final rawSrc = uri.toString().trim();
+    if (rawSrc.isEmpty || rawSrc.startsWith('<')) return null;
+
+    final path = uri.isScheme('file')
+        ? uri.toFilePath()
+        : (uri.hasScheme ? uri.path : Uri.decodeComponent(uri.toString()));
 
     if (path.isNotEmpty) {
       final file = File(path);
@@ -44,19 +57,53 @@ class FileSrcResolver extends SrcResolver {
   }
 
   @override
-  bool exists(String src, [String? baseDirSrc]) {
-    return resolveFile(src, baseDirSrc) != null;
+  bool exists(Uri uri) {
+    final scheme = uri.scheme.toLowerCase();
+
+    if (scheme == 'data' || scheme == 'http' || scheme == 'https') {
+      return true;
+    }
+
+    if (kIsWeb) return false;
+
+    return resolveFile(uri) != null;
   }
 
   @override
-  Future<String?> load(String src, [String? baseDirSrc]) async {
-    final rawSrc = src.trim();
+  Future<String?> load(Uri uri) async {
+    final rawSrc = uri.toString().trim();
     if (rawSrc.isEmpty) return null;
 
-    final file = resolveFile(src, baseDirSrc);
-    if (file != null) {
-      return await file.readAsString();
+    final scheme = uri.scheme.toLowerCase();
+
+    if (scheme == 'data') {
+      return uri.data?.contentAsString();
     }
-    throw FileSystemException('Cannot read file for src: $src', src);
+
+    if (scheme == 'http' || scheme == 'https') {
+      try {
+        final response = await http.get(uri);
+        if (response.statusCode == 200) {
+          return response.body;
+        } else {
+          _logger.warning(
+              'HTTP request for $uri failed with status: ${response.statusCode}');
+        }
+      } catch (e) {
+        _logger.warning('Failed to load remote HTTP URL ($uri): $e');
+      }
+      return null;
+    }
+
+    if (!kIsWeb) {
+      final file = resolveFile(uri);
+      if (file != null) {
+        return await file.readAsString();
+      }
+    }
+
+    return null;
   }
 }
+
+
