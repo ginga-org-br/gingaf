@@ -1,5 +1,14 @@
-PYTHON ?= python
-rmdir = $(PYTHON) -c "import shutil, sys; [shutil.rmtree(f, ignore_errors=True) for f in sys.argv[1:]]"
+ifeq ($(OS),Windows_NT)
+    RM = if exist $(subst /,\,$1) del /F /Q $(subst /,\,$1)
+    RMDIR = if exist $(subst /,\,$1) rmdir /S /Q $(subst /,\,$1)
+    MKDIR = if not exist $(subst /,\,$1) mkdir $(subst /,\,$1)
+    CP = copy /Y $(subst /,\,$1) $(subst /,\,$2)
+else
+    RM = rm -f
+    RMDIR = rm -rf
+    MKDIR = mkdir -p
+    CP = cp
+endif
 
 .PHONY: help deps build serve clean run-example check-app
 
@@ -23,7 +32,8 @@ serve:
 	npm run serve
 
 clean:
-	@$(rmdir) dist assets
+	@$(call RMDIR,dist)
+	@$(call RMDIR,assets)
 
 check-app:
 	$(if $(app),,$(error Please specify app (e.g. app=video.ncl)))

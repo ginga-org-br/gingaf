@@ -1,9 +1,14 @@
-PYTHON ?= python
-rm = $(PYTHON) -c "import os, sys; [os.remove(f) for f in sys.argv[1:] if os.path.exists(f)]"
-rmdir = $(PYTHON) -c "import shutil, sys; [shutil.rmtree(f, ignore_errors=True) for f in sys.argv[1:]]"
-mkdir = $(PYTHON) -c "import os, sys; [os.makedirs(f, exist_ok=True) for f in sys.argv[1:]]"
-cp = $(PYTHON) -c "import shutil, sys; shutil.copy2(sys.argv[1], sys.argv[2])"
-cpdir = $(PYTHON) -c "import shutil, sys; shutil.copytree(sys.argv[1], sys.argv[2], dirs_exist_ok=True)"
+ifeq ($(OS),Windows_NT)
+    RM = if exist $(subst /,\,$1) del /F /Q $(subst /,\,$1)
+    RMDIR = if exist $(subst /,\,$1) rmdir /S /Q $(subst /,\,$1)
+    MKDIR = if not exist $(subst /,\,$1) mkdir $(subst /,\,$1)
+    CP = copy /Y $(subst /,\,$1) $(subst /,\,$2)
+else
+    RM = rm -f
+    RMDIR = rm -rf
+    MKDIR = mkdir -p
+    CP = cp
+endif
 
 .PHONY: help test deps serve build clean
 
@@ -25,8 +30,8 @@ test:
 
 public/player/flutter_bootstrap.js:
 	$(MAKE) -C ../ginga build-web BASE_HREF=/gingaf/playground/player/
-	@$(mkdir) public/player
-	@$(cpdir) ../ginga/build/web public/player
+	@$(call MKDIR,public/player)
+	@$(call CP,../ginga/build/web,public/player)
 
 serve: public/player/flutter_bootstrap.js
 	npm run dev
@@ -35,4 +40,5 @@ build: public/player/flutter_bootstrap.js
 	npm run build
 
 clean:
-	@$(rmdir) dist public/player
+	@$(call RMDIR,dist)
+	@$(call RMDIR,public/player)
