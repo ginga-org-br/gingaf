@@ -84,8 +84,13 @@ class CCWS {
       try {
         Map<String, dynamic>? mapData;
 
-        if (data is String) {
-          mapData = jsonDecode(data);
+        if (data is String && data.trim().startsWith('{')) {
+          try {
+            final decoded = jsonDecode(data);
+            if (decoded is Map) {
+              mapData = Map<String, dynamic>.from(decoded);
+            }
+          } catch (_) {}
         } else if (data is Map) {
           mapData = Map<String, dynamic>.from(data);
         }
