@@ -3,11 +3,13 @@ ifeq ($(OS),Windows_NT)
     RMDIR = if exist $(subst /,\,$1) rmdir /S /Q $(subst /,\,$1)
     MKDIR = if not exist $(subst /,\,$1) mkdir $(subst /,\,$1)
     CP = copy /Y $(subst /,\,$1) $(subst /,\,$2)
+    CPDIR = xcopy /E /I /Y /Q $(subst /,\,$1) $(subst /,\,$2)
 else
     RM = rm -f
     RMDIR = rm -rf
     MKDIR = mkdir -p
     CP = cp
+    CPDIR = cp -R
 endif
 
 .PHONY: help test deps serve build clean
@@ -31,7 +33,7 @@ test:
 public/player/flutter_bootstrap.js:
 	$(MAKE) -C ../ginga build-web BASE_HREF=/gingaf/playground/player/
 	@$(call MKDIR,public/player)
-	@$(call CP,../ginga/build/web,public/player)
+	@$(call CPDIR,../ginga/build/web,public/player)
 
 serve: public/player/flutter_bootstrap.js
 	npm run dev
