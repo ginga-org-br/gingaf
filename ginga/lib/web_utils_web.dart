@@ -22,6 +22,13 @@ String? getGingaAppPath() {
       }
     }
   } catch (_) {}
+  try {
+    final uri = Uri.parse(html.window.location.href);
+    final queryApp = uri.queryParameters['app'];
+    if (queryApp != null && queryApp.isNotEmpty) {
+      return queryApp;
+    }
+  } catch (_) {}
   return getSessionStorageItem('GINGA_PLAYGROUND_MAIN');
 }
 
