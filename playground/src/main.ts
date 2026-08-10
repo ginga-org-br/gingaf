@@ -136,16 +136,42 @@ async function initPlayground() {
   if (!editorContainer || !editorTabs || !runBtn || !selectEl || !iframe) return;
 
   const queryConfig = parseQueryConfig(window.location.search);
+  const requested = queryConfig.requestedExample;
 
   if (queryConfig.isEmbed) {
     document.body.classList.add('embed-mode');
   }
 
-  const defaultKey = resolveExampleKey(queryConfig.requestedExample, examples);
+  let defaultKey = resolveExampleKey(requested, examples);
+
+  if (requested && !examples[defaultKey]) {
+    const isUrl = requested.startsWith('http://') || requested.startsWith('https://');
+    const fileName = requested.split('/').pop()?.split('?')[0] || 'app.ncl';
+    defaultKey = 'requested_app';
+    examples[defaultKey] = {
+      mainFile: fileName,
+      rawMainUrl: isUrl ? requested : undefined,
+      files: {},
+      fileUrls: isUrl ? { [fileName]: requested } : undefined
+    };
+  }
 
   let currentExample = examples[defaultKey];
   let currentFileName = currentExample.mainFile;
   let isRunning = false;
+
+  if (requested) {
+    const selectLabel = document.querySelector('label[for="example-select"]') as HTMLElement;
+    if (selectLabel) selectLabel.style.display = 'none';
+    if (selectEl) selectEl.style.display = 'none';
+    if (uploadBtn) uploadBtn.style.display = 'none';
+    selectEl.innerHTML = '';
+    const opt = document.createElement('option');
+    opt.value = defaultKey;
+    opt.textContent = currentExample.mainFile;
+    selectEl.appendChild(opt);
+  }
+
   selectEl.value = defaultKey;
 
   await loadExampleFiles(currentExample);

@@ -4,12 +4,17 @@ import fs from 'fs';
 import { getAssetsPath } from 'gingaf-node';
 
 export default defineConfig({
-  base: '/playground/',
+  base: process.env.VITE_BASE || '/gingaf/playground/',
   plugins: [
     {
       name: 'playground',
       configureServer(server) {
         server.middlewares.use((req, res, next) => {
+          if (req.url === '/' || req.url === '') {
+            res.writeHead(302, { Location: '/gingaf/playground/' });
+            res.end();
+            return;
+          }
           if (req.url && (req.url.startsWith('/gingaf-web') || req.url.includes('/gingaf-web'))) {
             let subPath = req.url.replace(/^.*\/gingaf-web\/?/, '').split('?')[0];
             if (!subPath || subPath === '') {

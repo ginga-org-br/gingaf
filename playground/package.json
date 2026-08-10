@@ -4,8 +4,10 @@
   "version": "0.1.1",
   "type": "module",
   "scripts": {
-    "clean": "node -e \"const fs=require('fs'); ['dist', 'public/gingaf-web'].forEach(d => fs.existsSync(d) && fs.rmSync(d, { recursive: true, force: true }));\"",
+    "clean": "node -e \"const fs=require('fs'); ['dist', 'site', 'public/gingaf-web'].forEach(d => fs.existsSync(d) && fs.rmSync(d, { recursive: true, force: true }));\"",
+    "prebuild": "cd ../ginga-node && npm install && npm run build",
     "dev": "vite",
+    "run-example": "vite --open /gingaf/playground/index-app-example.html",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "start": "npx concurrently \"npm run dev\" \"npx serve -p 8080 ../ginga/build/web --cors\""
