@@ -1,0 +1,13 @@
+{
+  "name": "gingaf-node-example",
+  "description": "Express application example utilizing gingaf-node",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "gingaf-node": "file:.."
+  }
+}

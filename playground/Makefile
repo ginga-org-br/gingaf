@@ -25,22 +25,17 @@ help:
 	@echo   clean  Clean playground build artifacts
 
 deps:
+	$(MAKE) -C ../ginga-node build
 	npm install --no-audit --no-fund
 
 test:
 	node test/main.test.js
 
-public/player/flutter_bootstrap.js:
-	$(MAKE) -C ../ginga build-web BASE_HREF=/gingaf/playground/player/
-	@$(call MKDIR,public/player)
-	@$(call CPDIR,../ginga/build/web,public/player)
-
-serve: public/player/flutter_bootstrap.js
+serve:
 	npm run dev
 
-build: public/player/flutter_bootstrap.js
+build:
 	npm run build
 
 clean:
-	@$(call RMDIR,dist)
-	@$(call RMDIR,public/player)
+	npm run clean

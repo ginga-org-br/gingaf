@@ -4,6 +4,7 @@
   "version": "0.1.1",
   "type": "module",
   "scripts": {
+    "clean": "node -e \"const fs=require('fs'); ['dist', 'public/gingaf-web'].forEach(d => fs.existsSync(d) && fs.rmSync(d, { recursive: true, force: true }));\"",
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
@@ -11,9 +12,10 @@
   },
   "devDependencies": {
     "typescript": "~6.0.2",
-    "vite": "^8.0.12"
+    "vite": "8.2.1"
   },
   "dependencies": {
-    "monaco-editor": "^0.55.1"
+    "gingaf-node": "file:../ginga-node",
+    "monaco-editor": "^0.53.0"
   }
 }

@@ -32,7 +32,7 @@ const pjMediaFiles: Record<string, string> = {
   'media/techno.png': `${RAW_PJ_BASE}media/techno.png`,
 };
 
-self.MonacoEnvironment = {
+(self as any).MonacoEnvironment = {
   getWorker(_workerId: string, _label: string) {
     return new EditorWorker();
   }
@@ -274,7 +274,7 @@ async function initPlayground() {
       editor.updateOptions({ readOnly: true });
       document.getElementById('editor-overlay')?.classList.remove('hidden');
       runBtn.textContent = 'Stop';
-      iframe.src = 'player/index.html';
+      iframe.src = 'gingaf-web/index.html';
       isRunning = true;
     }
   });
