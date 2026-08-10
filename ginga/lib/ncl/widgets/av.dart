@@ -33,8 +33,11 @@ class AVWidgetState extends MediaState<AVWidget> {
   }
 
   Future<void> _initVideo() async {
+    if (widget.src.trim().isEmpty) return;
     try {
-      final parsedUri = widget.config.contentLoader.resolveUri(widget.src);
+      final loader = widget.config.contentLoader..setBuildContext(context);
+      final parsedUri = loader.resolveUri(widget.src);
+      assert(loader.exists(parsedUri));
       final src = parsedUri.toString();
       final VideoPlayerController controller;
 

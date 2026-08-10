@@ -20,15 +20,39 @@ class AssetsSrcResolver extends BaseSrcResolver {
 
   @override
   Uri resolveUri(String src, [String? baseDirSrc]) {
-    return super.resolveUri(src, baseDirSrc);
+    final uri = super.resolveUri(src, baseDirSrc);
+    if (kIsWeb) {
+      try {
+        final mockFiles = getGingaAppFiles();
+        if (mockFiles != null) {
+          final fileName =
+              uri.pathSegments.isNotEmpty ? uri.pathSegments.last : uri.path;
+          final rawSrc = uri.toString().trim();
+          String? matchedValue;
+          if (mockFiles.containsKey(fileName)) {
+            matchedValue = mockFiles[fileName]?.toString();
+          } else if (mockFiles.containsKey(uri.path)) {
+            matchedValue = mockFiles[uri.path]?.toString();
+          } else if (mockFiles.containsKey(rawSrc)) {
+            matchedValue = mockFiles[rawSrc]?.toString();
+          }
+
+          if (matchedValue != null &&
+              (matchedValue.startsWith('http://') ||
+                  matchedValue.startsWith('https://') ||
+                  matchedValue.startsWith('data:'))) {
+            return Uri.tryParse(matchedValue) ?? uri;
+          }
+        }
+      } catch (e) {
+        _logger.warning('Failed to resolve mock uri: $e');
+      }
+    }
+    return uri;
   }
 
   @override
   bool exists(Uri uri) {
-    if (super.exists(uri)) {
-      return true;
-    }
-
     final rawSrc = uri.toString().trim();
     if (rawSrc.isEmpty || rawSrc.startsWith('<')) return false;
 
@@ -36,9 +60,8 @@ class AssetsSrcResolver extends BaseSrcResolver {
       try {
         final mockFiles = getGingaAppFiles();
         if (mockFiles != null) {
-          final fileName = uri.pathSegments.isNotEmpty
-              ? uri.pathSegments.last
-              : uri.path;
+          final fileName =
+              uri.pathSegments.isNotEmpty ? uri.pathSegments.last : uri.path;
           if (mockFiles.containsKey(fileName) ||
               mockFiles.containsKey(uri.path) ||
               mockFiles.containsKey(rawSrc)) {
@@ -50,18 +73,15 @@ class AssetsSrcResolver extends BaseSrcResolver {
       }
     }
 
+    if (super.exists(uri)) {
+      return true;
+    }
+
     return !uri.isScheme('file') && uri.path.isNotEmpty;
   }
 
   @override
   Future<String?> load(Uri uri) async {
-    try {
-      final superContent = await super.load(uri);
-      if (superContent != null) {
-        return superContent;
-      }
-    } catch (_) {}
-
     final rawSrc = uri.toString().trim();
     if (rawSrc.isEmpty) return null;
 
@@ -69,9 +89,8 @@ class AssetsSrcResolver extends BaseSrcResolver {
       try {
         final mockFiles = getGingaAppFiles();
         if (mockFiles != null) {
-          final fileName = uri.pathSegments.isNotEmpty
-              ? uri.pathSegments.last
-              : uri.path;
+          final fileName =
+              uri.pathSegments.isNotEmpty ? uri.pathSegments.last : uri.path;
           if (mockFiles.containsKey(fileName)) {
             return mockFiles[fileName];
           }
@@ -85,6 +104,15 @@ class AssetsSrcResolver extends BaseSrcResolver {
       } catch (e) {
         _logger.warning('Failed to read files: $e');
       }
+    }
+
+    try {
+      final superContent = await super.load(uri);
+      if (superContent != null) {
+        return superContent;
+      }
+    } catch (_) {
+      return null;
     }
 
     if (_context != null) {
@@ -112,4 +140,3 @@ class AssetsSrcResolver extends BaseSrcResolver {
     return null;
   }
 }
-

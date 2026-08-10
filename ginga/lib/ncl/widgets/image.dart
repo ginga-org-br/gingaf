@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
-import '../../assets_src_resolver.dart';
 import 'ncl_media_widget.dart';
 
 class ImageWidget extends MediaWidget {
@@ -18,19 +17,30 @@ class ImageWidget extends MediaWidget {
 }
 
 class ImageWidgetState extends MediaState<ImageWidget> {
+  Uri? _parsedUri;
+
   @override
   void initState() {
     super.initState();
     parseProperties(widget.media);
+    _initImage();
+  }
+
+  void _initImage() {
+    if (widget.src.trim().isEmpty) return;
+    final loader = widget.config.contentLoader..setBuildContext(context);
+    final parsedUri = loader.resolveUri(widget.src);
+    assert(loader.exists(parsedUri));
+    _parsedUri = parsedUri;
   }
 
   @override
   Widget buildWidgetContent(BuildContext context) {
-    final parsedUri = widget.config.contentLoader.resolveUri(widget.src);
-    final uriStr = parsedUri.toString();
-    if (uriStr.isEmpty) {
+    final parsedUri = _parsedUri;
+    if (parsedUri == null) {
       return const SizedBox.shrink();
     }
+    final uriStr = parsedUri.toString();
     final isHttpOrData = parsedUri.scheme == 'http' ||
         parsedUri.scheme == 'https' ||
         parsedUri.scheme == 'data' ||
@@ -52,9 +62,8 @@ class ImageWidgetState extends MediaState<ImageWidget> {
         },
       );
     } else {
-      final localPath = (parsedUri != null && parsedUri.isScheme('file'))
-          ? parsedUri.toFilePath()
-          : uriStr;
+      final localPath =
+          (parsedUri.isScheme('file')) ? parsedUri.toFilePath() : uriStr;
       return Image.file(
         File(localPath),
         fit: BoxFit.fill,
