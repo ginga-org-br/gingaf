@@ -1,6 +1,6 @@
 {
-  "name": "gingaf-node-example",
-  "description": "Express application example utilizing gingaf-node",
+  "name": "example-node-fs",
+  "description": "Express application example utilizing ginga-node",
   "private": true,
   "main": "index.js",
   "scripts": {
@@ -8,6 +8,6 @@
   },
   "dependencies": {
     "express": "^4.19.2",
-    "gingaf-node": "file:.."
+    "ginga-node": "file:.."
   }
 }

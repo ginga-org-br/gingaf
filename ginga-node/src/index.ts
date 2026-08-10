@@ -3,8 +3,16 @@ import fs from 'fs';
 import type { Express, Handler } from 'express';
 
 export function getAssetsPath(): string {
-  const assetsPath = path.resolve(__dirname, '..', 'assets');
-  return assetsPath;
+  const distPath = path.resolve(__dirname, 'gingaf-web');
+  if (fs.existsSync(distPath)) return distPath;
+
+  const distParentPath = path.resolve(__dirname, '..', 'dist', 'gingaf-web');
+  if (fs.existsSync(distParentPath)) return distParentPath;
+
+  const publicPath = path.resolve(__dirname, '..', 'public', 'gingaf-web');
+  if (fs.existsSync(publicPath)) return publicPath;
+
+  return path.resolve(__dirname, '..', 'assets');
 }
 
 export function gingafMiddleware(): Handler {
@@ -12,6 +20,8 @@ export function gingafMiddleware(): Handler {
   const assetsPath = getAssetsPath();
   return express.static(assetsPath);
 }
+
+export const gingaMiddleware = gingafMiddleware;
 
 export function startServer(port: number = 3000): Promise<Express> {
   return new Promise((resolve) => {

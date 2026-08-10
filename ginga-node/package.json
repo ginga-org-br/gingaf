@@ -1,20 +1,31 @@
 {
-  "name": "gingaf-node",
+  "name": "ginga-node",
   "version": "0.1.1",
   "description": "Node.js middleware and static asset distribution package for GingaF Flutter Web",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "ginga-node": "./bin/ginga-node.js"
+  },
   "files": [
     "dist",
-    "assets"
+    "assets",
+    "bin"
   ],
   "scripts": {
-    "flutter:build": "node -e \"const fs=require('fs'); const cp=require('child_process'); if (!fs.existsSync('../ginga/build/web/index.html')) cp.execSync('cd ../ginga && flutter build web --release', { stdio: 'inherit' }); else console.log('Flutter web build exists, skipping build.');\"",
-    "flutter:build:force": "cd ../ginga && flutter build web --release",
+    "flutter:build": "node -e \"const fs=require('fs'); const cp=require('child_process'); if (!fs.existsSync('../gingaf/ginga/build/web/index.html')) cp.execSync('cd ../gingaf/ginga && flutter build web --release', { stdio: 'inherit' }); else console.log('Flutter web build exists, skipping build.');\"",
+    "flutter:build:force": "cd ../gingaf/ginga && flutter build web --release",
     "copy:assets": "node scripts/copy-assets.js",
-    "build": "npm run flutter:build && npm run copy:assets && tsc",
-    "serve": "node dist/index.js",
-    "serve:vite": "vite preview --outDir assets --open"
+    "bundle:examples": "node scripts/bundle-examples.js",
+    "clean": "node -e \"const fs=require('fs'); ['dist', 'site', 'public/gingaf-web'].forEach(d => fs.existsSync(d) && fs.rmSync(d, { recursive: true, force: true }));\"",
+    "dev": "node scripts/bundle-examples.js && vite",
+    "serve": "node scripts/serve-vite.js playground.html",
+    "serve-playground": "node scripts/serve-vite.js playground.html",
+    "serve-example-playground-app": "node scripts/serve-vite.js playground-app-example.html",
+    "serve-example-player-app": "node scripts/serve-vite.js player-app-example.html",
+    "serve-example-node-fs": "node example-node-fs/index.js",
+    "build": "npm run flutter:build && npm run copy:assets && npm run bundle:examples && vite build && tsc",
+    "preview": "vite preview"
   },
   "peerDependencies": {
     "express": "^4.0.0"
@@ -23,6 +34,9 @@
     "express": {
       "optional": true
     }
+  },
+  "dependencies": {
+    "monaco-editor": "^0.53.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",

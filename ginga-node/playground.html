@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ginga-node: Playground</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body data-mode="playground">
+  <div id="app">
+    <header>
+      <div class="header-left" style="display: flex; align-items: center; gap: 20px;">
+        <div class="logo">Ginga Playground</div>
+        <div class="controls">
+          <label for="example-select" style="font-size: 0.9rem; color: #ccc;">Select example:</label>
+          <select id="example-select">
+            <optgroup label="General Examples">
+              <option value="video">video.ncl</option>
+              <option value="lua_canvas">lua_canvas.ncl</option>
+              <option value="image">image.ncl</option>
+              <option value="image_html">image.html</option>
+              <option value="current_service">current_service.html</option>
+            </optgroup>
+            <optgroup label="Primeiro João">
+              <option value="pj_00syncProp">00syncProp.ncl</option>
+              <option value="pj_01sync">01sync.ncl</option>
+              <option value="pj_02syncInt">02syncInt.ncl</option>
+              <option value="pj_03context">03context.ncl</option>
+              <option value="pj_04reuse">04reuse.ncl</option>
+              <option value="pj_05return">05return.ncl</option>
+              <option value="pj_06switch">06switch.ncl</option>
+              <option value="pj_07transition">07transition.ncl</option>
+              <option value="pj_08animation">08animation.ncl</option>
+              <option value="pj_09settings">09settings.ncl</option>
+              <option value="pj_10menu">10menu.ncl</option>
+              <option value="pj_11nclua">11nclua.ncl</option>
+              <option value="pj_12embNCL">12embNCL.ncl</option>
+            </optgroup>
+          </select>
+          <button id="run-btn">Run</button>
+          <button id="upload-btn">Upload Files</button>
+          <input type="file" id="file-input" multiple style="display: none;"
+            accept=".ncl,.xml,.lua,.html,.js,.css,.txt,.png,.jpg,.jpeg,.mp4,.mp3,.gif,.webp" />
+        </div>
+      </div>
+      <div class="header-right" style="font-size: 0.8rem; color: #aaa; display: flex; align-items: center; gap: 5px;">
+        Powered by <a href="https://github.com/ginga-org-br/gingaf" target="_blank" rel="noopener noreferrer"
+          style="color: #58a6ff; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+          gingaf
+          <svg height="16" aria-hidden="true" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true"
+            fill="currentColor">
+            <path
+              d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z">
+            </path>
+          </svg>
+        </a>
+      </div>
+    </header>
+    <main class="split-pane">
+      <div id="editor-wrapper">
+        <div id="editor-tabs"></div>
+        <div id="editor-container"></div>
+        <div id="editor-overlay" class="hidden">
+          <span>Editing blocked while running. Click Stop to edit.</span>
+        </div>
+      </div>
+      <div id="preview-container">
+        <iframe id="preview-frame" src="about:blank" frameborder="0"></iframe>
+      </div>
+    </main>
+  </div>
+  <script type="module" src="/src/main.ts?mode=playground"></script>
+</body>
+
+</html>

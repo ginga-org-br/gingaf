@@ -1,8 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const src = path.resolve(__dirname, '..', '..', 'ginga', 'build', 'web');
-const dest = path.resolve(__dirname, '..', 'assets');
+const src = path.resolve(__dirname, '..', '..', 'gingaf', 'ginga', 'build', 'web');
+const dest = path.resolve(__dirname, '..', 'public', 'gingaf-web');
 
 if (fs.existsSync(dest)) {
   fs.rmSync(dest, { recursive: true, force: true });

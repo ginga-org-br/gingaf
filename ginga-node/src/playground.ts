@@ -1,7 +1,9 @@
 import * as monaco from 'monaco-editor';
 import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
+import bundledExamples from './examples.json';
+import { Example } from './player';
 
-const RAW_GITHUB_BASE = 'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/ginga/examples/';
+const RAW_GITHUB_BASE = 'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/gingaf/ginga/examples/';
 const RAW_PJ_BASE = `${RAW_GITHUB_BASE}primeiro-joao/`;
 
 const pjMediaFiles: Record<string, string> = {
@@ -38,36 +40,7 @@ const pjMediaFiles: Record<string, string> = {
   }
 };
 
-export interface Example {
-  mainFile: string;
-  rawMainUrl?: string;
-  category?: string;
-  description?: string;
-  files: Record<string, string>;
-  fileUrls?: Record<string, string>;
-}
-
-export const examples: Record<string, Example> = {
-  video: { mainFile: 'video.ncl', rawMainUrl: `${RAW_GITHUB_BASE}video.ncl`, category: 'media', description: 'Video media presentation example', files: {}, fileUrls: { 'video.ncl': `${RAW_GITHUB_BASE}video.ncl` } },
-  lua_canvas: { mainFile: 'lua_canvas.ncl', rawMainUrl: `${RAW_GITHUB_BASE}lua_canvas.ncl`, category: 'lua', description: 'Lua canvas graphics example', files: {}, fileUrls: { 'lua_canvas.ncl': `${RAW_GITHUB_BASE}lua_canvas.ncl`, 'lua_canvas.lua': `${RAW_GITHUB_BASE}lua_canvas.lua` } },
-  image: { mainFile: 'image.ncl', rawMainUrl: `${RAW_GITHUB_BASE}image.ncl`, category: 'media', description: 'Image presentation example', files: {}, fileUrls: { 'image.ncl': `${RAW_GITHUB_BASE}image.ncl` } },
-  image_html: { mainFile: 'image.html', rawMainUrl: `${RAW_GITHUB_BASE}image.html`, category: 'html', description: 'HTML layout image example', files: {}, fileUrls: { 'image.html': `${RAW_GITHUB_BASE}image.html` } },
-  current_service: { mainFile: 'current_service.html', rawMainUrl: `${RAW_GITHUB_BASE}current_service.html`, category: 'html', description: 'Current service HTML integration example', files: {}, fileUrls: { 'current_service.html': `${RAW_GITHUB_BASE}current_service.html` } },
-
-  pj_00syncProp: { mainFile: '00syncProp.ncl', rawMainUrl: `${RAW_PJ_BASE}00syncProp.ncl`, category: 'primeiro-joao', description: 'Primeiro João: Property sync example', files: {}, fileUrls: { '00syncProp.ncl': `${RAW_PJ_BASE}00syncProp.ncl` } },
-  pj_01sync: { mainFile: '01sync.ncl', rawMainUrl: `${RAW_PJ_BASE}01sync.ncl`, category: 'primeiro-joao', description: 'Primeiro João: Sync example', files: {}, fileUrls: { '01sync.ncl': `${RAW_PJ_BASE}01sync.ncl`, 'causalConnBase.ncl': `${RAW_PJ_BASE}causalConnBase.ncl` } },
-  pj_02syncInt: { mainFile: '02syncInt.ncl', rawMainUrl: `${RAW_PJ_BASE}02syncInt.ncl`, category: 'primeiro-joao', description: 'Primeiro João: Interactive sync example', files: {}, fileUrls: { '02syncInt.ncl': `${RAW_PJ_BASE}02syncInt.ncl`, 'causalConnBase.ncl': `${RAW_PJ_BASE}causalConnBase.ncl` } },
-  pj_03context: { mainFile: '03context.ncl', rawMainUrl: `${RAW_PJ_BASE}03context.ncl`, category: 'primeiro-joao', description: 'Primeiro João: Context mapping example', files: {}, fileUrls: { '03context.ncl': `${RAW_PJ_BASE}03context.ncl`, 'causalConnBase.ncl': `${RAW_PJ_BASE}causalConnBase.ncl` } },
-  pj_04reuse: { mainFile: '04reuse.ncl', rawMainUrl: `${RAW_PJ_BASE}04reuse.ncl`, category: 'primeiro-joao', description: 'Primeiro João: Media reuse example', files: {}, fileUrls: { '04reuse.ncl': `${RAW_PJ_BASE}04reuse.ncl`, 'causalConnBase.ncl': `${RAW_PJ_BASE}causalConnBase.ncl` } },
-  pj_05return: { mainFile: '05return.ncl', rawMainUrl: `${RAW_PJ_BASE}05return.ncl`, category: 'primeiro-joao', description: 'Primeiro João: Form return example', files: {}, fileUrls: { '05return.ncl': `${RAW_PJ_BASE}05return.ncl`, 'causalConnBase.ncl': `${RAW_PJ_BASE}causalConnBase.ncl` } },
-  pj_06switch: { mainFile: '06switch.ncl', rawMainUrl: `${RAW_PJ_BASE}06switch.ncl`, category: 'primeiro-joao', description: 'Primeiro João: Rule switch example', files: {}, fileUrls: { '06switch.ncl': `${RAW_PJ_BASE}06switch.ncl`, 'causalConnBase.ncl': `${RAW_PJ_BASE}causalConnBase.ncl` } },
-  pj_07transition: { mainFile: '07transition.ncl', rawMainUrl: `${RAW_PJ_BASE}07transition.ncl`, category: 'primeiro-joao', description: 'Primeiro João: Transition example', files: {}, fileUrls: { '07transition.ncl': `${RAW_PJ_BASE}07transition.ncl`, 'causalConnBase.ncl': `${RAW_PJ_BASE}causalConnBase.ncl` } },
-  pj_08animation: { mainFile: '08animation.ncl', rawMainUrl: `${RAW_PJ_BASE}08animation.ncl`, category: 'primeiro-joao', description: 'Primeiro João: Animation example', files: {}, fileUrls: { '08animation.ncl': `${RAW_PJ_BASE}08animation.ncl`, 'causalConnBase.ncl': `${RAW_PJ_BASE}causalConnBase.ncl` } },
-  pj_09settings: { mainFile: '09settings.ncl', rawMainUrl: `${RAW_PJ_BASE}09settings.ncl`, category: 'primeiro-joao', description: 'Primeiro João: Settings example', files: {}, fileUrls: { '09settings.ncl': `${RAW_PJ_BASE}09settings.ncl`, 'causalConnBase.ncl': `${RAW_PJ_BASE}causalConnBase.ncl` } },
-  pj_10menu: { mainFile: '10menu.ncl', rawMainUrl: `${RAW_PJ_BASE}10menu.ncl`, category: 'primeiro-joao', description: 'Primeiro João: Menu example', files: {}, fileUrls: { '10menu.ncl': `${RAW_PJ_BASE}10menu.ncl`, 'causalConnBase.ncl': `${RAW_PJ_BASE}causalConnBase.ncl` } },
-  pj_11nclua: { mainFile: '11nclua.ncl', rawMainUrl: `${RAW_PJ_BASE}11nclua.ncl`, category: 'primeiro-joao', description: 'Primeiro João: NCLua example', files: {}, fileUrls: { '11nclua.ncl': `${RAW_PJ_BASE}11nclua.ncl`, 'causalConnBase.ncl': `${RAW_PJ_BASE}causalConnBase.ncl`, 'script/counter.lua': `${RAW_PJ_BASE}script/counter.lua` } },
-  pj_12embNCL: { mainFile: '12embNCL.ncl', rawMainUrl: `${RAW_PJ_BASE}12embNCL.ncl`, category: 'primeiro-joao', description: 'Primeiro João: Embedded NCL example', files: {}, fileUrls: { '12embNCL.ncl': `${RAW_PJ_BASE}12embNCL.ncl`, 'advert.ncl': `${RAW_PJ_BASE}advert.ncl`, 'causalConnBase.ncl': `${RAW_PJ_BASE}causalConnBase.ncl` } },
-};
+const examples: Record<string, Example> = bundledExamples as Record<string, Example>;
 
 async function loadExampleFiles(example: Example): Promise<void> {
   if (example.fileUrls) {
@@ -84,7 +57,7 @@ async function loadExampleFiles(example: Example): Promise<void> {
   }
 }
 
-export function resolveExampleKey(requested: string | null, available: Record<string, Example> = examples): string {
+function resolveExampleKey(requested: string | null, available: Record<string, Example> = examples): string {
   if (!requested) return 'video';
   const key = Object.keys(available).find(k =>
     k === requested ||
@@ -94,32 +67,18 @@ export function resolveExampleKey(requested: string | null, available: Record<st
   return key || 'video';
 }
 
-export function parseQueryConfig(searchString: string): {
-  requestedExample: string | null;
-  isEmbed: boolean;
-  category: string | null;
-  theme: string | null;
-  playbackRate: number;
-} {
+function parseQueryConfig(searchString: string) {
   const params = new URLSearchParams(searchString);
   const rateStr = params.get('rate') || params.get('playbackRate');
   const parsedRate = rateStr ? parseFloat(rateStr) : 1.0;
   return {
     requestedExample: params.get('example') || params.get('app'),
-    isEmbed: params.get('embed') === 'true',
+    isEmbed: params.get('embed') === 'true' || params.get('mode') === 'single' || params.get('mode') === 'playgroundSingle',
     category: params.get('category'),
     theme: params.get('theme'),
-    playbackRate: isNaN(parsedRate) || parsedRate <= 0 ? 1.0 : parsedRate,
+    playbackRate: isNaN(parsedRate) ? 1.0 : parsedRate
   };
 }
-
-const editorContainer = document.getElementById('editor-container');
-const editorTabs = document.getElementById('editor-tabs');
-const runBtn = document.getElementById('run-btn');
-const uploadBtn = document.getElementById('upload-btn');
-const fileInput = document.getElementById('file-input') as HTMLInputElement;
-const selectEl = document.getElementById('example-select') as HTMLSelectElement;
-const iframe = document.getElementById('preview-frame') as HTMLIFrameElement;
 
 const isEditableFile = (fileName: string) => {
   return fileName.endsWith('.ncl') ||
@@ -132,8 +91,38 @@ const isEditableFile = (fileName: string) => {
     fileName.endsWith('.txt');
 };
 
-async function initPlayground() {
-  if (!editorContainer || !editorTabs || !runBtn || !selectEl || !iframe) return;
+export async function initPlayground(mode: string): Promise<void> {
+  console.log('[ginga-node] INFO: initPlayground() starting in mode:', mode);
+  const editorContainer = document.getElementById('editor-container');
+  const editorTabs = document.getElementById('editor-tabs');
+  const runBtn = document.getElementById('run-btn');
+  const uploadBtn = document.getElementById('upload-btn');
+  const fileInput = document.getElementById('file-input') as HTMLInputElement;
+  const selectEl = document.getElementById('example-select') as HTMLSelectElement;
+  const iframe = document.getElementById('preview-frame') as HTMLIFrameElement;
+
+  if (!editorContainer || !editorTabs || !runBtn || !selectEl || !iframe) {
+    console.error('[ginga-node] Required Playground DOM elements not found');
+    return;
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const appParam = urlParams.get('app');
+  const playerParam = urlParams.get('player');
+
+  let playerBaseUrl = 'gingaf-web/index.html';
+  const isHostedEnv = typeof process !== 'undefined' && (process as any).env ? (process as any).env.VITE_USE_HOSTED_PLAYER === 'true' : false;
+  const useHosted = playerParam === 'hosted' || (playerParam !== 'local' && isHostedEnv);
+  if (useHosted) {
+    playerBaseUrl = 'https://ginga-org-br.github.io/gingaf/dst/gingaf-web/index.html';
+  }
+
+  if (mode === 'single' || mode === 'playgroundSingle') {
+    document.body.classList.add('mode-single');
+    const controls = document.querySelector('.controls') as HTMLElement;
+    if (controls) controls.style.display = 'none';
+    if (uploadBtn) uploadBtn.style.display = 'none';
+  }
 
   const queryConfig = parseQueryConfig(window.location.search);
   const requested = queryConfig.requestedExample;
@@ -160,20 +149,7 @@ async function initPlayground() {
   let currentFileName = currentExample.mainFile;
   let isRunning = false;
 
-  if (requested) {
-    const selectLabel = document.querySelector('label[for="example-select"]') as HTMLElement;
-    if (selectLabel) selectLabel.style.display = 'none';
-    if (selectEl) selectEl.style.display = 'none';
-    if (uploadBtn) uploadBtn.style.display = 'none';
-    selectEl.innerHTML = '';
-    const opt = document.createElement('option');
-    opt.value = defaultKey;
-    opt.textContent = currentExample.mainFile;
-    selectEl.appendChild(opt);
-  }
-
   selectEl.value = defaultKey;
-
   await loadExampleFiles(currentExample);
 
   const editor = monaco.editor.create(editorContainer, {
@@ -278,6 +254,62 @@ async function initPlayground() {
     });
   }
 
+  if (appParam) {
+    const extractedFileName = appParam.split('/').pop() || appParam;
+    const extractedKey = extractedFileName.replace(/\.[^/.]+$/, "");
+
+    let matchedExample: Example | undefined;
+    if (examples[appParam]) matchedExample = examples[appParam];
+    else if (examples[extractedFileName]) matchedExample = examples[extractedFileName];
+    else if (examples[extractedKey]) matchedExample = examples[extractedKey];
+    else {
+      for (const key of Object.keys(examples)) {
+        if (examples[key].mainFile === extractedFileName || examples[key].mainFile === appParam) {
+          matchedExample = examples[key];
+          break;
+        }
+      }
+    }
+
+    if (matchedExample) {
+      currentExample = matchedExample;
+      currentFileName = currentExample.mainFile;
+      editor.setValue(currentExample.files[currentFileName] || '');
+      monaco.editor.setModelLanguage(editor.getModel()!, currentFileName.endsWith('.lua') ? 'lua' : 'xml');
+      if (selectEl) {
+        for (let i = 0; i < selectEl.options.length; i++) {
+          if (selectEl.options[i].value === appParam || selectEl.options[i].value === extractedKey) {
+            selectEl.selectedIndex = i;
+            break;
+          }
+        }
+      }
+      renderTabs();
+    } else {
+      try {
+        const res = await fetch(appParam);
+        if (res.ok) {
+          const text = await res.text();
+          const customAppKey = 'remote_app';
+          examples[customAppKey] = {
+            mainFile: 'app.ncl',
+            rawMainUrl: appParam,
+            category: 'remote',
+            description: 'Remote NCL App',
+            files: { 'app.ncl': text }
+          };
+          currentExample = examples[customAppKey];
+          currentFileName = currentExample.mainFile;
+          editor.setValue(text);
+          monaco.editor.setModelLanguage(editor.getModel()!, 'xml');
+          renderTabs();
+        }
+      } catch (e) {
+        console.warn('Could not fetch app GET parameter URL:', e);
+      }
+    }
+  }
+
   iframe.src = 'about:blank';
 
   runBtn.addEventListener('click', async () => {
@@ -300,16 +332,22 @@ async function initPlayground() {
       editor.updateOptions({ readOnly: true });
       document.getElementById('editor-overlay')?.classList.remove('hidden');
       runBtn.textContent = 'Stop';
-      iframe.src = 'gingaf-web/index.html';
+
+      iframe.src = playerBaseUrl;
+      iframe.onload = () => {
+        try {
+          const win = iframe.contentWindow as any;
+          if (win) {
+            win.sessionStorage.setItem('GINGA_PLAYGROUND_FILES', JSON.stringify(allFiles));
+            win.sessionStorage.setItem('GINGA_PLAYGROUND_MAIN', currentExample.mainFile);
+            win.GingaApp = {
+              appPath: currentExample.mainFile,
+              files: allFiles
+            };
+          }
+        } catch (_) {}
+      };
       isRunning = true;
     }
   });
-
-  window.addEventListener('message', (event) => {
-    if (event.data === 'ginga_app_exited' && isRunning) {
-      runBtn.click();
-    }
-  });
 }
-
-initPlayground();

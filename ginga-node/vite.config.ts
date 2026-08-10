@@ -1,17 +1,30 @@
 import { defineConfig } from 'vite';
 import path from 'path';
 import fs from 'fs';
-import { getAssetsPath } from 'gingaf-node';
+import { getAssetsPath } from './src/index';
 
 export default defineConfig({
-  base: process.env.VITE_BASE || '/gingaf/playground/',
+  base: process.env.VITE_BASE || '/gingaf/dst/',
+  build: {
+    emptyOutDir: false,
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        playground: path.resolve(__dirname, 'playground.html'),
+        player: path.resolve(__dirname, 'player.html'),
+        'playground-app-example': path.resolve(__dirname, 'playground-app-example.html'),
+        'player-app-example': path.resolve(__dirname, 'player-app-example.html')
+      }
+    }
+  },
   plugins: [
     {
       name: 'playground',
       configureServer(server) {
         server.middlewares.use((req, res, next) => {
-          if (req.url === '/' || req.url === '') {
-            res.writeHead(302, { Location: '/gingaf/playground/' });
+          if (req.url && (req.url === '/gingaf/playground' || req.url === '/gingaf/playground/' || req.url.startsWith('/gingaf/playground?'))) {
+            const search = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+            res.writeHead(302, { Location: `/gingaf/dst/playground.html${search}` });
             res.end();
             return;
           }
@@ -57,7 +70,7 @@ export default defineConfig({
       closeBundle() {
         const dest = path.resolve(import.meta.dirname, 'dist', 'gingaf-web');
         const src = getAssetsPath();
-        if (fs.existsSync(src)) {
+        if (fs.existsSync(src) && path.resolve(src) !== path.resolve(dest)) {
           if (fs.existsSync(dest)) fs.rmSync(dest, { recursive: true, force: true });
           fs.mkdirSync(dest, { recursive: true });
           fs.cpSync(src, dest, { recursive: true });

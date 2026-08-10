@@ -6,10 +6,17 @@ import 'package:flutter/foundation.dart' show debugPrint;
 
 String? getSessionStorageItem(String key) {
   try {
-    return html.window.sessionStorage[key];
-  } catch (e) {
-    return null;
-  }
+    final localVal = html.window.sessionStorage[key];
+    if (localVal != null && localVal.isNotEmpty) return localVal;
+  } catch (_) {}
+  try {
+    if (html.window.parent != null && html.window.parent != html.window) {
+      final parentWin = html.window.parent as html.Window;
+      final parentVal = parentWin.sessionStorage[key];
+      if (parentVal != null && parentVal.isNotEmpty) return parentVal;
+    }
+  } catch (_) {}
+  return null;
 }
 
 String? getGingaAppPath() {
