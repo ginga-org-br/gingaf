@@ -28,25 +28,15 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Build Flutter Web
-        working-directory: ./ginga
-        run: flutter build web --base-href /gingaf/playground/player/
-
-      - name: Install playground dependencies
-        working-directory: ./playground
-        run: npm install
-
-      - name: Copy Flutter build to Playground public/player
-        run: |
-          mkdir -p playground/public/player
-          cp -r ginga/build/web/* playground/public/player/
-
       - name: Build playground
         working-directory: ./playground
-        run: npx vite build --base=/gingaf/playground/
+        run: |
+          npm install
+          npm run build
 
       - name: Setup Pages
         id: pages
+        if: ${{ !env.ACT }}
         uses: actions/configure-pages@v5
 
       - name: Prepare site directory
@@ -55,6 +45,7 @@ jobs:
           cp -r playground/dist/* site/playground/
 
       - name: Upload artifact
+        if: ${{ !env.ACT }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./site
