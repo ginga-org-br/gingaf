@@ -1,3 +1,5 @@
+MAKEFLAGS += -s --no-print-directory
+
 .PHONY: help deps build serve serve-playground serve-example-playground-app serve-example-player-app serve-example-node-fs clean simulate-gh-deploy
 
 help:

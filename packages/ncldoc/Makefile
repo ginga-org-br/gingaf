@@ -1,3 +1,5 @@
+MAKEFLAGS += -s --no-print-directory
+
 .PHONY: help test deps clean run-example check-app
 
 help:

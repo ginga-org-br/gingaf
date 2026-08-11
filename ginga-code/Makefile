@@ -1,3 +1,5 @@
+MAKEFLAGS += -s --no-print-directory
+
 .PHONY: help deps build package test clean run-vscode-with-extension-only
 
 help:

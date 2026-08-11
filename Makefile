@@ -1,3 +1,5 @@
+MAKEFLAGS += -s --no-print-directory
+
 .PHONY: help test deps
 
 help:
@@ -18,5 +20,4 @@ test: deps
 	$(MAKE) -C packages/ccws test
 	$(MAKE) -C packages/ncldoc test
 	$(MAKE) -C ginga test
-	$(MAKE) -C ginga-node test
 	$(MAKE) -C ginga-code test

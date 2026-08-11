@@ -1,3 +1,5 @@
+MAKEFLAGS += -s --no-print-directory
+
 .PHONY: help test deps build build-windows build-web clean run-example check-app build-release-zip github-release
 
 BASE_HREF ?= /
