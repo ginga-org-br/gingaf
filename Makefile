@@ -8,15 +8,15 @@ help:
 	@echo   test  Run unit tests for all components
 
 deps:
-	$(MAKE) -C ccws deps
-	$(MAKE) -C ncldoc deps
+	$(MAKE) -C packages/ccws deps
+	$(MAKE) -C packages/ncldoc deps
 	$(MAKE) -C ginga deps
-	$(MAKE) -C playground deps
-	$(MAKE) -C vscode deps
+	$(MAKE) -C ginga-node deps
+	$(MAKE) -C ginga-code deps
 
 test: deps
-	$(MAKE) -C ccws test
-	$(MAKE) -C ncldoc test
+	$(MAKE) -C packages/ccws test
+	$(MAKE) -C packages/ncldoc test
 	$(MAKE) -C ginga test
-	$(MAKE) -C playground test
-	$(MAKE) -C vscode test
+	$(MAKE) -C ginga-node test
+	$(MAKE) -C ginga-code test

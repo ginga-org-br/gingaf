@@ -18,9 +18,9 @@ dependencies:
   media_kit_libs_windows_video: ^1.0.0
   http: ^1.1.0
   ncldoc:
-    path: ../ncldoc
+    path: ../packages/ncldoc
   ccws:
-    path: ../ccws
+    path: ../packages/ccws
 
 dev_dependencies:
   flutter_test:

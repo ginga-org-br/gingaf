@@ -11,8 +11,8 @@ The `gingaf` project structure is:
 ```mermaid
 block-beta
 columns 3
-  playground["playground"]
-  vscode["vscode"]
+  ginga_node["playground"]
+  ginga_code["ginga-code"]
   space
   ginga_web["ginga (web)"]
   ginga_desktop["ginga (desktop)"]
@@ -22,11 +22,11 @@ columns 3
   ccws["ccws"]:1
 ```
 
-- `ncldoc/` - Dart-based headless execution engine and core NCL library. See [ncldoc/README.md](ncldoc/README.md).
-- `ccws/` - Dart-based Ginga-CC-WebService library. See [ccws/README.md](ccws/README.md).
-- `ginga/` - Ginga visual of Ginga-NCL and Ginga-HTML5 applications (contains the `examples/` for testing). See how to run application at [ginga/README.md](ginga/README.md). Depends on `ncldoc/` and `ccws/`.
-- `playground/` - web-based interactive playground for evaluating gingaf. See [playground/README.md](playground/README.md). Uses `ginga (web)`.
-- `vscode/` - Visual Studio Code extension. See [vscode/README.md](vscode/README.md). Uses `ginga (desktop)`.
+- `packages/ncldoc/` - Dart-based headless execution engine and core NCL library. See [packages/ncldoc/README.md](packages/ncldoc/README.md).
+- `packages/ccws/` - Dart-based Ginga-CC-WebService library. See [packages/ccws/README.md](packages/ccws/README.md).
+- `ginga/` - Ginga visual of Ginga-NCL and Ginga-HTML5 applications (contains the `examples/` for testing). See how to run application at [ginga/README.md](ginga/README.md). Depends on `packages/ncldoc/` and `packages/ccws/`.
+- `ginga-node/` - Web-based interactive playground for evaluating gingaf. See [ginga-node/README.md](ginga-node/README.md). Uses `ginga (web)`.
+- `ginga-code/` - Visual Studio Code extension. See [ginga-code/README.md](ginga-code/README.md). Uses `ginga (desktop)`.
 
 ## Demonstration Videos
 

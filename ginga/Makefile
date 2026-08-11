@@ -49,7 +49,7 @@ build-windows:
 	flutter build windows --debug
 
 rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
-DART_FILES := $(call rwildcard,../ncldoc .,*.dart)
+DART_FILES := $(call rwildcard,../packages/ncldoc .,*.dart)
 
 build-web:
 	flutter build web --base-href $(BASE_HREF)

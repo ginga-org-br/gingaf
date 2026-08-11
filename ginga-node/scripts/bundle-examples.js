@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const examplesDir = path.resolve(__dirname, '..', '..', 'gingaf', 'ginga', 'examples');
+const examplesDir = path.resolve(__dirname, '..', '..', 'ginga', 'examples');
 
 const examples = {
   video: {
