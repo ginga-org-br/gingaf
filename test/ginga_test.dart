@@ -1,14 +1,11 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingaf/ginga.dart';
 import 'package:gingaf/html/html_app.dart';
 import 'package:gingaf/ncl/ncl_app.dart';
-
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
+
 import 'mock_video_player.dart';
 
 class MockGingaTestAssetBundle extends AssetBundle {
@@ -31,9 +28,7 @@ class MockGingaTestAssetBundle extends AssetBundle {
 
 void main() {
   group('GingaConfig Logic Tests', () {
-    test(
-        'Constructor should accept string sources',
-        () {
+    test('Constructor should accept string sources', () {
       expect(GingaConfig('app.ncl').appSrc, 'app.ncl');
       expect(GingaConfig('app.html').appSrc, 'app.html');
       expect(GingaConfig('APP.NCL').appSrc, 'APP.NCL');
@@ -44,7 +39,9 @@ void main() {
       expect(config.usersDataSrc, equals('test/user_data1.json'));
     });
 
-    test('Constructor should accept file path for usersDataSrc profile parameter', () {
+    test(
+        'Constructor should accept file path for usersDataSrc profile parameter',
+        () {
       final config = GingaConfig('app.ncl', true, '/path/to/user_data.json');
       expect(config.usersDataSrc, equals('/path/to/user_data.json'));
     });
@@ -84,11 +81,14 @@ void main() {
       final nclAppState = tester.state<NCLAppState>(find.byType(NCLApp));
       expect(nclAppState.nclDocument, isNotNull);
       expect(nclAppState.nclDocument?.users.getUser('u400'), isNotNull);
-      expect(nclAppState.nclDocument?.users.getUser('u400')?.name, equals('ConfUser'));
+      expect(nclAppState.nclDocument?.users.getUser('u400')?.name,
+          equals('ConfUser'));
       await tester.pumpWidget(const SizedBox());
     });
 
-    testWidgets('NCLApp mounts with GingaConfig parameter and resolves usersDataJson', (WidgetTester tester) async {
+    testWidgets(
+        'NCLApp mounts with GingaConfig parameter and resolves usersDataJson',
+        (WidgetTester tester) async {
       final config = GingaConfig('test.ncl', true, 'test/user_data2.json');
       await tester.pumpWidget(MaterialApp(
         home: DefaultAssetBundle(
@@ -106,7 +106,8 @@ void main() {
       final nclAppState = tester.state<NCLAppState>(find.byType(NCLApp));
       expect(nclAppState.nclDocument, isNotNull);
       expect(nclAppState.nclDocument?.users.getUser('uConfig'), isNotNull);
-      expect(nclAppState.nclDocument?.users.getUser('uConfig')?.name, equals('GingaConfigUser'));
+      expect(nclAppState.nclDocument?.users.getUser('uConfig')?.name,
+          equals('GingaConfigUser'));
       await tester.pumpWidget(const SizedBox());
     });
 

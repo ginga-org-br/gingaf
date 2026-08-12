@@ -49,7 +49,7 @@ void main() {
           child: DefaultAssetBundle(
             bundle: mockBundle,
             child: HTMLApp(
-              uri: "test_status.html",
+              src: "test_status.html",
               javaScriptChannels: {
                 "HTMLAppChannel": (message) {
                   if (!completer.isCompleted) {

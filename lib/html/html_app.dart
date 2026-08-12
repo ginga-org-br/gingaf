@@ -1,7 +1,6 @@
 import 'package:ccws/ccws.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:gingaf/ginga.dart';
 import 'package:gingaf/ncl/widgets/ncl_media_widget.dart';
 import 'package:logging/logging.dart';
 import 'package:webview_all/webview_all.dart';
@@ -56,10 +55,8 @@ class HTMLAppState extends MediaState<HTMLApp> {
     try {
       String content = await loadContent(widget.src);
 
-      if (widget.ccws != null || (widget.config?.enableCCWS ?? false)) {
-        if (widget.ccws != null) {
-          content = widget.ccws!.injectCcwsFetch(content);
-        }
+      if (widget.ccws != null && widget.config.enableCCWS) {
+        content = widget.ccws!.injectCcwsFetch(content);
       }
 
       await _controller.loadHtmlString(content);

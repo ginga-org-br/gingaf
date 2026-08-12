@@ -1,12 +1,9 @@
-import 'dart:async';
 import 'package:flutter/material.dart' hide Action;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingaf/ncl/ncl_app.dart';
 import 'package:ncldoc/ncl_document.dart';
-import 'package:ncldoc/elements.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
-import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import '../mock_video_player.dart';
 
@@ -164,8 +161,10 @@ void main() {
     VideoPlayerPlatform.instance = MockVideoPlayer();
   });
 
-  test('NCLDocument parses transitions and transition descriptors correctly', () {
-    final doc = NCLDocument.fromContent('''<ncl id="nclTransition" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+  test('NCLDocument parses transitions and transition descriptors correctly',
+      () {
+    final doc = NCLDocument.fromContent(
+        '''<ncl id="nclTransition" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <transitionBase>
       <transition id="trans1" type="fade" dur="2s"/>
@@ -179,20 +178,25 @@ void main() {
 </ncl>''');
 
     final headChildren = doc.headChildren;
-    final transBase = headChildren.firstWhere((e) => e.xmlTagName == 'transitionBase');
+    final transBase =
+        headChildren.firstWhere((e) => e.xmlTagName == 'transitionBase');
     expect(transBase.children.length, 2);
 
-    final trans1 = transBase.children.firstWhere((e) => e.rawAttributes['id'] == 'trans1');
+    final trans1 =
+        transBase.children.firstWhere((e) => e.rawAttributes['id'] == 'trans1');
     expect(trans1.rawAttributes['type'], 'fade');
     expect(trans1.rawAttributes['dur'], '2s');
 
-    final descBase = headChildren.firstWhere((e) => e.xmlTagName == 'descriptorBase');
-    final dribleDesc = descBase.children.firstWhere((e) => e.rawAttributes['id'] == 'dribleDesc');
+    final descBase =
+        headChildren.firstWhere((e) => e.xmlTagName == 'descriptorBase');
+    final dribleDesc = descBase.children
+        .firstWhere((e) => e.rawAttributes['id'] == 'dribleDesc');
     expect(dribleDesc.rawAttributes['transIn'], 'trans1');
     expect(dribleDesc.rawAttributes['transOut'], 'trans2');
   });
 
-  testWidgets('NCLApp runs transition example structure successfully', (WidgetTester tester) async {
+  testWidgets('NCLApp runs transition example structure successfully',
+      (WidgetTester tester) async {
     final mockBundle = MockTransitionAssetBundle();
 
     await tester.pumpWidget(
@@ -215,7 +219,8 @@ void main() {
     nclState.tick(5000);
     await tester.pump();
 
-    final activeMedia = nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
+    final activeMedia =
+        nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
     expect(activeMedia, contains('background'));
     expect(activeMedia, contains('choro'));
   });

@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:ncldoc/ncl_document.dart';
 
-import '../ginga.dart';
-import '../assets_src_resolver.dart';
 import '../main_av.dart';
 import 'widgets/ncl_media_widget.dart';
 
@@ -122,7 +120,8 @@ class NCLAppState extends MediaState<NCLApp> {
         setState(() {});
       }
 
-      final activeLoader = widget.config.contentLoader..setBuildContext(context);
+      final activeLoader = widget.config.contentLoader
+        ..setBuildContext(context);
 
       final srcString = widget.src;
       final String nclData;

@@ -57,11 +57,6 @@ class _GingaState extends State<Ginga> {
 
   final GlobalKey<ncl.NCLAppState> _nclAppKey = GlobalKey<ncl.NCLAppState>();
 
-  bool get _isSbtvdActiveInNcl {
-    final state = _nclAppKey.currentState;
-    return state?.hasSbtvdMedia ?? false;
-  }
-
   @override
   void initState() {
     super.initState();

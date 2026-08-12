@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -40,7 +38,8 @@ void main() {
         ),
       );
 
-      final dataSrc = Uri.dataFromString('hello world', mimeType: 'text/plain').toString();
+      final dataSrc =
+          Uri.dataFromString('hello world', mimeType: 'text/plain').toString();
       final dataUri = loader.resolveUri(dataSrc);
       expect(loader.exists(dataUri), isTrue);
       final content = await loader.load(dataUri);
@@ -155,7 +154,9 @@ void main() {
             'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/ginga/examples/video.ncl'),
       );
       expect(
-        AssetsSrcResolver().resolveUri('http://example.com/test.ncl').toString(),
+        AssetsSrcResolver()
+            .resolveUri('http://example.com/test.ncl')
+            .toString(),
         equals('http://example.com/test.ncl'),
       );
     });

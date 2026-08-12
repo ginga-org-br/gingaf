@@ -1,11 +1,10 @@
-import 'dart:async';
 import 'package:flutter/material.dart' hide Action, State;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingaf/ginga.dart';
-import 'package:gingaf/main_av.dart';
 import 'package:gingaf/ncl/ncl_app.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
+
 import '../mock_video_player.dart';
 
 class MockNCLAssetBundle extends CachingAssetBundle {
@@ -31,7 +30,8 @@ void main() {
     VideoPlayerPlatform.instance = MockVideoPlayer();
   });
 
-  testWidgets('NCLApp can change background video via settings property', (WidgetTester tester) async {
+  testWidgets('NCLApp can change background video via settings property',
+      (WidgetTester tester) async {
     const nclData = '''
 <ncl>
   <body>
@@ -45,7 +45,8 @@ void main() {
       'test_bg.ncl': nclData,
     });
 
-    final config = GingaConfig('test_bg.ncl', false, null, 'examples/primeiro-joao/media/animGar.mp4');
+    final config = GingaConfig(
+        'test_bg.ncl', false, null, 'examples/primeiro-joao/media/animGar.mp4');
 
     await tester.pumpWidget(
       MaterialApp(
@@ -65,7 +66,9 @@ void main() {
     expect(av.src, config.mainAvSrc);
   });
 
-  testWidgets('NCLApp background video resolution with online butterfly.mp4 URL', (WidgetTester tester) async {
+  testWidgets(
+      'NCLApp background video resolution with online butterfly.mp4 URL',
+      (WidgetTester tester) async {
     const nclData = '''
 <ncl>
   <body>
@@ -79,7 +82,8 @@ void main() {
       'test_bg.ncl': nclData,
     });
 
-    final config = GingaConfig('test_bg.ncl', false, null, 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4');
+    final config = GingaConfig('test_bg.ncl', false, null,
+        'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4');
 
     await tester.pumpWidget(
       MaterialApp(
@@ -96,6 +100,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     final AVWidget av = tester.widget(find.byType(AVWidget));
-    expect(av.src, 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4');
+    expect(av.src,
+        'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4');
   });
 }

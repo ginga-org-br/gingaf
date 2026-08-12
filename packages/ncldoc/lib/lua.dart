@@ -1,15 +1,18 @@
 import 'dart:async';
+
 import 'package:lua_dardo_plus/lua.dart';
 
 abstract class NCLCanvasDelegate {
   void attrColor(int r, int g, int b, int a);
   void drawRect(String mode, double x, double y, double w, double h);
   void drawLine(double x1, double y1, double x2, double y2);
-  void drawRoundRect(String mode, double x, double y, double w, double h, double rx, double ry);
+  void drawRoundRect(String mode, double x, double y, double w, double h,
+      double rx, double ry);
   void drawPolygon(List<double> points);
   void drawEllipse(String mode, double x, double y, double w, double h);
   void drawText(String text, double x, double y);
-  void drawTextRect(String text, double x, double y, double w, double h, String halign, String valign);
+  void drawTextRect(String text, double x, double y, double w, double h,
+      String halign, String valign);
   void clear();
   void flush();
 }
@@ -45,7 +48,7 @@ class NCLua {
   final List<int> _registeredCallbackRefs = [];
   final List<LuaTimer> _activeTimers = [];
   int _nextTimerId = 1;
-  int _startTime = DateTime.now().millisecondsSinceEpoch;
+  final int _startTime = DateTime.now().millisecondsSinceEpoch;
   int Function()? uptimeProvider;
   void Function(Map<String, dynamic> event)? onPostEvent;
   final Map<String, String> _persistentVars = {};
@@ -225,7 +228,8 @@ class NCLua {
       final h = ls.toNumber(-3);
       final halign = ls.toStr(-2) ?? "left";
       final valign = ls.toStr(-1) ?? "top";
-      canvasCalls.add(CanvasCall('drawTextRect', [text, x, y, w, h, halign, valign]));
+      canvasCalls
+          .add(CanvasCall('drawTextRect', [text, x, y, w, h, halign, valign]));
       delegate?.drawTextRect(text, x, y, w, h, halign, valign);
       return 0;
     });
@@ -347,7 +351,9 @@ class NCLua {
     });
 
     _lua.register("_event_uptime", (LuaState ls) {
-      final t = uptimeProvider != null ? uptimeProvider!() : (DateTime.now().millisecondsSinceEpoch - _startTime);
+      final t = uptimeProvider != null
+          ? uptimeProvider!()
+          : (DateTime.now().millisecondsSinceEpoch - _startTime);
       ls.pushInteger(t);
       return 1;
     });
@@ -358,7 +364,10 @@ class NCLua {
         ls.pushValue(2);
         final refId = ls.ref(luaRegistryIndex);
         final timerId = _nextTimerId++;
-        final targetUptime = (uptimeProvider != null ? uptimeProvider!() : (DateTime.now().millisecondsSinceEpoch - _startTime)) + time;
+        final targetUptime = (uptimeProvider != null
+                ? uptimeProvider!()
+                : (DateTime.now().millisecondsSinceEpoch - _startTime)) +
+            time;
         final luaTimer = LuaTimer(
           id: timerId,
           targetUptime: targetUptime,
@@ -421,6 +430,7 @@ class NCLua {
 
     _lua.register("_dir_list", (LuaState ls) {
       final path = ls.toStr(1) ?? "";
+      assert(path.isNotEmpty);
       ls.newTable();
       ls.pushString("file1.txt");
       ls.setI(-2, 1);
@@ -612,7 +622,7 @@ class NCLua {
     final list = <double>[];
     if (!ls.isTable(idx)) return list;
     final absoluteIdx = idx < 0 ? ls.getTop() + idx + 1 : idx;
-    for (int i = 1; ; i++) {
+    for (int i = 1;; i++) {
       ls.rawGetI(absoluteIdx, i);
       if (ls.isNil(-1)) {
         ls.pop(1);
@@ -733,7 +743,8 @@ class NCLua {
   }
 
   void tickTimers(int currentUptimeMs) {
-    final toTrigger = _activeTimers.where((t) => t.targetUptime <= currentUptimeMs).toList();
+    final toTrigger =
+        _activeTimers.where((t) => t.targetUptime <= currentUptimeMs).toList();
     for (final timer in toTrigger) {
       _triggerTimerCallback(timer);
     }

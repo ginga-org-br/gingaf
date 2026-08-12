@@ -5,7 +5,6 @@ import 'package:flutter/material.dart' hide Action;
 import 'package:ncldoc/event.dart';
 import 'package:video_player/video_player.dart';
 
-import '../../assets_src_resolver.dart';
 import '../ncl_app.dart';
 
 class AVWidget extends MediaWidget {

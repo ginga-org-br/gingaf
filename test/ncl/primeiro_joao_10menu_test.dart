@@ -1,13 +1,8 @@
-import 'dart:async';
 import 'package:flutter/material.dart' hide Action, State;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingaf/ncl/ncl_app.dart';
-import 'package:ncldoc/ncl_document.dart';
-import 'package:ncldoc/elements.dart';
-import 'package:ncldoc/event.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
-import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import '../mock_video_player.dart';
 
@@ -168,7 +163,8 @@ void main() {
     VideoPlayerPlatform.instance = MockVideoPlayer();
   });
 
-  testWidgets('NCLApp parses and runs menu configuration successfully', (WidgetTester tester) async {
+  testWidgets('NCLApp parses and runs menu configuration successfully',
+      (WidgetTester tester) async {
     final mockBundle = MockMenuAssetBundle();
 
     await tester.pumpWidget(
@@ -191,7 +187,8 @@ void main() {
     nclState.tick(5000);
     await tester.pump();
 
-    final activeMedia = nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
+    final activeMedia =
+        nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
     expect(activeMedia, contains('imgChorinho'));
     expect(activeMedia, contains('imgRock'));
   });

@@ -1,11 +1,9 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingaf/ncl/ncl_app.dart';
 import 'package:ncldoc/ncl_document.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
-import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import '../mock_video_player.dart';
 
@@ -95,7 +93,8 @@ void main() {
   });
 
   test('NCLDocument delay and property parsing', () {
-    final doc = NCLDocument.fromContent('''<ncl id="mySyncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+    final doc = NCLDocument.fromContent(
+        '''<ncl id="mySyncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <connectorBase>
       <causalConnector id="onBeginStart_delay">
@@ -183,11 +182,13 @@ void main() {
     final img1 = doc.getNodeById('img1') as Media;
     final leftProp = img1.getProperties().firstWhere((p) => p.name == 'left');
     expect(leftProp.value, '5%');
-    final zIndexProp = img1.getProperties().firstWhere((p) => p.name == 'zIndex');
+    final zIndexProp =
+        img1.getProperties().firstWhere((p) => p.name == 'zIndex');
     expect(zIndexProp.value, '3');
   });
 
-  testWidgets('NCLApp layouts children based on parsed properties and sorts by zIndex',
+  testWidgets(
+      'NCLApp layouts children based on parsed properties and sorts by zIndex',
       (WidgetTester tester) async {
     final mockBundle = MockNCLAssetBundle();
 
@@ -212,7 +213,8 @@ void main() {
 
     expect(find.byType(Positioned), findsNWidgets(3));
 
-    final posList = tester.widgetList<Positioned>(find.byType(Positioned)).toList();
+    final posList =
+        tester.widgetList<Positioned>(find.byType(Positioned)).toList();
     expect(posList.length, 3);
 
     final pos0 = posList[0];
@@ -233,7 +235,8 @@ void main() {
     nclState.tick(29000);
     await tester.pump();
 
-    final posList2 = tester.widgetList<Positioned>(find.byType(Positioned)).toList();
+    final posList2 =
+        tester.widgetList<Positioned>(find.byType(Positioned)).toList();
     expect(posList2.length, 4);
 
     final p0 = posList2[0];

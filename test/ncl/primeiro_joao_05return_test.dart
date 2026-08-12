@@ -1,12 +1,9 @@
-import 'dart:async';
 import 'package:flutter/material.dart' hide Action;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingaf/ncl/ncl_app.dart';
 import 'package:ncldoc/ncl_document.dart';
-import 'package:ncldoc/elements.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
-import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import '../mock_video_player.dart';
 
@@ -146,7 +143,8 @@ void main() {
   });
 
   test('NCLDocument executes form return logic correctly', () {
-    final doc = NCLDocument.fromContent('''<ncl id="nclReturn" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+    final doc = NCLDocument.fromContent(
+        '''<ncl id="nclReturn" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
       <region id="rBg" width="100%" height="100%" zIndex="1"/>
@@ -279,7 +277,8 @@ void main() {
     expect(active, contains('mForm'));
 
     final mMain = doc.getNodeById('mMain') as Media;
-    final boundsProp = mMain.getProperties().firstWhere((p) => p.name == 'bounds');
+    final boundsProp =
+        mMain.getProperties().firstWhere((p) => p.name == 'bounds');
     expect(boundsProp.value, '5%,6.7%,45%,45%');
 
     doc.tick(15000);
@@ -316,13 +315,15 @@ void main() {
     nclState.tick(0);
     await tester.pump();
 
-    final posList = tester.widgetList<Positioned>(find.byType(Positioned)).toList();
+    final posList =
+        tester.widgetList<Positioned>(find.byType(Positioned)).toList();
     expect(posList.length, 7);
 
     nclState.tick(15000);
     await tester.pump();
 
-    final posList2 = tester.widgetList<Positioned>(find.byType(Positioned)).toList();
+    final posList2 =
+        tester.widgetList<Positioned>(find.byType(Positioned)).toList();
     expect(posList2.length, 5);
 
     final mainVideoWidget = posList2.firstWhere((p) => p.width == 800.0);

@@ -81,7 +81,7 @@ void main() {
             child: DefaultAssetBundle(
               bundle: mockBundle,
               child: HTMLApp(
-                uri: "test_ccws.html",
+                src: "test_ccws.html",
                 javaScriptChannels: {
                   "HTMLAppChannel": (message) {
                     if (!completer.isCompleted) {

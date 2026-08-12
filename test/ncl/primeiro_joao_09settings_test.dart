@@ -1,13 +1,10 @@
-import 'dart:async';
 import 'package:flutter/material.dart' hide Action, State;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingaf/ncl/ncl_app.dart';
-import 'package:ncldoc/ncl_document.dart';
 import 'package:ncldoc/elements.dart';
-import 'package:ncldoc/event.dart';
+import 'package:ncldoc/ncl_document.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
-import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import '../mock_video_player.dart';
 
@@ -221,7 +218,9 @@ void main() {
     VideoPlayerPlatform.instance = MockVideoPlayer();
   });
 
-  testWidgets('NCLApp evaluates settings conditional triggers correctly when true', (WidgetTester tester) async {
+  testWidgets(
+      'NCLApp evaluates settings conditional triggers correctly when true',
+      (WidgetTester tester) async {
     final mockBundle = MockSettingsAssetBundle();
 
     await tester.pumpWidget(
@@ -244,11 +243,14 @@ void main() {
     nclState.tick(45000);
     await tester.pump();
 
-    final activeMedia = nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
+    final activeMedia =
+        nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
     expect(activeMedia, contains('icon'));
   });
 
-  testWidgets('NCLApp evaluates settings conditional triggers correctly when false', (WidgetTester tester) async {
+  testWidgets(
+      'NCLApp evaluates settings conditional triggers correctly when false',
+      (WidgetTester tester) async {
     final mockBundle = MockSettingsAssetBundle();
 
     await tester.pumpWidget(
@@ -273,13 +275,15 @@ void main() {
     await tester.pump();
 
     final globalVar = nclState.nclDocument!.getNodeById('globalVar') as Media;
-    final propVal = nclState.nclDocument!.getPropertyValue(globalVar, 'service.interactivity');
+    final propVal = nclState.nclDocument!
+        .getPropertyValue(globalVar, 'service.interactivity');
     expect(propVal, 'false');
 
     nclState.tick(45000);
     await tester.pump();
 
-    final activeMedia = nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
+    final activeMedia =
+        nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
     expect(activeMedia, isNot(contains('icon')));
   });
 }

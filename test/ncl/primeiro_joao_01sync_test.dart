@@ -1,12 +1,9 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingaf/ncl/ncl_app.dart';
 import 'package:ncldoc/ncl_document.dart';
-import 'package:ncldoc/elements.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
-import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import '../mock_video_player.dart';
 
@@ -91,7 +88,8 @@ void main() {
   });
 
   test('NCLDocument descriptor duration and region resolution', () {
-    final doc = NCLDocument.fromContent('''<ncl id="syncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+    final doc = NCLDocument.fromContent(
+        '''<ncl id="syncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
       <region id="baseRegion" width="100%" height="100%" zIndex="2">
@@ -175,7 +173,8 @@ void main() {
     expect(popupPic.explicitDurMs, 5000);
   });
 
-  testWidgets('NCLApp layouts children based on descriptors and region hierarchy',
+  testWidgets(
+      'NCLApp layouts children based on descriptors and region hierarchy',
       (WidgetTester tester) async {
     final mockBundle = MockSyncAssetBundle();
 
@@ -198,7 +197,8 @@ void main() {
     nclState.tick(12000);
     await tester.pump();
 
-    final posList = tester.widgetList<Positioned>(find.byType(Positioned)).toList();
+    final posList =
+        tester.widgetList<Positioned>(find.byType(Positioned)).toList();
     expect(posList.length, 3);
 
     final pos0 = posList[0];
@@ -219,7 +219,8 @@ void main() {
     nclState.tick(29000);
     await tester.pump();
 
-    final posList2 = tester.widgetList<Positioned>(find.byType(Positioned)).toList();
+    final posList2 =
+        tester.widgetList<Positioned>(find.byType(Positioned)).toList();
     expect(posList2.length, 4);
 
     final posPopup = posList2[3];
