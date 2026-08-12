@@ -1,7 +1,0 @@
-.vscode/**
-.gitignore
-.vscodeignore
-Makefile
-test/**
-package-lock.json
-*.vsix
