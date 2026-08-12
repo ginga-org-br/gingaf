@@ -11,7 +11,7 @@ export interface Example {
 
 const examples: Record<string, Example> = bundledExamples as Record<string, Example>;
 
-const RAW_GITHUB_BASE = 'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/gingaf/ginga/examples/';
+const RAW_GITHUB_BASE = 'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/';
 const RAW_PJ_BASE = `${RAW_GITHUB_BASE}primeiro-joao/`;
 
 const pjMediaFiles: Record<string, string> = {

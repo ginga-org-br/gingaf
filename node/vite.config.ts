@@ -57,7 +57,12 @@ export default defineConfig({
               else if (ext === '.png') res.setHeader('Content-Type', 'image/png');
               else if (ext === '.jpg') res.setHeader('Content-Type', 'image/jpeg');
               else if (ext === '.ncl') res.setHeader('Content-Type', 'application/xml');
-              else if (ext === '.html') res.setHeader('Content-Type', 'text/html');
+              else if (ext === '.html' || ext === '.htm') res.setHeader('Content-Type', 'text/html');
+              else if (ext === '.mp4') res.setHeader('Content-Type', 'video/mp4');
+              else if (ext === '.webm') res.setHeader('Content-Type', 'video/webm');
+              else if (ext === '.ogv') res.setHeader('Content-Type', 'video/ogg');
+              else if (ext === '.mp3') res.setHeader('Content-Type', 'audio/mpeg');
+              else if (ext === '.wav') res.setHeader('Content-Type', 'audio/wav');
               
               res.setHeader('Access-Control-Allow-Origin', '*');
               fs.createReadStream(filePath).pipe(res);

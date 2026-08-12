@@ -3,7 +3,7 @@ import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 import bundledExamples from './examples.json';
 import { Example } from './player';
 
-const RAW_GITHUB_BASE = 'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/gingaf/ginga/examples/';
+const RAW_GITHUB_BASE = 'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/';
 const RAW_PJ_BASE = `${RAW_GITHUB_BASE}primeiro-joao/`;
 
 const pjMediaFiles: Record<string, string> = {
