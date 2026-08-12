@@ -61,3 +61,20 @@ https://github.com/user-attachments/assets/b06bf145-4cc2-4431-9f00-98b218cfedde
 ### Launch Ginga Application from VSCode
 
 https://github.com/user-attachments/assets/717948df-64ab-42c9-8dd6-3a4a2e3603da
+
+## Run Ginga-NCL or Ginga-HTML applications with UI
+
+All example NCL and HTML documents are stored in the `examples/` folder. You can configure and run the application via APP environment variable (e.g. `examples/image.ncl` or `examples/image.html`).
+
+```bash
+flutter run -d windows --dart-define="APP=examples/image.ncl"
+flutter run -d windows --dart-define="APP=examples/video.ncl"
+```
+
+For convenience, you can use `make run-example` for the current platform:
+
+```bash
+make run-example app=viode.ncl
+make run-example app=image.html
+make run-example app=primeiro-joao/00syncProp.ncl
+```

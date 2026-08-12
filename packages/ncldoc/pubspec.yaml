@@ -3,7 +3,9 @@ description: "A pure Dart implementation of the Nested Context Language (NCL) do
 version: 0.0.1
 
 environment:
-  sdk: ^3.11.0
+  sdk: ">=3.5.0 <4.0.0"
+
+resolution: workspace
 
 dependencies:
   flutter:

@@ -1,10 +1,4 @@
-# gingaf
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-
-Technical overview of the Ginga engine architecture and modular implementation.
-
-## Setup
+# Setup
 
 ### Flutter SDK
 
@@ -81,34 +75,4 @@ Execute the test suite for core logic and integration:
 
 ```bash
 flutter test
-```
-
-## Run Ginga-NCL or Ginga-HTML applications with UI
-
-All example NCL and HTML documents are stored in the `examples/` folder.
-
-You can configure and run the application via environment variables or compile-time definitions (`--dart-define`):
-
-- `APP`: Path to the application file (e.g. `examples/image.ncl` or `examples/image.html`).
-- `MAINAV`: Path to the background video URI. Set it to empty or `true` to use the default butterfly video.
-
-### Run with Flutter command
-
-> [!IMPORTANT]
-> When defining multiple parameters at compile time using `--dart-define`, they **must** be passed as separate arguments (e.g. `--dart-define="APP=..." --dart-define="MAINAV=..."`). Combining them with semicolons (e.g., `--dart-define="APP=...;MAINAV=..."`) is invalid and will cause the build or configuration validation to fail.
-
-```bash
-cd gingaf/ginga
-# Using compile-time definitions
-flutter run -d windows --dart-define="APP=examples/image.ncl"
-flutter run -d windows --dart-define="APP=examples/video.ncl" --dart-define="MAINAV=true"
-flutter run -d chrome --dart-define="APP=examples/image.ncl"
-```
-
-For convenience, you can use `make run-example` for the current platform:
-
-```bash
-cd gingaf/ginga
-make run-example app=image.ncl
-make run-example app=image.html
 ```

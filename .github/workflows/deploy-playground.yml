@@ -28,8 +28,8 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Build ginga-node
-        working-directory: ./ginga-node
+      - name: Build node module
+        working-directory: ./node
         run: |
           npm install
           npm run build
@@ -42,7 +42,7 @@ jobs:
       - name: Prepare site directory
         run: |
           mkdir -p site/dst
-          cp -r ginga-node/dist/* site/dst/
+          cp -r node/dist/* site/dst/
 
       - name: Upload artifact
         if: ${{ !env.ACT }}

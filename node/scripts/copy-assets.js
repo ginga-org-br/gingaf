@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const src = path.resolve(__dirname, '..', '..', 'ginga', 'build', 'web');
+const src = path.resolve(__dirname, '..', '..', 'build', 'web');
 const dest = path.resolve(__dirname, '..', 'public', 'gingaf-web');
 
 if (fs.existsSync(dest)) {
