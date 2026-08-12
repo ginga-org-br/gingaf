@@ -7,6 +7,7 @@ BASE_HREF ?= /
 ifeq ($(OS),Windows_NT)
     VERSION ?= $(shell powershell -Command "(Get-Content pubspec.yaml | Select-String '^version:').Line.Split(':')[1].Trim().Split('+')[0]")
     PLATFORM := windows-x64
+    RUN_OS := windows
     BUILD_CMD := flutter build windows --release
     RELEASE_DIR := build/windows/x64/runner/Release
     ZIP_CMD = powershell -Command "if (Test-Path '$(ZIP_NAME)') { Remove-Item '$(ZIP_NAME)' }; Compress-Archive -Path '$(RELEASE_DIR)/*' -DestinationPath '$(ZIP_NAME)'"
@@ -16,10 +17,12 @@ else
     UNAME_M := $(shell uname -m)
     ifeq ($(UNAME_S),Darwin)
         PLATFORM := macos-$(UNAME_M)
+        RUN_OS := macos
         BUILD_CMD := flutter build macos --release
         RELEASE_DIR := build/macos/Build/Products/Release
     else
         PLATFORM := linux-$(UNAME_M)
+        RUN_OS := linux
         BUILD_CMD := flutter build linux --release
         RELEASE_DIR := build/linux/$(UNAME_M)/release/bundle
     endif
@@ -41,10 +44,10 @@ help:
 	@echo   run-example          Run NCL example application (e.g. make run-example app=video.ncl)
 
 deps:
-	flutter pub get
+	flutter pub get --offline
 
-test: deps
-	flutter test
+test:
+	flutter test test packages/ccws/test packages/ncldoc/test --no-pub
 
 build-windows:
 	flutter build windows --debug
@@ -69,4 +72,4 @@ run-example: check-app
 	@echo ======================================================================
 	@echo Running Example: $(APP_EXAMPLE)
 	@echo ======================================================================
-	flutter run -d windows --dart-define="APP=examples/$(APP_EXAMPLE)" || true
+	flutter run --no-pub -d $(RUN_OS) --dart-define="APP=examples/$(APP_EXAMPLE)" || true
