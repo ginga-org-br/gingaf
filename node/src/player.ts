@@ -42,7 +42,7 @@ const pjMediaFiles: Record<string, string> = {
   'media/techno.png': `${RAW_PJ_BASE}media/techno.png`,
 };
 
-export function initPlayer(): void {
+export async function initPlayer(): Promise<void> {
   console.log('[ginga-node] INFO: initPlayer() starting...');
   document.body.classList.add('mode-player');
   const appEl = document.getElementById('app');
@@ -88,6 +88,19 @@ export function initPlayer(): void {
   }
 
   console.log('[ginga-node] INFO: Player target example resolved:', targetExample.mainFile);
+
+  if (targetExample.fileUrls) {
+    for (const [fileName, url] of Object.entries(targetExample.fileUrls)) {
+      if ((fileName.endsWith('.ncl') || fileName.endsWith('.html') || fileName.endsWith('.htm') || fileName.endsWith('.lua')) && !targetExample.files[fileName]) {
+        try {
+          const res = await fetch(url);
+          if (res.ok) {
+            targetExample.files[fileName] = await res.text();
+          }
+        } catch (_) {}
+      }
+    }
+  }
 
   const allFiles = targetExample.category === 'primeiro-joao'
     ? { ...pjMediaFiles, ...targetExample.files }

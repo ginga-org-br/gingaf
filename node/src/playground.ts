@@ -45,7 +45,7 @@ const examples: Record<string, Example> = bundledExamples as Record<string, Exam
 async function loadExampleFiles(example: Example): Promise<void> {
   if (example.fileUrls) {
     for (const [fileName, url] of Object.entries(example.fileUrls)) {
-      if (!(fileName in example.files)) {
+      if (isEditableFile(fileName) && (!example.files[fileName] || example.files[fileName] === '')) {
         try {
           const res = await fetch(url);
           if (res.ok) {
@@ -117,18 +117,17 @@ export async function initPlayground(mode: string): Promise<void> {
     playerBaseUrl = 'https://ginga-org-br.github.io/gingaf/dst/gingaf-web/index.html';
   }
 
-  if (mode === 'single' || mode === 'playgroundSingle') {
-    document.body.classList.add('mode-single');
-    const controls = document.querySelector('.controls') as HTMLElement;
-    if (controls) controls.style.display = 'none';
-    if (uploadBtn) uploadBtn.style.display = 'none';
-  }
-
   const queryConfig = parseQueryConfig(window.location.search);
   const requested = queryConfig.requestedExample;
 
-  if (queryConfig.isEmbed) {
+  if (queryConfig.isEmbed || mode === 'single' || mode === 'playgroundSingle') {
+    document.body.classList.add('mode-single');
     document.body.classList.add('embed-mode');
+    const exampleSelect = document.getElementById('example-select');
+    if (exampleSelect) exampleSelect.style.display = 'none';
+    const selectLabel = document.querySelector('label[for="example-select"]') as HTMLElement;
+    if (selectLabel) selectLabel.style.display = 'none';
+    if (uploadBtn) uploadBtn.style.display = 'none';
   }
 
   let defaultKey = resolveExampleKey(requested, examples);

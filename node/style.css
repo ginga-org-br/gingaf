@@ -189,3 +189,8 @@ body.embed-mode .header-right {
   display: none !important;
 }
 
+body.mode-single #example-select,
+body.mode-single label[for="example-select"] {
+  display: none !important;
+}
+
