@@ -4,29 +4,25 @@
 
 `gingaf` is an MIT-licensed, multi-platform implementation of the interactive TV middleware Ginga standardised by ITU-T and SBTVD.
 
-For a web-based evaluation of `gingaf`, see [a github-hosted Ginga Playground](https://ginga-org-br.github.io/gingaf/playground/).
+## Architecture
 
-The `gingaf` project structure is:
+The `gingaf` repository is organized as a host-centric monorepo: the root directory (`.`) contains the Flutter visual host application for Ginga applications. It depends on core Dart packages in `packages/ncldoc/` (the headless execution engine, see [packages/ncldoc/README.md](packages/ncldoc/README.md)) and `packages/ccws/` (the web service library, see [packages/ccws/README.md](packages/ccws/README.md)). While `node/` provides the Node.js middleware and web interactive playground (see [node/README.md](node/README.md)).
+
+User-level applications built on top of `gingaf` include [ginga-playground](https://ginga-org-br.github.io/gingaf/playground/) (for web-based evaluation) and [ginga-code](https://github.com/ginga-org-br/ginga-code) (a Visual Studio Code extension for application development).
 
 ```mermaid
 block-beta
 columns 3
-  ginga_node["playground"]
+  playground["playground"]
   ginga_code["ginga-code"]
   space
-  ginga_web["ginga (web)"]
-  ginga_desktop["ginga (desktop)"]
-  ginga_mobile["ginga (mobile)"]
-  ginga["ginga"]:3
+  web["gingaf (web)"]
+  desktop["gingaf (desktop)"]
+  mobile["gingaf (mobile)"]
+  gingaf["gingaf"]:3
   ncldoc["ncldoc"]:2
   ccws["ccws"]:1
 ```
-
-- `packages/ncldoc/` - Dart-based headless execution engine and core NCL library. See [packages/ncldoc/README.md](packages/ncldoc/README.md).
-- `packages/ccws/` - Dart-based Ginga-CC-WebService library. See [packages/ccws/README.md](packages/ccws/README.md).
-- `ginga/` - Ginga visual of Ginga-NCL and Ginga-HTML5 applications (contains the `examples/` for testing). See how to run application at [ginga/README.md](ginga/README.md). Depends on `packages/ncldoc/` and `packages/ccws/`.
-- `ginga-node/` - Web-based interactive playground for evaluating gingaf. See [ginga-node/README.md](ginga-node/README.md). Uses `ginga (web)`.
-- `ginga-code/` - Visual Studio Code extension. See [ginga-code/README.md](ginga-code/README.md). Uses `ginga (desktop)`.
 
 ## Demonstration Videos
 
@@ -62,7 +58,7 @@ https://github.com/user-attachments/assets/b06bf145-4cc2-4431-9f00-98b218cfedde
 
 https://github.com/user-attachments/assets/717948df-64ab-42c9-8dd6-3a4a2e3603da
 
-## Run Ginga-NCL or Ginga-HTML applications with UI
+## gingaf (desktop) run applications from examples/
 
 All example NCL and HTML documents are stored in the `examples/` folder. You can configure and run the application via APP environment variable (e.g. `examples/image.ncl` or `examples/image.html`).
 
@@ -77,4 +73,10 @@ For convenience, you can use `make run-example` for the current platform:
 make run-example app=viode.ncl
 make run-example app=image.html
 make run-example app=primeiro-joao/00syncProp.ncl
+```
+
+## gingaf (web, mobile) run applications from URL
+
+```bash
+flutter run -d chrome --dart-define="APP=https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/ginga/examples/primeiro-joao/00syncProp.ncl"
 ```
