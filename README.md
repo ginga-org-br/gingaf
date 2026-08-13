@@ -72,11 +72,10 @@ For convenience, you can use `make run-example` for the current platform:
 ```bash
 make run-example app=viode.ncl
 make run-example app=image.html
-make run-example app=primeiro-joao/00syncProp.ncl
 ```
 
 ## gingaf (web, mobile) run applications from URLs
 
 ```bash
-flutter run -d chrome --dart-define="APP=https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/ginga/examples/primeiro-joao/00syncProp.ncl"
+flutter run -d chrome --dart-define="APP=https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/video.ncl"
 ```
