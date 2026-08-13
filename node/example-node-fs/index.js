@@ -1,14 +1,14 @@
 const express = require('express');
-const { gingaMiddleware } = require('../dist/index.js');
+const path = require('path');
+const { gingaMiddleware } = require('ginga-node');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.static(__dirname));
+app.use('/app', express.static(path.join(__dirname, 'app')));
 app.use('/gingaf-web', gingaMiddleware());
 
 app.get('/', (req, res) => {
-  const fullAppUrl = `${req.protocol}://${req.get('host')}/video.ncl`;
   res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,11 +27,10 @@ app.get('/', (req, res) => {
 </head>
 <body>
   <header>
-    <h1>gingaf example from nodejs (Local File)</h1>
-    <div class="status">Loading /video.ncl from local filesystem</div>
+    <h1>gingaf example from nodejs opening express-hosted /app/video.ncl</h1>
   </header>
   <main>
-    <iframe src="/gingaf-web/index.html?app=${encodeURIComponent(fullAppUrl)}"></iframe>
+    <iframe src="/gingaf-web/index.html?app=/app/video.ncl"></iframe>
   </main>
 </body>
 </html>`);
@@ -41,7 +40,7 @@ const cp = require('child_process');
 
 app.listen(PORT, () => {
   const url = `http://localhost:${PORT}`;
-  console.log(`\n  ➜ Local:   ${url}\n`);
+  console.log(`\n   Local:   ${url}\n`);
   const startCmd = process.platform === 'win32' ? 'start' : process.platform === 'darwin' ? 'open' : 'xdg-open';
-  cp.exec(`${startCmd} ${url}`, () => {});
+  cp.exec(`${startCmd} ${url}`, () => { });
 });

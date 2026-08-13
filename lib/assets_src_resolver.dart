@@ -20,7 +20,10 @@ class AssetsSrcResolver extends BaseSrcResolver {
 
   @override
   Uri resolveUri(String src, [String? baseDirSrc]) {
-    final uri = super.resolveUri(src, baseDirSrc);
+    var uri = super.resolveUri(src, baseDirSrc);
+    if (kIsWeb && !uri.hasScheme && src.startsWith('/')) {
+      uri = Uri.base.resolveUri(uri);
+    }
     if (kIsWeb) {
       try {
         final mockFiles = getGingaAppFiles();

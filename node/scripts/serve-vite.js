@@ -17,7 +17,7 @@ const targetPage = process.argv[2] || 'playground.html';
     if (!base.endsWith('/')) base = base + '/';
 
     const url = `http://localhost:${port}${base}${targetPage}`;
-    console.log(`\n  ➜ Local:   ${url}\n`);
+    console.log(`\n   Local:   ${url}\n`);
 
     const startCmd = process.platform === 'win32' ? 'start' : process.platform === 'darwin' ? 'open' : 'xdg-open';
     cp.exec(`${startCmd} ${url}`, (err) => {
