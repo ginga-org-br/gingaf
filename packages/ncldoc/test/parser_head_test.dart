@@ -1,11 +1,11 @@
-import 'package:ncldoc/elements.dart';
 import 'package:ncldoc/ncl_document.dart';
-import 'package:ncldoc/parser.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('Elements Typed Accessors', () {
-    test('NCLParser.parseDurStr parses seconds, milliseconds, and numeric values', () {
+    test(
+        'NCLParser.parseDurStr parses seconds, milliseconds, and numeric values',
+        () {
       expect(NCLParser.parseDurStr('2.5s'), equals(2500));
       expect(NCLParser.parseDurStr('500ms'), equals(500));
       expect(NCLParser.parseDurStr('3'), equals(3000));
@@ -83,7 +83,8 @@ void main() {
     });
 
     test('Link xconnector and binds getters', () {
-      final link = Link(rawAttributes: {'id': 'l1', 'xconnector': 'onBeginStart'});
+      final link =
+          Link(rawAttributes: {'id': 'l1', 'xconnector': 'onBeginStart'});
       final bind = Bind(rawAttributes: {'role': 'onBegin', 'component': 'm1'});
       link.children.add(bind);
 
@@ -93,8 +94,10 @@ void main() {
       expect(link.binds.first.component, equals('m1'));
     });
 
-    test('NCLDocument parses Transition and Rule elements as typed instances', () {
-      final doc = NCLDocument.fromContent('''<ncl id="testDoc" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+    test('NCLDocument parses Transition and Rule elements as typed instances',
+        () {
+      final doc = NCLDocument.fromContent(
+          '''<ncl id="testDoc" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <ruleBase>
       <rule id="r1" var="system.language" comparator="eq" value="en"/>
@@ -106,18 +109,22 @@ void main() {
   <body/>
 </ncl>''');
 
-      final ruleBase = doc.headChildren.firstWhere((e) => e.xmlTagName == 'ruleBase');
+      final ruleBase =
+          doc.headChildren.firstWhere((e) => e.xmlTagName == 'ruleBase');
       final rule = ruleBase.children.firstWhere((e) => e.id == 'r1');
       expect(rule, isA<Rule>());
       expect((rule as Rule).varName, equals('system.language'));
 
-      final transBase = doc.headChildren.firstWhere((e) => e.xmlTagName == 'transitionBase');
+      final transBase =
+          doc.headChildren.firstWhere((e) => e.xmlTagName == 'transitionBase');
       final trans = transBase.children.firstWhere((e) => e.id == 't1');
       expect(trans, isA<Transition>());
       expect((trans as Transition).durMs, equals(2000));
     });
 
-    test('NCLParser parses assessmentStatement and condition elements correctly', () {
+    test(
+        'NCLParser parses assessmentStatement and condition elements correctly',
+        () {
       final xmlString = '''<ncl id="myNCL">
 <head>
   <connectorBase>
@@ -139,20 +146,24 @@ void main() {
       final head = doc.head;
       expect(head, isNotNull);
 
-      final connectorBase = head!.firstWhere((e) => e.xmlTagName == 'connectorBase');
+      final connectorBase =
+          head!.firstWhere((e) => e.xmlTagName == 'connectorBase');
       final connector = connectorBase.children.whereType<Connector>().first;
       expect(connector.id, equals('c1'));
 
-      final compoundCond = connector.children.whereType<CompoundCondition>().first;
+      final compoundCond =
+          connector.children.whereType<CompoundCondition>().first;
       expect(compoundCond.operator, equals('and'));
       expect(compoundCond.conditions.length, equals(2));
 
-      final simpleCond = compoundCond.conditions.whereType<SimpleCondition>().first;
+      final simpleCond =
+          compoundCond.conditions.whereType<SimpleCondition>().first;
       expect(simpleCond.role, equals('onSelection'));
       expect(simpleCond.eventType, equals('selection'));
       expect(simpleCond.key, equals('BLUE'));
 
-      final assessmentStmt = compoundCond.conditions.whereType<AssessmentStatement>().first;
+      final assessmentStmt =
+          compoundCond.conditions.whereType<AssessmentStatement>().first;
       expect(assessmentStmt.comparator, equals('eq'));
       expect(assessmentStmt.attributeAssessments.length, equals(1));
       expect(assessmentStmt.valueAssessments.length, equals(1));
@@ -167,7 +178,8 @@ void main() {
       expect(valAss.value, equals('5'));
     });
 
-    test('NCLParser parses focus, navigation, and descriptorParam attributes', () {
+    test('NCLParser parses focus, navigation, and descriptorParam attributes',
+        () {
       final xmlString = '''<ncl id="myNCL">
 <head>
   <descriptorBase>
@@ -184,7 +196,8 @@ void main() {
       final head = doc.head;
       expect(head, isNotNull);
 
-      final descriptorBase = head!.firstWhere((e) => e.xmlTagName == 'descriptorBase');
+      final descriptorBase =
+          head!.firstWhere((e) => e.xmlTagName == 'descriptorBase');
       final desc = descriptorBase.children.whereType<Descriptor>().first;
 
       expect(desc.id, equals('dFocus'));

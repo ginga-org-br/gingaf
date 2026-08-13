@@ -148,10 +148,10 @@ void main() {
       expect(
         AssetsSrcResolver()
             .resolveUri(
-                'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/ginga/examples/video.ncl')
+                'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/video.ncl')
             .toString(),
         equals(
-            'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/ginga/examples/video.ncl'),
+            'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/video.ncl'),
       );
       expect(
         AssetsSrcResolver()
@@ -182,7 +182,7 @@ void main() {
       );
 
       const httpUrl =
-          'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/ginga/examples/video.ncl';
+          'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/video.ncl';
       final httpUri = loader.resolveUri(httpUrl);
       expect(loader.exists(httpUri), isTrue);
       expect(requestedKeys, isEmpty);
