@@ -1,6 +1,6 @@
 MAKEFLAGS += -s --no-print-directory
 
-.PHONY: help deps build serve serve-playground serve-example-playground-app serve-example-player-app serve-example-node-fs clean simulate-gh-deploy
+.PHONY: help deps build serve serve-playground serve-example-playground-app serve-example-player-app serve-example-node-express clean simulate-gh-deploy
 
 help:
 	@echo Usage: make [target]
@@ -13,7 +13,7 @@ help:
 	@echo   serve-playground              Open Ginga Playground IDE (playground.html)
 	@echo   serve-example-playground-app  Open Ginga Playground with NCL app integration (example-playground-app.html)
 	@echo   serve-example-player-app      Open Ginga Player with autostarting NCL app (example-player-app.html)
-	@echo   serve-example-node-fs         Serve Node.js Express filesystem app (example-node-fs)
+	@echo   serve-example-node-express    Serve Node.js Express app (example-node-express)
 	@echo   simulate-gh-deploy            Simulate GitHub Actions deploy and serve site locally
 
 deps:
@@ -34,8 +34,8 @@ serve-example-playground-app: build
 serve-example-player-app: build
 	npm run serve-example-player-app
 
-serve-example-node-fs: build
-	npm run serve-example-node-fs
+serve-example-node-express: build
+	npm run serve-example-node-express
 
 simulate-gh-deploy: build
 	-act -C .. -W .github/workflows/deploy-playground.yml -j build

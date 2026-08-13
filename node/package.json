@@ -23,7 +23,7 @@
     "serve-playground": "node scripts/serve-vite.js playground.html",
     "serve-example-playground-app": "node scripts/serve-vite.js playground-app-example.html",
     "serve-example-player-app": "node scripts/serve-vite.js player-app-example.html",
-    "serve-example-node-fs": "node example-node-fs/index.js",
+    "serve-example-node-express": "node example-node-express/index.js",
     "build": "npm run flutter:build && npm run copy:assets && npm run bundle:examples && vite build && tsc",
     "preview": "vite preview"
   },

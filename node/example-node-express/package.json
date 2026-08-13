@@ -1,5 +1,5 @@
 {
-  "name": "example-node-fs",
+  "name": "example-node-express",
   "description": "Express application example utilizing ginga-node",
   "private": true,
   "main": "index.js",
