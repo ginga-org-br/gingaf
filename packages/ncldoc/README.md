@@ -6,13 +6,13 @@ Logic package handling the NCL document logic.
 
 ## Run Headless (no-UI) Ginga-NCL applications
 
-All example NCL documents are stored in the `../../ginga/examples/` folder.
+All example NCL documents are stored in the `../../examples/` folder.
 
 To run headless NCL simulation:
 
 ```bash
 cd packages/ncldoc
-dart lib/main.dart ../../ginga/examples/video.ncl
+dart lib/main.dart ../../examples/video.ncl
 ```
 
 For easy, you can use `make run`. See below.
