@@ -4,7 +4,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "declaration": true,
-    "outDir": "./dist",
+    "outDir": "./playground",
     "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,

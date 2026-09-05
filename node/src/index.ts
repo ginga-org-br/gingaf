@@ -6,6 +6,9 @@ export function getAssetsPath(): string {
   const distPath = path.resolve(__dirname, 'gingaf-web');
   if (fs.existsSync(distPath)) return distPath;
 
+  const playgroundParentPath = path.resolve(__dirname, '..', 'playground', 'gingaf-web');
+  if (fs.existsSync(playgroundParentPath)) return playgroundParentPath;
+
   const distParentPath = path.resolve(__dirname, '..', 'dist', 'gingaf-web');
   if (fs.existsSync(distParentPath)) return distParentPath;
 

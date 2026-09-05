@@ -1,59 +1,47 @@
 name: Deploy Playground
-
 on:
   workflow_dispatch:
-
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 permissions:
   contents: read
   pages: write
   id-token: write
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
+      - uses: actions/configure-pages@v6
+      - uses: actions/checkout@v6
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: "stable"
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-
       - name: Build node module
         working-directory: ./node
         run: |
           npm install
           npm run build
-
       - name: Setup Pages
         id: pages
         if: ${{ !env.ACT }}
         uses: actions/configure-pages@v5
-
       - name: Prepare site directory
         run: |
-          mkdir -p site/dst
-          cp -r node/dist/* site/dst/
-
+          mkdir -p site
+          cp -r node/playground site/playground
       - name: Upload artifact
-        if: ${{ !env.ACT }}
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
-          path: ./site
-
+          path: site
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}dst/
+      url: ${{ steps.deployment.outputs.page_url }}playground/
     needs: build
     runs-on: ubuntu-latest
     name: Deploy

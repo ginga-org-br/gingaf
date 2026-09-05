@@ -1,46 +1,38 @@
 {
-  "name": "ginga-node",
-  "version": "0.1.1",
-  "description": "Node.js middleware and static asset distribution package for GingaF Flutter Web",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "bin": {
-    "ginga-node": "./bin/ginga-node.js"
-  },
-  "files": [
-    "dist",
-    "assets",
-    "bin"
-  ],
-  "scripts": {
-    "flutter:build": "node -e \"const fs=require('fs'); const cp=require('child_process'); if (!fs.existsSync('../build/web/index.html')) cp.execSync('cd .. && flutter build web --release', { stdio: 'inherit' }); else console.log('Flutter web build exists, skipping build.');\"",
-    "flutter:build:force": "cd .. && flutter build web --release",
-    "copy:assets": "node scripts/copy-assets.js",
-    "bundle:examples": "node scripts/bundle-examples.js",
-    "clean": "node -e \"const fs=require('fs'); ['dist', 'site', 'public/gingaf-web'].forEach(d => fs.existsSync(d) && fs.rmSync(d, { recursive: true, force: true }));\"",
-    "dev": "node scripts/bundle-examples.js && vite",
-    "serve": "node scripts/serve-vite.js playground.html",
-    "serve-playground": "node scripts/serve-vite.js playground.html",
-    "serve-example-playground-app": "node scripts/serve-vite.js playground-app-example.html",
-    "serve-example-player-app": "node scripts/serve-vite.js player-app-example.html",
-    "serve-example-node-express": "node example-node-express/index.js",
-    "build": "npm run flutter:build && npm run copy:assets && npm run bundle:examples && vite build && tsc",
-    "preview": "vite preview"
-  },
-  "peerDependencies": {
-    "express": "^4.0.0"
-  },
-  "peerDependenciesMeta": {
-    "express": {
-      "optional": true
+    "name": "ginga-node",
+    "version": "0.1.1",
+    "description": "Node.js middleware and static asset distribution package for GingaF Flutter Web",
+    "main": "playground/index.js",
+    "types": "playground/index.d.ts",
+    "files": [
+        "playground",
+        "assets"
+    ],
+    "scripts": {
+        "flutter:build": "node -e \"const fs=require('fs'); const cp=require('child_process'); if (!fs.existsSync('../build/web/index.html')) cp.execSync('cd .. && flutter build web --release', { stdio: 'inherit' }); else console.log('Flutter web build exists, skipping build.');\"",
+        "flutter:build:force": "cd .. && flutter build web --release",
+        "copy:assets": "node scripts/copy-assets.js",
+        "bundle:examples": "node scripts/bundle-examples.js",
+        "clean": "node -e \"const fs=require('fs'); ['playground', 'dist', 'site', 'public/gingaf-web'].forEach(d => fs.existsSync(d) && fs.rmSync(d, { recursive: true, force: true }));\"",
+        "dev": "node scripts/bundle-examples.js && node scripts/build.js && node scripts/serve.js index.html",
+        "serve": "node scripts/serve.js index.html",
+        "serve-examples": "node scripts/serve.js --express examples/playground-app-example.html examples/player-app-example.html",
+        "build": "npm run flutter:build && npm run copy:assets && npm run bundle:examples && node scripts/build.js && tsc"
+    },
+    "peerDependencies": {
+        "express": "^4.0.0"
+    },
+    "peerDependenciesMeta": {
+        "express": {
+            "optional": true
+        }
+    },
+    "devDependencies": {
+        "@types/express": "^4.17.21",
+        "@types/node": "^20.12.7",
+        "esbuild": "^0.28.2",
+        "express": "^4.19.2",
+        "monaco-editor": "^0.53.0",
+        "typescript": "^5.4.5"
     }
-  },
-  "devDependencies": {
-    "@types/express": "^4.17.21",
-    "@types/node": "^20.12.7",
-    "express": "^4.19.2",
-    "monaco-editor": "^0.53.0",
-    "typescript": "^5.4.5",
-    "vite": "^8.2.1"
-  }
 }
