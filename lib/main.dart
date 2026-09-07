@@ -30,8 +30,11 @@ void main(List<String> args) {
   }
 
   WidgetsFlutterBinding.ensureInitialized();
-  if (!kIsWeb && Platform.isWindows) {
-    VideoPlayerMediaKit.ensureInitialized(windows: true);
+  if (!kIsWeb && (Platform.isWindows || Platform.isLinux)) {
+    VideoPlayerMediaKit.ensureInitialized(
+      windows: Platform.isWindows,
+      linux: Platform.isLinux,
+    );
   }
 
   Logger.root.level = Level.ALL;

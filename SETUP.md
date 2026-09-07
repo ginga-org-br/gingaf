@@ -1,9 +1,6 @@
 # Setup
 
-### Flutter SDK
-
-Install the Flutter SDK from the official website:
-[https://docs.flutter.dev/get-started/install/](https://docs.flutter.dev/get-started/install/)
+`gignaf` is based in Flutter. So first [install Flutter SDK from](https://docs.flutter.dev/install/manual)
 
 ### At windows, build for windows and chrome
 
@@ -23,7 +20,7 @@ nuget install Microsoft.Windows.ImplementationLibrary -Version 1.0.220914.1 -Exc
 nuget install Microsoft.Web.WebView2 -Version 1.0.1210.39 -ExcludeVersion -OutputDirectory build/windows/x64/packages
 ```
 
-Then, to configure the proejct and test, do:
+Then, to configure, do:
 
 ```powershell
 flutter config --enable-web
@@ -45,8 +42,9 @@ Install java and make sure `JAVA_HOME` is set. You can do the below.
 
 ```powershell
 winget install EclipseAdoptium.Temurin.25.JDK
-java --version
+# at a new shell
 echo $env:JAVA_HOME
+java --version
 ```
 
 Make sure you have `ANDROID_HOME`. You can do the below.
@@ -60,6 +58,7 @@ Remove-Item "$env:TEMP\cmdline-tools.zip", "$env:TEMP\cmdline-tools" -Recurse -F
 [System.Environment]::SetEnvironmentVariable("ANDROID_HOME", "C:\Android", [System.EnvironmentVariableTarget]::User)
 $user_path = [System.Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)
 [System.Environment]::SetEnvironmentVariable("Path", "$user_path;C:\Android\cmdline-tools\latest\bin", [System.EnvironmentVariableTarget]::User)
+# at a new shell
 echo $env:ANDROID_HOME
 sdkmanager.bat --version
 ```
@@ -86,4 +85,25 @@ Finnaly to run an application at an virutal device called `emulator-5554`, do:
 
 ```powershell
 flutter run --no-pub -d emulator-5554 --dart-define="APP=https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/video.ncl"
+```
+
+### At linux, build for android
+
+```bash
+sudo snap install flutter --classic
+sudo apt install -y cmake ninja-build clang pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev libmpv-dev mpv
+```
+
+Then, to configure, do:
+
+```powershell
+flutter config --enable-linux-desktop
+flutter pub get
+flutter build linux
+```
+
+You may test by:
+
+```powershell
+flutter run -d linux --dart-define="APP=examples/video.ncl"
 ```

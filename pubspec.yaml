@@ -20,6 +20,7 @@ dependencies:
   video_player: ^2.14.0
   video_player_media_kit: ^2.0.0
   media_kit_libs_windows_video: ^1.0.0
+  media_kit_libs_linux: ^1.0.4
   http: ^1.1.0
   ccws:
   ncldoc:
