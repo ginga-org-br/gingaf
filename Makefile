@@ -1,6 +1,6 @@
 MAKEFLAGS += -s --no-print-directory
 
-.PHONY: help deps test build build-windows build-web build-release-zip clean run-example check-app setup
+.PHONY: help deps test build build-windows build-web release release-publish clean run-example check-app setup
 
 BASE_HREF ?= /
 
@@ -8,9 +8,9 @@ ifeq ($(OS),Windows_NT)
     VERSION ?= $(shell powershell -Command "(Get-Content pubspec.yaml | Select-String '^version:').Line.Split(':')[1].Trim().Split('+')[0]")
     PLATFORM := windows-x64
     RUN_OS := windows
-    BUILD_CMD := flutter build windows --release
+    RELEASE_BUILD := flutter build windows --release
     RELEASE_DIR := build/windows/x64/runner/Release
-    ZIP_CMD = powershell -Command "if (Test-Path '$(ZIP_NAME)') { Remove-Item '$(ZIP_NAME)' }; Compress-Archive -Path '$(RELEASE_DIR)/*' -DestinationPath '$(ZIP_NAME)'"
+    RELEASE_ZIP = powershell -Command "if (Test-Path '$(ZIP_NAME)') { Remove-Item '$(ZIP_NAME)' }; Compress-Archive -Path '$(RELEASE_DIR)/*' -DestinationPath '$(ZIP_NAME)'"
 else
     VERSION ?= $(shell grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1 | tr -d '\r')
     UNAME_S := $(shell uname -s)
@@ -18,15 +18,22 @@ else
     ifeq ($(UNAME_S),Darwin)
         PLATFORM := macos-$(UNAME_M)
         RUN_OS := macos
-        BUILD_CMD := flutter build macos --release
+        RELEASE_BUILD := flutter build macos --release
         RELEASE_DIR := build/macos/Build/Products/Release
     else
-        PLATFORM := linux-$(UNAME_M)
+        ifeq ($(UNAME_M),x86_64)
+            ARCH := x64
+        else ifeq ($(UNAME_M),aarch64)
+            ARCH := arm64
+        else
+            ARCH := $(UNAME_M)
+        endif
+        PLATFORM := linux-$(ARCH)
         RUN_OS := linux
-        BUILD_CMD := flutter build linux --release
-        RELEASE_DIR := build/linux/$(UNAME_M)/release/bundle
+        RELEASE_BUILD := flutter build linux --release
+        RELEASE_DIR := build/linux/$(ARCH)/release/bundle
     endif
-    ZIP_CMD = rm -f $(ZIP_NAME) && (cd $(RELEASE_DIR) && zip -r $(CURDIR)/$(ZIP_NAME) .)
+    RELEASE_ZIP = rm -f $(ZIP_NAME) && (cd $(RELEASE_DIR) && zip -r $(CURDIR)/$(ZIP_NAME) .)
 endif
 
 ZIP_NAME := gingaf-v$(VERSION)-$(PLATFORM).zip
@@ -39,7 +46,8 @@ help:
 	@echo   test                 Run tests for Flutter workspace
 	@echo   build-windows        Build debug executable for Windows
 	@echo   build-web            Build web release bundle
-	@echo   build-release-zip    Zip current platform release build
+	@echo   release              Zip current platform release build
+	@echo   release-publish      Publish release to GitHub Releases via gh
 	@echo   clean                Clean build artifacts
 	@echo   run-example          Run NCL example application (e.g. make run-example app=video.ncl)
 
@@ -55,9 +63,12 @@ build-windows:
 build-web:
 	flutter build web --base-href $(BASE_HREF)
 
-build-release-zip:
-	$(BUILD_CMD)
-	$(ZIP_CMD)
+release:
+	$(RELEASE_BUILD)
+	$(RELEASE_ZIP)
+
+release-publish: release
+	gh release upload v$(VERSION) $(ZIP_NAME) --clobber || gh release create v$(VERSION) $(ZIP_NAME) --generate-notes
 
 clean:
 	flutter clean
