@@ -28,7 +28,6 @@ class NCLDocument {
   late final Settings _settings;
   Uri? docUri;
   final String docSrc;
-  final SrcResolver contentLoader;
 
   late final NCLScheduler scheduler = NCLScheduler(this);
   final NCLUsers users = NCLUsers();
@@ -37,20 +36,17 @@ class NCLDocument {
   static Future<NCLDocument> fromSrc(
     String docSrc, {
     String? userDataSrc,
-    SrcResolver? contentLoader,
   }) async {
-    final loader = contentLoader ?? const BaseSrcResolver();
     _logger.info('Loading NCL document from src: $docSrc');
-    final docUri = loader.resolveUri(docSrc);
-    final xml = await loader.load(docUri);
+    final docUri = resolveUri(docSrc);
+    final xml = await loadContent(docUri);
     final userData = userDataSrc != null
-        ? await loader.load(loader.resolveUri(userDataSrc, docSrc))
+        ? await loadContent(resolveUri(userDataSrc, docSrc))
         : null;
     final doc = NCLDocument.fromContent(
       xml ?? '',
       docSrc: docSrc,
       userData: userData,
-      contentLoader: loader,
     );
     await doc.loadUserProfiles();
     return doc;
@@ -60,9 +56,7 @@ class NCLDocument {
     String xml, {
     String? docSrc,
     String? userData,
-    SrcResolver? contentLoader,
   }) {
-    final loader = contentLoader ?? const BaseSrcResolver();
     if (xml.trim().isEmpty) {
       throw ArgumentError('empty src');
     }
@@ -71,7 +65,6 @@ class NCLDocument {
     final Uri? resolvedUri = docSrc != null ? Uri.tryParse(docSrc) : null;
     final (head, body) = NCLParser(
       docUri: resolvedUri,
-      contentLoader: loader,
     ).parseString(xml);
     return NCLDocument._(
       head: head,
@@ -79,7 +72,6 @@ class NCLDocument {
       docSrc: resolvedDocSrc,
       docUri: resolvedUri,
       userData: userData,
-      contentLoader: loader,
     );
   }
 
@@ -89,8 +81,7 @@ class NCLDocument {
     required this.docSrc,
     this.docUri,
     String? userData,
-    SrcResolver? contentLoader,
-  }) : contentLoader = contentLoader ?? const BaseSrcResolver() {
+  }) {
     _head = head;
     _body = body;
     _gatherSettings();
@@ -126,8 +117,8 @@ class NCLDocument {
     if (src == null) return;
     try {
       _logger.fine('Loading user profile "$id" from src: $src');
-      final profileUri = contentLoader.resolveUri(src, docSrc);
-      final jsonContent = await contentLoader.load(profileUri);
+      final profileUri = resolveUri(src, docSrc);
+      final jsonContent = await loadContent(profileUri);
       if (jsonContent != null && jsonContent.isNotEmpty) {
         final query = json.decode(jsonContent);
         users.registerProfile(NCLUserProfile(id: id, src: src, query: query));
@@ -153,7 +144,7 @@ class NCLDocument {
   Settings getSettings() => _settings;
 
   void doNclEditingCommand(String command) {
-    NCLParser(docUri: docUri, contentLoader: contentLoader).doNclEditingCommand(this, command);
+    NCLParser(docUri: docUri).doNclEditingCommand(this, command);
   }
 
   Node? getNodeById(String id) {

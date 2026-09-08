@@ -9,13 +9,11 @@ import 'schema.dart';
 class NCLParser {
   final Schema schema = Schema();
   final Uri? docUri;
-  final SrcResolver contentLoader;
   Uri? get baseUri => docUri?.resolve('.');
 
   NCLParser({
     this.docUri,
-    SrcResolver? contentLoader,
-  }) : contentLoader = contentLoader ?? const BaseSrcResolver();
+  });
 
   (Head, Body) parseString(String xmlString) {
     if (xmlString.trim().isEmpty) {
@@ -217,8 +215,8 @@ class NCLParser {
       final isNetworkOrStream = src.startsWith('sbtvd://') ||
           src.startsWith('http://') ||
           src.startsWith('https://');
-      final resolvedMediaUri = contentLoader.resolveUri(src, baseDirSrc);
-      if (!isNetworkOrStream && !contentLoader.exists(resolvedMediaUri)) {
+      final resolvedMediaUri = resolveUri(src, baseDirSrc);
+      if (!isNetworkOrStream && !exists(resolvedMediaUri)) {
         throw FileSystemException('Media src does not exist: $src', src);
       }
     }
