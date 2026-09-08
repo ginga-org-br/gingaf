@@ -6,10 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:logging/logging.dart';
 
-import 'assets_src_resolver.dart';
-import 'html/html_app.dart' as html;
+import 'package:nclui/html_app.dart' as html;
+import 'package:nclui/ncl_app.dart' as ncl;
+
 import 'main_av.dart';
-import 'ncl/ncl_app.dart' as ncl;
 import 'web_utils_stub.dart' if (dart.library.html) 'web_utils_web.dart';
 
 final _logger = Logger('ginga');
@@ -17,17 +17,15 @@ final _logger = Logger('ginga');
 class GingaConfig {
   final String? appSrc;
   final String? mainAvSrc;
-  final bool enableCCWS;
   final String? usersDataSrc;
-  final AssetsSrcResolver contentLoader;
+  final bool enableCCWS;
 
   GingaConfig([
     this.appSrc,
     this.enableCCWS = true,
     this.usersDataSrc,
     this.mainAvSrc,
-    AssetsSrcResolver? contentLoader,
-  ]) : contentLoader = contentLoader ?? AssetsSrcResolver();
+  ]);
 
   bool get isEmpty =>
       appSrc == null && (mainAvSrc == null || mainAvSrc!.isEmpty);
@@ -87,7 +85,6 @@ class _GingaState extends State<Ginga> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    widget.config.contentLoader.setBuildContext(context);
     if (!_initialized) {
       _initialized = true;
       final appSrc = widget.config.appSrc;
@@ -96,14 +93,14 @@ class _GingaState extends State<Ginga> {
           htmlApp = html.HTMLApp(
             src: appSrc,
             ccws: _ccws,
-            config: widget.config,
+            enableCCWS: widget.config.enableCCWS,
           );
         } else {
           nclApp = ncl.NCLApp(
             key: _nclAppKey,
             src: appSrc,
             mainAVController: mainAVController,
-            config: widget.config,
+            usersDataSrc: widget.config.usersDataSrc,
           );
         }
       }

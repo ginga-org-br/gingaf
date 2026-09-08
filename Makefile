@@ -53,11 +53,7 @@ deps:
 	flutter pub get
 
 test:
-	flutter test test packages/ccws/test packages/ncldoc/test --no-pub
-
-build-windows:
-	flutter build windows --debug
-
+	flutter test test packages/ccws/test packages/ncldoc/test packages/nclui/test --no-pub
 
 release:
 	$(RELEASE_BUILD)

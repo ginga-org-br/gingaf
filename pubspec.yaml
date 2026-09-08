@@ -10,6 +10,7 @@ environment:
 workspace:
   - packages/ccws
   - packages/ncldoc
+  - packages/nclui
 
 dependencies:
   flutter:
@@ -24,6 +25,7 @@ dependencies:
   http: ^1.1.0
   ccws:
   ncldoc:
+  nclui:
 
 dev_dependencies:
   flutter_test:
@@ -33,6 +35,7 @@ dev_dependencies:
     sdk: flutter
   test: ^1.29.0
   video_player_platform_interface: ^6.9.0
+  plugin_platform_interface: ^2.1.8
 
 flutter:
   uses-material-design: true

@@ -2,35 +2,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:nclui/main_av_controller.dart';
 
-class MainAVController extends ChangeNotifier {
-  String? _uri;
-  bool _isPlaying = true;
-
-  String? get uri => _uri;
-  bool get isPlaying => _isPlaying;
-
-  void setMainAvUri(String? val) {
-    if (_uri != val) {
-      _uri = val;
-      notifyListeners();
-    }
-  }
-
-  void play() {
-    if (!_isPlaying) {
-      _isPlaying = true;
-      notifyListeners();
-    }
-  }
-
-  void stop() {
-    if (_isPlaying) {
-      _isPlaying = false;
-      notifyListeners();
-    }
-  }
-}
+export 'package:nclui/main_av_controller.dart';
 
 class MainAVWidget extends StatefulWidget {
   final MainAVController controller;

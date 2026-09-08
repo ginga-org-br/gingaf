@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingaf/ginga.dart';
-import 'package:gingaf/html/html_app.dart';
-import 'package:gingaf/ncl/ncl_app.dart';
+import 'package:nclui/html_app.dart';
+import 'package:nclui/ncl_app.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 import 'mock_video_player.dart';
@@ -70,7 +70,7 @@ void main() {
           bundle: MockGingaTestAssetBundle(),
           child: NCLApp(
             src: 'test.ncl',
-            config: GingaConfig('test.ncl', true, 'test/user_data1.json'),
+            usersDataSrc: 'test/user_data1.json',
           ),
         ),
       ));
@@ -87,7 +87,7 @@ void main() {
     });
 
     testWidgets(
-        'NCLApp mounts with GingaConfig parameter and resolves usersDataJson',
+        'NCLApp mounts with usersDataSrc parameter and resolves usersDataJson',
         (WidgetTester tester) async {
       final config = GingaConfig('test.ncl', true, 'test/user_data2.json');
       await tester.pumpWidget(MaterialApp(
@@ -95,7 +95,7 @@ void main() {
           bundle: MockGingaTestAssetBundle(),
           child: NCLApp(
             src: 'test.ncl',
-            config: config,
+            usersDataSrc: config.usersDataSrc,
           ),
         ),
       ));
@@ -111,10 +111,9 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
 
-    test('HTMLApp accepts GingaConfig parameter', () {
-      final config = GingaConfig('app.html', true);
-      final htmlApp = HTMLApp(src: 'app.html', config: config);
-      expect(htmlApp.config, equals(config));
+    test('HTMLApp accepts enableCCWS parameter', () {
+      final htmlApp = HTMLApp(src: 'app.html', enableCCWS: true);
+      expect(htmlApp.enableCCWS, isTrue);
       expect(htmlApp.src, equals('app.html'));
     });
   });
