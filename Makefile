@@ -1,6 +1,6 @@
 MAKEFLAGS += -s --no-print-directory
 
-.PHONY: help deps test build build-windows build-web release release-publish clean run-example check-app setup
+.PHONY: help deps test release release-publish clean run-example check-app
 
 BASE_HREF ?= /
 
@@ -44,15 +44,13 @@ help:
 	@echo Targets:
 	@echo   deps                 Install dependencies for Flutter workspace
 	@echo   test                 Run tests for Flutter workspace
-	@echo   build-windows        Build debug executable for Windows
-	@echo   build-web            Build web release bundle
 	@echo   release              Zip current platform release build
 	@echo   release-publish      Publish release to GitHub Releases via gh
 	@echo   clean                Clean build artifacts
 	@echo   run-example          Run NCL example application (e.g. make run-example app=video.ncl)
 
 deps:
-	flutter pub get --offline
+	flutter pub get
 
 test:
 	flutter test test packages/ccws/test packages/ncldoc/test --no-pub
@@ -60,8 +58,6 @@ test:
 build-windows:
 	flutter build windows --debug
 
-build-web:
-	flutter build web --base-href $(BASE_HREF)
 
 release:
 	$(RELEASE_BUILD)
