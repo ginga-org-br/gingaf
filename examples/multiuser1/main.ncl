@@ -7,6 +7,10 @@
       <descriptor id="dAd" region="rgAd"/>
     </descriptorBase>
     <connectorBase>
+      <causalConnector id="onEndStop">
+        <simpleCondition role="onEnd"/>
+        <simpleAction role="stop"/>
+      </causalConnector>
       <causalConnector id="onBeginTestVarStart">
         <compoundCondition operator="and">
           <simpleCondition role="onBegin"/>
@@ -22,7 +26,7 @@
       <userProfile id="pAdult" src="adult_query.json" max="1"/>
     </userBase>
   </head>
-  <body>
+  <body id="body">
     <settings id="uSettings" type="application/x-ncl-user-settings" user="pAdult">
       <property name="gender"/>
     </settings>
@@ -43,6 +47,10 @@
       <bind role="var" component="uSettings" interface="gender"/>
       <bindParam name="value" value="female"/>
       <bind role="start" component="mGeneralAd"/>
+    </link>
+    <link xconnector="onEndStop">
+      <bind role="onEnd" component="mVideo"/>
+      <bind role="stop" component="body"/>
     </link>
   </body>
 </ncl>
