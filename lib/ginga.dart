@@ -73,14 +73,14 @@ class _GingaState extends State<Ginga> {
           htmlApp = html.HTMLApp(
             src: appSrc,
             ccws: _ccws,
-            enableCCWS: widget.config.enableCCWS,
+            config: widget.config,
           );
         } else {
           nclApp = ncl.NCLApp(
             key: _nclAppKey,
             src: appSrc,
             mainAVController: mainAVController,
-            usersDataSrc: widget.config.usersDataSrc,
+            config: widget.config,
           );
         }
       }

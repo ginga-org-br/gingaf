@@ -38,8 +38,11 @@ void main() {
 
       final docAdultCC = NCLDocument.fromContent(
         xml,
-        userData:
+        config: GingaConfig(
+          users: Users(
             '[{"id": "u1", "name": "AdultCC", "properties": {"age": "25", "closedCaptioning": "true"}}]',
+          ),
+        ),
       );
 
       final sw1 = docAdultCC.getNodeById('swAd') as Switch;
@@ -48,8 +51,11 @@ void main() {
 
       final docAdultNoCC = NCLDocument.fromContent(
         xml,
-        userData:
+        config: GingaConfig(
+          users: Users(
             '[{"id": "u2", "name": "AdultNoCC", "properties": {"age": "25", "closedCaptioning": "false"}}]',
+          ),
+        ),
       );
 
       final sw2 = docAdultNoCC.getNodeById('swAd') as Switch;
@@ -83,8 +89,11 @@ void main() {
 
       final doc = NCLDocument.fromContent(
         xml,
-        userData:
+        config: GingaConfig(
+          users: Users(
             '[{"id": "u1", "name": "YoungUser", "properties": {"age": "16"}}]',
+          ),
+        ),
       );
 
       final sw = doc.getNodeById('swContent') as Switch;
@@ -123,8 +132,11 @@ void main() {
 
       final doc = NCLDocument.fromContent(
         xml,
-        userData:
+        config: GingaConfig(
+          users: Users(
             '[{"id": "u1", "name": "User PT", "properties": {"lang": "pt-BR"}}, {"id": "u2", "name": "User EN", "properties": {"lang": "en-US"}}]',
+          ),
+        ),
       );
 
       final sw = doc.getNodeById('swLang') as Switch;
@@ -167,9 +179,9 @@ void main() {
 
       final doc = NCLDocument.fromContent(xml);
       final u1 =
-          NCLUserData(id: 'u1', name: 'Adult', initialProperties: {'age': 25});
+          UserData(id: 'u1', name: 'Adult', initialProperties: {'age': 25});
       final u2 =
-          NCLUserData(id: 'u2', name: 'Child', initialProperties: {'age': 10});
+          UserData(id: 'u2', name: 'Child', initialProperties: {'age': 10});
 
       doc.users.registerUser(u1);
       doc.users.registerUser(u2);
@@ -219,11 +231,11 @@ void main() {
 
       final doc = NCLDocument.fromContent(xml);
       final users = doc.users;
-      final u1 = NCLUserData(
+      final u1 = UserData(
           id: 'u1',
           name: 'Alice',
           initialProperties: {'age': 25, 'preferredLang': 'en'});
-      final u2 = NCLUserData(
+      final u2 = UserData(
           id: 'u2',
           name: 'Bob',
           initialProperties: {'age': 16, 'preferredLang': 'es'});

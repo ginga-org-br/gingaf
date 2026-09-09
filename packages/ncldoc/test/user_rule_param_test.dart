@@ -34,7 +34,8 @@ void main() {
 
         final doc = NCLDocument.fromContent(
           xml,
-          userData: '''
+          config: GingaConfig(
+            users: Users('''
         {
           "id": "u1",
           "name": "Bob",
@@ -43,7 +44,8 @@ void main() {
             "age": 30
           }
         }
-        ''',
+        '''),
+          ),
         );
 
         final sw = doc.getNodeById('swAd') as Switch;
@@ -81,7 +83,8 @@ void main() {
 
       final doc = NCLDocument.fromContent(
         xml,
-        userData: '''
+        config: GingaConfig(
+          users: Users('''
       {
         "id": "u1",
         "name": "Alice",
@@ -89,7 +92,8 @@ void main() {
           "age": 20
         }
       }
-      ''',
+      '''),
+        ),
       );
 
       final sw = doc.getNodeById('swAge') as Switch;
@@ -128,7 +132,8 @@ void main() {
 
       final doc = NCLDocument.fromContent(
         xml,
-        userData: '''
+        config: GingaConfig(
+          users: Users('''
       [
         {
           "id": "user1",
@@ -141,7 +146,8 @@ void main() {
           "properties": {"tier": "gold"}
         }
       ]
-      ''',
+      '''),
+        ),
       );
 
       final sw = doc.getNodeById('swTier') as Switch;
@@ -186,13 +192,15 @@ void main() {
 
       final doc = NCLDocument.fromContent(
         xml,
-        userData: '''
+        config: GingaConfig(
+          users: Users('''
       {
         "id": "u1",
         "name": "User One",
         "properties": {"gender": "male", "age": 16}
       }
-      ''',
+      '''),
+        ),
       );
 
       final sw = doc.getNodeById('swContent') as Switch;

@@ -1,4 +1,5 @@
 import 'package:gingacc/ginga_config.dart';
+import 'package:gingacc/users.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -10,17 +11,102 @@ void main() {
       expect(GingaConfig(appSrc: 'APP.HTML').appSrc, 'APP.HTML');
     });
 
-    test('default constructor initializes envVariables and defaults', () {
+    test('constructor initializes envVariables and defaults', () {
       final config = GingaConfig();
       expect(config.appSrc, isNull);
-      expect(config.usersDataSrc, isNull);
       expect(config.enableCCWS, isTrue);
       expect(config.envVariables['system.language'], equals('por'));
+      expect(config.users, isNotNull);
     });
 
-    test('accepts usersDataSrc', () {
-      final config = GingaConfig(usersDataSrc: 'data1.json');
-      expect(config.usersDataSrc, equals('data1.json'));
+    test('accepts users in constructor', () {
+      final users = Users('{"id": "u1", "name": "Alice"}');
+      final config = GingaConfig(users: users);
+      expect(config.users.getUser('u1')?.name, equals('Alice'));
+    });
+
+    test('fromJson parses usersDataJson from JSON and populates users', () async {
+      final config = await GingaConfig.fromJson(
+        '{"usersDataJson": "[{\\"id\\": \\"u3\\", \\"name\\": \\"Charlie\\"}]"}',
+      );
+      expect(config.users.getUser('u3')?.name, equals('Charlie'));
+    });
+
+    test('loads single user from inline user JSON map with ID', () {
+      final config = GingaConfig(
+        users: Users(
+          '{"id": "u100", "name": "Alice", "properties": {"age": 30}}',
+        ),
+      );
+      expect(config.users.getUser('u100'), isNotNull);
+      expect(config.users.getUserProperty('u100', 'age'), equals(30));
+    });
+
+    test('loads user properties from inline user JSON map without ID', () {
+      final config = GingaConfig(
+        users: Users('{"age": 45, "preferredLang": "en-US"}'),
+      );
+      final active = config.users.activeUser;
+      expect(active, isNotNull);
+      expect(active?.getProperty('age'), equals(45));
+      expect(active?.getProperty('preferredLang'), equals('en-US'));
+    });
+
+    test('loads list of users from inline user JSON list', () {
+      final config = GingaConfig(
+        users: Users(
+          '[{"id": "u201", "name": "Alice"}, {"id": "u202", "name": "Bob"}]',
+        ),
+      );
+      expect(config.users.getUser('u201'), isNotNull);
+      expect(config.users.getUser('u202'), isNotNull);
+      expect(config.users.allUsers.length, equals(2));
+    });
+
+    test('loads all required viewer profile attributes', () {
+      final config = GingaConfig(
+        users: Users('''
+{
+  "id": "uViewer1",
+  "name": "Alice",
+  "properties": {
+    "nickname": "AliceNick",
+    "parentalControl": true,
+    "maxContentRating": "14",
+    "avatar": "avatar.png",
+    "audioLanguage": "pt",
+    "closedCaptioningLanguage": "pt",
+    "userInterfaceLanguage": "pt",
+    "closedCaptioning": true,
+    "closedSigning": false,
+    "closedSigningSide": "left",
+    "closedSigningWidth": 20,
+    "audioDescription": false,
+    "dialogEnhancement": false,
+    "voiceGuidance": false
+  }
+}
+'''),
+      );
+
+      final user = config.users.getUser('uViewer1');
+      expect(user, isNotNull);
+      expect(user!.id, equals('uViewer1'));
+      expect(user.name, equals('Alice'));
+      expect(user.getProperty('nickname'), equals('AliceNick'));
+      expect(user.getProperty('parentalControl'), isTrue);
+      expect(user.getProperty('maxContentRating'), equals('14'));
+      expect(user.getProperty('avatar'), equals('avatar.png'));
+      expect(user.getProperty('audioLanguage'), equals('pt'));
+      expect(user.getProperty('closedCaptioningLanguage'), equals('pt'));
+      expect(user.getProperty('userInterfaceLanguage'), equals('pt'));
+      expect(user.getProperty('closedCaptioning'), isTrue);
+      expect(user.getProperty('closedSigning'), isFalse);
+      expect(user.getProperty('closedSigningSide'), equals('left'));
+      expect(user.getProperty('closedSigningWidth'), equals(20));
+      expect(user.getProperty('audioDescription'), isFalse);
+      expect(user.getProperty('dialogEnhancement'), isFalse);
+      expect(user.getProperty('voiceGuidance'), isFalse);
     });
 
     test('appSrc can be mutated directly', () async {
@@ -78,27 +164,23 @@ void main() {
       expect(config.envVariables['service.name'], equals('TV HD'));
     });
 
-    test('fromJson parses backward-compatible systemProperties directly',
-        () async {
+    test('fromJson parses envVariables directly', () async {
       const json =
-          '{"userDataSrc": "users.json", "systemProperties": {"system.language": "eng", "custom": "val"}}';
+          '{"envVariables": {"system.language": "eng", "custom": "val"}}';
       final config = await GingaConfig.fromJson(json);
-      expect(config.usersDataSrc, equals('users.json'));
       expect(config.envVariables['system.language'], equals('eng'));
       expect(config.envVariables['custom'], equals('val'));
     });
 
     test('fromJson loads content from jsonSrc URI', () async {
       const dataUri =
-          'data:application/json,{"userDataSrc":"users2.json","envVariables":{"system.language":"deu"}}';
+          'data:application/json,{"envVariables":{"system.language":"deu"}}';
       final config = await GingaConfig.fromJson(dataUri);
-      expect(config.usersDataSrc, equals('users2.json'));
       expect(config.envVariables['system.language'], equals('deu'));
     });
 
     test('fromJson handles empty string gracefully', () async {
       final config = await GingaConfig.fromJson('');
-      expect(config.usersDataSrc, isNull);
       expect(config.envVariables['system.language'], equals('por'));
     });
 
@@ -109,13 +191,16 @@ void main() {
       );
     });
 
-    test('fromJson parses full config with appSrc, mainAvSrc, and ccws',
+    test(
+        'fromJson parses full config with appSrc, mainAvSrc, ccws, and usersDataJson',
         () async {
       const json = '''
       {
         "appSrc": "main.ncl",
         "mainAvSrc": "video.mp4",
-        "usersDataSrc": "users.json",
+        "usersDataJson": [
+          {"id": "u1", "name": "Bob"}
+        ],
         "enableCCWS": false,
         "envVariables": {
           "system.language": "eng",
@@ -131,17 +216,9 @@ void main() {
       final config = await GingaConfig.fromJson(json);
       expect(config.appSrc, equals('main.ncl'));
       expect(config.mainAvSrc, equals('video.mp4'));
-      expect(config.usersDataSrc, equals('users.json'));
+      expect(config.users.getUser('u1')?.name, equals('Bob'));
       expect(config.enableCCWS, isFalse);
       expect(config.envVariables['system.language'], equals('eng'));
-    });
-
-    test('NclDocConfig typedef works identically', () async {
-      final NclDocConfig config = await NclDocConfig.fromJson(
-        '{"userDataSrc": "users.json", "systemProperties": {"system.language": "fra"}}',
-      );
-      expect(config.usersDataSrc, equals('users.json'));
-      expect(config.envVariables['system.language'], equals('fra'));
     });
   });
 }

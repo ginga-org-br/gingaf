@@ -21,16 +21,16 @@ class NCLAppExitNotification extends Notification {}
 
 class NCLApp extends MediaWidget {
   final MainAVController? mainAVController;
-  final String? usersDataSrc;
+  final GingaConfig config;
 
-  const NCLApp({
+  NCLApp({
     super.key,
     required super.src,
     super.media,
     super.document,
     this.mainAVController,
-    this.usersDataSrc,
-  });
+    GingaConfig? config,
+  }) : config = config ?? GingaConfig();
 
   @override
   State<NCLApp> createState() => NCLAppState();
@@ -136,26 +136,10 @@ class NCLAppState extends MediaState<NCLApp> {
       }
       if (!mounted) return;
 
-      final usersDataSrc = widget.usersDataSrc;
-      String? effectiveUserData;
-      if (usersDataSrc != null) {
-        final str = usersDataSrc.trim();
-        if (str.startsWith('[') || str.startsWith('{')) {
-          effectiveUserData = str;
-        } else {
-          try {
-            effectiveUserData = await this.loadContent(str);
-          } catch (_) {
-            if (!mounted) return;
-            throw Exception('USERS_DATA file does not exist: $usersDataSrc');
-          }
-        }
-      }
-      if (!mounted) return;
       final doc = NCLDocument.fromContent(
         nclData,
         docSrc: srcString,
-        userData: effectiveUserData,
+        config: widget.config,
       );
 
       nclDocument = doc;

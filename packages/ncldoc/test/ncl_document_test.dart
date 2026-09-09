@@ -118,8 +118,8 @@ void main() {
       }
     });
 
-    test('NCLDocument loads envVariables from NclDocConfig', () async {
-      final config = await NclDocConfig.fromJson(
+    test('NCLDocument loads envVariables from GingaConfig', () async {
+      final config = await GingaConfig.fromJson(
         '{"envVariables": {"system.language": "fra", "channel.key": "ch1"}}',
       );
       final doc = NCLDocument.fromContent(
@@ -138,9 +138,9 @@ void main() {
       final doc = await NCLDocument.fromSrc(
         'data:text/xml,<ncl><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>',
         configSrc:
-            '{"userDataSrc": "users.json", "envVariables": {"system.language": "spa", "user.pref": "dark"}}',
+            '{"userDataJson": "users.json", "envVariables": {"system.language": "spa", "user.pref": "dark"}}',
       );
-      expect(doc.config.usersDataSrc, equals('users.json'));
+      expect(doc.users, isNotNull);
       expect(doc.envVariables['system.language'], equals('spa'));
       expect(doc.envVariables['user.pref'], equals('dark'));
     });

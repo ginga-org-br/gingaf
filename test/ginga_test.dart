@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingacc/ginga_config.dart';
+import 'package:gingacc/users.dart';
 import 'package:nclui/html_app.dart';
 import 'package:nclui/ncl_app.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
@@ -44,13 +45,17 @@ void main() {
       expect(find.byType(NCLApp), findsOneWidget);
     });
 
-    testWidgets('NCLApp mounts with userDataJson', (WidgetTester tester) async {
+    testWidgets('NCLApp mounts with config parameter',
+        (WidgetTester tester) async {
+      final config = GingaConfig(
+        users: Users('{"id": "u400", "name": "ConfUser"}'),
+      );
       await tester.pumpWidget(MaterialApp(
         home: DefaultAssetBundle(
           bundle: MockGingaTestAssetBundle(),
           child: NCLApp(
             src: 'test.ncl',
-            usersDataSrc: 'test/user_data1.json',
+            config: config,
           ),
         ),
       ));
@@ -66,20 +71,17 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
 
-    testWidgets(
-        'NCLApp mounts with usersDataSrc parameter and resolves usersDataJson',
+    testWidgets('NCLApp mounts with GingaConfig from JSON',
         (WidgetTester tester) async {
-      final config = GingaConfig(
-        appSrc: 'test.ncl',
-        enableCCWS: true,
-        usersDataSrc: 'test/user_data2.json',
+      final config = await GingaConfig.fromJson(
+        '{"usersDataJson": [{"id": "uConfig", "name": "GingaConfigUser"}]}',
       );
       await tester.pumpWidget(MaterialApp(
         home: DefaultAssetBundle(
           bundle: MockGingaTestAssetBundle(),
           child: NCLApp(
             src: 'test.ncl',
-            usersDataSrc: config.usersDataSrc,
+            config: config,
           ),
         ),
       ));
@@ -95,9 +97,12 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
 
-    test('HTMLApp accepts enableCCWS parameter', () {
-      final htmlApp = HTMLApp(src: 'app.html', enableCCWS: true);
-      expect(htmlApp.enableCCWS, isTrue);
+    test('HTMLApp accepts config parameter', () {
+      final htmlApp = HTMLApp(
+        src: 'app.html',
+        config: GingaConfig(enableCCWS: true),
+      );
+      expect(htmlApp.config.enableCCWS, isTrue);
       expect(htmlApp.src, equals('app.html'));
     });
   });

@@ -2,6 +2,7 @@ import 'package:ccws/ccws.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
+import 'package:ncldoc/ncl_document.dart' show GingaConfig;
 import 'package:webview_all/webview_all.dart';
 
 import 'ncl_media_widget.dart';
@@ -11,17 +12,17 @@ final _logger = Logger('ginga-html');
 class HTMLApp extends MediaWidget {
   final Map<String, void Function(JavaScriptMessage)>? javaScriptChannels;
   final CCWS? ccws;
-  final bool enableCCWS;
+  final GingaConfig config;
 
-  const HTMLApp({
+  HTMLApp({
     super.key,
     required super.src,
     super.media,
     super.document,
     this.javaScriptChannels,
     this.ccws,
-    this.enableCCWS = true,
-  });
+    GingaConfig? config,
+  }) : config = config ?? GingaConfig();
 
   @override
   State<HTMLApp> createState() => HTMLAppState();
@@ -59,7 +60,7 @@ class HTMLAppState extends MediaState<HTMLApp> {
     try {
       String content = await this.loadContent(widget.src);
 
-      if (widget.ccws != null && widget.enableCCWS) {
+      if (widget.ccws != null && widget.config.enableCCWS) {
         content = widget.ccws!.injectCcwsFetch(content);
       }
 

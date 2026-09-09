@@ -3,24 +3,25 @@ library;
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:gingacc/ginga_config.dart';
+import 'package:gingacc/users.dart';
 import 'package:logging/logging.dart';
 
 import 'elements.dart';
 import 'event.dart';
-import 'package:gingacc/ginga_config.dart';
 import 'ncl_scheduler.dart';
 import 'parser.dart';
 import 'src_resolver.dart';
-import 'users.dart';
+
+export 'package:gingacc/ginga_config.dart';
+export 'package:gingacc/users.dart';
 
 export 'elements.dart';
 export 'event.dart';
-export 'package:gingacc/ginga_config.dart';
 export 'lua.dart';
 export 'ncl_scheduler.dart';
 export 'parser.dart';
 export 'src_resolver.dart';
-export 'users.dart';
 
 final _logger = Logger('ncl_doc');
 
@@ -32,8 +33,10 @@ class NCLDocument {
   final String docSrc;
 
   late final NCLScheduler scheduler = NCLScheduler(this);
-  final NCLUsers users = NCLUsers();
+  Users get users => config.users;
   final GingaConfig config;
+  final Map<String, UserProfileQuery> _loadedProfiles = {};
+  Map<String, UserProfileQuery> get loadedProfiles => _loadedProfiles;
   late final Map<String, String> envVariables;
   Map<String, String> get systemVariables => envVariables;
   Map<String, String> get systemProperties => envVariables;
@@ -46,25 +49,14 @@ class NCLDocument {
     final docUri = resolveUri(docSrc);
     final xml = await loadContent(docUri);
 
-    final docConfig = configSrc != null
+    final config = configSrc != null
         ? await GingaConfig.fromJson(configSrc, docSrc)
         : GingaConfig();
 
-    final uDataSrc = docConfig.usersDataSrc;
-    String? userData;
-    if (uDataSrc != null) {
-      if (uDataSrc.trim().startsWith('{') || uDataSrc.trim().startsWith('[')) {
-        userData = uDataSrc;
-      } else {
-        userData = (await loadContent(resolveUri(uDataSrc, docSrc))) ??
-            (await loadContent(resolveUri(uDataSrc)));
-      }
-    }
     final doc = NCLDocument.fromContent(
       xml ?? '',
       docSrc: docSrc,
-      userData: userData,
-      config: docConfig,
+      config: config,
     );
     await doc.loadUserProfiles();
     return doc;
@@ -73,7 +65,6 @@ class NCLDocument {
   factory NCLDocument.fromContent(
     String xml, {
     String? docSrc,
-    String? userData,
     GingaConfig? config,
   }) {
     if (xml.trim().isEmpty) {
@@ -90,7 +81,6 @@ class NCLDocument {
       body: body,
       docSrc: resolvedDocSrc,
       docUri: resolvedUri,
-      userData: userData,
       config: config,
     );
   }
@@ -100,21 +90,13 @@ class NCLDocument {
     required Body body,
     required this.docSrc,
     this.docUri,
-    String? userData,
     GingaConfig? config,
-  }) : config = config ?? GingaConfig(usersDataSrc: userData) {
+  }) : config = config ?? GingaConfig() {
     envVariables = this.config.envVariables;
     _head = head;
     _body = body;
     _gatherSettings();
-    _gatherUsers(userData);
-  }
-
-  void _gatherUsers([String? userData]) {
     loadUserProfiles();
-    if (userData != null) {
-      users.loadUserData(userData);
-    }
   }
 
   Future<void> loadUserProfiles() async {
@@ -143,7 +125,12 @@ class NCLDocument {
       final jsonContent = await loadContent(profileUri);
       if (jsonContent != null && jsonContent.isNotEmpty) {
         final query = json.decode(jsonContent);
-        users.registerProfile(NCLUserProfile(id: id, src: src, query: query));
+        final queryMap = query is Map<String, dynamic>
+            ? query
+            : (query is Map
+                ? Map<String, dynamic>.from(query)
+                : <String, dynamic>{});
+        _loadedProfiles[id] = UserProfileQuery.fromJson(queryMap);
       }
     } catch (_) {}
   }

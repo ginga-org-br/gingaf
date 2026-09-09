@@ -1,7 +1,39 @@
 import 'dart:convert';
 
 import 'src_resolver.dart' as src_resolver;
+import 'users.dart';
 
+/// Ginga environment configuration.
+///
+/// Example configuration JSON:
+/// ```json
+/// {
+///   "appSrc": "main.ncl",
+///   "mainAvSrc": "video.mp4",
+///   "enableCCWS": true,
+///   "envVariables": {
+///     "system.language": "por",
+///     "user.age": "30",
+///     "default.font": "sans",
+///     "service.id": "1",
+///     "si.ts": "2",
+///     "channel.num": "10",
+///     "shared.key": "val"
+///   },
+///   "usersDataJson": [
+///     {
+///       "id": "u1",
+///       "name": "User 1",
+///       "properties": {
+///         "age": 30,
+///         "closedCaptioning": true
+///       }
+///     }
+///   ]
+/// }
+/// ```
+///
+/// Note: `"usersDataJson"` can also be a URI or file path string pointing to a JSON file (e.g. `"usersDataJson": "users.json"`).
 class GingaConfig {
   static const List<String> supportedGroups = [
     'system.',
@@ -15,19 +47,21 @@ class GingaConfig {
 
   String? appSrc;
   final String? mainAvSrc;
-  String? usersDataSrc;
   final bool enableCCWS;
   final Map<String, String> envVariables;
+  final Users users;
 
   GingaConfig({
     this.appSrc,
     this.enableCCWS = true,
-    this.usersDataSrc,
     this.mainAvSrc,
     Map<String, String>? envVariables,
-  }) : envVariables = envVariables ?? {} {
-    this.envVariables.putIfAbsent('system.language', () => 'por');
-  }
+    Users? users,
+  })  : envVariables = {
+          'system.language': 'por',
+          ...?envVariables,
+        },
+        users = users ?? Users();
 
   Map<String, String> getGroup(String group) {
     final prefix = group.endsWith('.') ? group : '$group.';
@@ -80,9 +114,7 @@ class GingaConfig {
       }
     }
 
-    final rawEnv = decoded['envVariables'] ??
-        decoded['systemVariables'] ??
-        decoded['systemProperties'];
+    final rawEnv = decoded['envVariables'];
     if (rawEnv is Map) {
       extractFromMap(rawEnv);
     }
@@ -106,23 +138,39 @@ class GingaConfig {
       }
     }
 
+    final users = Users();
+    final usersObj = decoded['usersDataJson'];
+    if (usersObj is String) {
+      final trimmedUsers = usersObj.trim();
+      if (trimmedUsers.startsWith('{') || trimmedUsers.startsWith('[')) {
+        users.loadUserData(trimmedUsers);
+      } else {
+        final uri = src_resolver.resolveUri(trimmedUsers, baseDirSrc);
+        final loaded = (await src_resolver.loadContent(uri)) ??
+            (await src_resolver.loadContent(trimmedUsers));
+        if (loaded != null && loaded.isNotEmpty) {
+          users.loadUserData(loaded);
+        }
+      }
+    } else if (usersObj is List) {
+      users.importUsers(usersObj);
+    } else if (usersObj is Map<String, dynamic>) {
+      users.loadUserData(jsonEncode(usersObj));
+    } else if (usersObj is Map) {
+      users.loadUserData(jsonEncode(Map<String, dynamic>.from(usersObj)));
+    }
+
     return GingaConfig(
-      appSrc: (decoded['appSrc'] ?? decoded['app']) as String?,
-      mainAvSrc: (decoded['mainAvSrc'] ?? decoded['mainAv']) as String?,
-      usersDataSrc: (decoded['usersDataSrc'] ??
-          decoded['usersData'] ??
-          decoded['userDataSrc'] ??
-          decoded['userData']) as String?,
-      enableCCWS: (decoded['enableCCWS'] ?? decoded['ccws']) as bool? ?? true,
-      envVariables: envVars.isNotEmpty ? envVars : null,
+      appSrc: decoded['appSrc'] as String?,
+      mainAvSrc: decoded['mainAvSrc'] as String?,
+      enableCCWS: decoded['enableCCWS'] as bool? ?? true,
+      envVariables: envVars,
+      users: users,
     );
   }
 
   @override
   String toString() {
-    return 'GingaConfig(appSrc: $appSrc, mainAvSrc: $mainAvSrc, enableCCWS: $enableCCWS, usersDataSrc: $usersDataSrc, envVariables: $envVariables)';
+    return 'GingaConfig(appSrc: $appSrc, mainAvSrc: $mainAvSrc, enableCCWS: $enableCCWS, envVariables: $envVariables)';
   }
 }
-
-typedef NclDocConfig = GingaConfig;
-typedef NclDocumentConfig = GingaConfig;

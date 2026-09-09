@@ -59,8 +59,11 @@ void main() {
 
         final doc = NCLDocument.fromContent(
           xmlString,
-          userData:
+          config: GingaConfig(
+            users: Users(
               '[{"id": "u1", "name": "Bob", "gender": "male", "age": 30}]',
+            ),
+          ),
         );
 
         doc.start();
@@ -135,8 +138,11 @@ void main() {
 
         final doc = NCLDocument.fromContent(
           xmlString,
-          userData:
+          config: GingaConfig(
+            users: Users(
               '[{"id": "u2", "name": "Alice", "gender": "female", "age": 30}]',
+            ),
+          ),
         );
 
         doc.start();

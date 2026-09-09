@@ -29,7 +29,7 @@ void main() {
 ''';
 
         final doc = NCLDocument.fromContent(xml);
-        final user = NCLUserData(
+        final user = UserData(
           id: 'u1',
           name: 'Viewer',
           initialProperties: {'closedCaptioning': false},
@@ -76,7 +76,8 @@ void main() {
     ''';
       final doc = NCLDocument.fromContent(
         xml,
-        userData: '''
+        config: GingaConfig(
+          users: Users('''
     {
       "id": "uViewer1",
       "name": "Alice",
@@ -97,7 +98,8 @@ void main() {
         "voiceGuidance": false
       }
     }
-    ''',
+    '''),
+        ),
       );
 
       final user = doc.users.activeUser;
