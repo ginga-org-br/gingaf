@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'ncl_media_widget.dart';
+import 'base_widget.dart';
 
-class TextWidget extends MediaWidget {
+class TextWidget extends BaseWidget {
   const TextWidget({
     super.key,
     required super.src,

@@ -4,7 +4,7 @@ import 'package:ccws/ccws.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nclui/html_app.dart';
+import 'package:nclui/html.dart';
 import 'package:integration_test/integration_test.dart';
 
 class MockCCWSAssetBundle extends CachingAssetBundle {
@@ -69,7 +69,7 @@ void main() {
     });
 
     testWidgets(
-        'Verify HTMLApp successful request /dtv/current-service via MockBundle',
+        'Verify HtmlWidget successful request /dtv/current-service via MockBundle',
         (WidgetTester tester) async {
       final mockBundle = MockCCWSAssetBundle();
       final completer = Completer<String>();
@@ -79,7 +79,7 @@ void main() {
           home: Material(
             child: DefaultAssetBundle(
               bundle: mockBundle,
-              child: HTMLApp(
+              child: HtmlWidget(
                 src: "test_ccws.html",
                 javaScriptChannels: {
                   "HTMLAppChannel": (message) {

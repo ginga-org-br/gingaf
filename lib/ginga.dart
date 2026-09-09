@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gingacc/ginga_config.dart';
 import 'package:logging/logging.dart';
-import 'package:nclui/html_app.dart' as html;
-import 'package:nclui/ncl_app.dart' as ncl;
+import 'package:nclui/html.dart' as html;
+import 'package:nclui/ncl.dart' as ncl;
 
 import 'main_av.dart';
 import 'web_utils_stub.dart' if (dart.library.html) 'web_utils_web.dart';
@@ -31,7 +31,7 @@ class _GingaState extends State<Ginga> {
   bool _isExiting = false;
   bool _initialized = false;
 
-  final GlobalKey<ncl.NCLAppState> _nclAppKey = GlobalKey<ncl.NCLAppState>();
+  final GlobalKey<ncl.NclWidgetState> _nclAppKey = GlobalKey<ncl.NclWidgetState>();
 
   @override
   void initState() {
@@ -70,13 +70,13 @@ class _GingaState extends State<Ginga> {
       final appSrc = widget.config.appSrc;
       if (appSrc != null) {
         if (appSrc.toLowerCase().endsWith('.html')) {
-          htmlApp = html.HTMLApp(
+          htmlApp = html.HtmlWidget(
             src: appSrc,
             ccws: _ccws,
             config: widget.config,
           );
         } else {
-          nclApp = ncl.NCLApp(
+          nclApp = ncl.NclWidget(
             key: _nclAppKey,
             src: appSrc,
             mainAVController: mainAVController,
@@ -137,10 +137,10 @@ class _GingaState extends State<Ginga> {
         brightness: Brightness.light,
         scaffoldBackgroundColor: Colors.grey[200],
       ),
-      home: NotificationListener<ncl.NCLAppExitNotification>(
+      home: NotificationListener<ncl.NclWidgetExitNotification>(
         onNotification: (notification) {
           _logger.info(
-              'Received NCLAppExitNotification. Cleaning up and exiting.');
+              'Received NclWidgetExitNotification. Cleaning up and exiting.');
           _cleanup();
           return true;
         },

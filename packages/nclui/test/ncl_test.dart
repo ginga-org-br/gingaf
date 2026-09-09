@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingacc/ginga_config.dart';
 import 'package:gingacc/users.dart';
-import 'package:nclui/ncl_app.dart';
+import 'package:nclui/ncl.dart';
 
 class MockNCLAssetBundle extends CachingAssetBundle {
   @override
@@ -28,7 +28,7 @@ class MockNCLAssetBundle extends CachingAssetBundle {
 }
 
 void main() {
-  testWidgets('Verify NCLApp launches with branding logo',
+  testWidgets('Verify NclWidget launches with branding logo',
       (WidgetTester tester) async {
     final mockBundle = MockNCLAssetBundle();
 
@@ -37,17 +37,17 @@ void main() {
         home: Material(
           child: DefaultAssetBundle(
             bundle: mockBundle,
-            child: NCLApp(src: "test_image.ncl"),
+            child: NclWidget(src: "test_image.ncl"),
           ),
         ),
       ),
     );
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.byType(NCLApp), findsOneWidget);
+    expect(find.byType(NclWidget), findsOneWidget);
   });
 
   testWidgets(
-      'Verify NCLApp receives config parameter and accesses configuration',
+      'Verify NclWidget receives config parameter and accesses configuration',
       (WidgetTester tester) async {
     final mockBundle = MockNCLAssetBundle();
     final config = GingaConfig(
@@ -59,7 +59,7 @@ void main() {
         home: Material(
           child: DefaultAssetBundle(
             bundle: mockBundle,
-            child: NCLApp(
+            child: NclWidget(
               src: "test_image.ncl",
               config: config,
             ),
@@ -68,8 +68,8 @@ void main() {
       ),
     );
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.byType(NCLApp), findsOneWidget);
-    final appWidget = tester.widget<NCLApp>(find.byType(NCLApp));
+    expect(find.byType(NclWidget), findsOneWidget);
+    final appWidget = tester.widget<NclWidget>(find.byType(NclWidget));
     expect(appWidget.config.users.getUser('uConfig'), isNotNull);
   });
 }

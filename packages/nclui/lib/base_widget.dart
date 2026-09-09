@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:ncldoc/ncl_document.dart';
 
 import 'main_av_controller.dart';
-import 'ncl_app.dart';
+import 'ncl.dart';
 
 export 'package:gingacc/src_resolver.dart';
 
-abstract class MediaWidget extends StatefulWidget {
+abstract class BaseWidget extends StatefulWidget {
   final String src;
   final Media? media;
   final NclDocument? document;
 
-  const MediaWidget({
+  const BaseWidget({
     super.key,
     required this.src,
     this.media,
@@ -19,7 +19,7 @@ abstract class MediaWidget extends StatefulWidget {
   });
 }
 
-abstract class MediaState<T extends MediaWidget> extends State<T> {
+abstract class MediaState<T extends BaseWidget> extends State<T> {
   Color background = Colors.transparent;
   Rect rect = Rect.zero;
   bool debug = false;
@@ -227,7 +227,7 @@ class WidgetFactory {
     if (src.endsWith('.ncl') ||
         mimeType == 'application/x-ncl-NCL' ||
         mimeType == 'application/x-ncl-ncl') {
-      return NCLApp(
+      return NclWidget(
         key: key,
         src: src,
         media: media,
@@ -250,13 +250,6 @@ class WidgetFactory {
       case 'application/x-ncl-NCLua':
       case 'application/x-ginga-NCLua':
         return LuaWidget(
-          key: key,
-          src: src,
-          media: media,
-          document: document,
-        );
-      case 'application/ssml+xml':
-        return SsmlWidget(
           key: key,
           src: src,
           media: media,

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:ncldoc/ncl_document.dart';
 
-import 'ncl_app.dart';
+import 'ncl.dart';
 
-class LuaWidget extends MediaWidget {
+class LuaWidget extends BaseWidget {
   const LuaWidget({
     super.key,
     required super.src,
@@ -26,7 +26,7 @@ class LuaWidgetState extends MediaState<LuaWidget> {
     _engine = NCLua(delegate: canvasState);
 
     _engine.settingsProvider = (name) {
-      final appState = context.findAncestorStateOfType<NCLAppState>();
+      final appState = context.findAncestorStateOfType<NclWidgetState>();
       final doc = appState?.nclDocument;
       if (doc != null) {
         return doc.getPropertyValue(doc.getSettings(), name);
@@ -35,12 +35,12 @@ class LuaWidgetState extends MediaState<LuaWidget> {
     };
 
     _engine.getPersistentVar = (name) {
-      final appState = context.findAncestorStateOfType<NCLAppState>();
+      final appState = context.findAncestorStateOfType<NclWidgetState>();
       return appState?.persistentVars[name];
     };
 
     _engine.setPersistentVar = (name, value) {
-      final appState = context.findAncestorStateOfType<NCLAppState>();
+      final appState = context.findAncestorStateOfType<NclWidgetState>();
       if (appState != null) {
         appState.persistentVars[name] = value;
       }

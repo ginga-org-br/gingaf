@@ -48,7 +48,7 @@ void main() {
     expect(widget, isA<TextWidget>());
   });
 
-  testWidgets('NCLApp builds and renders correctly', (tester) async {
+  testWidgets('NclWidget builds and renders correctly', (tester) async {
     const nclContent = '''
 <ncl id="test_doc">
   <head>
@@ -68,13 +68,13 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: NCLApp(src: nclContent),
+          body: NclWidget(src: nclContent),
         ),
       ),
     );
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.byType(NCLApp), findsOneWidget);
+    expect(find.byType(NclWidget), findsOneWidget);
     expect(find.byKey(const Key('ncl_app_stack')), findsOneWidget);
   });
 }

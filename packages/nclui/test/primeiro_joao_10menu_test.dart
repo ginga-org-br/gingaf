@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nclui/ncl_app.dart';
+import 'package:nclui/ncl.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 import 'mock_video_player.dart';
@@ -163,7 +163,7 @@ void main() {
     VideoPlayerPlatform.instance = MockVideoPlayer();
   });
 
-  testWidgets('NCLApp parses and runs menu configuration successfully',
+  testWidgets('NclWidget parses and runs menu configuration successfully',
       (WidgetTester tester) async {
     final mockBundle = MockMenuAssetBundle();
 
@@ -172,7 +172,7 @@ void main() {
         home: Scaffold(
           body: DefaultAssetBundle(
             bundle: mockBundle,
-            child: NCLApp(src: 'joao10menu.ncl'),
+            child: NclWidget(src: 'joao10menu.ncl'),
           ),
         ),
       ),
@@ -181,7 +181,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    final nclState = tester.state<NCLAppState>(find.byType(NCLApp));
+    final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
     expect(nclState.nclDocument, isNotNull);
 
     nclState.tick(5000);

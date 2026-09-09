@@ -3,8 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingacc/ginga_config.dart';
 import 'package:gingacc/users.dart';
-import 'package:nclui/html_app.dart';
-import 'package:nclui/ncl_app.dart';
+import 'package:nclui/ncl.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 import 'mock_video_player.dart';
@@ -33,19 +32,19 @@ void main() {
       VideoPlayerPlatform.instance = MockVideoPlayer();
     });
 
-    testWidgets('NCLApp mounts example', (WidgetTester tester) async {
+    testWidgets('NclWidget mounts example', (WidgetTester tester) async {
       await tester.pumpWidget(MaterialApp(
-        home: NCLApp(src: '../examples/video.ncl'),
+        home: NclWidget(src: '../examples/video.ncl'),
       ));
 
-      // Use pump() instead of pumpAndSettle() because the NCLApp uses an infinite periodic timer
+      // Use pump() instead of pumpAndSettle() because the NclWidget uses an infinite periodic timer
       await tester.pump(const Duration(seconds: 1));
 
-      // Assert that NCLApp is in the tree
-      expect(find.byType(NCLApp), findsOneWidget);
+      // Assert that NclWidget is in the tree
+      expect(find.byType(NclWidget), findsOneWidget);
     });
 
-    testWidgets('NCLApp mounts with config parameter',
+    testWidgets('NclWidget mounts with config parameter',
         (WidgetTester tester) async {
       final config = GingaConfig(
         users: Users('{"id": "u400", "name": "ConfUser"}'),
@@ -53,7 +52,7 @@ void main() {
       await tester.pumpWidget(MaterialApp(
         home: DefaultAssetBundle(
           bundle: MockGingaTestAssetBundle(),
-          child: NCLApp(
+          child: NclWidget(
             src: 'test.ncl',
             config: config,
           ),
@@ -62,16 +61,16 @@ void main() {
 
       await tester.pump(const Duration(seconds: 1));
 
-      expect(find.byType(NCLApp), findsOneWidget);
-      final nclAppState = tester.state<NCLAppState>(find.byType(NCLApp));
-      expect(nclAppState.nclDocument, isNotNull);
-      expect(nclAppState.nclDocument?.users.getUser('u400'), isNotNull);
-      expect(nclAppState.nclDocument?.users.getUser('u400')?.name,
+      expect(find.byType(NclWidget), findsOneWidget);
+      final nclWidgetState = tester.state<NclWidgetState>(find.byType(NclWidget));
+      expect(nclWidgetState.nclDocument, isNotNull);
+      expect(nclWidgetState.nclDocument?.users.getUser('u400'), isNotNull);
+      expect(nclWidgetState.nclDocument?.users.getUser('u400')?.name,
           equals('ConfUser'));
       await tester.pumpWidget(const SizedBox());
     });
 
-    testWidgets('NCLApp mounts with GingaConfig from JSON',
+    testWidgets('NclWidget mounts with GingaConfig from JSON',
         (WidgetTester tester) async {
       final config = await GingaConfig.fromJson(
         '{"usersDataJson": [{"id": "uConfig", "name": "GingaConfigUser"}]}',
@@ -79,7 +78,7 @@ void main() {
       await tester.pumpWidget(MaterialApp(
         home: DefaultAssetBundle(
           bundle: MockGingaTestAssetBundle(),
-          child: NCLApp(
+          child: NclWidget(
             src: 'test.ncl',
             config: config,
           ),
@@ -88,22 +87,22 @@ void main() {
 
       await tester.pump(const Duration(seconds: 1));
 
-      expect(find.byType(NCLApp), findsOneWidget);
-      final nclAppState = tester.state<NCLAppState>(find.byType(NCLApp));
-      expect(nclAppState.nclDocument, isNotNull);
-      expect(nclAppState.nclDocument?.users.getUser('uConfig'), isNotNull);
-      expect(nclAppState.nclDocument?.users.getUser('uConfig')?.name,
+      expect(find.byType(NclWidget), findsOneWidget);
+      final nclWidgetState = tester.state<NclWidgetState>(find.byType(NclWidget));
+      expect(nclWidgetState.nclDocument, isNotNull);
+      expect(nclWidgetState.nclDocument?.users.getUser('uConfig'), isNotNull);
+      expect(nclWidgetState.nclDocument?.users.getUser('uConfig')?.name,
           equals('GingaConfigUser'));
       await tester.pumpWidget(const SizedBox());
     });
 
-    test('HTMLApp accepts config parameter', () {
-      final htmlApp = HTMLApp(
+    test('HtmlWidget accepts config parameter', () {
+      final htmlWidget = HtmlWidget(
         src: 'app.html',
         config: GingaConfig(enableCCWS: true),
       );
-      expect(htmlApp.config.enableCCWS, isTrue);
-      expect(htmlApp.src, equals('app.html'));
+      expect(htmlWidget.config.enableCCWS, isTrue);
+      expect(htmlWidget.src, equals('app.html'));
     });
   });
 }

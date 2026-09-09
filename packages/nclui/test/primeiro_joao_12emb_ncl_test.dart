@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nclui/ncl_app.dart';
+import 'package:nclui/ncl.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 import 'mock_video_player.dart';
@@ -95,7 +95,7 @@ void main() {
     VideoPlayerPlatform.instance = MockVideoPlayer();
   });
 
-  testWidgets('NCLApp runs embedded NCL document successfully',
+  testWidgets('NclWidget runs embedded NCL document successfully',
       (WidgetTester tester) async {
     final mockBundle = MockEmbNclAssetBundle();
 
@@ -104,7 +104,7 @@ void main() {
         home: Scaffold(
           body: DefaultAssetBundle(
             bundle: mockBundle,
-            child: NCLApp(src: 'joao12embNCL.ncl'),
+            child: NclWidget(src: 'joao12embNCL.ncl'),
           ),
         ),
       ),
@@ -113,7 +113,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    final nclState = tester.state<NCLAppState>(find.byType(NCLApp));
+    final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
     expect(nclState.nclDocument, isNotNull);
 
     nclState.tick(45000);

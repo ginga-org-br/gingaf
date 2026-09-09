@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ncldoc/ncl_document.dart';
-import 'package:nclui/ncl_app.dart';
+import 'package:nclui/ncl.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';

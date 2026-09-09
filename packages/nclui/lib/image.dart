@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
-import 'ncl_media_widget.dart';
+import 'base_widget.dart';
 
-class ImageWidget extends MediaWidget {
+class ImageWidget extends BaseWidget {
   const ImageWidget({
     super.key,
     required super.src,

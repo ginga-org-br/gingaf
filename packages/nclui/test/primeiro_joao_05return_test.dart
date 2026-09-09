@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ncldoc/ncl_document.dart';
-import 'package:nclui/ncl_app.dart';
+import 'package:nclui/ncl.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 import 'mock_video_player.dart';
@@ -288,7 +288,7 @@ void main() {
     expect(boundsProp.value, '0,0,100%,100%');
   });
 
-  testWidgets('NCLApp updates layout in response to form ending',
+  testWidgets('NclWidget updates layout in response to form ending',
       (WidgetTester tester) async {
     final mockBundle = MockReturnAssetBundle();
 
@@ -297,7 +297,7 @@ void main() {
         home: Scaffold(
           body: DefaultAssetBundle(
             bundle: mockBundle,
-            child: NCLApp(src: 'joao05return.ncl'),
+            child: NclWidget(src: 'joao05return.ncl'),
           ),
         ),
       ),
@@ -306,7 +306,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    final nclState = tester.state<NCLAppState>(find.byType(NCLApp));
+    final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
 
     nclState.tick(45000);
     await tester.pump();

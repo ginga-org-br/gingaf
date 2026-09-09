@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nclui/main_av_controller.dart';
-import 'package:nclui/ncl_app.dart';
+import 'package:nclui/ncl.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 import 'mock_video_player.dart';
@@ -31,7 +31,7 @@ void main() {
     VideoPlayerPlatform.instance = MockVideoPlayer();
   });
 
-  testWidgets('NCLApp can change background video via settings property',
+  testWidgets('NclWidget can change background video via settings property',
       (WidgetTester tester) async {
     const nclData = '''
 <ncl>
@@ -54,7 +54,7 @@ void main() {
         home: Scaffold(
           body: DefaultAssetBundle(
             bundle: mockBundle,
-            child: NCLApp(
+            child: NclWidget(
               src: 'test_bg.ncl',
               mainAVController: controller,
             ),
@@ -71,7 +71,7 @@ void main() {
   });
 
   testWidgets(
-      'NCLApp background video resolution with online butterfly.mp4 URL',
+      'NclWidget background video resolution with online butterfly.mp4 URL',
       (WidgetTester tester) async {
     const nclData = '''
 <ncl>
@@ -95,7 +95,7 @@ void main() {
         home: Scaffold(
           body: DefaultAssetBundle(
             bundle: mockBundle,
-            child: NCLApp(
+            child: NclWidget(
               src: 'test_bg.ncl',
               mainAVController: controller,
             ),

@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nclui/html_app.dart';
+import 'package:nclui/html.dart';
 import 'package:integration_test/integration_test.dart';
 
 class MockHTMLAssetBundle extends CachingAssetBundle {
@@ -38,7 +38,7 @@ class MockHTMLAssetBundle extends CachingAssetBundle {
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('Verify HTMLApp run on real platform',
+  testWidgets('Verify HtmlWidget run on real platform',
       (WidgetTester tester) async {
     final mockBundle = MockHTMLAssetBundle();
     final completer = Completer<String>();
@@ -48,7 +48,7 @@ void main() {
         home: Material(
           child: DefaultAssetBundle(
             bundle: mockBundle,
-            child: HTMLApp(
+            child: HtmlWidget(
               src: "test_status.html",
               javaScriptChannels: {
                 "HTMLAppChannel": (message) {
@@ -67,6 +67,6 @@ void main() {
     final result = await completer.future.timeout(const Duration(seconds: 10));
 
     expect(result, equals("BRIDGE_READY"));
-    expect(find.byType(HTMLApp), findsOneWidget);
+    expect(find.byType(HtmlWidget), findsOneWidget);
   });
 }

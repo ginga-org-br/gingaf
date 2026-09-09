@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nclui/ncl_app.dart';
+import 'package:nclui/ncl.dart';
 
 class MockAssetBundle extends CachingAssetBundle {
   final Map<String, String> assets;
@@ -51,14 +51,14 @@ c:drawRect("fill", 110, 110, 20, 20)
       MaterialApp(
         home: DefaultAssetBundle(
           bundle: mockBundle,
-          child: NCLApp(src: 'test.ncl'),
+          child: NclWidget(src: 'test.ncl'),
         ),
       ),
     );
 
     await tester.pumpAndSettle();
 
-    expect(find.byType(NCLApp), findsOneWidget);
+    expect(find.byType(NclWidget), findsOneWidget);
   });
 
   group('LuaWidget Standalone Unit Tests', () {

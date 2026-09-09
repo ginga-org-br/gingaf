@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:ncldoc/event.dart';
 import 'package:video_player/video_player.dart';
 
-import 'ncl_app.dart';
+import 'ncl.dart';
 
-class AVWidget extends MediaWidget {
+class AVWidget extends BaseWidget {
   const AVWidget({
     super.key,
     required super.src,
@@ -56,7 +56,7 @@ class AVWidgetState extends MediaState<AVWidget> {
           _isCompleted = true;
           final media = widget.media;
           if (media != null && mounted) {
-            final appState = context.findAncestorStateOfType<NCLAppState>();
+            final appState = context.findAncestorStateOfType<NclWidgetState>();
             if (appState != null && appState.nclDocument != null) {
               appState.nclDocument!.uiQueue.add(
                 NclAction(

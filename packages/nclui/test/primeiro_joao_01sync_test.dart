@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ncldoc/ncl_document.dart';
-import 'package:nclui/ncl_app.dart';
+import 'package:nclui/ncl.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 import 'mock_video_player.dart';
@@ -174,7 +174,7 @@ void main() {
   });
 
   testWidgets(
-      'NCLApp layouts children based on descriptors and region hierarchy',
+      'NclWidget layouts children based on descriptors and region hierarchy',
       (WidgetTester tester) async {
     final mockBundle = MockSyncAssetBundle();
 
@@ -183,7 +183,7 @@ void main() {
         home: Scaffold(
           body: DefaultAssetBundle(
             bundle: mockBundle,
-            child: NCLApp(src: 'joao01sync.ncl'),
+            child: NclWidget(src: 'joao01sync.ncl'),
           ),
         ),
       ),
@@ -192,7 +192,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    final nclState = tester.state<NCLAppState>(find.byType(NCLApp));
+    final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
 
     nclState.tick(12000);
     await tester.pump();

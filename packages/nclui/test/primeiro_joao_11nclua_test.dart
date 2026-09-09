@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ncldoc/elements.dart';
 import 'package:ncldoc/ncl_document.dart';
-import 'package:nclui/ncl_app.dart';
+import 'package:nclui/ncl.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 import 'mock_video_player.dart';
@@ -213,7 +213,7 @@ void main() {
   });
 
   testWidgets(
-      'NCLApp runs lua script configuration and triggers property modifications successfully',
+      'NclWidget runs lua script configuration and triggers property modifications successfully',
       (WidgetTester tester) async {
     final mockBundle = MockLuaAssetBundle();
 
@@ -222,7 +222,7 @@ void main() {
         home: Scaffold(
           body: DefaultAssetBundle(
             bundle: mockBundle,
-            child: NCLApp(src: 'joao11nclua.ncl'),
+            child: NclWidget(src: 'joao11nclua.ncl'),
           ),
         ),
       ),
@@ -231,7 +231,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    final nclState = tester.state<NCLAppState>(find.byType(NCLApp));
+    final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
     expect(nclState.nclDocument, isNotNull);
 
     nclState.tick(5000);

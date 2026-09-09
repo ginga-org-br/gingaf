@@ -4,26 +4,25 @@ import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:ncldoc/ncl_document.dart';
 
+import 'base_widget.dart';
 import 'main_av_controller.dart';
-import 'ncl_media_widget.dart';
 
 export 'av.dart';
+export 'base_widget.dart';
 export 'html.dart';
 export 'image.dart';
 export 'lua.dart';
-export 'ncl_media_widget.dart';
-export 'ssml.dart';
 export 'text.dart';
 
 final _logger = Logger('ginga-ncl');
 
-class NCLAppExitNotification extends Notification {}
+class NclWidgetExitNotification extends Notification {}
 
-class NCLApp extends MediaWidget {
+class NclWidget extends BaseWidget {
   final MainAVController? mainAVController;
   final GingaConfig config;
 
-  NCLApp({
+  NclWidget({
     super.key,
     required super.src,
     super.media,
@@ -33,10 +32,10 @@ class NCLApp extends MediaWidget {
   }) : config = config ?? GingaConfig();
 
   @override
-  State<NCLApp> createState() => NCLAppState();
+  State<NclWidget> createState() => NclWidgetState();
 }
 
-class NCLAppState extends MediaState<NCLApp> {
+class NclWidgetState extends MediaState<NclWidget> {
   NclDocument? nclDocument;
   final Map<String, GlobalKey<MediaState>> _mediaStateKeys = {};
   final Map<String, Widget> _cachedWidgets = {};
@@ -169,7 +168,7 @@ class NCLAppState extends MediaState<NCLApp> {
                 _ticker = null;
                 nclDocument = null;
                 if (mounted) {
-                  NCLAppExitNotification().dispatch(context);
+                  NclWidgetExitNotification().dispatch(context);
                 }
               }
             }
