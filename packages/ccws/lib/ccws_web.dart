@@ -1,8 +1,9 @@
 import 'dart:convert';
-import 'dart:html' as html;
+import 'dart:js_interop';
 
 import 'package:logging/logging.dart';
 import 'package:shelf/shelf.dart';
+import 'package:web/web.dart' as web;
 
 import 'router.dart';
 
@@ -81,46 +82,54 @@ class CCWS {
     _running = true;
     _logger.info('Starting Web CCWS');
 
-    html.window.onMessage.listen((html.MessageEvent event) async {
-      final data = event.data;
-      try {
-        Map<String, dynamic>? mapData;
+    web.window.addEventListener(
+      'message',
+      (web.MessageEvent event) {
+        _handleMessage(event);
+      }.toJS,
+    );
+  }
 
-        if (data is String && data.trim().startsWith('{')) {
-          try {
-            final decoded = jsonDecode(data);
-            if (decoded is Map) {
-              mapData = Map<String, dynamic>.from(decoded);
-            }
-          } catch (_) {}
-        } else if (data is Map) {
-          mapData = Map<String, dynamic>.from(data);
-        }
+  Future<void> _handleMessage(web.MessageEvent event) async {
+    final rawData = event.data?.dartify();
+    try {
+      Map<String, dynamic>? mapData;
 
-        if (mapData != null && mapData['type'] == 'CCWS_REQUEST') {
-          _logger.info(
-              'CCWS Dart received request from iframe: ${mapData["url"]}');
-          final url = mapData['url'] as String;
-          final method = (mapData['method'] as String?) ?? 'GET';
-
-          final request = Request(method, Uri.parse(url));
-          final response = await handler(request);
-          final body = await response.readAsString();
-
-          final source = event.source as html.WindowBase?;
-          source?.postMessage(
-              jsonEncode({
-                'type': 'CCWS_RESPONSE',
-                'id': mapData['id'],
-                'status': response.statusCode,
-                'body': body,
-              }),
-              '*');
-        }
-      } catch (e, st) {
-        _logger.severe('Error processing CCWS_REQUEST from iframe: $e\n$st');
+      if (rawData is String && rawData.trim().startsWith('{')) {
+        try {
+          final decoded = jsonDecode(rawData);
+          if (decoded is Map) {
+            mapData = Map<String, dynamic>.from(decoded);
+          }
+        } catch (_) {}
+      } else if (rawData is Map) {
+        mapData = Map<String, dynamic>.from(rawData);
       }
-    });
+
+      if (mapData != null && mapData['type'] == 'CCWS_REQUEST') {
+        _logger.info(
+            'CCWS Dart received request from iframe: ${mapData["url"]}');
+        final url = mapData['url'] as String;
+        final method = (mapData['method'] as String?) ?? 'GET';
+
+        final request = Request(method, Uri.parse(url));
+        final response = await handler(request);
+        final body = await response.readAsString();
+
+        final source = event.source as web.Window?;
+        source?.postMessage(
+          jsonEncode({
+            'type': 'CCWS_RESPONSE',
+            'id': mapData['id'],
+            'status': response.statusCode,
+            'body': body,
+          }).toJS,
+          '*'.toJS,
+        );
+      }
+    } catch (e, st) {
+      _logger.severe('Error processing CCWS_REQUEST from iframe: $e\n$st');
+    }
   }
 
   Future<void> stop() async {

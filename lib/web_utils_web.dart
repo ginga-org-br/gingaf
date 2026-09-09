@@ -1,18 +1,19 @@
 import 'dart:convert';
-import 'dart:html' as html;
-import 'dart:js' as js;
+import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 
 import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:web/web.dart' as web;
 
 String? getSessionStorageItem(String key) {
   try {
-    final localVal = html.window.sessionStorage[key];
+    final localVal = web.window.sessionStorage.getItem(key);
     if (localVal != null && localVal.isNotEmpty) return localVal;
   } catch (_) {}
   try {
-    if (html.window.parent != null && html.window.parent != html.window) {
-      final parentWin = html.window.parent as html.Window;
-      final parentVal = parentWin.sessionStorage[key];
+    final parent = web.window.parent;
+    if (parent != null && parent != web.window) {
+      final parentVal = parent.sessionStorage.getItem(key);
       if (parentVal != null && parentVal.isNotEmpty) return parentVal;
     }
   } catch (_) {}
@@ -21,16 +22,19 @@ String? getSessionStorageItem(String key) {
 
 String? getGingaAppPath() {
   try {
-    if (js.context.hasProperty('GingaApp')) {
-      final gingaApp = js.context['GingaApp'];
-      if (gingaApp != null && gingaApp['appPath'] != null) {
-        final path = gingaApp['appPath'].toString();
-        if (path.isNotEmpty) return path;
+    if (web.window.hasProperty('GingaApp'.toJS).toDart) {
+      final gingaApp = web.window.getProperty<JSObject?>('GingaApp'.toJS);
+      if (gingaApp != null && gingaApp.hasProperty('appPath'.toJS).toDart) {
+        final path = gingaApp
+            .getProperty<JSAny?>('appPath'.toJS)
+            ?.dartify()
+            ?.toString();
+        if (path != null && path.isNotEmpty) return path;
       }
     }
   } catch (_) {}
   try {
-    final uri = Uri.parse(html.window.location.href);
+    final uri = Uri.parse(web.window.location.href);
     final queryApp = uri.queryParameters['app'];
     if (queryApp != null && queryApp.isNotEmpty) {
       return queryApp;
@@ -41,16 +45,16 @@ String? getGingaAppPath() {
 
 Map<String, dynamic>? getGingaAppFiles() {
   try {
-    if (js.context.hasProperty('GingaApp')) {
-      final gingaApp = js.context['GingaApp'];
-      if (gingaApp != null && gingaApp['files'] != null) {
-        final filesObj = gingaApp['files'];
-        final jsKeys = js.context['Object'].callMethod('keys', [filesObj]) as List;
-        final map = <String, dynamic>{};
-        for (final k in jsKeys) {
-          map[k.toString()] = filesObj[k];
+    if (web.window.hasProperty('GingaApp'.toJS).toDart) {
+      final gingaApp = web.window.getProperty<JSObject?>('GingaApp'.toJS);
+      if (gingaApp != null && gingaApp.hasProperty('files'.toJS).toDart) {
+        final filesObj = gingaApp.getProperty<JSObject?>('files'.toJS);
+        if (filesObj != null) {
+          final dartified = filesObj.dartify();
+          if (dartified is Map) {
+            return Map<String, dynamic>.from(dartified);
+          }
         }
-        if (map.isNotEmpty) return map;
       }
     }
   } catch (_) {}
@@ -67,7 +71,7 @@ Map<String, dynamic>? getGingaAppFiles() {
 
 void notifyParentAppExited() {
   try {
-    html.window.parent?.postMessage('ginga_app_exited', '*');
+    web.window.parent?.postMessage('ginga_app_exited'.toJS, '*'.toJS);
   } catch (e) {
     debugPrint('Failed to notify parent app exited: $e');
   }
