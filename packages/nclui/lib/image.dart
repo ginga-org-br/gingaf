@@ -28,7 +28,8 @@ class ImageWidgetState extends MediaState<ImageWidget> {
 
   void _initImage() {
     if (widget.src.trim().isEmpty) return;
-    _parsedUri = resolveUri(widget.src);
+    final gingacc = widget.document?.gingacc ?? GingaCC();
+    _parsedUri = gingacc.resolveUri(widget.src);
   }
 
   @override

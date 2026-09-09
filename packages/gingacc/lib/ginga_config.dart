@@ -1,7 +1,6 @@
 import 'dart:convert';
 
-import 'src_resolver.dart' as src_resolver;
-import 'users.dart';
+import 'gingacc.dart';
 
 /// Ginga environment configuration.
 ///
@@ -59,8 +58,8 @@ class GingaConfig {
 
   GingaConfig({
     this.appSrc,
-    this.enableCCWS = true,
-    this.enableMainAv = true,
+    this.enableCCWS = false,
+    this.enableMainAv = false,
     this.mainAvSrc = defaultMainAvSrc,
     Map<String, String>? envVariables,
     Users? users,
@@ -69,6 +68,24 @@ class GingaConfig {
           ...?envVariables,
         },
         users = users ?? Users();
+
+  GingaConfig copyWith({
+    String? appSrc,
+    String? mainAvSrc,
+    bool? enableCCWS,
+    bool? enableMainAv,
+    Map<String, String>? envVariables,
+    Users? users,
+  }) {
+    return GingaConfig(
+      appSrc: appSrc ?? this.appSrc,
+      mainAvSrc: mainAvSrc ?? this.mainAvSrc,
+      enableCCWS: enableCCWS ?? this.enableCCWS,
+      enableMainAv: enableMainAv ?? this.enableMainAv,
+      envVariables: envVariables ?? this.envVariables,
+      users: users ?? this.users,
+    );
+  }
 
   Map<String, String> getGroup(String group) {
     final prefix = group.endsWith('.') ? group : '$group.';
@@ -84,7 +101,9 @@ class GingaConfig {
   static Future<GingaConfig> fromJson(
     String jsonOrSrc, [
     String? baseDirSrc,
+    GingaCC? gingacc,
   ]) async {
+    gingacc ??= GingaCC();
     final trimmed = jsonOrSrc.trim();
     if (trimmed.isEmpty) {
       return GingaConfig();
@@ -93,9 +112,9 @@ class GingaConfig {
     if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
       jsonString = trimmed;
     } else {
-      final uri = src_resolver.resolveUri(trimmed, baseDirSrc);
-      final loaded = (await src_resolver.loadContent(uri)) ??
-          (await src_resolver.loadContent(trimmed));
+      final uri = gingacc.resolveUri(trimmed, baseDirSrc);
+      final loaded = (await gingacc.loadContent(uri)) ??
+          (await gingacc.loadContent(trimmed));
       if (loaded == null) {
         throw FormatException('Failed to load GingaConfig from $jsonOrSrc');
       }
@@ -156,9 +175,9 @@ class GingaConfig {
       if (trimmedUsers.startsWith('{') || trimmedUsers.startsWith('[')) {
         users.loadUserData(trimmedUsers);
       } else {
-        final uri = src_resolver.resolveUri(trimmedUsers, baseDirSrc);
-        final loaded = (await src_resolver.loadContent(uri)) ??
-            (await src_resolver.loadContent(trimmedUsers));
+        final uri = gingacc.resolveUri(trimmedUsers, baseDirSrc);
+        final loaded = (await gingacc.loadContent(uri)) ??
+            (await gingacc.loadContent(trimmedUsers));
         if (loaded != null && loaded.isNotEmpty) {
           users.loadUserData(loaded);
         }

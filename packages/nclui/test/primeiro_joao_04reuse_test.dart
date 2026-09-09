@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ncldoc/ncl_document.dart';
 import 'package:nclui/ncl.dart';
@@ -7,16 +6,7 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 
 import 'mock_video_player.dart';
 
-class MockReuseAssetBundle extends CachingAssetBundle {
-  @override
-  Future<ByteData> load(String key) async {
-    return ByteData(0);
-  }
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async {
-    if (key == 'joao04reuse.ncl') {
-      return '''<ncl id="nclReuse" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+const _joao04reuseNcl = '''<ncl id="nclReuse" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
       <region id="rBg" width="100%" height="100%" zIndex="1"/>
@@ -128,10 +118,6 @@ class MockReuseAssetBundle extends CachingAssetBundle {
     </link>
   </body>
 </ncl>''';
-    }
-    return '';
-  }
-}
 
 void main() {
   setUpAll(() {
@@ -289,14 +275,16 @@ void main() {
 
   testWidgets('NclWidget updates layout in response to reused media SET action',
       (WidgetTester tester) async {
-    final mockBundle = MockReuseAssetBundle();
+    final gingacc = GingaCC(
+      virtualFiles: {'joao04reuse.ncl': _joao04reuseNcl},
+    );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: DefaultAssetBundle(
-            bundle: mockBundle,
-            child: NclWidget(src: 'joao04reuse.ncl'),
+          body: NclWidget(
+            src: 'joao04reuse.ncl',
+            gingacc: gingacc,
           ),
         ),
       ),

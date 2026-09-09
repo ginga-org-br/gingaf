@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ncldoc/ncl_document.dart';
 import 'package:nclui/ncl.dart';
@@ -7,19 +6,7 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 
 import 'mock_video_player.dart';
 
-class MockTransitionAssetBundle extends CachingAssetBundle {
-  final String language;
-  MockTransitionAssetBundle({this.language = 'por'});
-
-  @override
-  Future<ByteData> load(String key) async {
-    return ByteData(0);
-  }
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async {
-    if (key == 'joao07transition.ncl') {
-      return '''<ncl id="nclTransition" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+const _joao07transitionNcl = '''<ncl id="nclTransition" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <ruleBase>
       <rule id="en" var="system.language" value="eng" comparator="eq"/>
@@ -151,10 +138,6 @@ class MockTransitionAssetBundle extends CachingAssetBundle {
     </link>
   </body>
 </ncl>''';
-    }
-    return '';
-  }
-}
 
 void main() {
   setUpAll(() {
@@ -197,14 +180,16 @@ void main() {
 
   testWidgets('NclWidget runs transition example structure successfully',
       (WidgetTester tester) async {
-    final mockBundle = MockTransitionAssetBundle();
+    final gingacc = GingaCC(
+      virtualFiles: {'joao07transition.ncl': _joao07transitionNcl},
+    );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: DefaultAssetBundle(
-            bundle: mockBundle,
-            child: NclWidget(src: 'joao07transition.ncl'),
+          body: NclWidget(
+            src: 'joao07transition.ncl',
+            gingacc: gingacc,
           ),
         ),
       ),

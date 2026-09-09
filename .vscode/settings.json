@@ -1,5 +1,6 @@
 {
     "search.exclude": {
+        "node/playground/**": true
         "node/public/**": true
     }
 }

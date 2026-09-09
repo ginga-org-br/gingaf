@@ -57,13 +57,14 @@ void main() {
 </ncl>
 ''';
 
+        final gingacc = GingaCC(
+          users: Users(
+            '[{"id": "u1", "name": "Bob", "gender": "male", "age": 30}]',
+          ),
+        );
         final doc = NclDocument.fromContent(
           xmlString,
-          config: GingaConfig(
-            users: Users(
-              '[{"id": "u1", "name": "Bob", "gender": "male", "age": 30}]',
-            ),
-          ),
+          gingacc: gingacc,
         );
 
         doc.start();
@@ -136,13 +137,14 @@ void main() {
 </ncl>
 ''';
 
+        final gingacc = GingaCC(
+          users: Users(
+            '[{"id": "u2", "name": "Alice", "gender": "female", "age": 30}]',
+          ),
+        );
         final doc = NclDocument.fromContent(
           xmlString,
-          config: GingaConfig(
-            users: Users(
-              '[{"id": "u2", "name": "Alice", "gender": "female", "age": 30}]',
-            ),
-          ),
+          gingacc: gingacc,
         );
 
         doc.start();

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ncldoc/ncl_document.dart';
 import 'package:nclui/ncl.dart';
@@ -7,16 +6,7 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 
 import 'mock_video_player.dart';
 
-class MockReturnAssetBundle extends CachingAssetBundle {
-  @override
-  Future<ByteData> load(String key) async {
-    return ByteData(0);
-  }
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async {
-    if (key == 'joao05return.ncl') {
-      return '''<ncl id="nclReturn" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+const _joao05returnNcl = '''<ncl id="nclReturn" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
       <region id="rBg" width="100%" height="100%" zIndex="1"/>
@@ -132,10 +122,6 @@ class MockReturnAssetBundle extends CachingAssetBundle {
     </link>
   </body>
 </ncl>''';
-    }
-    return '';
-  }
-}
 
 void main() {
   setUpAll(() {
@@ -290,14 +276,16 @@ void main() {
 
   testWidgets('NclWidget updates layout in response to form ending',
       (WidgetTester tester) async {
-    final mockBundle = MockReturnAssetBundle();
+    final gingacc = GingaCC(
+      virtualFiles: {'joao05return.ncl': _joao05returnNcl},
+    );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: DefaultAssetBundle(
-            bundle: mockBundle,
-            child: NclWidget(src: 'joao05return.ncl'),
+          body: NclWidget(
+            src: 'joao05return.ncl',
+            gingacc: gingacc,
           ),
         ),
       ),

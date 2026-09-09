@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ncldoc/ncl_document.dart';
 import 'package:nclui/ncl.dart';
@@ -7,16 +6,7 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 
 import 'mock_video_player.dart';
 
-class MockNCLAssetBundle extends CachingAssetBundle {
-  @override
-  Future<ByteData> load(String key) async {
-    return ByteData(0);
-  }
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async {
-    if (key == 'joao00syncProp.ncl') {
-      return '''<ncl id="mySyncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+const _joao00syncPropNcl = '''<ncl id="mySyncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <connectorBase>
       <causalConnector id="onBeginStart_delay">
@@ -79,10 +69,6 @@ class MockNCLAssetBundle extends CachingAssetBundle {
     </link>
   </body>
 </ncl>''';
-    }
-    throw FlutterError('MockNCLAssetBundle: Unknown key \$key');
-  }
-}
 
 void main() {
   late MockVideoPlayer fakePlatform;
@@ -190,14 +176,16 @@ void main() {
   testWidgets(
       'NclWidget layouts children based on parsed properties and sorts by zIndex',
       (WidgetTester tester) async {
-    final mockBundle = MockNCLAssetBundle();
+    final gingacc = GingaCC(
+      virtualFiles: {'joao00syncProp.ncl': _joao00syncPropNcl},
+    );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: DefaultAssetBundle(
-            bundle: mockBundle,
-            child: NclWidget(src: 'joao00syncProp.ncl'),
+          body: NclWidget(
+            src: 'joao00syncProp.ncl',
+            gingacc: gingacc,
           ),
         ),
       ),

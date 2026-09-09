@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ncldoc/ncl_document.dart';
 import 'package:nclui/ncl.dart';
@@ -7,19 +6,7 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 
 import 'mock_video_player.dart';
 
-class MockAnimationAssetBundle extends CachingAssetBundle {
-  final String language;
-  MockAnimationAssetBundle({this.language = 'por'});
-
-  @override
-  Future<ByteData> load(String key) async {
-    return ByteData(0);
-  }
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async {
-    if (key == 'joao08animation.ncl') {
-      return '''<ncl id="nclAnimation" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+const _joao08animationNcl = '''<ncl id="nclAnimation" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <ruleBase>
       <rule id="en" var="system.language" value="eng" comparator="eq"/>
@@ -164,10 +151,6 @@ class MockAnimationAssetBundle extends CachingAssetBundle {
     </link>
   </body>
 </ncl>''';
-    }
-    return '';
-  }
-}
 
 void main() {
   setUpAll(() {
@@ -240,14 +223,16 @@ void main() {
 
   testWidgets('NclWidget runs animation example structure successfully',
       (WidgetTester tester) async {
-    final mockBundle = MockAnimationAssetBundle();
+    final gingacc = GingaCC(
+      virtualFiles: {'joao08animation.ncl': _joao08animationNcl},
+    );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: DefaultAssetBundle(
-            bundle: mockBundle,
-            child: NclWidget(src: 'joao08animation.ncl'),
+          body: NclWidget(
+            src: 'joao08animation.ncl',
+            gingacc: gingacc,
           ),
         ),
       ),

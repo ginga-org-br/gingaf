@@ -1,26 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ncldoc/elements.dart';
 import 'package:ncldoc/ncl_document.dart';
 import 'package:nclui/ncl.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 import 'mock_video_player.dart';
 
-class MockLuaAssetBundle extends CachingAssetBundle {
-  final String language;
-  MockLuaAssetBundle({this.language = 'por'});
-
-  @override
-  Future<ByteData> load(String key) async {
-    return ByteData(0);
-  }
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async {
-    if (key == 'joao11nclua.ncl') {
-      return '''<ncl id="ncluaEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+const _joao11ncluaNcl = '''<ncl id="ncluaEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <ruleBase>
       <rule id="en" var="system.language" value="en" comparator="eq"/>
@@ -163,9 +149,8 @@ class MockLuaAssetBundle extends CachingAssetBundle {
     </link>
   </body>
 </ncl>''';
-    }
-    if (key == 'script/counter.lua' || key == 'counter.lua') {
-      return '''local counter = 0
+
+const _counterLua = '''local counter = 0
 local dx, dy = canvas:attrSize()
 function handler1 (evt)
    if evt.class=='ncl' and evt.type=='attribution' and evt.action=='start' and evt.name=='add' then 
@@ -202,10 +187,6 @@ end
 event.register(handler1)
 event.register(handler2)
 ''';
-    }
-    return '';
-  }
-}
 
 void main() {
   setUpAll(() {
@@ -215,14 +196,20 @@ void main() {
   testWidgets(
       'NclWidget runs lua script configuration and triggers property modifications successfully',
       (WidgetTester tester) async {
-    final mockBundle = MockLuaAssetBundle();
+    final gingacc = GingaCC(
+      virtualFiles: {
+        'joao11nclua.ncl': _joao11ncluaNcl,
+        'script/counter.lua': _counterLua,
+        'counter.lua': _counterLua,
+      },
+    );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: DefaultAssetBundle(
-            bundle: mockBundle,
-            child: NclWidget(src: 'joao11nclua.ncl'),
+          body: NclWidget(
+            src: 'joao11nclua.ncl',
+            gingacc: gingacc,
           ),
         ),
       ),

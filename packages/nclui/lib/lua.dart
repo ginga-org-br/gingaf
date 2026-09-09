@@ -9,6 +9,7 @@ class LuaWidget extends BaseWidget {
     required super.src,
     super.media,
     super.document,
+    super.gingacc,
   });
 
   @override
@@ -65,7 +66,8 @@ class LuaWidgetState extends MediaState<LuaWidget> {
   Future<void> _runScript() async {
     canvasState.reset();
     try {
-      final script = await loadContent(widget.src, context: context);
+      final gingacc = widget.gingacc ?? widget.document?.gingacc ?? GingaCC();
+      final script = await gingacc.loadContent(widget.src);
       if (script != null) {
         _engine.execute(script);
       }

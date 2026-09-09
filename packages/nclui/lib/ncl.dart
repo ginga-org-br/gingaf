@@ -25,17 +25,16 @@ final _logger = Logger('ginga-ncl');
 class NclWidgetExitNotification extends Notification {}
 
 class NclWidget extends BaseWidget {
-  final GingaConfig config;
   final GlobalKey<MainAVWidgetState>? mainAvKey;
 
-  NclWidget({
+  const NclWidget({
     super.key,
     required super.src,
     super.media,
     super.document,
-    GingaConfig? config,
+    super.gingacc,
     this.mainAvKey,
-  }) : config = config ?? GingaConfig();
+  });
 
   static Widget? createMediaWidget({
     Key? key,
@@ -55,6 +54,7 @@ class NclWidget extends BaseWidget {
         src: src,
         media: media,
         document: document,
+        gingacc: document?.gingacc,
       );
     }
     if (mimeType.startsWith('video/') ||
@@ -199,9 +199,10 @@ class NclWidgetState extends MediaState<NclWidget> {
       } else {
         return;
       }
+      final gingacc = widget.gingacc ?? GingaCC();
       final doc = await NclDocument.fromSrc(
         widget.src,
-        config: widget.config,
+        gingacc: gingacc,
       );
       if (!mounted) return;
 

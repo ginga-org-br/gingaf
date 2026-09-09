@@ -122,9 +122,10 @@ void main() {
       final config = await GingaConfig.fromJson(
         '{"envVariables": {"system.language": "fra", "channel.key": "ch1"}}',
       );
+      final gingacc = GingaCC(config: config);
       final doc = NclDocument.fromContent(
         '<ncl><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>',
-        config: config,
+        gingacc: gingacc,
       );
       expect(doc.envVariables['system.language'], equals('fra'));
       expect(doc.systemVariables['system.language'], equals('fra'));
@@ -135,10 +136,13 @@ void main() {
     test(
         'NclDocument.fromSrc loads config with envVariables from configSrc raw JSON',
         () async {
-      final doc = NclDocument.fromContent(
-        '<ncl><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>',
+      final gingacc = GingaCC(
         config: await GingaConfig.fromJson(
             '{"userDataJson": "users.json", "envVariables": {"system.language": "spa", "user.pref": "dark"}}'),
+      );
+      final doc = NclDocument.fromContent(
+        '<ncl><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>',
+        gingacc: gingacc,
       );
       expect(doc.users, isNotNull);
       expect(doc.envVariables['system.language'], equals('spa'));

@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:gingacc/ginga_config.dart';
+import 'package:gingacc/gingacc.dart';
 import 'package:logging/logging.dart';
 import 'package:video_player_media_kit/video_player_media_kit.dart';
 
@@ -168,5 +168,5 @@ void main(List<String> args) async {
 
   _logger.info(config.toString());
 
-  runApp(Ginga(config: config));
+  runApp(Ginga(gingacc: GingaCC(config: config)));
 }

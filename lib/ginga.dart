@@ -3,8 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:gingacc/ccws.dart';
-import 'package:gingacc/ginga_config.dart';
+import 'package:gingacc/gingacc.dart';
 import 'package:logging/logging.dart';
 import 'package:nclui/html.dart' as html;
 import 'package:nclui/main_av.dart';
@@ -14,15 +13,19 @@ import 'web_utils_stub.dart' if (dart.library.html) 'web_utils_web.dart';
 final _logger = Logger('ginga');
 
 class Ginga extends StatefulWidget {
-  final GingaConfig config;
-  const Ginga({super.key, required this.config});
+  final GingaCC? gingacc;
+
+  const Ginga({
+    super.key,
+    this.gingacc,
+  });
 
   @override
   State<Ginga> createState() => _GingaState();
 }
 
 class _GingaState extends State<Ginga> {
-  late final CCWS _ccws;
+  late final GingaCC _gingacc;
   Widget? mainAVWidget;
   Widget? htmlApp;
   Widget? nclApp;
@@ -37,25 +40,23 @@ class _GingaState extends State<Ginga> {
   @override
   void initState() {
     super.initState();
-    _ccws = CCWS();
-    if (widget.config.enableMainAv) {
+    _gingacc = widget.gingacc ?? GingaCC();
+    if (_gingacc.config.enableMainAv) {
       mainAVWidget = MainAVWidget(
         key: _mainAvKey,
-        src: widget.config.mainAvSrc,
+        src: _gingacc.config.mainAvSrc,
       );
     }
 
     final isConfigEmpty =
-        widget.config.appSrc == null && !widget.config.enableMainAv;
+        _gingacc.config.appSrc == null && !_gingacc.config.enableMainAv;
     if (isConfigEmpty && !kIsWeb) {
       _logger.severe('Both APP and MAINAV are disabled or empty, exiting.');
       _cleanup();
       return;
     }
 
-    if (widget.config.enableCCWS) {
-      _ccws.start();
-    }
+    _gingacc.start();
     HardwareKeyboard.instance.addHandler(_handleKeyPress);
   }
 
@@ -64,20 +65,19 @@ class _GingaState extends State<Ginga> {
     super.didChangeDependencies();
     if (!_initialized) {
       _initialized = true;
-      final appSrc = widget.config.appSrc;
+      final appSrc = _gingacc.config.appSrc;
       if (appSrc != null) {
         if (appSrc.toLowerCase().endsWith('.html')) {
           htmlApp = html.HtmlWidget(
             src: appSrc,
-            ccws: _ccws,
-            config: widget.config,
+            gingacc: _gingacc,
           );
         } else {
           nclApp = ncl.NclWidget(
             key: _nclAppKey,
             src: appSrc,
-            config: widget.config,
             mainAvKey: _mainAvKey,
+            gingacc: _gingacc,
           );
         }
       }
@@ -96,9 +96,7 @@ class _GingaState extends State<Ginga> {
   }
 
   void _stopServices() {
-    if (widget.config.enableCCWS) {
-      _ccws.stop();
-    }
+    _gingacc.stop();
   }
 
   Future<void> _cleanup() async {

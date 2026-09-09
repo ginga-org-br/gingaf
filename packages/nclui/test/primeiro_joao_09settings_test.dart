@@ -1,26 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ncldoc/elements.dart';
 import 'package:ncldoc/ncl_document.dart';
 import 'package:nclui/ncl.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 import 'mock_video_player.dart';
 
-class MockSettingsAssetBundle extends CachingAssetBundle {
-  final String language;
-  MockSettingsAssetBundle({this.language = 'por'});
-
-  @override
-  Future<ByteData> load(String key) async {
-    return ByteData(0);
-  }
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async {
-    if (key == 'joao09settings.ncl') {
-      return '''<ncl id="settingsEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+const _joao09settingsNcl = '''<ncl id="settingsEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <ruleBase>
       <rule id="en" var="system.language" value="en" comparator="eq"/>
@@ -208,10 +194,6 @@ class MockSettingsAssetBundle extends CachingAssetBundle {
     </link>
   </body>
 </ncl>''';
-    }
-    return '';
-  }
-}
 
 void main() {
   setUpAll(() {
@@ -221,14 +203,16 @@ void main() {
   testWidgets(
       'NclWidget evaluates settings conditional triggers correctly when true',
       (WidgetTester tester) async {
-    final mockBundle = MockSettingsAssetBundle();
+    final gingacc = GingaCC(
+      virtualFiles: {'joao09settings.ncl': _joao09settingsNcl},
+    );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: DefaultAssetBundle(
-            bundle: mockBundle,
-            child: NclWidget(src: 'joao09settings.ncl'),
+          body: NclWidget(
+            src: 'joao09settings.ncl',
+            gingacc: gingacc,
           ),
         ),
       ),
@@ -251,14 +235,16 @@ void main() {
   testWidgets(
       'NclWidget evaluates settings conditional triggers correctly when false',
       (WidgetTester tester) async {
-    final mockBundle = MockSettingsAssetBundle();
+    final gingacc = GingaCC(
+      virtualFiles: {'joao09settings.ncl': _joao09settingsNcl},
+    );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: DefaultAssetBundle(
-            bundle: mockBundle,
-            child: NclWidget(src: 'joao09settings.ncl'),
+          body: NclWidget(
+            src: 'joao09settings.ncl',
+            gingacc: gingacc,
           ),
         ),
       ),

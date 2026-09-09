@@ -34,7 +34,7 @@ void main() {
 
         final doc = NclDocument.fromContent(
           xml,
-          config: GingaConfig(
+          gingacc: GingaCC(
             users: Users('''
         {
           "id": "u1",
@@ -84,7 +84,7 @@ void main() {
 
       final doc = NclDocument.fromContent(
         xml,
-        config: GingaConfig(
+        gingacc: GingaCC(
           users: Users('''
       {
         "id": "u1",
@@ -133,7 +133,7 @@ void main() {
 
       final doc = NclDocument.fromContent(
         xml,
-        config: GingaConfig(
+        gingacc: GingaCC(
           users: Users('''
       [
         {
@@ -195,7 +195,7 @@ void main() {
 
       final doc = NclDocument.fromContent(
         xml,
-        config: GingaConfig(
+        gingacc: GingaCC(
           users: Users('''
       {
         "id": "u1",

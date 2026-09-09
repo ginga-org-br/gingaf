@@ -1,24 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nclui/ncl.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 import 'mock_video_player.dart';
 
-class MockEmbNclAssetBundle extends CachingAssetBundle {
-  final String language;
-  MockEmbNclAssetBundle({this.language = 'por'});
-
-  @override
-  Future<ByteData> load(String key) async {
-    return ByteData(0);
-  }
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async {
-    if (key == 'joao12embNCL.ncl') {
-      return '''<ncl id="_03prepPassiveDevicesEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+const _joao12embNcl = '''<ncl id="_03prepPassiveDevicesEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
       <region id="screenReg" width="100%" height="100%" zIndex="1">
@@ -61,8 +48,8 @@ class MockEmbNclAssetBundle extends CachingAssetBundle {
     </link>
   </body>
 </ncl>''';
-    } else if (key == 'advert.ncl') {
-      return '''<ncl id="_00prepPassiveDevicesEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+
+const _advertNcl = '''<ncl id="_00prepPassiveDevicesEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
       <region id="backgroundReg" width="100%" height="100%" zIndex="5">
@@ -85,10 +72,6 @@ class MockEmbNclAssetBundle extends CachingAssetBundle {
     <media id="icon" src="../media/iconPassive.png" descriptor="iconDesc"/>
   </body>
 </ncl>''';
-    }
-    return '';
-  }
-}
 
 void main() {
   setUpAll(() {
@@ -97,14 +80,19 @@ void main() {
 
   testWidgets('NclWidget runs embedded NCL document successfully',
       (WidgetTester tester) async {
-    final mockBundle = MockEmbNclAssetBundle();
+    final gingacc = GingaCC(
+      virtualFiles: {
+        'joao12embNCL.ncl': _joao12embNcl,
+        'advert.ncl': _advertNcl,
+      },
+    );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: DefaultAssetBundle(
-            bundle: mockBundle,
-            child: NclWidget(src: 'joao12embNCL.ncl'),
+          body: NclWidget(
+            src: 'joao12embNCL.ncl',
+            gingacc: gingacc,
           ),
         ),
       ),

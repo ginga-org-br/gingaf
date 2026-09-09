@@ -1,6 +1,3 @@
-import 'dart:io';
-
-import 'package:gingacc/src_resolver.dart';
 import 'package:xml/xml.dart';
 
 import 'mimetype.dart';
@@ -210,16 +207,6 @@ class NclParser {
         type == 'application/x-ginga-settings' ||
         type == 'application/x-ncl-user-settings') {
       return Settings(rawAttributes: rawAttributes, mimeType: type);
-    }
-    final baseDirSrc = baseUri?.toString();
-    if (src.isNotEmpty && docUri != null) {
-      final isNetworkOrStream = src.startsWith('sbtvd://') ||
-          src.startsWith('http://') ||
-          src.startsWith('https://');
-      final resolvedMediaUri = resolveUri(src, baseDirSrc);
-      if (!isNetworkOrStream && !exists(resolvedMediaUri)) {
-        throw FileSystemException('Media src does not exist: $src', src);
-      }
     }
     final uri = src.isNotEmpty ? (baseUri?.resolve(src).toString() ?? src) : '';
     final mimeType = type.isNotEmpty ? type : getMimeTypeFromExtension(src);

@@ -14,7 +14,8 @@ void main() {
     test('constructor initializes envVariables and defaults', () {
       final config = GingaConfig();
       expect(config.appSrc, isNull);
-      expect(config.enableCCWS, isTrue);
+      expect(config.enableCCWS, isFalse);
+      expect(config.enableMainAv, isFalse);
       expect(config.envVariables['system.language'], equals('por'));
       expect(config.users, isNotNull);
     });

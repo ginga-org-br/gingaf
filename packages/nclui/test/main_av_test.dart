@@ -1,30 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gingacc/ginga_config.dart';
 import 'package:nclui/ncl.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 import 'mock_video_player.dart';
-
-class MockNCLAssetBundle extends CachingAssetBundle {
-  final Map<String, String> assets;
-  MockNCLAssetBundle({required this.assets});
-
-  @override
-  Future<ByteData> load(String key) async {
-    return ByteData(0);
-  }
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async {
-    if (assets.containsKey(key)) {
-      return assets[key]!;
-    }
-    throw FlutterError('MockNCLAssetBundle: Unknown key $key');
-  }
-}
 
 void main() {
   setUpAll(() {
@@ -42,11 +21,12 @@ void main() {
 </ncl>
 ''';
 
-    final mockBundle = MockNCLAssetBundle(assets: {
-      'test_bg.ncl': nclData,
-    });
-
     const mainAvUri = 'examples/primeiro-joao/media/animGar.mp4';
+    final config = GingaConfig(mainAvSrc: mainAvUri);
+    final gingacc = GingaCC(
+      config: config,
+      virtualFiles: {'test_bg.ncl': nclData},
+    );
     final mainAvKey = GlobalKey<MainAVWidgetState>();
 
     await tester.pumpWidget(
@@ -59,13 +39,10 @@ void main() {
                 key: mainAvKey,
                 src: mainAvUri,
               ),
-              DefaultAssetBundle(
-                bundle: mockBundle,
-                child: NclWidget(
-                  src: 'test_bg.ncl',
-                  config: GingaConfig(mainAvSrc: mainAvUri),
-                  mainAvKey: mainAvKey,
-                ),
+              NclWidget(
+                src: 'test_bg.ncl',
+                mainAvKey: mainAvKey,
+                gingacc: gingacc,
               ),
             ],
           ),
@@ -93,11 +70,12 @@ void main() {
 </ncl>
 ''';
 
-    final mockBundle = MockNCLAssetBundle(assets: {
-      'test_bg.ncl': nclData,
-    });
-
     const mainAvUri = GingaConfig.defaultMainAVSrc;
+    final config = GingaConfig(mainAvSrc: mainAvUri);
+    final gingacc = GingaCC(
+      config: config,
+      virtualFiles: {'test_bg.ncl': nclData},
+    );
     final mainAvKey = GlobalKey<MainAVWidgetState>();
 
     await tester.pumpWidget(
@@ -110,13 +88,10 @@ void main() {
                 key: mainAvKey,
                 src: mainAvUri,
               ),
-              DefaultAssetBundle(
-                bundle: mockBundle,
-                child: NclWidget(
-                  src: 'test_bg.ncl',
-                  config: GingaConfig(mainAvSrc: mainAvUri),
-                  mainAvKey: mainAvKey,
-                ),
+              NclWidget(
+                src: 'test_bg.ncl',
+                mainAvKey: mainAvKey,
+                gingacc: gingacc,
               ),
             ],
           ),
@@ -132,8 +107,7 @@ void main() {
     expect(mainAvKey.currentState?.media?.id, 'mainAV');
   });
 
-  testWidgets(
-      'NclWidget controls external MainAVWidget via mainAvKey',
+  testWidgets('NclWidget controls external MainAVWidget via mainAvKey',
       (WidgetTester tester) async {
     const nclData = '''
 <ncl>
@@ -144,11 +118,12 @@ void main() {
 </ncl>
 ''';
 
-    final mockBundle = MockNCLAssetBundle(assets: {
-      'test_bg.ncl': nclData,
-    });
-
     const mainAvUri = 'examples/primeiro-joao/media/animGar.mp4';
+    final config = GingaConfig(mainAvSrc: mainAvUri);
+    final gingacc = GingaCC(
+      config: config,
+      virtualFiles: {'test_bg.ncl': nclData},
+    );
     final mainAvKey = GlobalKey<MainAVWidgetState>();
 
     await tester.pumpWidget(
@@ -161,13 +136,10 @@ void main() {
                 key: mainAvKey,
                 src: mainAvUri,
               ),
-              DefaultAssetBundle(
-                bundle: mockBundle,
-                child: NclWidget(
-                  src: 'test_bg.ncl',
-                  config: GingaConfig(mainAvSrc: mainAvUri),
-                  mainAvKey: mainAvKey,
-                ),
+              NclWidget(
+                src: 'test_bg.ncl',
+                mainAvKey: mainAvKey,
+                gingacc: gingacc,
               ),
             ],
           ),

@@ -1,22 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:gingacc/ccws.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nclui/html.dart';
+import 'package:gingacc/gingacc.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:nclui/html.dart';
 
-class MockCCWSAssetBundle extends CachingAssetBundle {
-  @override
-  Future<ByteData> load(String key) async {
-    return ByteData(0);
-  }
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async {
-    if (key == 'test_ccws.html') {
-      return '''
+const _testCcwsHtml = '''
 <!DOCTYPE html>
 <html>
 <body>
@@ -48,47 +38,43 @@ class MockCCWSAssetBundle extends CachingAssetBundle {
 </body>
 </html>
 ''';
-    }
-    throw FlutterError('MockCCWSAssetBundle: Unknown key $key');
-  }
-}
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('CCWS HTML Mocked Integration Tests', () {
-    late CCWS ccws;
+    late GingaCC gingacc;
 
     setUp(() async {
-      ccws = CCWS();
-      await ccws.start();
+      gingacc = GingaCC(
+        config: GingaConfig(enableCCWS: true),
+        virtualFiles: {'test_ccws.html': _testCcwsHtml},
+      );
+      await gingacc.start();
     });
 
     tearDown(() async {
-      await ccws.stop();
+      await gingacc.stop();
     });
 
     testWidgets(
         'Verify HtmlWidget successful request /dtv/current-service via MockBundle',
         (WidgetTester tester) async {
-      final mockBundle = MockCCWSAssetBundle();
       final completer = Completer<String>();
 
       await tester.pumpWidget(
         MaterialApp(
           home: Material(
-            child: DefaultAssetBundle(
-              bundle: mockBundle,
-              child: HtmlWidget(
-                src: "test_ccws.html",
-                javaScriptChannels: {
-                  "HTMLAppChannel": (message) {
-                    if (!completer.isCompleted) {
-                      completer.complete(message.message);
-                    }
+            child: HtmlWidget(
+              src: 'test_ccws.html',
+              gingacc: gingacc,
+              javaScriptChannels: {
+                'HTMLAppChannel': (message) {
+                  if (!completer.isCompleted) {
+                    completer.complete(message.message);
                   }
-                },
-              ),
+                }
+              },
             ),
           ),
         ),
@@ -102,7 +88,7 @@ void main() {
       expect(result,
           contains(defaultCurrentService["serviceContextId"] as String));
       expect(result, contains(defaultCurrentService["serviceName"] as String));
-      expect(ccws.isRunning, isTrue);
+      expect(gingacc.ccws.isRunning, isTrue);
     });
   });
 }

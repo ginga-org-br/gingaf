@@ -3,9 +3,7 @@ library;
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:gingacc/ginga_config.dart';
-import 'package:gingacc/src_resolver.dart';
-import 'package:gingacc/users.dart';
+import 'package:gingacc/gingacc.dart';
 import 'package:logging/logging.dart';
 
 import 'elements.dart';
@@ -13,8 +11,7 @@ import 'event.dart';
 import 'ncl_scheduler.dart';
 import 'parser.dart';
 
-export 'package:gingacc/ginga_config.dart';
-export 'package:gingacc/users.dart';
+export 'package:gingacc/gingacc.dart';
 
 export 'elements.dart';
 export 'event.dart';
@@ -32,31 +29,34 @@ class NclDocument {
   final String docSrc;
 
   late final NclScheduler scheduler = NclScheduler(this);
-  Users get users => config.users;
-  final GingaConfig config;
+  Users get users => gingacc.users;
+  GingaConfig get config => gingacc.config;
   final Map<String, UserProfileQuery> _loadedProfiles = {};
   Map<String, UserProfileQuery> get loadedProfiles => _loadedProfiles;
   late final Map<String, String> envVariables;
   Map<String, String> get systemVariables => envVariables;
   Map<String, String> get systemProperties => envVariables;
 
+  final GingaCC gingacc;
+
   static Future<NclDocument> fromSrc(
     String docSrc, {
-    GingaConfig? config,
+    GingaCC? gingacc,
   }) async {
     _logger.info('Loading NCL document from src: $docSrc');
+    gingacc ??= GingaCC();
     final String? xml;
     if (docSrc.trim().startsWith('<')) {
       xml = docSrc;
     } else {
-      final docUri = resolveUri(docSrc);
-      xml = await loadContent(docUri);
+      final docUri = gingacc.resolveUri(docSrc);
+      xml = await gingacc.loadContent(docUri);
     }
 
     final doc = NclDocument.fromContent(
       xml ?? '',
       docSrc: docSrc,
-      config: config,
+      gingacc: gingacc,
     );
     return doc;
   }
@@ -64,14 +64,15 @@ class NclDocument {
   factory NclDocument.fromContent(
     String xml, {
     String? docSrc,
-    GingaConfig? config,
+    GingaCC? gingacc,
   }) {
     if (xml.trim().isEmpty) {
       throw ArgumentError('empty src');
     }
     final resolvedDocSrc = docSrc ?? 'tmp.ncl';
     _logger.fine('Creating NclDocument from content (src: $resolvedDocSrc)');
-    final Uri? resolvedUri = docSrc != null ? Uri.tryParse(docSrc) : null;
+    final cc = gingacc ?? GingaCC();
+    final Uri? resolvedUri = docSrc != null ? cc.resolveUri(docSrc) : null;
     final (head, body) = NclParser(
       docUri: resolvedUri,
     ).parseString(xml);
@@ -80,7 +81,7 @@ class NclDocument {
       body: body,
       docSrc: resolvedDocSrc,
       docUri: resolvedUri,
-      config: config,
+      gingacc: cc,
     );
   }
 
@@ -89,9 +90,9 @@ class NclDocument {
     required Body body,
     required this.docSrc,
     this.docUri,
-    GingaConfig? config,
-  }) : config = config ?? GingaConfig() {
-    envVariables = this.config.envVariables;
+    GingaCC? gingacc,
+  }) : gingacc = gingacc ?? GingaCC() {
+    envVariables = this.gingacc.config.envVariables;
     _head = head;
     _body = body;
     _gatherSettings();
@@ -120,8 +121,8 @@ class NclDocument {
     if (src == null) return;
     try {
       _logger.fine('Loading user profile "$id" from src: $src');
-      final profileUri = resolveUri(src, docSrc);
-      final jsonContent = await loadContent(profileUri);
+      final profileUri = gingacc.resolveUri(src, docSrc);
+      final jsonContent = await gingacc.loadContent(profileUri);
       if (jsonContent != null && jsonContent.isNotEmpty) {
         final query = json.decode(jsonContent);
         final queryMap = query is Map<String, dynamic>

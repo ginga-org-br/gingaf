@@ -1,24 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nclui/ncl.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 import 'mock_video_player.dart';
 
-class MockMenuAssetBundle extends CachingAssetBundle {
-  final String language;
-  MockMenuAssetBundle({this.language = 'por'});
-
-  @override
-  Future<ByteData> load(String key) async {
-    return ByteData(0);
-  }
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async {
-    if (key == 'joao10menu.ncl') {
-      return '''<ncl id="menuEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+const _joao10menuNcl = '''<ncl id="menuEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <ruleBase>
       <rule id="en" var="system.language" value="en" comparator="eq"/>
@@ -153,10 +140,6 @@ class MockMenuAssetBundle extends CachingAssetBundle {
     </link>
   </body>
 </ncl>''';
-    }
-    return '';
-  }
-}
 
 void main() {
   setUpAll(() {
@@ -165,14 +148,16 @@ void main() {
 
   testWidgets('NclWidget parses and runs menu configuration successfully',
       (WidgetTester tester) async {
-    final mockBundle = MockMenuAssetBundle();
+    final gingacc = GingaCC(
+      virtualFiles: {'joao10menu.ncl': _joao10menuNcl},
+    );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: DefaultAssetBundle(
-            bundle: mockBundle,
-            child: NclWidget(src: 'joao10menu.ncl'),
+          body: NclWidget(
+            src: 'joao10menu.ncl',
+            gingacc: gingacc,
           ),
         ),
       ),

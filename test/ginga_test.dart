@@ -1,31 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gingacc/ginga_config.dart';
-import 'package:gingacc/users.dart';
 import 'package:gingaf/ginga.dart';
 import 'package:nclui/ncl.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 import 'mock_video_player.dart';
 
-class MockGingaTestAssetBundle extends AssetBundle {
-  @override
-  Future<ByteData> load(String key) async {
-    return ByteData(0);
-  }
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async {
-    if (key == 'test/user_data1.json') {
-      return '[{"id": "u400", "name": "ConfUser"}]';
-    } else if (key == 'test/user_data2.json') {
-      return '[{"id": "uConfig", "name": "GingaConfigUser"}]';
-    } else {
-      return '<ncl><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>';
-    }
-  }
-}
+const testVirtualFiles = {
+  'test.ncl':
+      '<ncl><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>',
+  'test/user_data1.json': '[{"id": "u400", "name": "ConfUser"}]',
+  'test/user_data2.json': '[{"id": "uConfig", "name": "GingaConfigUser"}]',
+};
 
 void main() {
   group('Widget Tests', () {
@@ -38,10 +24,8 @@ void main() {
         home: NclWidget(src: '../examples/video.ncl'),
       ));
 
-      // Use pump() instead of pumpAndSettle() because the NclWidget uses an infinite periodic timer
       await tester.pump(const Duration(seconds: 1));
 
-      // Assert that NclWidget is in the tree
       expect(find.byType(NclWidget), findsOneWidget);
     });
 
@@ -50,20 +34,22 @@ void main() {
       final config = GingaConfig(
         users: Users('{"id": "u400", "name": "ConfUser"}'),
       );
+      final gingacc = GingaCC(
+        config: config,
+        virtualFiles: testVirtualFiles,
+      );
       await tester.pumpWidget(MaterialApp(
-        home: DefaultAssetBundle(
-          bundle: MockGingaTestAssetBundle(),
-          child: NclWidget(
-            src: 'test.ncl',
-            config: config,
-          ),
+        home: NclWidget(
+          src: 'test.ncl',
+          gingacc: gingacc,
         ),
       ));
 
       await tester.pump(const Duration(seconds: 1));
 
       expect(find.byType(NclWidget), findsOneWidget);
-      final nclWidgetState = tester.state<NclWidgetState>(find.byType(NclWidget));
+      final nclWidgetState =
+          tester.state<NclWidgetState>(find.byType(NclWidget));
       expect(nclWidgetState.nclDocument, isNotNull);
       expect(nclWidgetState.nclDocument?.users.getUser('u400'), isNotNull);
       expect(nclWidgetState.nclDocument?.users.getUser('u400')?.name,
@@ -76,20 +62,22 @@ void main() {
       final config = await GingaConfig.fromJson(
         '{"usersDataJson": [{"id": "uConfig", "name": "GingaConfigUser"}]}',
       );
+      final gingacc = GingaCC(
+        config: config,
+        virtualFiles: testVirtualFiles,
+      );
       await tester.pumpWidget(MaterialApp(
-        home: DefaultAssetBundle(
-          bundle: MockGingaTestAssetBundle(),
-          child: NclWidget(
-            src: 'test.ncl',
-            config: config,
-          ),
+        home: NclWidget(
+          src: 'test.ncl',
+          gingacc: gingacc,
         ),
       ));
 
       await tester.pump(const Duration(seconds: 1));
 
       expect(find.byType(NclWidget), findsOneWidget);
-      final nclWidgetState = tester.state<NclWidgetState>(find.byType(NclWidget));
+      final nclWidgetState =
+          tester.state<NclWidgetState>(find.byType(NclWidget));
       expect(nclWidgetState.nclDocument, isNotNull);
       expect(nclWidgetState.nclDocument?.users.getUser('uConfig'), isNotNull);
       expect(nclWidgetState.nclDocument?.users.getUser('uConfig')?.name,
@@ -97,12 +85,13 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
 
-    test('HtmlWidget accepts config parameter', () {
+    test('HtmlWidget accepts gingacc parameter', () {
+      final gingacc = GingaCC(config: GingaConfig(enableCCWS: true));
       final htmlWidget = HtmlWidget(
         src: 'app.html',
-        config: GingaConfig(enableCCWS: true),
+        gingacc: gingacc,
       );
-      expect(htmlWidget.config.enableCCWS, isTrue);
+      expect(htmlWidget.gingacc?.config.enableCCWS, isTrue);
       expect(htmlWidget.src, equals('app.html'));
     });
 
@@ -114,9 +103,12 @@ void main() {
         enableMainAv: true,
         enableCCWS: false,
       );
-      await tester.pumpWidget(DefaultAssetBundle(
-        bundle: MockGingaTestAssetBundle(),
-        child: Ginga(config: config),
+      final gingacc = GingaCC(
+        config: config,
+        virtualFiles: testVirtualFiles,
+      );
+      await tester.pumpWidget(Ginga(
+        gingacc: gingacc,
       ));
 
       await tester.pump(const Duration(seconds: 1));

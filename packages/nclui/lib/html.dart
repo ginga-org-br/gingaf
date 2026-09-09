@@ -1,7 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:gingacc/ccws.dart';
-import 'package:gingacc/ginga_config.dart';
 import 'package:logging/logging.dart';
 import 'package:webview_all/webview_all.dart';
 
@@ -11,18 +9,15 @@ final _logger = Logger('ginga-html');
 
 class HtmlWidget extends BaseWidget {
   final Map<String, void Function(JavaScriptMessage)>? javaScriptChannels;
-  final CCWS? ccws;
-  final GingaConfig config;
 
-  HtmlWidget({
+  const HtmlWidget({
     super.key,
     required super.src,
     super.media,
     super.document,
+    super.gingacc,
     this.javaScriptChannels,
-    this.ccws,
-    GingaConfig? config,
-  }) : config = config ?? GingaConfig();
+  });
 
   @override
   State<HtmlWidget> createState() => HtmlWidgetState();
@@ -63,10 +58,13 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
   Future<void> _loadHTML() async {
     if (_controller == null) return;
     try {
-      String content = await loadContent(widget.src) ?? '';
+      final gingacc = widget.gingacc ??
+          widget.document?.gingacc ??
+          GingaCC();
+      String content = await gingacc.loadContent(widget.src) ?? '';
 
-      if (widget.ccws != null && widget.config.enableCCWS) {
-        content = widget.ccws!.injectCcwsFetch(content);
+      if (gingacc.config.enableCCWS) {
+        content = gingacc.ccws.injectCcwsFetch(content);
       }
 
       await _controller!.loadHtmlString(content);

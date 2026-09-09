@@ -47,7 +47,8 @@ class MainAVWidgetState extends MediaState<MainAVWidget> {
   Future<void> _initVideo() async {
     if (widget.src.trim().isEmpty) return;
     try {
-      final parsedUri = resolveUri(widget.src);
+      final gingacc = widget.document?.gingacc ?? GingaCC();
+      final parsedUri = gingacc.resolveUri(widget.src);
       final src = parsedUri.toString();
       final VideoPlayerController controller;
 

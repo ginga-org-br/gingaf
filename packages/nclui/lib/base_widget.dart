@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:ncldoc/ncl_document.dart';
 
-export 'package:gingacc/src_resolver.dart';
+export 'package:gingacc/gingacc.dart';
 
 abstract class BaseWidget extends StatefulWidget {
   final String src;
   final Media? media;
   final NclDocument? document;
+  final GingaCC? gingacc;
 
   const BaseWidget({
     super.key,
     required this.src,
     this.media,
     this.document,
+    this.gingacc,
   });
 }
 

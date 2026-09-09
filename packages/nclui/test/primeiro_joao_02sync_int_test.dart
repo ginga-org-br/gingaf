@@ -1,6 +1,4 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ncldoc/ncl_document.dart';
 import 'package:nclui/ncl.dart';
@@ -8,16 +6,7 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 
 import 'mock_video_player.dart';
 
-class MockSyncIntAssetBundle extends CachingAssetBundle {
-  @override
-  Future<ByteData> load(String key) async {
-    return ByteData(0);
-  }
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async {
-    if (key == 'joao02syncInt.ncl') {
-      return '''<ncl id="joaoSyncIntTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+const _joao02syncIntNcl = '''<ncl id="joaoSyncIntTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
       <region id="bgRegion" width="100%" height="100%" zIndex="1"/>
@@ -125,10 +114,6 @@ class MockSyncIntAssetBundle extends CachingAssetBundle {
     </link>
   </body>
 </ncl>''';
-    }
-    throw FlutterError('MockSyncIntAssetBundle: Unknown key \$key');
-  }
-}
 
 void main() {
   late MockVideoPlayer fakePlatform;
@@ -297,14 +282,16 @@ void main() {
   testWidgets(
       'NclWidget updates widget sizes and positions in response to SET action from key selection',
       (WidgetTester tester) async {
-    final mockBundle = MockSyncIntAssetBundle();
+    final gingacc = GingaCC(
+      virtualFiles: {'joao02syncInt.ncl': _joao02syncIntNcl},
+    );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: DefaultAssetBundle(
-            bundle: mockBundle,
-            child: NclWidget(src: 'joao02syncInt.ncl'),
+          body: NclWidget(
+            src: 'joao02syncInt.ncl',
+            gingacc: gingacc,
           ),
         ),
       ),

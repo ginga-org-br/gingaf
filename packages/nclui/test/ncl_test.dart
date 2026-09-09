@@ -1,19 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ncldoc/ncl_document.dart';
 import 'package:nclui/ncl.dart';
 
-class MockNCLAssetBundle extends CachingAssetBundle {
-  @override
-  Future<ByteData> load(String key) async {
-    return ByteData(0);
-  }
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async {
-    if (key == 'test_image.ncl') {
-      return '''
+const _testImageNcl = '''
 <ncl>
   <body>
     <port id="init" component="ginga_logo"/>
@@ -21,22 +11,20 @@ class MockNCLAssetBundle extends CachingAssetBundle {
   </body>
 </ncl>
 ''';
-    }
-    throw FlutterError('MockNCLAssetBundle: Unknown key $key');
-  }
-}
 
 void main() {
   testWidgets('Verify NclWidget launches with branding logo',
       (WidgetTester tester) async {
-    final mockBundle = MockNCLAssetBundle();
+    final gingacc = GingaCC(
+      virtualFiles: {'test_image.ncl': _testImageNcl},
+    );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Material(
-          child: DefaultAssetBundle(
-            bundle: mockBundle,
-            child: NclWidget(src: "test_image.ncl"),
+          child: NclWidget(
+            src: "test_image.ncl",
+            gingacc: gingacc,
           ),
         ),
       ),
@@ -48,20 +36,20 @@ void main() {
   testWidgets(
       'Verify NclWidget receives config parameter and accesses configuration',
       (WidgetTester tester) async {
-    final mockBundle = MockNCLAssetBundle();
     final config = GingaConfig(
       users: Users('{"id": "uConfig"}'),
+    );
+    final gingacc = GingaCC(
+      config: config,
+      virtualFiles: {'test_image.ncl': _testImageNcl},
     );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Material(
-          child: DefaultAssetBundle(
-            bundle: mockBundle,
-            child: NclWidget(
-              src: "test_image.ncl",
-              config: config,
-            ),
+          child: NclWidget(
+            src: "test_image.ncl",
+            gingacc: gingacc,
           ),
         ),
       ),
@@ -69,7 +57,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.byType(NclWidget), findsOneWidget);
     final appWidget = tester.widget<NclWidget>(find.byType(NclWidget));
-    expect(appWidget.config.users.getUser('uConfig'), isNotNull);
+    expect(appWidget.gingacc?.config.users.getUser('uConfig'), isNotNull);
   });
 
   testWidgets(

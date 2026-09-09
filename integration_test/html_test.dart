@@ -1,21 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nclui/html.dart';
+import 'package:gingacc/gingacc.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:nclui/html.dart';
 
-class MockHTMLAssetBundle extends CachingAssetBundle {
-  @override
-  Future<ByteData> load(String key) async {
-    return ByteData(0);
-  }
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async {
-    if (key == 'test_status.html') {
-      return '''
+const _testStatusHtml = '''
 <!DOCTYPE html>
 <html>
 <body>
@@ -30,34 +21,30 @@ class MockHTMLAssetBundle extends CachingAssetBundle {
 </body>
 </html>
 ''';
-    }
-    throw FlutterError('MockHTMLAssetBundle: Unknown key $key');
-  }
-}
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('Verify HtmlWidget run on real platform',
       (WidgetTester tester) async {
-    final mockBundle = MockHTMLAssetBundle();
+    final gingacc = GingaCC(
+      virtualFiles: {'test_status.html': _testStatusHtml},
+    );
     final completer = Completer<String>();
 
     await tester.pumpWidget(
       MaterialApp(
         home: Material(
-          child: DefaultAssetBundle(
-            bundle: mockBundle,
-            child: HtmlWidget(
-              src: "test_status.html",
-              javaScriptChannels: {
-                "HTMLAppChannel": (message) {
-                  if (!completer.isCompleted) {
-                    completer.complete(message.message);
-                  }
+          child: HtmlWidget(
+            src: 'test_status.html',
+            gingacc: gingacc,
+            javaScriptChannels: {
+              'HTMLAppChannel': (message) {
+                if (!completer.isCompleted) {
+                  completer.complete(message.message);
                 }
-              },
-            ),
+              }
+            },
           ),
         ),
       ),
