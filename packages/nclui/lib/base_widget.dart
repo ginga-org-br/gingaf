@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ncldoc/ncl_document.dart';
 
-import 'main_av_controller.dart';
-import 'ncl.dart';
-
 export 'package:gingacc/src_resolver.dart';
 
 abstract class BaseWidget extends StatefulWidget {
@@ -39,22 +36,54 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
   String heightStr = '100%';
   bool isPositioned = false;
 
+  Media? _media;
+  NclDocument? _document;
+
+  Media? get media => _media ?? widget.media;
+  NclDocument? get document => _document ?? widget.document;
+
+  void setMedia(Media? newMedia, [NclDocument? newDocument]) {
+    _media = newMedia;
+    if (newDocument != null) {
+      _document = newDocument;
+    }
+    parseProperties(media);
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void clearMedia() {
+    _media = null;
+    _document = null;
+    isPositioned = false;
+    leftStr = '0%';
+    topStr = '0%';
+    widthStr = '100%';
+    heightStr = '100%';
+    rect = Rect.zero;
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    parseProperties(widget.media);
+    parseProperties(media);
   }
 
   @override
   void didUpdateWidget(covariant T oldWidget) {
     super.didUpdateWidget(oldWidget);
-    parseProperties(widget.media);
+    parseProperties(media);
   }
 
-  void parseProperties(Media? media) {
-    if (media == null) return;
+  void parseProperties([Media? targetMedia]) {
+    final m = targetMedia ?? media;
+    if (m == null) return;
     isPositioned = true;
-    id = media.id;
+    id = m.id;
     String? backgroundVal;
     String? boundsVal;
     String? leftVal;
@@ -62,7 +91,7 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
     String? widthVal;
     String? heightVal;
     String? zIndexVal;
-    for (var prop in media.getProperties()) {
+    for (var prop in m.getProperties()) {
       if (prop.name == 'background') {
         backgroundVal = prop.value;
       } else if (prop.name == 'bounds') {
@@ -89,10 +118,10 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
         heightStr = boundsParts[3].trim();
       }
     } else {
-      leftStr = media.rawAttributes['resolvedLeft'] ?? '0%';
-      topStr = media.rawAttributes['resolvedTop'] ?? '0%';
-      widthStr = media.rawAttributes['resolvedWidth'] ?? '100%';
-      heightStr = media.rawAttributes['resolvedHeight'] ?? '100%';
+      leftStr = m.rawAttributes['resolvedLeft'] ?? '0%';
+      topStr = m.rawAttributes['resolvedTop'] ?? '0%';
+      widthStr = m.rawAttributes['resolvedWidth'] ?? '100%';
+      heightStr = m.rawAttributes['resolvedHeight'] ?? '100%';
     }
     if (leftVal != null) leftStr = leftVal;
     if (topVal != null) topStr = topVal;
@@ -100,22 +129,22 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
     if (heightVal != null) heightStr = heightVal;
     if (zIndexVal != null) {
       zindex = int.tryParse(zIndexVal) ?? 0;
-    } else if (media.rawAttributes.containsKey('resolvedZIndex')) {
-      zindex = int.tryParse(media.rawAttributes['resolvedZIndex']!) ?? 0;
+    } else if (m.rawAttributes.containsKey('resolvedZIndex')) {
+      zindex = int.tryParse(m.rawAttributes['resolvedZIndex']!) ?? 0;
     } else {
       zindex = 0;
     }
-    final visibleStr = media.rawAttributes['visible'] ?? 'true';
+    final visibleStr = m.rawAttributes['visible'] ?? 'true';
     visible = visibleStr.toLowerCase() == 'true';
     background = _parseColor(backgroundVal);
-    focusBorderColor = _parseColor(media.rawAttributes['focusBorderColor']);
-    selBorderColor = _parseColor(media.rawAttributes['selBorderColor']);
+    focusBorderColor = _parseColor(m.rawAttributes['focusBorderColor']);
+    selBorderColor = _parseColor(m.rawAttributes['selBorderColor']);
   }
 
   void syncProperties() {
     if (mounted) {
       setState(() {
-        parseProperties(widget.media);
+        parseProperties(media);
       });
     }
   }
@@ -200,91 +229,4 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
   }
 
   Widget buildWidgetContent(BuildContext context);
-}
-
-class WidgetFactory {
-  static Widget? createMediaWidget({
-    Key? key,
-    required Media media,
-    NclDocument? document,
-    MainAVController? mainAVController,
-  }) {
-    final mimeType = media.mimeType;
-    var src = media.uri.isNotEmpty ? media.uri : (media.src ?? '');
-    if (src.startsWith('sbtvd://')) {
-      final avUri = mainAVController?.uri ?? '';
-      if (avUri.isEmpty || avUri.startsWith('sbtvd://')) {
-        throw ArgumentError(
-            'mainAvSrc must be provided when media uses sbtvd:// scheme');
-      }
-      return AVWidget(
-        key: key,
-        src: avUri,
-        media: media,
-        document: document,
-      );
-    }
-    if (src.endsWith('.ncl') ||
-        mimeType == 'application/x-ncl-NCL' ||
-        mimeType == 'application/x-ncl-ncl') {
-      return NclWidget(
-        key: key,
-        src: src,
-        media: media,
-        document: document,
-        mainAVController: mainAVController,
-      );
-    }
-    if (mimeType.startsWith('video/') ||
-        mimeType.startsWith('audio/') ||
-        mimeType.contains('video') ||
-        mimeType.contains('audio')) {
-      return AVWidget(
-        key: key,
-        src: src,
-        media: media,
-        document: document,
-      );
-    }
-    switch (mimeType) {
-      case 'application/x-ncl-NCLua':
-      case 'application/x-ginga-NCLua':
-        return LuaWidget(
-          key: key,
-          src: src,
-          media: media,
-          document: document,
-        );
-      case 'text/plain':
-        return TextWidget(
-          key: key,
-          src: src,
-          media: media,
-          document: document,
-        );
-      case 'text/html':
-        return HtmlWidget(
-          key: key,
-          src: src,
-          media: media,
-          document: document,
-        );
-      case 'image/png':
-      case 'image/jpeg':
-      case 'image/gif':
-      case 'image/webp':
-      case 'image/bmp':
-      case 'image/heic':
-      case 'application/x-ginga-time':
-      case 'application/x-ncl-time':
-        return ImageWidget(
-          key: key,
-          src: src,
-          media: media,
-          document: document,
-        );
-      default:
-        return null;
-    }
-  }
 }

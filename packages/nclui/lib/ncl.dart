@@ -4,14 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:ncldoc/ncl_document.dart';
 
+import 'av.dart';
 import 'base_widget.dart';
-import 'main_av_controller.dart';
+import 'html.dart';
+import 'image.dart';
+import 'lua.dart';
+import 'main_av.dart';
+import 'text.dart';
 
 export 'av.dart';
 export 'base_widget.dart';
 export 'html.dart';
 export 'image.dart';
 export 'lua.dart';
+export 'main_av.dart';
 export 'text.dart';
 
 final _logger = Logger('ginga-ncl');
@@ -19,17 +25,90 @@ final _logger = Logger('ginga-ncl');
 class NclWidgetExitNotification extends Notification {}
 
 class NclWidget extends BaseWidget {
-  final MainAVController? mainAVController;
   final GingaConfig config;
+  final GlobalKey<MainAVWidgetState>? mainAvKey;
 
   NclWidget({
     super.key,
     required super.src,
     super.media,
     super.document,
-    this.mainAVController,
     GingaConfig? config,
+    this.mainAvKey,
   }) : config = config ?? GingaConfig();
+
+  static Widget? createMediaWidget({
+    Key? key,
+    required Media media,
+    NclDocument? document,
+  }) {
+    final mimeType = media.mimeType;
+    var src = media.uri.isNotEmpty ? media.uri : (media.src ?? '');
+    if (src.startsWith('sbtvd://')) {
+      return null;
+    }
+    if (src.endsWith('.ncl') ||
+        mimeType == 'application/x-ncl-NCL' ||
+        mimeType == 'application/x-ncl-ncl') {
+      return NclWidget(
+        key: key,
+        src: src,
+        media: media,
+        document: document,
+      );
+    }
+    if (mimeType.startsWith('video/') ||
+        mimeType.startsWith('audio/') ||
+        mimeType.contains('video') ||
+        mimeType.contains('audio')) {
+      return AVWidget(
+        key: key,
+        src: src,
+        media: media,
+        document: document,
+      );
+    }
+    switch (mimeType) {
+      case 'application/x-ncl-NCLua':
+      case 'application/x-ginga-NCLua':
+        return LuaWidget(
+          key: key,
+          src: src,
+          media: media,
+          document: document,
+        );
+      case 'text/plain':
+        return TextWidget(
+          key: key,
+          src: src,
+          media: media,
+          document: document,
+        );
+      case 'text/html':
+        return HtmlWidget(
+          key: key,
+          src: src,
+          media: media,
+          document: document,
+        );
+      case 'image/png':
+      case 'image/jpeg':
+      case 'image/gif':
+      case 'image/webp':
+      case 'image/bmp':
+      case 'image/heic':
+      case 'application/x-ginga-time':
+      case 'application/x-ncl-time':
+        return ImageWidget(
+          key: key,
+          src: src,
+          media: media,
+          document: document,
+        );
+      default:
+        return null;
+    }
+  }
 
   @override
   State<NclWidget> createState() => NclWidgetState();
@@ -42,7 +121,6 @@ class NclWidgetState extends MediaState<NclWidget> {
   Timer? _ticker;
   String errorMsg = "";
   bool _loading = false;
-  String? _initialMainAvUri;
 
   bool get hasSbtvdMedia {
     if (nclDocument == null) return false;
@@ -59,41 +137,40 @@ class NclWidgetState extends MediaState<NclWidget> {
     bool changed = false;
     final currentIds = activeMedia.map((m) => m.id ?? '').toSet();
 
-    String? sbtvdUri;
-    for (var media in activeMedia) {
-      if (media.uri.startsWith('sbtvd://')) {
-        sbtvdUri = media.uri;
-      }
-    }
-    if (sbtvdUri != null) {
-      final resolvedUri = sbtvdUri.startsWith('sbtvd://')
-          ? (_initialMainAvUri ?? sbtvdUri)
-          : sbtvdUri;
-      widget.mainAVController?.setMainAvUri(resolvedUri);
-    } else {
-      if (widget.mainAVController != null &&
-          widget.mainAVController!.uri != _initialMainAvUri) {
-        widget.mainAVController!.setMainAvUri(_initialMainAvUri);
-      }
-    }
-
+    final allTrackedIds = {..._cachedWidgets.keys, ..._mediaStateKeys.keys};
     final toRemove =
-        _cachedWidgets.keys.where((id) => !currentIds.contains(id)).toList();
-    if (toRemove.isNotEmpty) changed = true;
+        allTrackedIds.where((id) => !currentIds.contains(id)).toList();
     for (var id in toRemove) {
-      _cachedWidgets.remove(id);
+      if (_cachedWidgets.containsKey(id)) {
+        _cachedWidgets.remove(id);
+        changed = true;
+      }
+      if (widget.mainAvKey != null && _mediaStateKeys[id] == widget.mainAvKey) {
+        widget.mainAvKey!.currentState?.clearMedia();
+      }
       _mediaStateKeys.remove(id);
     }
 
     for (var media in activeMedia) {
       final id = media.id ?? '';
+      final isSbtvd = media.src?.startsWith('sbtvd://') == true ||
+          media.uri.startsWith('sbtvd://');
+      if (isSbtvd && widget.mainAvKey != null) {
+        if (!_mediaStateKeys.containsKey(id)) {
+          widget.mainAvKey!.currentState?.setMedia(media, nclDocument);
+          _mediaStateKeys[id] = widget.mainAvKey!;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            widget.mainAvKey?.currentState?.syncProperties();
+          });
+        }
+        continue;
+      }
       if (!_cachedWidgets.containsKey(id)) {
         final key = GlobalKey<MediaState>();
-        final mediaWidget = WidgetFactory.createMediaWidget(
+        final mediaWidget = NclWidget.createMediaWidget(
           key: key,
           media: media,
           document: nclDocument,
-          mainAVController: widget.mainAVController,
         );
         if (mediaWidget != null) {
           _mediaStateKeys[id] = key;
@@ -108,7 +185,6 @@ class NclWidgetState extends MediaState<NclWidget> {
   @override
   void initState() {
     super.initState();
-    _initialMainAvUri = widget.mainAVController?.uri;
     _logger.info("Starting NCL application: ${widget.src}");
     _startApplication();
   }
@@ -208,6 +284,7 @@ class NclWidgetState extends MediaState<NclWidget> {
     _logger.info("Stopping NCL application: ${widget.src}");
     _ticker?.cancel();
     _ticker = null;
+    widget.mainAvKey?.currentState?.clearMedia();
     final doc = nclDocument;
     nclDocument = null;
     try {

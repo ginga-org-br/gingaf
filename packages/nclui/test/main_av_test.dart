@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nclui/main_av_controller.dart';
+import 'package:gingacc/ginga_config.dart';
 import 'package:nclui/ncl.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
@@ -46,18 +46,28 @@ void main() {
       'test_bg.ncl': nclData,
     });
 
-    final controller = MainAVController()
-      ..setMainAvUri('examples/primeiro-joao/media/animGar.mp4');
+    const mainAvUri = 'examples/primeiro-joao/media/animGar.mp4';
+    final mainAvKey = GlobalKey<MainAVWidgetState>();
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: DefaultAssetBundle(
-            bundle: mockBundle,
-            child: NclWidget(
-              src: 'test_bg.ncl',
-              mainAVController: controller,
-            ),
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              MainAVWidget(
+                key: mainAvKey,
+                src: mainAvUri,
+              ),
+              DefaultAssetBundle(
+                bundle: mockBundle,
+                child: NclWidget(
+                  src: 'test_bg.ncl',
+                  config: GingaConfig(mainAvSrc: mainAvUri),
+                  mainAvKey: mainAvKey,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -66,8 +76,9 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    final AVWidget av = tester.widget(find.byType(AVWidget));
-    expect(av.src, controller.uri);
+    final MainAVWidget av = tester.widget(find.byType(MainAVWidget));
+    expect(av.src, mainAvUri);
+    expect(mainAvKey.currentState?.media?.id, 'mainAV');
   });
 
   testWidgets(
@@ -86,19 +97,28 @@ void main() {
       'test_bg.ncl': nclData,
     });
 
-    final controller = MainAVController()
-      ..setMainAvUri(
-          'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4');
+    const mainAvUri = GingaConfig.defaultMainAVSrc;
+    final mainAvKey = GlobalKey<MainAVWidgetState>();
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: DefaultAssetBundle(
-            bundle: mockBundle,
-            child: NclWidget(
-              src: 'test_bg.ncl',
-              mainAVController: controller,
-            ),
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              MainAVWidget(
+                key: mainAvKey,
+                src: mainAvUri,
+              ),
+              DefaultAssetBundle(
+                bundle: mockBundle,
+                child: NclWidget(
+                  src: 'test_bg.ncl',
+                  config: GingaConfig(mainAvSrc: mainAvUri),
+                  mainAvKey: mainAvKey,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -107,8 +127,59 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    final AVWidget av = tester.widget(find.byType(AVWidget));
-    expect(av.src,
-        'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4');
+    final MainAVWidget av = tester.widget(find.byType(MainAVWidget));
+    expect(av.src, mainAvUri);
+    expect(mainAvKey.currentState?.media?.id, 'mainAV');
+  });
+
+  testWidgets(
+      'NclWidget controls external MainAVWidget via mainAvKey',
+      (WidgetTester tester) async {
+    const nclData = '''
+<ncl>
+  <body>
+    <port id="p1" component="mainAV"/>
+    <media id="mainAV" src="sbtvd://0" />
+  </body>
+</ncl>
+''';
+
+    final mockBundle = MockNCLAssetBundle(assets: {
+      'test_bg.ncl': nclData,
+    });
+
+    const mainAvUri = 'examples/primeiro-joao/media/animGar.mp4';
+    final mainAvKey = GlobalKey<MainAVWidgetState>();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              MainAVWidget(
+                key: mainAvKey,
+                src: mainAvUri,
+              ),
+              DefaultAssetBundle(
+                bundle: mockBundle,
+                child: NclWidget(
+                  src: 'test_bg.ncl',
+                  config: GingaConfig(mainAvSrc: mainAvUri),
+                  mainAvKey: mainAvKey,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.byType(MainAVWidget), findsOneWidget);
+    expect(mainAvKey.currentState?.media?.id, 'mainAV');
+    expect(mainAvKey.currentState?.document, isNotNull);
   });
 }

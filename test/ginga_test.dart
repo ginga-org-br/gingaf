@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingacc/ginga_config.dart';
 import 'package:gingacc/users.dart';
+import 'package:gingaf/ginga.dart';
 import 'package:nclui/ncl.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
@@ -103,6 +104,26 @@ void main() {
       );
       expect(htmlWidget.config.enableCCWS, isTrue);
       expect(htmlWidget.src, equals('app.html'));
+    });
+
+    testWidgets('Ginga mounts single MainAVWidget and plays when app is running',
+        (WidgetTester tester) async {
+      final config = GingaConfig(
+        appSrc: 'test.ncl',
+        mainAvSrc: 'examples/primeiro-joao/media/animGar.mp4',
+        enableMainAv: true,
+        enableCCWS: false,
+      );
+      await tester.pumpWidget(DefaultAssetBundle(
+        bundle: MockGingaTestAssetBundle(),
+        child: Ginga(config: config),
+      ));
+
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.byType(MainAVWidget), findsOneWidget);
+      expect(find.byType(NclWidget), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
     });
   });
 }

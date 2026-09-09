@@ -7,9 +7,8 @@ import 'package:flutter/services.dart';
 import 'package:gingacc/ginga_config.dart';
 import 'package:logging/logging.dart';
 import 'package:nclui/html.dart' as html;
+import 'package:nclui/main_av.dart';
 import 'package:nclui/ncl.dart' as ncl;
-
-import 'main_av.dart';
 import 'web_utils_stub.dart' if (dart.library.html) 'web_utils_web.dart';
 
 final _logger = Logger('ginga');
@@ -24,32 +23,30 @@ class Ginga extends StatefulWidget {
 
 class _GingaState extends State<Ginga> {
   late final CCWS _ccws;
-  MainAVController? mainAVController;
   Widget? mainAVWidget;
   Widget? htmlApp;
   Widget? nclApp;
   bool _isExiting = false;
   bool _initialized = false;
 
-  final GlobalKey<ncl.NclWidgetState> _nclAppKey = GlobalKey<ncl.NclWidgetState>();
+  final GlobalKey<ncl.NclWidgetState> _nclAppKey =
+      GlobalKey<ncl.NclWidgetState>();
+  final GlobalKey<MainAVWidgetState> _mainAvKey =
+      GlobalKey<MainAVWidgetState>();
 
   @override
   void initState() {
     super.initState();
     _ccws = CCWS();
-    final appSrc = widget.config.appSrc;
-    if (widget.config.mainAvSrc != null &&
-        widget.config.mainAvSrc!.isNotEmpty) {
-      final controller = MainAVController()
-        ..setMainAvUri(widget.config.mainAvSrc);
-      mainAVController = controller;
-      if (appSrc == null || appSrc.isEmpty) {
-        mainAVWidget = MainAVWidget(controller: controller);
-      }
+    if (widget.config.enableMainAv) {
+      mainAVWidget = MainAVWidget(
+        key: _mainAvKey,
+        src: widget.config.mainAvSrc,
+      );
     }
 
-    final isConfigEmpty = widget.config.appSrc == null &&
-        (widget.config.mainAvSrc == null || widget.config.mainAvSrc!.isEmpty);
+    final isConfigEmpty =
+        widget.config.appSrc == null && !widget.config.enableMainAv;
     if (isConfigEmpty && !kIsWeb) {
       _logger.severe('Both APP and MAINAV are disabled or empty, exiting.');
       _cleanup();
@@ -79,8 +76,8 @@ class _GingaState extends State<Ginga> {
           nclApp = ncl.NclWidget(
             key: _nclAppKey,
             src: appSrc,
-            mainAVController: mainAVController,
             config: widget.config,
+            mainAvKey: _mainAvKey,
           );
         }
       }
@@ -99,7 +96,6 @@ class _GingaState extends State<Ginga> {
   }
 
   void _stopServices() {
-    mainAVController?.stop();
     if (widget.config.enableCCWS) {
       _ccws.stop();
     }

@@ -34,7 +34,12 @@ import 'users.dart';
 /// ```
 ///
 /// Note: `"usersDataJson"` can also be a URI or file path string pointing to a JSON file (e.g. `"usersDataJson": "users.json"`).
+
 class GingaConfig {
+  static const String defaultMainAvSrc =
+      "https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4";
+  static const String defaultMainAVSrc = defaultMainAvSrc;
+
   static const List<String> supportedGroups = [
     'system.',
     'user.',
@@ -46,15 +51,17 @@ class GingaConfig {
   ];
 
   String? appSrc;
-  final String? mainAvSrc;
+  final String mainAvSrc;
   final bool enableCCWS;
+  final bool enableMainAv;
   final Map<String, String> envVariables;
   final Users users;
 
   GingaConfig({
     this.appSrc,
     this.enableCCWS = true,
-    this.mainAvSrc,
+    this.enableMainAv = true,
+    this.mainAvSrc = defaultMainAvSrc,
     Map<String, String>? envVariables,
     Users? users,
   })  : envVariables = {
@@ -166,8 +173,9 @@ class GingaConfig {
 
     return GingaConfig(
       appSrc: decoded['appSrc'] as String?,
-      mainAvSrc: decoded['mainAvSrc'] as String?,
+      mainAvSrc: decoded['mainAvSrc'] as String? ?? defaultMainAvSrc,
       enableCCWS: decoded['enableCCWS'] as bool? ?? true,
+      enableMainAv: decoded['enableMainAv'] as bool? ?? true,
       envVariables: envVars,
       users: users,
     );
@@ -175,6 +183,6 @@ class GingaConfig {
 
   @override
   String toString() {
-    return 'GingaConfig(appSrc: $appSrc, mainAvSrc: $mainAvSrc, enableCCWS: $enableCCWS, envVariables: $envVariables, users: $users)';
+    return 'GingaConfig(appSrc: $appSrc, mainAvSrc: $mainAvSrc, enableCCWS: $enableCCWS, enableMainAv: $enableMainAv, envVariables: $envVariables, users: $users)';
   }
 }

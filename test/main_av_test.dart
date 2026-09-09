@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gingaf/main_av.dart';
+import 'package:gingacc/ginga_config.dart';
+import 'package:nclui/main_av.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
+
 import 'mock_video_player.dart';
 
 void main() {
@@ -13,19 +15,24 @@ void main() {
     VideoPlayerPlatform.instance = fakePlatform;
   });
 
-  testWidgets('MainAVController and MainAVWidget init, start, stop tests',
+  testWidgets('MainAVWidget init, start, stop tests',
       (WidgetTester tester) async {
-    final controller = MainAVController()..setMainAvUri('examples/primeiro-joao/media/animGar.mp4');
+    final key = GlobalKey<MainAVWidgetState>();
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: MainAVWidget(controller: controller),
+          body: MainAVWidget(
+            key: key,
+            src: 'examples/primeiro-joao/media/animGar.mp4',
+          ),
         ),
       ),
     );
 
-    expect(find.text('Loading Background AV: examples/primeiro-joao/media/animGar.mp4'), findsOneWidget);
+    expect(
+        find.text('Loading MainAV: examples/primeiro-joao/media/animGar.mp4'),
+        findsOneWidget);
 
     fakePlatform.events.add(VideoEvent(
       eventType: VideoEventType.initialized,
@@ -36,32 +43,38 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(VideoPlayer), findsOneWidget);
-    expect(find.text('Loading Background AV: examples/primeiro-joao/media/animGar.mp4'), findsNothing);
+    expect(
+        find.text('Loading MainAV: examples/primeiro-joao/media/animGar.mp4'),
+        findsNothing);
 
-    controller.stop();
+    key.currentState?.stop();
     await tester.pumpAndSettle();
 
     expect(find.byType(VideoPlayer), findsNothing);
 
-    controller.play();
+    key.currentState?.play();
     await tester.pumpAndSettle();
 
     expect(find.byType(VideoPlayer), findsOneWidget);
   });
 
-  testWidgets('MainAVController and MainAVWidget with online butterfly.mp4 URL tests',
+  testWidgets('MainAVWidget with online butterfly.mp4 URL tests',
       (WidgetTester tester) async {
-    final controller = MainAVController()..setMainAvUri('https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4');
+    final key = GlobalKey<MainAVWidgetState>();
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: MainAVWidget(controller: controller),
+          body: MainAVWidget(
+            key: key,
+            src: GingaConfig.defaultMainAVSrc,
+          ),
         ),
       ),
     );
 
-    expect(find.text('Loading Background AV: https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4'), findsOneWidget);
+    expect(find.text('Loading MainAV: ${GingaConfig.defaultMainAVSrc}'),
+        findsOneWidget);
 
     fakePlatform.events.add(VideoEvent(
       eventType: VideoEventType.initialized,
@@ -72,14 +85,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(VideoPlayer), findsOneWidget);
-    expect(find.text('Loading Background AV: https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4'), findsNothing);
+    expect(find.text('Loading MainAV: ${GingaConfig.defaultMainAVSrc}'),
+        findsNothing);
 
-    controller.stop();
+    key.currentState?.stop();
     await tester.pumpAndSettle();
 
     expect(find.byType(VideoPlayer), findsNothing);
 
-    controller.play();
+    key.currentState?.play();
     await tester.pumpAndSettle();
 
     expect(find.byType(VideoPlayer), findsOneWidget);
