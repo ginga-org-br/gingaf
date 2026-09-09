@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gingaf/ginga.dart';
+import 'package:gingacc/ginga_config.dart';
 import 'package:nclui/html_app.dart';
 import 'package:nclui/ncl_app.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
@@ -27,26 +27,6 @@ class MockGingaTestAssetBundle extends AssetBundle {
 }
 
 void main() {
-  group('GingaConfig Logic Tests', () {
-    test('Constructor should accept string sources', () {
-      expect(GingaConfig('app.ncl').appSrc, 'app.ncl');
-      expect(GingaConfig('app.html').appSrc, 'app.html');
-      expect(GingaConfig('APP.NCL').appSrc, 'APP.NCL');
-      expect(GingaConfig('APP.HTML').appSrc, 'APP.HTML');
-    });
-    test('Constructor should capture manual usersDataSrc', () {
-      final config = GingaConfig('app.ncl', true, 'test/user_data1.json');
-      expect(config.usersDataSrc, equals('test/user_data1.json'));
-    });
-
-    test(
-        'Constructor should accept file path for usersDataSrc profile parameter',
-        () {
-      final config = GingaConfig('app.ncl', true, '/path/to/user_data.json');
-      expect(config.usersDataSrc, equals('/path/to/user_data.json'));
-    });
-  });
-
   group('Widget Tests', () {
     setUp(() {
       VideoPlayerPlatform.instance = MockVideoPlayer();
@@ -89,7 +69,11 @@ void main() {
     testWidgets(
         'NCLApp mounts with usersDataSrc parameter and resolves usersDataJson',
         (WidgetTester tester) async {
-      final config = GingaConfig('test.ncl', true, 'test/user_data2.json');
+      final config = GingaConfig(
+        appSrc: 'test.ncl',
+        enableCCWS: true,
+        usersDataSrc: 'test/user_data2.json',
+      );
       await tester.pumpWidget(MaterialApp(
         home: DefaultAssetBundle(
           bundle: MockGingaTestAssetBundle(),

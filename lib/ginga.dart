@@ -4,8 +4,8 @@ import 'package:ccws/ccws.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:gingacc/ginga_config.dart';
 import 'package:logging/logging.dart';
-
 import 'package:nclui/html_app.dart' as html;
 import 'package:nclui/ncl_app.dart' as ncl;
 
@@ -13,28 +13,6 @@ import 'main_av.dart';
 import 'web_utils_stub.dart' if (dart.library.html) 'web_utils_web.dart';
 
 final _logger = Logger('ginga');
-
-class GingaConfig {
-  final String? appSrc;
-  final String? mainAvSrc;
-  final String? usersDataSrc;
-  final bool enableCCWS;
-
-  GingaConfig([
-    this.appSrc,
-    this.enableCCWS = true,
-    this.usersDataSrc,
-    this.mainAvSrc,
-  ]);
-
-  bool get isEmpty =>
-      appSrc == null && (mainAvSrc == null || mainAvSrc!.isEmpty);
-
-  @override
-  String toString() {
-    return 'GingaConfig(appSrc: $appSrc, mainAvSrc: $mainAvSrc, enableCCWS: $enableCCWS, usersDataSrc: $usersDataSrc)';
-  }
-}
 
 class Ginga extends StatefulWidget {
   final GingaConfig config;
@@ -70,7 +48,9 @@ class _GingaState extends State<Ginga> {
       }
     }
 
-    if (widget.config.isEmpty && !kIsWeb) {
+    final isConfigEmpty = widget.config.appSrc == null &&
+        (widget.config.mainAvSrc == null || widget.config.mainAvSrc!.isEmpty);
+    if (isConfigEmpty && !kIsWeb) {
       _logger.severe('Both APP and MAINAV are disabled or empty, exiting.');
       _cleanup();
       return;

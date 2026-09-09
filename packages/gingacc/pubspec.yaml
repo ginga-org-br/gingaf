@@ -1,5 +1,5 @@
-name: ncldoc
-description: "A pure Dart implementation of the Nested Context Language (NCL) document model."
+name: gingacc
+description: "Ginga common configuration and core package"
 version: 0.0.1
 
 environment:
@@ -11,10 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
   logging: ^1.3.0
-  lua_dardo_plus: ^0.3.0
-  xml: ^7.0.1
   http: ^1.1.0
-  gingacc:
 
 dev_dependencies:
   flutter_test:

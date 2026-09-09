@@ -11,6 +11,7 @@ workspace:
   - packages/ccws
   - packages/ncldoc
   - packages/nclui
+  - packages/gingacc
 
 dependencies:
   flutter:
@@ -26,6 +27,7 @@ dependencies:
   ccws:
   ncldoc:
   nclui:
+  gingacc:
 
 dev_dependencies:
   flutter_test:

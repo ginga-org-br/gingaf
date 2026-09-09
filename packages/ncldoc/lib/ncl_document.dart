@@ -7,17 +7,19 @@ import 'package:logging/logging.dart';
 
 import 'elements.dart';
 import 'event.dart';
-import 'src_resolver.dart';
+import 'package:gingacc/ginga_config.dart';
 import 'ncl_scheduler.dart';
 import 'parser.dart';
+import 'src_resolver.dart';
 import 'users.dart';
 
 export 'elements.dart';
 export 'event.dart';
-export 'src_resolver.dart';
+export 'package:gingacc/ginga_config.dart';
 export 'lua.dart';
 export 'ncl_scheduler.dart';
 export 'parser.dart';
+export 'src_resolver.dart';
 export 'users.dart';
 
 final _logger = Logger('ncl_doc');
@@ -31,22 +33,38 @@ class NCLDocument {
 
   late final NCLScheduler scheduler = NCLScheduler(this);
   final NCLUsers users = NCLUsers();
-  final Map<String, String> systemVariables = {'system.language': 'por'};
+  final GingaConfig config;
+  late final Map<String, String> envVariables;
+  Map<String, String> get systemVariables => envVariables;
+  Map<String, String> get systemProperties => envVariables;
 
   static Future<NCLDocument> fromSrc(
     String docSrc, {
-    String? userDataSrc,
+    String? configSrc,
   }) async {
     _logger.info('Loading NCL document from src: $docSrc');
     final docUri = resolveUri(docSrc);
     final xml = await loadContent(docUri);
-    final userData = userDataSrc != null
-        ? await loadContent(resolveUri(userDataSrc, docSrc))
-        : null;
+
+    final docConfig = configSrc != null
+        ? await GingaConfig.fromJson(configSrc, docSrc)
+        : GingaConfig();
+
+    final uDataSrc = docConfig.usersDataSrc;
+    String? userData;
+    if (uDataSrc != null) {
+      if (uDataSrc.trim().startsWith('{') || uDataSrc.trim().startsWith('[')) {
+        userData = uDataSrc;
+      } else {
+        userData = (await loadContent(resolveUri(uDataSrc, docSrc))) ??
+            (await loadContent(resolveUri(uDataSrc)));
+      }
+    }
     final doc = NCLDocument.fromContent(
       xml ?? '',
       docSrc: docSrc,
       userData: userData,
+      config: docConfig,
     );
     await doc.loadUserProfiles();
     return doc;
@@ -56,6 +74,7 @@ class NCLDocument {
     String xml, {
     String? docSrc,
     String? userData,
+    GingaConfig? config,
   }) {
     if (xml.trim().isEmpty) {
       throw ArgumentError('empty src');
@@ -72,6 +91,7 @@ class NCLDocument {
       docSrc: resolvedDocSrc,
       docUri: resolvedUri,
       userData: userData,
+      config: config,
     );
   }
 
@@ -81,7 +101,9 @@ class NCLDocument {
     required this.docSrc,
     this.docUri,
     String? userData,
-  }) {
+    GingaConfig? config,
+  }) : config = config ?? GingaConfig(usersDataSrc: userData) {
+    envVariables = this.config.envVariables;
     _head = head;
     _body = body;
     _gatherSettings();
@@ -229,7 +251,7 @@ class NCLDocument {
       // NOT COMPLIANT: <rule> with user
       final userAttr = ruleEl.rawAttributes['user'];
       // NOT COMPLIANT ends
-      var systemVal = systemVariables[varName];
+      var systemVal = envVariables[varName];
       if (systemVal == null) {
         for (final s in _body.children.whereType<Settings>()) {
           var propName = varName;
@@ -382,7 +404,7 @@ class NCLDocument {
     if (node is Settings) {
       final isUserSetting =
           node.mimeType == 'application/x-ncl-user-settings' ||
-          node.rawAttributes['type'] == 'application/x-ncl-user-settings';
+              node.rawAttributes['type'] == 'application/x-ncl-user-settings';
 
       bool hasCurrentUser = node.rawAttributes['user'] == 'currentUser';
       if (!hasCurrentUser && node == _settings) {
@@ -392,8 +414,8 @@ class NCLDocument {
       if (isUserSetting || hasCurrentUser) {
         // NOT COMPLIANT: <rule> with user
         final hasPropertyDecl = node.children.whereType<Property>().any(
-          (p) => p.name == propertyName,
-        );
+              (p) => p.name == propertyName,
+            );
         // NOT COMPLIANT ends
         if (hasPropertyDecl) {
           final user = users.activeUser;

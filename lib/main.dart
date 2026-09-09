@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:gingacc/ginga_config.dart';
 import 'package:logging/logging.dart';
-
 import 'package:video_player_media_kit/video_player_media_kit.dart';
 
 import 'ginga.dart';
@@ -11,24 +11,7 @@ import 'web_utils_stub.dart' if (dart.library.html) 'web_utils_web.dart';
 
 final _logger = Logger('ginga');
 
-void main(List<String> args) {
-  if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
-    if (args.contains('-h') || args.contains('--help')) {
-      stdout.writeln('Usage: gingaf [options] [APP_FILE]');
-      stdout.writeln('');
-      stdout.writeln('Options:');
-      stdout.writeln('  -h, --help    Show this help message');
-      stdout.writeln('');
-      stdout.writeln('Environment Variables alternatives (mobile, web):');
-      stdout.writeln('  APP         Path to the application file');
-      stdout.writeln('  MAINAV      Main AV media source URL or file path');
-      stdout.writeln('  CCWS        Enable or disable CCWS (true/false, default: true)');
-      stdout.writeln('  USERS_DATA  Path to users data JSON file');
-      stdout.flush();
-      exit(0);
-    }
-  }
-
+void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   if (!kIsWeb && (Platform.isWindows || Platform.isLinux)) {
     VideoPlayerMediaKit.ensureInitialized(
@@ -43,43 +26,20 @@ void main(List<String> args) {
         '[${record.loggerName}] ${record.level.name}: ${record.message}');
   });
 
-  String? app;
-  if (args.isNotEmpty &&
-      args.first.trim().isNotEmpty &&
-      !args.first.startsWith('-')) {
-    app = args.first.trim();
-  }
-  if (app == null && const String.fromEnvironment('APP').isNotEmpty) {
-    app = const String.fromEnvironment('APP');
-  }
-  if (app == null && !kIsWeb) {
-    app = Platform.environment['APP'];
-  }
-  if (app == null && kIsWeb) {
-    try {
-      final mainFile = getGingaAppPath();
-      if (mainFile != null && mainFile.isNotEmpty) {
-        app = mainFile;
-      }
-    } catch (e) {
-      _logger.warning('Failed to read app path on web: $e');
-    }
-  }
-  final appSrc = (app != null && app.isNotEmpty) ? app : null;
-
-  String? effectiveAppSrc = appSrc;
-  if (!kIsWeb && appSrc != null) {
-    _logger.info('Initial working directory: ${Directory.current.path}');
-    try {
-      final file = File(appSrc).absolute;
-      _logger.info('Resolved app path: ${file.path}');
-      if (file.existsSync()) {
-        Directory.current = file.parent.path;
-        _logger.info('Switched working directory to ${Directory.current.path}');
-        effectiveAppSrc = file.path.split('/').last.split('\\').last;
-      }
-    } catch (e) {
-      _logger.severe('Failed to set working directory: $e');
+  if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
+    if (args.contains('-h') || args.contains('--help')) {
+      stdout.writeln('Usage: gingaf [options] [APP_FILE] [CONFIG_FILE]');
+      stdout.writeln('');
+      stdout.writeln('Options:');
+      stdout.writeln('  -h, --help           Show this help message');
+      stdout.writeln('  -c, --config <path>  Path to configuration file');
+      stdout.writeln('  -a, --app <path>     Path to application file');
+      stdout.writeln('');
+      stdout.writeln('Environment Variables alternatives (mobile, web):');
+      stdout.writeln('  APP         Path to the application file');
+      stdout.writeln('  CONFIG      Path to the configuration file');
+      stdout.flush();
+      exit(0);
     }
 
     try {
@@ -100,47 +60,105 @@ void main(List<String> args) {
     }
   }
 
-  String? mainav;
-  if (const bool.hasEnvironment('MAINAV')) {
-    mainav = const String.fromEnvironment('MAINAV');
-  } else if (!kIsWeb && Platform.environment.containsKey('MAINAV')) {
-    mainav = Platform.environment['MAINAV'];
-  }
-  final mainAvSrc = (mainav != null &&
-          mainav.isNotEmpty &&
-          mainav != 'true' &&
-          mainav != 'false')
-      ? mainav
-      : null;
+  String? appEnv;
+  String? configEnv;
 
-  bool ccws = const bool.fromEnvironment('CCWS', defaultValue: true);
-  if (!kIsWeb) {
-    if (Platform.environment.containsKey('CCWS')) {
-      final val = Platform.environment['CCWS'];
-      ccws = val == 'true';
+  if (const String.fromEnvironment('APP').isNotEmpty) {
+    appEnv = const String.fromEnvironment('APP');
+  }
+  if ((appEnv == null || appEnv.isEmpty) && !kIsWeb) {
+    appEnv = Platform.environment['APP'];
+  }
+  if ((appEnv == null || appEnv.isEmpty) && kIsWeb) {
+    try {
+      final mainFile = getGingaAppPath();
+      if (mainFile != null && mainFile.isNotEmpty) {
+        appEnv = mainFile;
+      }
+    } catch (e) {
+      _logger.warning('Failed to read app path on web: $e');
     }
   }
 
-  String? usersDataJson = const String.fromEnvironment('USERS_DATA').isNotEmpty
-      ? const String.fromEnvironment('USERS_DATA')
-      : null;
-  if (usersDataJson == null) {
-    if (kIsWeb) {
-      usersDataJson = Uri.base.queryParameters['USERS_DATA'];
-    } else {
-      usersDataJson = Platform.environment['USERS_DATA'];
+  if (const String.fromEnvironment('CONFIG').isNotEmpty) {
+    configEnv = const String.fromEnvironment('CONFIG');
+  }
+  if ((configEnv == null || configEnv.isEmpty) && !kIsWeb) {
+    configEnv = Platform.environment['CONFIG'];
+  }
+  if ((configEnv == null || configEnv.isEmpty) && kIsWeb) {
+    try {
+      configEnv = Uri.base.queryParameters['CONFIG'] ??
+          Uri.base.queryParameters['config'];
+    } catch (e) {
+      _logger.warning('Failed to read config path on web: $e');
     }
   }
-  final usersDataSrc = (usersDataJson != null && usersDataJson.isNotEmpty)
-      ? usersDataJson
-      : null;
 
-  final config = GingaConfig(
-    effectiveAppSrc,
-    ccws,
-    usersDataSrc,
-    mainAvSrc,
-  );
+  String? appArg;
+  String? configArg;
+
+  for (var i = 0; i < args.length; i++) {
+    final arg = args[i];
+    if (arg == '--config' || arg == '-c') {
+      if (i + 1 < args.length) {
+        configArg = args[++i];
+      }
+    } else if (arg == '--app' || arg == '-a') {
+      if (i + 1 < args.length) {
+        appArg = args[++i];
+      }
+    } else if (!arg.startsWith('-')) {
+      if (appArg == null) {
+        appArg = arg;
+      } else {
+        configArg ??= arg;
+      }
+    }
+  }
+
+  final appSrc = (appArg != null && appArg.trim().isNotEmpty)
+      ? appArg.trim()
+      : ((appEnv != null && appEnv.trim().isNotEmpty) ? appEnv.trim() : null);
+  final configSrc = (configArg != null && configArg.trim().isNotEmpty)
+      ? configArg.trim()
+      : ((configEnv != null && configEnv.trim().isNotEmpty)
+          ? configEnv.trim()
+          : null);
+
+  GingaConfig config;
+  if (configSrc != null) {
+    try {
+      config = await GingaConfig.fromJson(configSrc);
+    } catch (e) {
+      _logger.severe('Failed to load config: $e');
+      config = GingaConfig();
+    }
+  } else {
+    config = GingaConfig();
+  }
+
+  final initialAppSrc = appSrc ?? config.appSrc;
+  String? effectiveAppSrc = initialAppSrc;
+  if (!kIsWeb && initialAppSrc != null) {
+    _logger.info('Initial working directory: ${Directory.current.path}');
+    try {
+      final file = File(initialAppSrc).absolute;
+      _logger.info('Resolved app path: ${file.path}');
+      if (file.existsSync()) {
+        Directory.current = file.parent.path;
+        _logger.info('Switched working directory to ${Directory.current.path}');
+        effectiveAppSrc = file.path.split('/').last.split('\\').last;
+      }
+    } catch (e) {
+      _logger.severe('Failed to set working directory: $e');
+    }
+  }
+
+  if (effectiveAppSrc != null) {
+    config.appSrc = effectiveAppSrc;
+  }
+
   _logger.info(config.toString());
 
   runApp(Ginga(config: config));

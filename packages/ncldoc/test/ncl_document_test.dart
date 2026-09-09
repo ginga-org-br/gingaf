@@ -117,5 +117,32 @@ void main() {
         if (dummy.existsSync()) dummy.deleteSync();
       }
     });
+
+    test('NCLDocument loads envVariables from NclDocConfig', () async {
+      final config = await NclDocConfig.fromJson(
+        '{"envVariables": {"system.language": "fra", "channel.key": "ch1"}}',
+      );
+      final doc = NCLDocument.fromContent(
+        '<ncl><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>',
+        config: config,
+      );
+      expect(doc.envVariables['system.language'], equals('fra'));
+      expect(doc.systemVariables['system.language'], equals('fra'));
+      expect(doc.envVariables['channel.key'], equals('ch1'));
+      expect(doc.config, equals(config));
+    });
+
+    test(
+        'NCLDocument.fromSrc loads config with envVariables from configSrc raw JSON',
+        () async {
+      final doc = await NCLDocument.fromSrc(
+        'data:text/xml,<ncl><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>',
+        configSrc:
+            '{"userDataSrc": "users.json", "envVariables": {"system.language": "spa", "user.pref": "dark"}}',
+      );
+      expect(doc.config.usersDataSrc, equals('users.json'));
+      expect(doc.envVariables['system.language'], equals('spa'));
+      expect(doc.envVariables['user.pref'], equals('dark'));
+    });
   });
 }
