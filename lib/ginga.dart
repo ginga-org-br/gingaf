@@ -1,9 +1,9 @@
 import 'dart:io';
 
-import 'package:ccws/ccws.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:gingacc/ccws.dart';
 import 'package:gingacc/ginga_config.dart';
 import 'package:logging/logging.dart';
 import 'package:nclui/html.dart' as html;

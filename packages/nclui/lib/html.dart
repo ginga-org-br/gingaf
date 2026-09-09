@@ -1,6 +1,6 @@
-import 'package:ccws/ccws.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:gingacc/ccws.dart';
 import 'package:gingacc/ginga_config.dart';
 import 'package:logging/logging.dart';
 import 'package:webview_all/webview_all.dart';

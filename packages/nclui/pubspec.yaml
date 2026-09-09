@@ -10,7 +10,6 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
-  ccws:
   ncldoc:
   logging: ^1.3.0
   video_player: ^2.14.0

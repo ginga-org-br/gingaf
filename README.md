@@ -6,11 +6,7 @@
 
 ## Architecture
 
-The `gingaf` repository is organized as a host-centric monorepo: the root directory (`.`) contains the Flutter visual host application for Ginga applications. It depends on core Dart packages in `packages/ncldoc/` (the headless execution engine, see [packages/ncldoc/README.md](packages/ncldoc/README.md)) and `packages/ccws/` (the web service library, see [packages/ccws/README.md](packages/ccws/README.md)).
-
-The web interactive playground and player are located in [`node/`](node/README.md), which also provides the `ginga-node` package.
-
-User-level applications built on top of `gingaf` include [ginga-playground](https://ginga-org-br.github.io/gingaf/playground/) (for web-based evaluation) and [ginga-code](https://github.com/ginga-org-br/ginga-code) (a Visual Studio Code extension for application development).
+The `gingaf` repository is organized as a monorepo: the root directory contains the Flutter host application. It depends on core Dart packages in  `packages/gingacc/` (the common configuration, users, and CCWS library, see [packages/gingacc/README.md](packages/gingacc/README.md)), `packages/ncldoc/` (the headless execution engine, see [packages/ncldoc/README.md](packages/ncldoc/README.md)), and `packages/nclui/` (the visual execution engine, see [packages/nclui/README.md](packages/nclui/README.md)). While [`node/`](node/README.md) contains web interactive playground and npm package.
 
 ```mermaid
 block-beta
@@ -22,9 +18,16 @@ columns 3
   desktop["gingaf (desktop)"]
   mobile["gingaf (mobile)"]
   gingaf["gingaf"]:3
+  nclui["nclui"]:3
   ncldoc["ncldoc"]:2
-  ccws["ccws"]:1
+  gingacc["gingacc"]:1
 ```
+
+## Developing Ginga Applciations
+
+You can use `gingaf` to develop Ginga applications:
+- at web by using the playground or acessing [ginga.org.br/gingaf/playground](ginga.org.br/gingaf/playground).
+- at desktop by the Visual Studeio code extension [ginga-code](https://github.com/ginga-org-br/ginga-code).
 
 ## Demonstration Videos
 

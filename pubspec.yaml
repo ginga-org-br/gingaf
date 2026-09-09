@@ -8,7 +8,6 @@ environment:
   sdk: ">=3.5.0 <4.0.0"
 
 workspace:
-  - packages/ccws
   - packages/ncldoc
   - packages/nclui
   - packages/gingacc
@@ -25,7 +24,6 @@ dependencies:
   media_kit_libs_linux: ^1.0.4
   http: ^1.1.0
   web: ^1.0.0
-  ccws:
   ncldoc:
   nclui:
   gingacc:
