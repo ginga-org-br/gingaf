@@ -3,8 +3,8 @@ import 'package:test/test.dart';
 
 void main() {
   group('primeiro_joao_01sync', () {
-    test('NCLDocument descriptor duration and region resolution', () {
-      final doc = NCLDocument.fromContent(
+    test('NclDocument descriptor duration and region resolution', () {
+      final doc = NclDocument.fromContent(
         '''<ncl id="syncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
@@ -75,29 +75,29 @@ void main() {
       final insertVideo = doc.getNodeById('insertVideo') as Media;
       final popupPic = doc.getNodeById('popupPic') as Media;
 
-      expect(mainVideo.getMainState(), NCLState.OCCURRING);
-      expect(bgMusic.getMainState(), NCLState.SLEEPING);
-      expect(insertVideo.getMainState(), NCLState.SLEEPING);
-      expect(popupPic.getMainState(), NCLState.SLEEPING);
+      expect(mainVideo.getMainState(), NclStateType.occurring);
+      expect(bgMusic.getMainState(), NclStateType.sleeping);
+      expect(insertVideo.getMainState(), NclStateType.sleeping);
+      expect(popupPic.getMainState(), NclStateType.sleeping);
 
       doc.tick(4000);
       active = doc.getActiveMedia().map((m) => m.id).toList();
       expect(active, contains('mainVideo'));
       expect(active, isNot(contains('bgMusic')));
-      expect(bgMusic.getMainState(), NCLState.SLEEPING);
+      expect(bgMusic.getMainState(), NclStateType.sleeping);
 
       doc.tick(1000);
       active = doc.getActiveMedia().map((m) => m.id).toList();
       expect(active, contains('mainVideo'));
       expect(active, contains('bgMusic'));
-      expect(bgMusic.getMainState(), NCLState.OCCURRING);
+      expect(bgMusic.getMainState(), NclStateType.occurring);
 
       doc.tick(7000);
       active = doc.getActiveMedia().map((m) => m.id).toList();
       expect(active, contains('mainVideo'));
       expect(active, contains('bgMusic'));
       expect(active, contains('insertVideo'));
-      expect(insertVideo.getMainState(), NCLState.OCCURRING);
+      expect(insertVideo.getMainState(), NclStateType.occurring);
 
       expect(popupPic.explicitDurMs, 5000);
     });

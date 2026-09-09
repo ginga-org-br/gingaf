@@ -1,5 +1,5 @@
 {
     "search.exclude": {
-        "node/playground/gingaf-web/**": true
+        "node/public/**": true
     }
 }

@@ -4,9 +4,9 @@ import 'package:test/test.dart';
 void main() {
   group('primeiro_joao_02syncInt', () {
     test(
-      'NCLDocument key selection, property SET, and layout change resolution',
+      'NclDocument key selection, property SET, and layout change resolution',
       () {
-        final doc = NCLDocument.fromContent(
+        final doc = NclDocument.fromContent(
           '''<ncl id="joaoSyncIntTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
@@ -122,9 +122,9 @@ void main() {
         final btnIcon = doc.getNodeById('btnIcon') as Media;
         final promoVideo = doc.getNodeById('promoVideo') as Media;
 
-        expect(mainVideo.getMainState(), NCLState.OCCURRING);
-        expect(btnIcon.getMainState(), NCLState.SLEEPING);
-        expect(promoVideo.getMainState(), NCLState.SLEEPING);
+        expect(mainVideo.getMainState(), NclStateType.occurring);
+        expect(btnIcon.getMainState(), NclStateType.sleeping);
+        expect(promoVideo.getMainState(), NclStateType.sleeping);
 
         var active = doc.getActiveMedia().map((m) => m.id).toList();
         expect(active, contains('mainVideo'));
@@ -135,7 +135,7 @@ void main() {
         expect(active, contains('mainVideo'));
         expect(active, contains('btnIcon'));
         expect(active, isNot(contains('promoVideo')));
-        expect(btnIcon.getMainState(), NCLState.OCCURRING);
+        expect(btnIcon.getMainState(), NclStateType.occurring);
 
         doc.triggerSelection('btnIcon', 'RED');
         doc.tick(0);
@@ -144,20 +144,21 @@ void main() {
         expect(active, contains('mainVideo'));
         expect(active, isNot(contains('btnIcon')));
         expect(active, contains('promoVideo'));
-        expect(btnIcon.getMainState(), NCLState.SLEEPING);
-        expect(promoVideo.getMainState(), NCLState.OCCURRING);
+        expect(btnIcon.getMainState(), NclStateType.sleeping);
+        expect(promoVideo.getMainState(), NclStateType.occurring);
 
         final boundsProp = mainVideo.getProperties().firstWhere(
-          (p) => p.name == 'bounds',
-        );
+              (p) => p.name == 'bounds',
+            );
         expect(boundsProp.value, '5%,6.7%,45%,45%');
 
         doc.uiQueue.add(
-          Action(event: promoVideo.getMainEvent(), action: NCLAction.STOP),
+          NclAction(
+              event: promoVideo.getMainNclEvent(), action: NclActionType.stop),
         );
         doc.tick(0);
 
-        expect(promoVideo.getMainState(), NCLState.SLEEPING);
+        expect(promoVideo.getMainState(), NclStateType.sleeping);
         expect(boundsProp.value, '0,0,100%,100%');
       },
     );

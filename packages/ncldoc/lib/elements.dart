@@ -10,7 +10,7 @@ class Element {
   Element? parent;
   String? xmlTagName;
   Element({Map<String, String> rawAttributes = const {}, this.xmlTagName})
-    : rawAttributes = Map<String, String>.from(rawAttributes);
+      : rawAttributes = Map<String, String>.from(rawAttributes);
 }
 
 class Port extends Element {
@@ -66,7 +66,7 @@ class Descriptor extends Element {
   String? get moveLeft => rawAttributes['moveLeft'];
   String? get moveRight => rawAttributes['moveRight'];
   String? get explicitDur => rawAttributes['explicitDur'];
-  int? get explicitDurMs => NCLParser.parseDurStr(explicitDur);
+  int? get explicitDurMs => NclParser.parseDurStr(explicitDur);
   String? get focusBorderColor => rawAttributes['focusBorderColor'];
   String? get focusBorderWidth => rawAttributes['focusBorderWidth'];
   String? get focusBorderTransparency =>
@@ -99,7 +99,7 @@ class Transition extends Element {
   String? get type => rawAttributes['type'];
   String? get subtype => rawAttributes['subtype'];
   String? get dur => rawAttributes['dur'];
-  int? get durMs => NCLParser.parseDurStr(dur);
+  int? get durMs => NclParser.parseDurStr(dur);
   String? get startProgress => rawAttributes['startProgress'];
   String? get endProgress => rawAttributes['endProgress'];
   String? get direction => rawAttributes['direction'];
@@ -166,31 +166,31 @@ abstract class Node extends Element {
   set parent(covariant Composition? value) => super.parent = value;
   int time = 0;
   int? explicitDurMs;
-  late final Event _mainEvt = Event(
-    type: NCLEvent.PRESENTATION,
+  late final NclEvent _mainEvt = NclEvent(
+    type: NclEventType.presentation,
     targetNode: this,
     isMain: true,
   );
-  final Map<String, Event> _areaEvents = {};
-  final Map<String, Event> _propertyEvents = {};
-  Event getMainEvent() => _mainEvt;
-  NCLState getMainState() => _mainEvt.state;
-  Event getAreaEvent(String areaId) {
-    return _areaEvents.putIfAbsent(
+  final Map<String, NclEvent> _areaNclEvents = {};
+  final Map<String, NclEvent> _propertyNclEvents = {};
+  NclEvent getMainNclEvent() => _mainEvt;
+  NclStateType getMainState() => _mainEvt.state;
+  NclEvent getAreaNclEvent(String areaId) {
+    return _areaNclEvents.putIfAbsent(
       areaId,
-      () => Event(
-        type: NCLEvent.PRESENTATION,
+      () => NclEvent(
+        type: NclEventType.presentation,
         targetNode: this,
         interfaceId: areaId,
       ),
     );
   }
 
-  Event getPropertyEvent(String propertyName) {
-    return _propertyEvents.putIfAbsent(
+  NclEvent getPropertyNclEvent(String propertyName) {
+    return _propertyNclEvents.putIfAbsent(
       propertyName,
-      () => Event(
-        type: NCLEvent.ATTRIBUTION,
+      () => NclEvent(
+        type: NclEventType.attribution,
         targetNode: this,
         propertyName: propertyName,
       ),
@@ -210,7 +210,7 @@ abstract class Node extends Element {
     existing.rawAttributes['value'] = value;
   }
 
-  NCLState getAreaEventState(String areaId) => getAreaEvent(areaId).state;
+  NclStateType getAreaNclEventState(String areaId) => getAreaNclEvent(areaId).state;
   List<Property> getProperties() => children.whereType<Property>().toList();
   List<Area> getAreas() => children.whereType<Area>().toList();
   Node({super.rawAttributes});

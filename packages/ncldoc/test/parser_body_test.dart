@@ -5,12 +5,20 @@ import 'package:ncldoc/parser.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('NCLParser Tests', () {
-    late NCLParser parser;
-    final dummyFiles = ['video.mp4', 'video1.mp4', 'video2.mp4', 'image.png', 'a.mp4', 'main.lua', 'index.html'];
+  group('NclParser Tests', () {
+    late NclParser parser;
+    final dummyFiles = [
+      'video.mp4',
+      'video1.mp4',
+      'video2.mp4',
+      'image.png',
+      'a.mp4',
+      'main.lua',
+      'index.html'
+    ];
 
     setUp(() {
-      parser = NCLParser();
+      parser = NclParser();
       for (final name in dummyFiles) {
         File(name).writeAsStringSync('dummy content');
       }

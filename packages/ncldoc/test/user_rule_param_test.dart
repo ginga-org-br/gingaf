@@ -32,7 +32,7 @@ void main() {
 </ncl>
 ''';
 
-        final doc = NCLDocument.fromContent(
+        final doc = NclDocument.fromContent(
           xml,
           config: GingaConfig(
             users: Users('''
@@ -55,7 +55,8 @@ void main() {
       },
     );
 
-    test('updates user profile dynamic property and re-evaluates active rules', () {
+    test('updates user profile dynamic property and re-evaluates active rules',
+        () {
       final xml = '''
 <ncl id="userEventStateDoc">
 <head>
@@ -81,7 +82,7 @@ void main() {
 </ncl>
 ''';
 
-      final doc = NCLDocument.fromContent(
+      final doc = NclDocument.fromContent(
         xml,
         config: GingaConfig(
           users: Users('''
@@ -130,7 +131,7 @@ void main() {
 </ncl>
 ''';
 
-      final doc = NCLDocument.fromContent(
+      final doc = NclDocument.fromContent(
         xml,
         config: GingaConfig(
           users: Users('''
@@ -159,7 +160,9 @@ void main() {
       expect(doc.resolveSwitch(sw)?.id, equals('mGoldContent'));
     });
 
-    test('evaluates compound rules bound to user properties accurately across user state updates', () {
+    test(
+        'evaluates compound rules bound to user properties accurately across user state updates',
+        () {
       final xml = '''
 <ncl id="userCompoundRuleDoc">
 <head>
@@ -190,7 +193,7 @@ void main() {
 </ncl>
 ''';
 
-      final doc = NCLDocument.fromContent(
+      final doc = NclDocument.fromContent(
         xml,
         config: GingaConfig(
           users: Users('''

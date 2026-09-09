@@ -1,5 +1,5 @@
-import 'dart:html' as html;
 import 'dart:convert';
+import 'dart:html' as html;
 
 import 'package:logging/logging.dart';
 import 'package:shelf/shelf.dart';
@@ -67,9 +67,11 @@ class CCWS {
 ''';
 
     if (content.toLowerCase().contains('<head>')) {
-      return content.replaceFirst(RegExp(r'<head>', caseSensitive: false), '<head>\n$fetchMock');
+      return content.replaceFirst(
+          RegExp(r'<head>', caseSensitive: false), '<head>\n$fetchMock');
     } else if (content.toLowerCase().contains('<html>')) {
-      return content.replaceFirst(RegExp(r'<html>', caseSensitive: false), '<html>\n<head>\n$fetchMock\n</head>');
+      return content.replaceFirst(RegExp(r'<html>', caseSensitive: false),
+          '<html>\n<head>\n$fetchMock\n</head>');
     } else {
       return '$fetchMock\n$content';
     }

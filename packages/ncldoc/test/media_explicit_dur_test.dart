@@ -15,20 +15,20 @@ void main() {
       </ncl>
       ''';
 
-      final doc = NCLDocument.fromContent(xmlString);
+      final doc = NclDocument.fromContent(xmlString);
       doc.start();
 
-      expect(doc.getBodyState(), NCLState.OCCURRING);
+      expect(doc.getBodyState(), NclStateType.occurring);
       final mediaNode = doc.getNodeById('m1')!;
-      expect(mediaNode.getMainState(), NCLState.OCCURRING);
+      expect(mediaNode.getMainState(), NclStateType.occurring);
 
       doc.tick(1000);
-      expect(mediaNode.getMainState(), NCLState.OCCURRING);
+      expect(mediaNode.getMainState(), NclStateType.occurring);
 
       doc.tick(1000);
       expect(
         mediaNode.getMainState(),
-        NCLState.SLEEPING,
+        NclStateType.sleeping,
         reason: 'Media should stop after explicitDur of 2s',
       );
     });

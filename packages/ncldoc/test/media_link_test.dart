@@ -2,7 +2,7 @@ import 'package:ncldoc/ncl_document.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('NCLDocument Media Only With Links Tests', () {
+  group('NclDocument Media Only With Links Tests', () {
     test('link onEnd starts another media', () {
       const xml = '''
 <ncl>
@@ -17,17 +17,17 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromContent(xml);
+      final doc = NclDocument.fromContent(xml);
       doc.start();
-      expect(doc.getBodyState(), NCLState.OCCURRING);
+      expect(doc.getBodyState(), NclStateType.occurring);
       expect(doc.virtualClock, 0);
-      expect(doc.getNodeById('m1')?.getMainState(), NCLState.OCCURRING);
+      expect(doc.getNodeById('m1')?.getMainState(), NclStateType.occurring);
       final changed1 = doc.tick(1);
       expect(changed1, isEmpty);
       expect(doc.virtualClock, 1);
       doc.stop();
-      expect(doc.getNodeById('m1')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getBodyState(), NCLState.SLEEPING);
+      expect(doc.getNodeById('m1')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getBodyState(), NclStateType.sleeping);
     });
 
     test('link onBegin starts another media', () {
@@ -44,19 +44,19 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromContent(xml);
+      final doc = NclDocument.fromContent(xml);
       doc.start();
-      expect(doc.getBodyState(), NCLState.OCCURRING);
+      expect(doc.getBodyState(), NclStateType.occurring);
       expect(doc.virtualClock, 0);
-      expect(doc.getNodeById('m1')?.getMainState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('m2')?.getMainState(), NCLState.OCCURRING);
+      expect(doc.getNodeById('m1')?.getMainState(), NclStateType.occurring);
+      expect(doc.getNodeById('m2')?.getMainState(), NclStateType.occurring);
       final changed2 = doc.tick(1);
       expect(changed2, isEmpty);
       expect(doc.virtualClock, 1);
       doc.stop();
-      expect(doc.getNodeById('m1')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getNodeById('m2')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getBodyState(), NCLState.SLEEPING);
+      expect(doc.getNodeById('m1')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('m2')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getBodyState(), NclStateType.sleeping);
     });
 
     test(
@@ -110,7 +110,7 @@ void main() {
 </ncl>
 ''';
 
-        final doc = NCLDocument.fromContent(xmlString);
+        final doc = NclDocument.fromContent(xmlString);
 
         doc.start();
         expect(doc.isPlaying, isTrue);
@@ -118,13 +118,13 @@ void main() {
         final mMaleAd = doc.getNodeById('mMaleAd') as Media;
         final mGeneralAd = doc.getNodeById('mGeneralAd') as Media;
 
-        expect(mMaleAd.getMainState(), equals(NCLState.SLEEPING));
-        expect(mGeneralAd.getMainState(), equals(NCLState.SLEEPING));
+        expect(mMaleAd.getMainState(), equals(NclStateType.sleeping));
+        expect(mGeneralAd.getMainState(), equals(NclStateType.sleeping));
 
         doc.tick(2000);
 
-        expect(mMaleAd.getMainState(), equals(NCLState.OCCURRING));
-        expect(mGeneralAd.getMainState(), equals(NCLState.SLEEPING));
+        expect(mMaleAd.getMainState(), equals(NclStateType.occurring));
+        expect(mGeneralAd.getMainState(), equals(NclStateType.sleeping));
       },
     );
 
@@ -179,7 +179,7 @@ void main() {
 </ncl>
 ''';
 
-        final doc = NCLDocument.fromContent(xmlString);
+        final doc = NclDocument.fromContent(xmlString);
 
         doc.start();
         expect(doc.isPlaying, isTrue);
@@ -187,13 +187,13 @@ void main() {
         final mMaleAd = doc.getNodeById('mMaleAd') as Media;
         final mGeneralAd = doc.getNodeById('mGeneralAd') as Media;
 
-        expect(mMaleAd.getMainState(), equals(NCLState.SLEEPING));
-        expect(mGeneralAd.getMainState(), equals(NCLState.SLEEPING));
+        expect(mMaleAd.getMainState(), equals(NclStateType.sleeping));
+        expect(mGeneralAd.getMainState(), equals(NclStateType.sleeping));
 
         doc.tick(2000);
 
-        expect(mMaleAd.getMainState(), equals(NCLState.SLEEPING));
-        expect(mGeneralAd.getMainState(), equals(NCLState.OCCURRING));
+        expect(mMaleAd.getMainState(), equals(NclStateType.sleeping));
+        expect(mGeneralAd.getMainState(), equals(NclStateType.occurring));
       },
     );
   });

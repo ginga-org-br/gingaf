@@ -44,93 +44,93 @@ void main() {
       expect(context.getAreas().first.begin, '10s');
     });
 
-    test('getMainEvent on Node returns same Event instance', () {
+    test('getMainNclEvent on Node returns same NclEvent instance', () {
       final media = Media(rawAttributes: const {'id': 'm1'});
-      final event1 = media.getMainEvent();
-      final event2 = media.getMainEvent();
+      final event1 = media.getMainNclEvent();
+      final event2 = media.getMainNclEvent();
       expect(event1, same(event2));
       expect(event1.targetNode.id, 'm1');
-      expect(event1.type, NCLEvent.PRESENTATION);
+      expect(event1.type, NclEventType.presentation);
     });
 
-    test('getAreaEventState returns state of the area event', () {
+    test('getAreaNclEventState returns state of the area event', () {
       final media = Media(rawAttributes: const {'id': 'm1'});
-      expect(media.getAreaEventState('a1'), NCLState.SLEEPING);
-      media.getAreaEvent('a1').state = NCLState.OCCURRING;
-      expect(media.getAreaEventState('a1'), NCLState.OCCURRING);
+      expect(media.getAreaNclEventState('a1'), NclStateType.sleeping);
+      media.getAreaNclEvent('a1').state = NclStateType.occurring;
+      expect(media.getAreaNclEventState('a1'), NclStateType.occurring);
     });
 
-    test('doAction', () {
+    test('doNclAction', () {
       final media = Media(rawAttributes: const {'id': 'm1'});
-      final event = media.getMainEvent();
-      expect(event.state, NCLState.SLEEPING);
-      expect(event.doAction(NCLAction.START), NCLState.OCCURRING);
-      expect(event.state, NCLState.OCCURRING);
-      expect(event.doAction(NCLAction.PAUSE), NCLState.PAUSED);
-      expect(event.state, NCLState.PAUSED);
-      expect(event.doAction(NCLAction.RESUME), NCLState.OCCURRING);
-      expect(event.state, NCLState.OCCURRING);
-      expect(event.doAction(NCLAction.STOP), NCLState.SLEEPING);
-      expect(event.state, NCLState.SLEEPING);
+      final event = media.getMainNclEvent();
+      expect(event.state, NclStateType.sleeping);
+      expect(event.doNclAction(NclActionType.start), NclStateType.occurring);
+      expect(event.state, NclStateType.occurring);
+      expect(event.doNclAction(NclActionType.pause), NclStateType.paused);
+      expect(event.state, NclStateType.paused);
+      expect(event.doNclAction(NclActionType.resume), NclStateType.occurring);
+      expect(event.state, NclStateType.occurring);
+      expect(event.doNclAction(NclActionType.stop), NclStateType.sleeping);
+      expect(event.state, NclStateType.sleeping);
     });
 
     test(
-      'doAction does not change state on invalid transitions from SLEEPING',
+      'doNclAction does not change state on invalid transitions from SLEEPING',
       () {
         final media = Media(rawAttributes: const {'id': 'm1'});
-        final event = media.getMainEvent();
-        expect(event.state, NCLState.SLEEPING);
-        expect(event.doAction(NCLAction.STOP), NCLState.SLEEPING);
-        expect(event.doAction(NCLAction.ABORT), NCLState.SLEEPING);
-        expect(event.doAction(NCLAction.PAUSE), NCLState.SLEEPING);
-        expect(event.doAction(NCLAction.RESUME), NCLState.SLEEPING);
-        expect(event.state, NCLState.SLEEPING);
+        final event = media.getMainNclEvent();
+        expect(event.state, NclStateType.sleeping);
+        expect(event.doNclAction(NclActionType.stop), NclStateType.sleeping);
+        expect(event.doNclAction(NclActionType.abort), NclStateType.sleeping);
+        expect(event.doNclAction(NclActionType.pause), NclStateType.sleeping);
+        expect(event.doNclAction(NclActionType.resume), NclStateType.sleeping);
+        expect(event.state, NclStateType.sleeping);
       },
     );
 
     test(
-      'doAction does not change state on invalid transitions from OCCURRING',
+      'doNclAction does not change state on invalid transitions from OCCURRING',
       () {
         final media = Media(rawAttributes: const {'id': 'm1'});
-        final event = media.getMainEvent();
-        event.doAction(NCLAction.START);
-        expect(event.state, NCLState.OCCURRING);
-        expect(event.doAction(NCLAction.START), NCLState.OCCURRING);
-        expect(event.doAction(NCLAction.RESUME), NCLState.OCCURRING);
-        expect(event.state, NCLState.OCCURRING);
+        final event = media.getMainNclEvent();
+        event.doNclAction(NclActionType.start);
+        expect(event.state, NclStateType.occurring);
+        expect(event.doNclAction(NclActionType.start), NclStateType.occurring);
+        expect(event.doNclAction(NclActionType.resume), NclStateType.occurring);
+        expect(event.state, NclStateType.occurring);
       },
     );
 
     test(
-      'doAction does not change state on invalid transitions from PAUSED',
+      'doNclAction does not change state on invalid transitions from PAUSED',
       () {
         final media = Media(rawAttributes: const {'id': 'm1'});
-        final event = media.getMainEvent();
-        event.doAction(NCLAction.START);
-        event.doAction(NCLAction.PAUSE);
-        expect(event.state, NCLState.PAUSED);
-        expect(event.doAction(NCLAction.START), NCLState.PAUSED);
-        expect(event.doAction(NCLAction.PAUSE), NCLState.PAUSED);
-        expect(event.state, NCLState.PAUSED);
+        final event = media.getMainNclEvent();
+        event.doNclAction(NclActionType.start);
+        event.doNclAction(NclActionType.pause);
+        expect(event.state, NclStateType.paused);
+        expect(event.doNclAction(NclActionType.start), NclStateType.paused);
+        expect(event.doNclAction(NclActionType.pause), NclStateType.paused);
+        expect(event.state, NclStateType.paused);
       },
     );
 
-    test('doAction ABORT behaves like STOP from OCCURRING and PAUSED', () {
+    test('doNclAction ABORT behaves like STOP from OCCURRING and PAUSED', () {
       final media = Media(rawAttributes: const {'id': 'm1'});
-      final event = media.getMainEvent();
-      event.doAction(NCLAction.START);
-      expect(event.doAction(NCLAction.ABORT), NCLState.SLEEPING);
+      final event = media.getMainNclEvent();
+      event.doNclAction(NclActionType.start);
+      expect(event.doNclAction(NclActionType.abort), NclStateType.sleeping);
 
-      event.doAction(NCLAction.START);
-      event.doAction(NCLAction.PAUSE);
-      expect(event.doAction(NCLAction.ABORT), NCLState.SLEEPING);
+      event.doNclAction(NclActionType.start);
+      event.doNclAction(NclActionType.pause);
+      expect(event.doNclAction(NclActionType.abort), NclStateType.sleeping);
     });
 
-    test('Event helper methods work correctly', () {
-      expect(Event.getStringAsActionType('start'), NCLAction.START);
-      expect(Event.getStringAsActionType('stop'), NCLAction.STOP);
-      expect(Event.getEventStateAsString(NCLState.OCCURRING), 'occurring');
-      expect(Event.getEventTypeAsString(NCLEvent.PRESENTATION), 'presentation');
+    test('NclEvent helper methods work correctly', () {
+      expect(NclEvent.getStringAsActionType('start'), NclActionType.start);
+      expect(NclEvent.getStringAsActionType('stop'), NclActionType.stop);
+      expect(NclEvent.getNclEventStateAsString(NclStateType.occurring), 'occurring');
+      expect(NclEvent.getEventTypeAsString(NclEventType.presentation), 'presentation');
     });
 
     test('Media Initialization', () {

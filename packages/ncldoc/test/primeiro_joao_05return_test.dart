@@ -3,8 +3,8 @@ import 'package:test/test.dart';
 
 void main() {
   group('primeiro_joao_05return', () {
-    test('NCLDocument executes form return logic correctly', () {
-      final doc = NCLDocument.fromContent(
+    test('NclDocument executes form return logic correctly', () {
+      final doc = NclDocument.fromContent(
         '''<ncl id="nclReturn" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
@@ -129,19 +129,19 @@ void main() {
       final mShoes = doc.getNodeById('mShoes') as Media;
       final mForm = doc.getNodeById('mForm') as Media;
 
-      expect(mMain.getMainState(), NCLState.OCCURRING);
-      expect(mIcon.getMainState(), NCLState.SLEEPING);
-      expect(mShoes.getMainState(), NCLState.SLEEPING);
-      expect(mForm.getMainState(), NCLState.SLEEPING);
+      expect(mMain.getMainState(), NclStateType.occurring);
+      expect(mIcon.getMainState(), NclStateType.sleeping);
+      expect(mShoes.getMainState(), NclStateType.sleeping);
+      expect(mForm.getMainState(), NclStateType.sleeping);
 
       doc.tick(45000);
       var active = doc.getActiveMedia().map((m) => m.id).toList();
       expect(active, contains('mMain'));
       expect(active, contains('mIcon'));
-      expect(mMain.getMainState(), NCLState.OCCURRING);
-      expect(mIcon.getMainState(), NCLState.OCCURRING);
-      expect(mShoes.getMainState(), NCLState.SLEEPING);
-      expect(mForm.getMainState(), NCLState.SLEEPING);
+      expect(mMain.getMainState(), NclStateType.occurring);
+      expect(mIcon.getMainState(), NclStateType.occurring);
+      expect(mShoes.getMainState(), NclStateType.sleeping);
+      expect(mForm.getMainState(), NclStateType.sleeping);
 
       doc.triggerSelection('mIcon', 'RED');
       doc.tick(0);
@@ -151,21 +151,21 @@ void main() {
       expect(active, isNot(contains('mIcon')));
       expect(active, contains('mShoes'));
       expect(active, contains('mForm'));
-      expect(mMain.getMainState(), NCLState.OCCURRING);
-      expect(mIcon.getMainState(), NCLState.SLEEPING);
-      expect(mShoes.getMainState(), NCLState.OCCURRING);
-      expect(mForm.getMainState(), NCLState.OCCURRING);
+      expect(mMain.getMainState(), NclStateType.occurring);
+      expect(mIcon.getMainState(), NclStateType.sleeping);
+      expect(mShoes.getMainState(), NclStateType.occurring);
+      expect(mForm.getMainState(), NclStateType.occurring);
 
       final boundsProp = mMain.getProperties().firstWhere(
-        (p) => p.name == 'bounds',
-      );
+            (p) => p.name == 'bounds',
+          );
       expect(boundsProp.value, '5%,6.7%,45%,45%');
 
       doc.tick(15000);
       active = doc.getActiveMedia().map((m) => m.id).toList();
       expect(active, contains('mMain'));
       expect(active, isNot(contains('mForm')));
-      expect(mForm.getMainState(), NCLState.SLEEPING);
+      expect(mForm.getMainState(), NclStateType.sleeping);
       expect(boundsProp.value, '0,0,100%,100%');
     });
   });

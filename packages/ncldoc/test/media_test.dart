@@ -2,8 +2,8 @@ import 'package:ncldoc/ncl_document.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('NCLDocument Media Only Tests', () {
-    test('NCLDocument initializes and starts ticking', () async {
+  group('NclDocument Media Only Tests', () {
+    test('NclDocument initializes and starts ticking', () async {
       const xml = r'''
 <ncl>
   <body>
@@ -12,13 +12,13 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromContent(xml);
+      final doc = NclDocument.fromContent(xml);
       doc.start();
-      expect(doc.getBodyState(), NCLState.OCCURRING);
+      expect(doc.getBodyState(), NclStateType.occurring);
       expect(doc.virtualClock, 0);
-      expect(doc.getNodeById('m1')?.getMainState(), NCLState.OCCURRING);
+      expect(doc.getNodeById('m1')?.getMainState(), NclStateType.occurring);
       doc.stop();
-      expect(doc.getBodyState(), NCLState.SLEEPING);
+      expect(doc.getBodyState(), NclStateType.sleeping);
     });
 
     test('state of media elements doc', () {
@@ -31,15 +31,15 @@ void main() {
           </body>
         </ncl>
         ''';
-      final doc = NCLDocument.fromContent(xmlString);
+      final doc = NclDocument.fromContent(xmlString);
       doc.start();
       final changed0 = doc.tick(10);
       expect(changed0, isEmpty);
-      expect(doc.getNodeById('video1')?.getMainState(), NCLState.SLEEPING);
+      expect(doc.getNodeById('video1')?.getMainState(), NclStateType.sleeping);
       doc.stop();
-      expect(doc.getNodeById('video1')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getNodeById('audio1')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getBodyState(), NCLState.SLEEPING);
+      expect(doc.getNodeById('video1')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('audio1')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getBodyState(), NclStateType.sleeping);
     });
 
     test('state of image.ncl', () {
@@ -51,13 +51,13 @@ void main() {
           </body>
         </ncl>
         ''';
-      final doc = NCLDocument.fromContent(imageNcl);
+      final doc = NclDocument.fromContent(imageNcl);
       doc.start();
-      expect(doc.getBodyState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('ginga_logo')?.getMainState(), NCLState.OCCURRING);
+      expect(doc.getBodyState(), NclStateType.occurring);
+      expect(doc.getNodeById('ginga_logo')?.getMainState(), NclStateType.occurring);
       doc.stop();
-      expect(doc.getNodeById('ginga_logo')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getBodyState(), NCLState.SLEEPING);
+      expect(doc.getNodeById('ginga_logo')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getBodyState(), NclStateType.sleeping);
     });
 
     test('state of media with properties doc', () {
@@ -70,13 +70,13 @@ void main() {
           </body>
         </ncl>
         ''';
-      final doc = NCLDocument.fromContent(xmlString);
+      final doc = NclDocument.fromContent(xmlString);
       doc.start();
-      expect(doc.getBodyState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('lua_script')?.getMainState(), NCLState.SLEEPING);
+      expect(doc.getBodyState(), NclStateType.occurring);
+      expect(doc.getNodeById('lua_script')?.getMainState(), NclStateType.sleeping);
       doc.stop();
-      expect(doc.getNodeById('lua_script')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getBodyState(), NCLState.SLEEPING);
+      expect(doc.getNodeById('lua_script')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getBodyState(), NclStateType.sleeping);
     });
 
     test('start media with property from port', () {
@@ -90,17 +90,17 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromContent(xml);
+      final doc = NclDocument.fromContent(xml);
       doc.start();
       expect(doc.virtualClock, 0);
-      expect(doc.getNodeById('m1')?.getMainState(), NCLState.OCCURRING);
-      expect(doc.getBodyState(), NCLState.OCCURRING);
+      expect(doc.getNodeById('m1')?.getMainState(), NclStateType.occurring);
+      expect(doc.getBodyState(), NclStateType.occurring);
       final changed1 = doc.tick(1);
       expect(changed1, isEmpty);
       expect(doc.virtualClock, 1);
       doc.stop();
-      expect(doc.getNodeById('m1')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getBodyState(), NCLState.SLEEPING);
+      expect(doc.getNodeById('m1')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getBodyState(), NclStateType.sleeping);
     });
 
     test('start single media from port', () {
@@ -112,17 +112,17 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromContent(xml);
+      final doc = NclDocument.fromContent(xml);
       doc.start();
-      expect(doc.getBodyState(), NCLState.OCCURRING);
+      expect(doc.getBodyState(), NclStateType.occurring);
       expect(doc.virtualClock, 0);
-      expect(doc.getNodeById('m1')?.getMainState(), NCLState.OCCURRING);
+      expect(doc.getNodeById('m1')?.getMainState(), NclStateType.occurring);
       final changed2 = doc.tick(1);
       expect(changed2, isEmpty);
       expect(doc.virtualClock, 1);
       doc.stop();
-      expect(doc.getNodeById('m1')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getBodyState(), NCLState.SLEEPING);
+      expect(doc.getNodeById('m1')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getBodyState(), NclStateType.sleeping);
     });
 
     test('start NCLua media', () {
@@ -134,17 +134,17 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromContent(xml);
+      final doc = NclDocument.fromContent(xml);
       doc.start();
-      expect(doc.getBodyState(), NCLState.OCCURRING);
+      expect(doc.getBodyState(), NclStateType.occurring);
       expect(doc.virtualClock, 0);
-      expect(doc.getNodeById('m1')?.getMainState(), NCLState.OCCURRING);
+      expect(doc.getNodeById('m1')?.getMainState(), NclStateType.occurring);
       final changed3 = doc.tick(1);
       expect(changed3, isEmpty);
       expect(doc.virtualClock, 1);
       doc.stop();
-      expect(doc.getNodeById('m1')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getBodyState(), NCLState.SLEEPING);
+      expect(doc.getNodeById('m1')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getBodyState(), NclStateType.sleeping);
     });
 
     test('state of media with areas doc', () {
@@ -157,13 +157,13 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromContent(xmlString);
+      final doc = NclDocument.fromContent(xmlString);
       doc.start();
-      expect(doc.getBodyState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('video_main')?.getMainState(), NCLState.SLEEPING);
+      expect(doc.getBodyState(), NclStateType.occurring);
+      expect(doc.getNodeById('video_main')?.getMainState(), NclStateType.sleeping);
       doc.stop();
-      expect(doc.getNodeById('video_main')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getBodyState(), NCLState.SLEEPING);
+      expect(doc.getNodeById('video_main')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getBodyState(), NclStateType.sleeping);
     });
 
     test('start media with area from port', () {
@@ -177,17 +177,17 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromContent(xml);
+      final doc = NclDocument.fromContent(xml);
       doc.start();
       expect(doc.virtualClock, 0);
-      expect(doc.getNodeById('video_main')?.getMainState(), NCLState.OCCURRING);
-      expect(doc.getBodyState(), NCLState.OCCURRING);
+      expect(doc.getNodeById('video_main')?.getMainState(), NclStateType.occurring);
+      expect(doc.getBodyState(), NclStateType.occurring);
       final changed4 = doc.tick(1);
       expect(changed4, isEmpty);
       expect(doc.virtualClock, 1);
       doc.stop();
-      expect(doc.getNodeById('video_main')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getBodyState(), NCLState.SLEEPING);
+      expect(doc.getNodeById('video_main')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getBodyState(), NclStateType.sleeping);
     });
 
     test('area timing triggers begin and end events', () {
@@ -201,28 +201,28 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromContent(xml);
+      final doc = NclDocument.fromContent(xml);
       doc.start();
       final video = doc.getNodeById('video_main')!;
-      final areaEvent = video.getAreaEvent('seg1');
-      expect(video.getMainState(), NCLState.OCCURRING);
-      expect(areaEvent.state, NCLState.SLEEPING);
+      final areaNclEvent = video.getAreaNclEvent('seg1');
+      expect(video.getMainState(), NclStateType.occurring);
+      expect(areaNclEvent.state, NclStateType.sleeping);
 
       final changed5a = doc.tick(5000);
       expect(changed5a, isEmpty);
-      expect(areaEvent.state, NCLState.SLEEPING);
+      expect(areaNclEvent.state, NclStateType.sleeping);
 
       final changed5b = doc.tick(5000);
       expect(changed5b, isNotEmpty);
-      expect(areaEvent.state, NCLState.OCCURRING);
+      expect(areaNclEvent.state, NclStateType.occurring);
 
       final changed5c = doc.tick(9000);
       expect(changed5c, isEmpty);
-      expect(areaEvent.state, NCLState.OCCURRING);
+      expect(areaNclEvent.state, NclStateType.occurring);
 
       final changed5d = doc.tick(1000);
       expect(changed5d, isNotEmpty);
-      expect(areaEvent.state, NCLState.SLEEPING);
+      expect(areaNclEvent.state, NclStateType.sleeping);
     });
 
     test('area begin triggers causal link to start another media', () {
@@ -241,18 +241,18 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromContent(xml);
+      final doc = NclDocument.fromContent(xml);
       doc.start();
-      expect(doc.getNodeById('video_main')?.getMainState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('m2')?.getMainState(), NCLState.SLEEPING);
+      expect(doc.getNodeById('video_main')?.getMainState(), NclStateType.occurring);
+      expect(doc.getNodeById('m2')?.getMainState(), NclStateType.sleeping);
 
       final changed6a = doc.tick(4000);
       expect(changed6a, isEmpty);
-      expect(doc.getNodeById('m2')?.getMainState(), NCLState.SLEEPING);
+      expect(doc.getNodeById('m2')?.getMainState(), NclStateType.sleeping);
 
       final changed6b = doc.tick(1000);
       expect(changed6b, isNotEmpty);
-      expect(doc.getNodeById('m2')?.getMainState(), NCLState.OCCURRING);
+      expect(doc.getNodeById('m2')?.getMainState(), NclStateType.occurring);
     });
 
     test('area end triggers causal link to stop another media', () {
@@ -272,18 +272,18 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromContent(xml);
+      final doc = NclDocument.fromContent(xml);
       doc.start();
-      expect(doc.getNodeById('video_main')?.getMainState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('m2')?.getMainState(), NCLState.OCCURRING);
+      expect(doc.getNodeById('video_main')?.getMainState(), NclStateType.occurring);
+      expect(doc.getNodeById('m2')?.getMainState(), NclStateType.occurring);
 
       final changed7a = doc.tick(9000);
       expect(changed7a, isNotEmpty);
-      expect(doc.getNodeById('m2')?.getMainState(), NCLState.OCCURRING);
+      expect(doc.getNodeById('m2')?.getMainState(), NclStateType.occurring);
 
       final changed7b = doc.tick(1000);
       expect(changed7b, isNotEmpty);
-      expect(doc.getNodeById('m2')?.getMainState(), NCLState.SLEEPING);
+      expect(doc.getNodeById('m2')?.getMainState(), NclStateType.sleeping);
     });
 
     test(
@@ -297,10 +297,10 @@ void main() {
   </body>
 </ncl>
 ''';
-        final doc = NCLDocument.fromContent(xml);
+        final doc = NclDocument.fromContent(xml);
         doc.start();
         final video = doc.getNodeById('video1') as AVMedia;
-        expect(video.getMainState(), NCLState.OCCURRING);
+        expect(video.getMainState(), NclStateType.occurring);
         expect(video, isA<AVMedia>());
 
         expect(video.time, 0);
@@ -308,12 +308,12 @@ void main() {
         final changedA = doc.tick(4000);
         expect(changedA, isEmpty);
         expect(video.time, 4000);
-        expect(video.getMainState(), NCLState.OCCURRING);
+        expect(video.getMainState(), NclStateType.occurring);
 
         final changedB = doc.tick(1000);
         expect(changedB, isNotEmpty);
         expect(video.time, 5000);
-        expect(video.getMainState(), NCLState.SLEEPING);
+        expect(video.getMainState(), NclStateType.sleeping);
       },
     );
   });

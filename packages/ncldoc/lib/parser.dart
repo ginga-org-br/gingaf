@@ -1,17 +1,18 @@
 import 'dart:io';
 
+import 'package:gingacc/src_resolver.dart';
 import 'package:xml/xml.dart';
 
 import 'mimetype.dart';
 import 'ncl_document.dart';
 import 'schema.dart';
 
-class NCLParser {
+class NclParser {
   final Schema schema = Schema();
   final Uri? docUri;
   Uri? get baseUri => docUri?.resolve('.');
 
-  NCLParser({
+  NclParser({
     this.docUri,
   });
 
@@ -220,9 +221,7 @@ class NCLParser {
         throw FileSystemException('Media src does not exist: $src', src);
       }
     }
-    final uri = src.isNotEmpty
-        ? (baseUri?.resolve(src).toString() ?? src)
-        : '';
+    final uri = src.isNotEmpty ? (baseUri?.resolve(src).toString() ?? src) : '';
     final mimeType = type.isNotEmpty ? type : getMimeTypeFromExtension(src);
     if (mimeType.startsWith('video/') || mimeType.startsWith('audio/')) {
       final avMedia = AVMedia(
@@ -254,7 +253,7 @@ class NCLParser {
     return errors;
   }
 
-  void doNclEditingCommand(NCLDocument doc, String command) {
+  void doNclEditingCommand(NclDocument doc, String command) {
     final parsed = _parseCommand(command);
     if (parsed == null) return;
 
@@ -368,9 +367,8 @@ class NCLParser {
         break;
       case 'addRule':
         if (parsed.args.isEmpty) return;
-        final ruleXmlStr = parsed.args.length > 1
-            ? parsed.args[1]
-            : parsed.args[0];
+        final ruleXmlStr =
+            parsed.args.length > 1 ? parsed.args[1] : parsed.args[0];
         final parentId = parsed.args.length > 1 ? parsed.args[0] : null;
         final newRule = parseXml(ruleXmlStr);
         if (newRule == null) return;
@@ -403,9 +401,8 @@ class NCLParser {
         break;
       case 'addConnector':
         if (parsed.args.isEmpty) return;
-        final connXmlStr = parsed.args.length > 1
-            ? parsed.args[1]
-            : parsed.args[0];
+        final connXmlStr =
+            parsed.args.length > 1 ? parsed.args[1] : parsed.args[0];
         final parentConnId = parsed.args.length > 1 ? parsed.args[0] : null;
         final newConnector = parseXml(connXmlStr);
         if (newConnector == null) return;
@@ -438,9 +435,8 @@ class NCLParser {
         break;
       case 'addDescriptor':
         if (parsed.args.isEmpty) return;
-        final descXmlStr = parsed.args.length > 1
-            ? parsed.args[1]
-            : parsed.args[0];
+        final descXmlStr =
+            parsed.args.length > 1 ? parsed.args[1] : parsed.args[0];
         final parentDescId = parsed.args.length > 1 ? parsed.args[0] : null;
         final newDesc = parseXml(descXmlStr);
         if (newDesc == null) return;
@@ -462,9 +458,8 @@ class NCLParser {
         break;
       case 'addDescriptorSwitch':
         if (parsed.args.isEmpty) return;
-        final descSwXmlStr = parsed.args.length > 1
-            ? parsed.args[1]
-            : parsed.args[0];
+        final descSwXmlStr =
+            parsed.args.length > 1 ? parsed.args[1] : parsed.args[0];
         final parentDescSwId = parsed.args.length > 1 ? parsed.args[0] : null;
         final newDescSwitch = parseXml(descSwXmlStr);
         if (newDescSwitch == null) return;
@@ -497,9 +492,8 @@ class NCLParser {
         break;
       case 'addTransition':
         if (parsed.args.isEmpty) return;
-        final transXmlStr = parsed.args.length > 1
-            ? parsed.args[1]
-            : parsed.args[0];
+        final transXmlStr =
+            parsed.args.length > 1 ? parsed.args[1] : parsed.args[0];
         final parentTransId = parsed.args.length > 1 ? parsed.args[0] : null;
         final newTrans = parseXml(transXmlStr);
         if (newTrans == null) return;
@@ -838,8 +832,7 @@ class NCLParser {
             });
 
             // resolve explicit duration
-            final explicitDurVal =
-                desc.rawAttributes['explicitDur'] ??
+            final explicitDurVal = desc.rawAttributes['explicitDur'] ??
                 el.rawAttributes['explicitDur'];
             if (explicitDurVal != null) {
               el.explicitDurMs = parseDurStr(explicitDurVal);

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ncldoc/ncl_document.dart' show GingaConfig, Users;
+import 'package:gingacc/ginga_config.dart';
+import 'package:gingacc/users.dart';
 import 'package:nclui/ncl_app.dart';
 
 class MockNCLAssetBundle extends CachingAssetBundle {
@@ -45,7 +46,8 @@ void main() {
     expect(find.byType(NCLApp), findsOneWidget);
   });
 
-  testWidgets('Verify NCLApp receives config parameter and accesses configuration',
+  testWidgets(
+      'Verify NCLApp receives config parameter and accesses configuration',
       (WidgetTester tester) async {
     final mockBundle = MockNCLAssetBundle();
     final config = GingaConfig(

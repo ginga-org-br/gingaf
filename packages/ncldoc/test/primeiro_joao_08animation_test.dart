@@ -4,9 +4,9 @@ import 'package:test/test.dart';
 void main() {
   group('primeiro_joao_08animation', () {
     test(
-      'NCLDocument executes duration-based SET action property changes correctly',
+      'NclDocument executes duration-based SET action property changes correctly',
       () {
-        final doc = NCLDocument.fromContent(
+        final doc = NclDocument.fromContent(
           '''<ncl id="nclAnimation" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <connectorBase>
@@ -47,26 +47,26 @@ void main() {
         doc.tick(10000);
 
         final m2 = doc.getNodeById('m2') as Media;
-        final prop = m2.getPropertyEvent('p');
+        final prop = m2.getPropertyNclEvent('p');
 
-        expect(m2.getMainState(), NCLState.OCCURRING);
-        expect(prop.state, NCLState.SLEEPING);
-
-        doc.tick(1000);
-        expect(prop.state, NCLState.SLEEPING);
+        expect(m2.getMainState(), NclStateType.occurring);
+        expect(prop.state, NclStateType.sleeping);
 
         doc.tick(1000);
-        expect(prop.state, NCLState.OCCURRING);
+        expect(prop.state, NclStateType.sleeping);
+
+        doc.tick(1000);
+        expect(prop.state, NclStateType.occurring);
         expect(
           m2.getProperties().firstWhere((p) => p.name == 'p').value,
           isNull,
         );
 
         doc.tick(4000);
-        expect(prop.state, NCLState.OCCURRING);
+        expect(prop.state, NclStateType.occurring);
 
         doc.tick(1000);
-        expect(prop.state, NCLState.SLEEPING);
+        expect(prop.state, NclStateType.sleeping);
         final pVal = m2.getProperties().firstWhere((p) => p.name == 'p');
         expect(pVal.value, 'active');
       },

@@ -3,8 +3,8 @@ import 'package:test/test.dart';
 
 void main() {
   group('primeiro_joao_00syncProp', () {
-    test('NCLDocument delay and property parsing', () {
-      final doc = NCLDocument.fromContent(
+    test('NclDocument delay and property parsing', () {
+      final doc = NclDocument.fromContent(
         '''<ncl id="mySyncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <connectorBase>
@@ -95,8 +95,8 @@ void main() {
       final leftProp = img1.getProperties().firstWhere((p) => p.name == 'left');
       expect(leftProp.value, '5%');
       final zIndexProp = img1.getProperties().firstWhere(
-        (p) => p.name == 'zIndex',
-      );
+            (p) => p.name == 'zIndex',
+          );
       expect(zIndexProp.value, '3');
     });
   });

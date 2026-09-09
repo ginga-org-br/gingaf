@@ -1,11 +1,12 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nclui/ncl_app.dart';
 import 'package:ncldoc/ncl_document.dart';
-import 'package:video_player_platform_interface/video_player_platform_interface.dart';
+import 'package:nclui/ncl_app.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:video_player/video_player.dart';
+import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 class MockVideoPlayer extends VideoPlayerPlatform
     with MockPlatformInterfaceMixin {
@@ -92,7 +93,7 @@ void main() {
 
   testWidgets('NCLMediaState visual attributes and properties mapping tests',
       (WidgetTester tester) async {
-    final doc = NCLDocument.fromContent('''
+    final doc = NclDocument.fromContent('''
 <ncl>
   <body>
     <media id="m1" src="video.mp4" focusBorderColor="red" selBorderColor="green">
@@ -133,7 +134,7 @@ void main() {
 
   testWidgets('NCLMediaState default visual attributes when omitted',
       (WidgetTester tester) async {
-    final doc = NCLDocument.fromContent('''
+    final doc = NclDocument.fromContent('''
 <ncl>
   <body>
     <media id="m1" src="video.mp4"/>
@@ -167,7 +168,7 @@ void main() {
 
   testWidgets('NCLMediaState bounds and background properties mapping tests',
       (WidgetTester tester) async {
-    final doc = NCLDocument.fromContent('''
+    final doc = NclDocument.fromContent('''
 <ncl>
   <body>
     <media id="m1" src="video.mp4">
@@ -206,7 +207,7 @@ void main() {
 
   testWidgets('ImageWidget rendering without source URI',
       (WidgetTester tester) async {
-    final doc = NCLDocument.fromContent('''
+    final doc = NclDocument.fromContent('''
 <ncl>
   <body>
     <media id="m1" type="image/png">

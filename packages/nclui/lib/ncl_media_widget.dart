@@ -1,18 +1,15 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:ncldoc/ncl_document.dart';
 
 import 'main_av_controller.dart';
 import 'ncl_app.dart';
-import 'package:ncldoc/src_resolver.dart' as src_resolver;
 
-export 'package:ncldoc/src_resolver.dart';
+export 'package:gingacc/src_resolver.dart';
 
 abstract class MediaWidget extends StatefulWidget {
   final String src;
   final Media? media;
-  final NCLDocument? document;
+  final NclDocument? document;
 
   const MediaWidget({
     super.key,
@@ -161,23 +158,6 @@ abstract class MediaState<T extends MediaWidget> extends State<T> {
     return double.tryParse(trimmed) ?? 0.0;
   }
 
-  Future<String> loadContent(String src) async {
-    final uri = resolveUri(src);
-    String? content = await src_resolver.loadContent(uri);
-    if (content == null && mounted) {
-      final bundle = DefaultAssetBundle.of(context);
-      try {
-        content = await bundle.loadString(src);
-      } catch (_) {
-        try {
-          content = await bundle.loadString(uri.path);
-        } catch (_) {}
-      }
-    }
-    if (content != null) return content;
-    throw Exception('Failed to load content for src: $src');
-  }
-
   String get playerKey => id ?? '';
 
   @override
@@ -226,7 +206,7 @@ class WidgetFactory {
   static Widget? createMediaWidget({
     Key? key,
     required Media media,
-    NCLDocument? document,
+    NclDocument? document,
     MainAVController? mainAVController,
   }) {
     final mimeType = media.mimeType;

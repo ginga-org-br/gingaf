@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:gingacc/ginga_config.dart';
+import 'package:gingacc/src_resolver.dart';
 import 'package:gingacc/users.dart';
 import 'package:logging/logging.dart';
 
@@ -11,7 +12,6 @@ import 'elements.dart';
 import 'event.dart';
 import 'ncl_scheduler.dart';
 import 'parser.dart';
-import 'src_resolver.dart';
 
 export 'package:gingacc/ginga_config.dart';
 export 'package:gingacc/users.dart';
@@ -21,18 +21,17 @@ export 'event.dart';
 export 'lua.dart';
 export 'ncl_scheduler.dart';
 export 'parser.dart';
-export 'src_resolver.dart';
 
 final _logger = Logger('ncl_doc');
 
-class NCLDocument {
+class NclDocument {
   late final Head? _head;
   late final Context _body;
   late final Settings _settings;
   Uri? docUri;
   final String docSrc;
 
-  late final NCLScheduler scheduler = NCLScheduler(this);
+  late final NclScheduler scheduler = NclScheduler(this);
   Users get users => config.users;
   final GingaConfig config;
   final Map<String, UserProfileQuery> _loadedProfiles = {};
@@ -41,28 +40,28 @@ class NCLDocument {
   Map<String, String> get systemVariables => envVariables;
   Map<String, String> get systemProperties => envVariables;
 
-  static Future<NCLDocument> fromSrc(
+  static Future<NclDocument> fromSrc(
     String docSrc, {
-    String? configSrc,
+    GingaConfig? config,
   }) async {
     _logger.info('Loading NCL document from src: $docSrc');
-    final docUri = resolveUri(docSrc);
-    final xml = await loadContent(docUri);
+    final String? xml;
+    if (docSrc.trim().startsWith('<')) {
+      xml = docSrc;
+    } else {
+      final docUri = resolveUri(docSrc);
+      xml = await loadContent(docUri);
+    }
 
-    final config = configSrc != null
-        ? await GingaConfig.fromJson(configSrc, docSrc)
-        : GingaConfig();
-
-    final doc = NCLDocument.fromContent(
+    final doc = NclDocument.fromContent(
       xml ?? '',
       docSrc: docSrc,
       config: config,
     );
-    await doc.loadUserProfiles();
     return doc;
   }
 
-  factory NCLDocument.fromContent(
+  factory NclDocument.fromContent(
     String xml, {
     String? docSrc,
     GingaConfig? config,
@@ -71,12 +70,12 @@ class NCLDocument {
       throw ArgumentError('empty src');
     }
     final resolvedDocSrc = docSrc ?? 'tmp.ncl';
-    _logger.fine('Creating NCLDocument from content (src: $resolvedDocSrc)');
+    _logger.fine('Creating NclDocument from content (src: $resolvedDocSrc)');
     final Uri? resolvedUri = docSrc != null ? Uri.tryParse(docSrc) : null;
-    final (head, body) = NCLParser(
+    final (head, body) = NclParser(
       docUri: resolvedUri,
     ).parseString(xml);
-    return NCLDocument._(
+    return NclDocument._(
       head: head,
       body: body,
       docSrc: resolvedDocSrc,
@@ -85,7 +84,7 @@ class NCLDocument {
     );
   }
 
-  NCLDocument._({
+  NclDocument._({
     Head? head,
     required Body body,
     required this.docSrc,
@@ -96,10 +95,10 @@ class NCLDocument {
     _head = head;
     _body = body;
     _gatherSettings();
-    loadUserProfiles();
+    _loadUserProfiles();
   }
 
-  Future<void> loadUserProfiles() async {
+  Future<void> _loadUserProfiles() async {
     if (_head != null) {
       for (var el in headChildren) {
         if (el.xmlTagName == 'userBase') {
@@ -148,12 +147,12 @@ class NCLDocument {
 
   Head? get head => _head;
   Context get body => _body;
-  NCLState getBodyState() => _body.getMainState();
+  NclStateType getBodyState() => _body.getMainState();
 
   Settings getSettings() => _settings;
 
   void doNclEditingCommand(String command) {
-    NCLParser(docUri: docUri).doNclEditingCommand(this, command);
+    NclParser(docUri: docUri).doNclEditingCommand(this, command);
   }
 
   Node? getNodeById(String id) {
@@ -350,7 +349,7 @@ class NCLDocument {
     final active = <Media>[];
     void search(Composition comp) {
       for (var node in comp.getNodes()) {
-        if (node is Media && node.getMainState() == NCLState.OCCURRING) {
+        if (node is Media && node.getMainState() == NclStateType.occurring) {
           active.add(node);
         } else if (node is Composition) {
           search(node);
@@ -435,7 +434,7 @@ class NCLDocument {
   set virtualClock(int val) => scheduler.virtualClock = val;
   bool get isPlaying => scheduler.isPlaying;
   set isPlaying(bool val) => scheduler.isPlaying = val;
-  List<Action> get uiQueue => scheduler.uiQueue;
+  List<NclAction> get uiQueue => scheduler.uiQueue;
 
   void start() => scheduler.start();
   void stop() => scheduler.stop();

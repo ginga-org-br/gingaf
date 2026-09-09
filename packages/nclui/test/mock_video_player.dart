@@ -1,13 +1,15 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 class MockVideoPlayer extends VideoPlayerPlatform
     with MockPlatformInterfaceMixin {
   int _nextTextureId = 1;
   final Map<int, StreamController<VideoEvent>> _controllers = {};
-  final StreamController<VideoEvent> events = StreamController<VideoEvent>.broadcast();
+  final StreamController<VideoEvent> events =
+      StreamController<VideoEvent>.broadcast();
 
   @override
   Future<void> init() async {}

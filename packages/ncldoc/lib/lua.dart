@@ -50,7 +50,7 @@ class NCLua {
   int _nextTimerId = 1;
   final int _startTime = DateTime.now().millisecondsSinceEpoch;
   int Function()? uptimeProvider;
-  void Function(Map<String, dynamic> event)? onPostEvent;
+  void Function(Map<String, dynamic> event)? onPostNclEvent;
   final Map<String, String> _persistentVars = {};
   String? Function(String propertyName)? settingsProvider;
   String? Function(String name)? getPersistentVar;
@@ -312,9 +312,9 @@ class NCLua {
       }
       if (evt != null) {
         if (dst == "in") {
-          postEvent(evt);
+          postNclEvent(evt);
         } else {
-          onPostEvent?.call(evt);
+          onPostNclEvent?.call(evt);
         }
       }
       return 0;
@@ -692,7 +692,7 @@ class NCLua {
     }
   }
 
-  void postEvent(Map<String, dynamic> event) {
+  void postNclEvent(Map<String, dynamic> event) {
     for (final refId in List<int>.from(_registeredCallbackRefs)) {
       _lua.rawGetI(luaRegistryIndex, refId);
       if (_lua.isFunction(-1)) {

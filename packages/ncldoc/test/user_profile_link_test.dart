@@ -57,7 +57,7 @@ void main() {
 </ncl>
 ''';
 
-        final doc = NCLDocument.fromContent(
+        final doc = NclDocument.fromContent(
           xmlString,
           config: GingaConfig(
             users: Users(
@@ -72,13 +72,13 @@ void main() {
         final mMaleAd = doc.getNodeById('mMaleAd') as Media;
         final mGeneralAd = doc.getNodeById('mGeneralAd') as Media;
 
-        expect(mMaleAd.getMainState(), equals(NCLState.SLEEPING));
-        expect(mGeneralAd.getMainState(), equals(NCLState.SLEEPING));
+        expect(mMaleAd.getMainState(), equals(NclStateType.sleeping));
+        expect(mGeneralAd.getMainState(), equals(NclStateType.sleeping));
 
         doc.tick(2000);
 
-        expect(mMaleAd.getMainState(), equals(NCLState.OCCURRING));
-        expect(mGeneralAd.getMainState(), equals(NCLState.SLEEPING));
+        expect(mMaleAd.getMainState(), equals(NclStateType.occurring));
+        expect(mGeneralAd.getMainState(), equals(NclStateType.sleeping));
       },
     );
 
@@ -136,7 +136,7 @@ void main() {
 </ncl>
 ''';
 
-        final doc = NCLDocument.fromContent(
+        final doc = NclDocument.fromContent(
           xmlString,
           config: GingaConfig(
             users: Users(
@@ -151,13 +151,13 @@ void main() {
         final mMaleAd = doc.getNodeById('mMaleAd') as Media;
         final mGeneralAd = doc.getNodeById('mGeneralAd') as Media;
 
-        expect(mMaleAd.getMainState(), equals(NCLState.SLEEPING));
-        expect(mGeneralAd.getMainState(), equals(NCLState.SLEEPING));
+        expect(mMaleAd.getMainState(), equals(NclStateType.sleeping));
+        expect(mGeneralAd.getMainState(), equals(NclStateType.sleeping));
 
         doc.tick(2000);
 
-        expect(mMaleAd.getMainState(), equals(NCLState.SLEEPING));
-        expect(mGeneralAd.getMainState(), equals(NCLState.OCCURRING));
+        expect(mMaleAd.getMainState(), equals(NclStateType.sleeping));
+        expect(mGeneralAd.getMainState(), equals(NclStateType.occurring));
       },
     );
   });

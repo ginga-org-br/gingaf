@@ -149,16 +149,16 @@ void main() {
 </ncl>''';
 
     test(
-      'NCLDocument runs lua script configuration and triggers property modifications successfully',
+      'NclDocument runs lua script configuration and triggers property modifications successfully',
       () {
-        final doc = NCLDocument.fromContent(xml);
+        final doc = NclDocument.fromContent(xml);
         doc.start();
         doc.tick(5000);
 
         final changesMedia = doc.getNodeById('changes') as Media;
         final addProp = changesMedia.getProperties().firstWhere(
-          (p) => p.name == 'add',
-        );
+              (p) => p.name == 'add',
+            );
         expect(addProp.value, isNull);
 
         doc.triggerSelection('imgRock', 'ENTER');

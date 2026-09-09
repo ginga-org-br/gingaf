@@ -3,8 +3,8 @@ import 'package:test/test.dart';
 
 void main() {
   group('primeiro_joao_03context', () {
-    test('NCLDocument executes context and port mapping correctly', () {
-      final doc = NCLDocument.fromContent(
+    test('NclDocument executes context and port mapping correctly', () {
+      final doc = NclDocument.fromContent(
         '''<ncl id="nclCtx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
@@ -133,9 +133,9 @@ void main() {
       final mIcon = doc.getNodeById('mIcon') as Media;
       final mShoes = doc.getNodeById('mShoes') as Media;
 
-      expect(mMain.getMainState(), NCLState.OCCURRING);
-      expect(mIcon.getMainState(), NCLState.SLEEPING);
-      expect(mShoes.getMainState(), NCLState.SLEEPING);
+      expect(mMain.getMainState(), NclStateType.occurring);
+      expect(mIcon.getMainState(), NclStateType.sleeping);
+      expect(mShoes.getMainState(), NclStateType.sleeping);
 
       var active = doc.getActiveMedia().map((m) => m.id).toList();
       expect(active, contains('mMain'));
@@ -146,7 +146,7 @@ void main() {
       expect(active, contains('mMain'));
       expect(active, contains('mIcon'));
       expect(active, isNot(contains('mShoes')));
-      expect(mIcon.getMainState(), NCLState.OCCURRING);
+      expect(mIcon.getMainState(), NclStateType.occurring);
 
       doc.triggerSelection('mIcon', 'RED');
       doc.tick(0);
@@ -155,20 +155,20 @@ void main() {
       expect(active, contains('mMain'));
       expect(active, isNot(contains('mIcon')));
       expect(active, contains('mShoes'));
-      expect(mIcon.getMainState(), NCLState.SLEEPING);
-      expect(mShoes.getMainState(), NCLState.OCCURRING);
+      expect(mIcon.getMainState(), NclStateType.sleeping);
+      expect(mShoes.getMainState(), NclStateType.occurring);
 
       final boundsProp = mMain.getProperties().firstWhere(
-        (p) => p.name == 'bounds',
-      );
+            (p) => p.name == 'bounds',
+          );
       expect(boundsProp.value, '5%,6.7%,45%,45%');
 
       doc.uiQueue.add(
-        Action(event: mShoes.getMainEvent(), action: NCLAction.STOP),
+        NclAction(event: mShoes.getMainNclEvent(), action: NclActionType.stop),
       );
       doc.tick(0);
 
-      expect(mShoes.getMainState(), NCLState.SLEEPING);
+      expect(mShoes.getMainState(), NclStateType.sleeping);
       expect(boundsProp.value, '0,0,100%,100%');
     });
   });

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nclui/ncl_app.dart';
 import 'package:ncldoc/ncl_document.dart';
+import 'package:nclui/ncl_app.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 import 'mock_video_player.dart';
@@ -92,8 +92,8 @@ void main() {
     VideoPlayerPlatform.instance = fakePlatform;
   });
 
-  test('NCLDocument delay and property parsing', () {
-    final doc = NCLDocument.fromContent(
+  test('NclDocument delay and property parsing', () {
+    final doc = NclDocument.fromContent(
         '''<ncl id="mySyncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <connectorBase>

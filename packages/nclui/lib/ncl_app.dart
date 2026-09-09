@@ -37,7 +37,7 @@ class NCLApp extends MediaWidget {
 }
 
 class NCLAppState extends MediaState<NCLApp> {
-  NCLDocument? nclDocument;
+  NclDocument? nclDocument;
   final Map<String, GlobalKey<MediaState>> _mediaStateKeys = {};
   final Map<String, Widget> _cachedWidgets = {};
   Timer? _ticker;
@@ -121,30 +121,17 @@ class NCLAppState extends MediaState<NCLApp> {
     try {
       if (mounted) {
         setState(() {});
-      }
-      if (!mounted) return;
-      final srcString = widget.src;
-      String nclData;
-      if (srcString.trim().startsWith('<')) {
-        nclData = srcString;
       } else {
-        try {
-          nclData = await this.loadContent(srcString);
-        } catch (_) {
-          nclData = '';
-        }
+        return;
       }
-      if (!mounted) return;
-
-      final doc = NCLDocument.fromContent(
-        nclData,
-        docSrc: srcString,
+      final doc = await NclDocument.fromSrc(
+        widget.src,
         config: widget.config,
       );
+      if (!mounted) return;
 
       nclDocument = doc;
       doc.start();
-
       _syncActiveMedia(doc.getActiveMedia());
 
       if (mounted) {

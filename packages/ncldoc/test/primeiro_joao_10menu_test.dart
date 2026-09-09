@@ -140,8 +140,8 @@ void main() {
   </body>
 </ncl>''';
 
-    test('NCLDocument parses and runs menu configuration successfully', () {
-      final doc = NCLDocument.fromContent(xml);
+    test('NclDocument parses and runs menu configuration successfully', () {
+      final doc = NclDocument.fromContent(xml);
       doc.start();
       doc.tick(5000);
       final active = doc.getActiveMedia().map((m) => m.id).toList();

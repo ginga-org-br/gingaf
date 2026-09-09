@@ -28,7 +28,7 @@ void main() {
 </ncl>
 ''';
 
-        final doc = NCLDocument.fromContent(xml);
+        final doc = NclDocument.fromContent(xml);
         final user = UserData(
           id: 'u1',
           name: 'Viewer',
@@ -74,7 +74,7 @@ void main() {
       </body>
     </ncl>
     ''';
-      final doc = NCLDocument.fromContent(
+      final doc = NclDocument.fromContent(
         xml,
         config: GingaConfig(
           users: Users('''
@@ -109,19 +109,31 @@ void main() {
       final settingsNode = doc.getElementById('userSettings') as Settings;
 
       expect(doc.getPropertyValue(settingsNode, 'nickname'), equals('Alice'));
-      expect(doc.getPropertyValue(settingsNode, 'parentalControl'), equals('true'));
-      expect(doc.getPropertyValue(settingsNode, 'maxContentRating'), equals('14'));
+      expect(doc.getPropertyValue(settingsNode, 'parentalControl'),
+          equals('true'));
+      expect(
+          doc.getPropertyValue(settingsNode, 'maxContentRating'), equals('14'));
       expect(doc.getPropertyValue(settingsNode, 'avatar'), equals('alice.png'));
-      expect(doc.getPropertyValue(settingsNode, 'audioLanguage'), equals('pt-BR'));
-      expect(doc.getPropertyValue(settingsNode, 'closedCaptioningLanguage'), equals('pt-BR'));
-      expect(doc.getPropertyValue(settingsNode, 'userInterfaceLanguage'), equals('pt-BR'));
-      expect(doc.getPropertyValue(settingsNode, 'closedCaptioning'), equals('true'));
-      expect(doc.getPropertyValue(settingsNode, 'closedSigning'), equals('false'));
-      expect(doc.getPropertyValue(settingsNode, 'closedSigningSide'), equals('right'));
-      expect(doc.getPropertyValue(settingsNode, 'closedSigningWidth'), equals('28'));
-      expect(doc.getPropertyValue(settingsNode, 'audioDescription'), equals('false'));
-      expect(doc.getPropertyValue(settingsNode, 'dialogEnhancement'), equals('false'));
-      expect(doc.getPropertyValue(settingsNode, 'voiceGuidance'), equals('false'));
+      expect(
+          doc.getPropertyValue(settingsNode, 'audioLanguage'), equals('pt-BR'));
+      expect(doc.getPropertyValue(settingsNode, 'closedCaptioningLanguage'),
+          equals('pt-BR'));
+      expect(doc.getPropertyValue(settingsNode, 'userInterfaceLanguage'),
+          equals('pt-BR'));
+      expect(doc.getPropertyValue(settingsNode, 'closedCaptioning'),
+          equals('true'));
+      expect(
+          doc.getPropertyValue(settingsNode, 'closedSigning'), equals('false'));
+      expect(doc.getPropertyValue(settingsNode, 'closedSigningSide'),
+          equals('right'));
+      expect(doc.getPropertyValue(settingsNode, 'closedSigningWidth'),
+          equals('28'));
+      expect(doc.getPropertyValue(settingsNode, 'audioDescription'),
+          equals('false'));
+      expect(doc.getPropertyValue(settingsNode, 'dialogEnhancement'),
+          equals('false'));
+      expect(
+          doc.getPropertyValue(settingsNode, 'voiceGuidance'), equals('false'));
     });
   });
 }

@@ -1,20 +1,20 @@
 import 'elements.dart';
 
-enum NCLState { OCCURRING, PAUSED, SLEEPING }
+enum NclStateType { occurring, paused, sleeping }
 
-enum NCLEvent { PRESENTATION, ATTRIBUTION, SELECTION, PREPARATION }
+enum NclEventType { presentation, attribution, selection, preparation }
 
-enum NCLAction { ABORT, PAUSE, RESUME, START, STOP, SET }
+enum NclActionType { abort, pause, resume, start, stop, set }
 
-class Event {
-  final NCLEvent type;
+class NclEvent {
+  final NclEventType type;
   final Node targetNode;
   final String? propertyName;
   final String? interfaceId;
   final bool isMain;
-  NCLState state = NCLState.SLEEPING;
+  NclStateType state = NclStateType.sleeping;
 
-  Event({
+  NclEvent({
     required this.type,
     required this.targetNode,
     this.propertyName,
@@ -22,81 +22,81 @@ class Event {
     this.isMain = false,
   });
 
-  NCLState doAction(NCLAction action) {
+  NclStateType doNclAction(NclActionType action) {
     switch (action) {
-      case NCLAction.START:
-        if (state == NCLState.SLEEPING) state = NCLState.OCCURRING;
+      case NclActionType.start:
+        if (state == NclStateType.sleeping) state = NclStateType.occurring;
         break;
-      case NCLAction.STOP:
-      case NCLAction.ABORT:
-        if (state == NCLState.OCCURRING || state == NCLState.PAUSED) {
-          state = NCLState.SLEEPING;
+      case NclActionType.stop:
+      case NclActionType.abort:
+        if (state == NclStateType.occurring || state == NclStateType.paused) {
+          state = NclStateType.sleeping;
         }
         break;
-      case NCLAction.PAUSE:
-        if (state == NCLState.OCCURRING) state = NCLState.PAUSED;
+      case NclActionType.pause:
+        if (state == NclStateType.occurring) state = NclStateType.paused;
         break;
-      case NCLAction.RESUME:
-        if (state == NCLState.PAUSED) state = NCLState.OCCURRING;
+      case NclActionType.resume:
+        if (state == NclStateType.paused) state = NclStateType.occurring;
         break;
-      case NCLAction.SET:
+      case NclActionType.set:
         break;
     }
     return state;
   }
 
-  static NCLAction getStringAsActionType(String str) {
+  static NclActionType getStringAsActionType(String str) {
     switch (str.toLowerCase()) {
       case 'start':
-        return NCLAction.START;
+        return NclActionType.start;
       case 'stop':
-        return NCLAction.STOP;
+        return NclActionType.stop;
       case 'abort':
-        return NCLAction.ABORT;
+        return NclActionType.abort;
       case 'pause':
-        return NCLAction.PAUSE;
+        return NclActionType.pause;
       case 'resume':
-        return NCLAction.RESUME;
+        return NclActionType.resume;
       case 'set':
-        return NCLAction.SET;
+        return NclActionType.set;
       default:
         throw ArgumentError('Unknown action string: $str');
     }
   }
 
-  static String getEventStateAsString(NCLState state) {
+  static String getNclEventStateAsString(NclStateType state) {
     switch (state) {
-      case NCLState.SLEEPING:
+      case NclStateType.sleeping:
         return 'sleeping';
-      case NCLState.OCCURRING:
+      case NclStateType.occurring:
         return 'occurring';
-      case NCLState.PAUSED:
+      case NclStateType.paused:
         return 'paused';
     }
   }
 
-  static String getEventTypeAsString(NCLEvent type) {
+  static String getEventTypeAsString(NclEventType type) {
     switch (type) {
-      case NCLEvent.PRESENTATION:
+      case NclEventType.presentation:
         return 'presentation';
-      case NCLEvent.ATTRIBUTION:
+      case NclEventType.attribution:
         return 'attribution';
-      case NCLEvent.SELECTION:
+      case NclEventType.selection:
         return 'selection';
-      case NCLEvent.PREPARATION:
+      case NclEventType.preparation:
         return 'preparation';
     }
   }
 }
 
-class Action {
-  final Event event;
-  final NCLAction action;
+class NclAction {
+  final NclEvent event;
+  final NclActionType action;
   final String value;
   final int duration;
   final int delay;
 
-  Action({
+  NclAction({
     required this.event,
     required this.action,
     this.value = '',

@@ -4,12 +4,12 @@ import 'package:test/test.dart';
 void main() {
   group('Elements Typed Accessors', () {
     test(
-        'NCLParser.parseDurStr parses seconds, milliseconds, and numeric values',
+        'NclParser.parseDurStr parses seconds, milliseconds, and numeric values',
         () {
-      expect(NCLParser.parseDurStr('2.5s'), equals(2500));
-      expect(NCLParser.parseDurStr('500ms'), equals(500));
-      expect(NCLParser.parseDurStr('3'), equals(3000));
-      expect(NCLParser.parseDurStr(null), isNull);
+      expect(NclParser.parseDurStr('2.5s'), equals(2500));
+      expect(NclParser.parseDurStr('500ms'), equals(500));
+      expect(NclParser.parseDurStr('3'), equals(3000));
+      expect(NclParser.parseDurStr(null), isNull);
     });
 
     test('Region attributes are exposed via getters', () {
@@ -94,9 +94,9 @@ void main() {
       expect(link.binds.first.component, equals('m1'));
     });
 
-    test('NCLDocument parses Transition and Rule elements as typed instances',
+    test('NclDocument parses Transition and Rule elements as typed instances',
         () {
-      final doc = NCLDocument.fromContent(
+      final doc = NclDocument.fromContent(
           '''<ncl id="testDoc" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <ruleBase>
@@ -123,7 +123,7 @@ void main() {
     });
 
     test(
-        'NCLParser parses assessmentStatement and condition elements correctly',
+        'NclParser parses assessmentStatement and condition elements correctly',
         () {
       final xmlString = '''<ncl id="myNCL">
 <head>
@@ -142,7 +142,7 @@ void main() {
 <body id="body"/>
 </ncl>''';
 
-      final doc = NCLDocument.fromContent(xmlString);
+      final doc = NclDocument.fromContent(xmlString);
       final head = doc.head;
       expect(head, isNotNull);
 
@@ -178,7 +178,7 @@ void main() {
       expect(valAss.value, equals('5'));
     });
 
-    test('NCLParser parses focus, navigation, and descriptorParam attributes',
+    test('NclParser parses focus, navigation, and descriptorParam attributes',
         () {
       final xmlString = '''<ncl id="myNCL">
 <head>
@@ -192,7 +192,7 @@ void main() {
 <body id="body"/>
 </ncl>''';
 
-      final doc = NCLDocument.fromContent(xmlString);
+      final doc = NclDocument.fromContent(xmlString);
       final head = doc.head;
       expect(head, isNotNull);
 
@@ -221,7 +221,7 @@ void main() {
       expect(desc.descriptorParams[1].value, equals('yellow'));
     });
 
-    test('NCLParser parses userBase and userProfile elements correctly', () {
+    test('NclParser parses userBase and userProfile elements correctly', () {
       final xmlString = '''<ncl id="userTestNCL">
 <head>
   <userBase id="ub1">
@@ -231,7 +231,7 @@ void main() {
 <body id="body"/>
 </ncl>''';
 
-      final doc = NCLDocument.fromContent(xmlString);
+      final doc = NclDocument.fromContent(xmlString);
       final head = doc.head;
       expect(head, isNotNull);
 

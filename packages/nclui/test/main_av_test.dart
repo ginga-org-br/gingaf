@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart' hide Action, State;
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nclui/main_av_controller.dart';
@@ -86,7 +87,8 @@ void main() {
     });
 
     final controller = MainAVController()
-      ..setMainAvUri('https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4');
+      ..setMainAvUri(
+          'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4');
 
     await tester.pumpWidget(
       MaterialApp(

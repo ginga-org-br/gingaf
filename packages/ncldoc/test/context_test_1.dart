@@ -2,7 +2,7 @@ import 'package:ncldoc/ncl_document.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('NCLDocument Context Tests', () {
+  group('NclDocument Context Tests', () {
     test('1x ctx', () {
       const xml = '''
 <ncl>
@@ -14,17 +14,17 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromContent(xml);
+      final doc = NclDocument.fromContent(xml);
       doc.start();
-      expect(doc.getBodyState(), NCLState.OCCURRING);
+      expect(doc.getBodyState(), NclStateType.occurring);
       expect(doc.virtualClock, 0);
-      expect(doc.getNodeById('ctx1')?.getMainState(), NCLState.OCCURRING);
+      expect(doc.getNodeById('ctx1')?.getMainState(), NclStateType.occurring);
       final changed = doc.tick(1);
       expect(changed, isEmpty);
       expect(doc.virtualClock, 1);
       doc.stop();
-      expect(doc.getNodeById('ctx1')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getBodyState(), NCLState.SLEEPING);
+      expect(doc.getNodeById('ctx1')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getBodyState(), NclStateType.sleeping);
     });
 
     test('2x ctx', () {
@@ -42,19 +42,19 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromContent(xmlString);
+      final doc = NclDocument.fromContent(xmlString);
       doc.start();
 
-      expect(doc.getBodyState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('c1')?.getMainState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('c2')?.getMainState(), NCLState.OCCURRING);
+      expect(doc.getBodyState(), NclStateType.occurring);
+      expect(doc.getNodeById('c1')?.getMainState(), NclStateType.occurring);
+      expect(doc.getNodeById('c2')?.getMainState(), NclStateType.occurring);
 
       doc.stop();
-      expect(doc.getNodeById('c1')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getNodeById('c2')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getNodeById('m1')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getNodeById('m2')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getBodyState(), NCLState.SLEEPING);
+      expect(doc.getNodeById('c1')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('c2')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('m1')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('m2')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getBodyState(), NclStateType.sleeping);
     });
 
     test('2x ctx nested', () {
@@ -72,12 +72,12 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromContent(xml);
+      final doc = NclDocument.fromContent(xml);
       doc.start();
-      expect(doc.getBodyState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('ctx1')?.getMainState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('ctx2')?.getMainState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('m1')?.getMainState(), NCLState.OCCURRING);
+      expect(doc.getBodyState(), NclStateType.occurring);
+      expect(doc.getNodeById('ctx1')?.getMainState(), NclStateType.occurring);
+      expect(doc.getNodeById('ctx2')?.getMainState(), NclStateType.occurring);
+      expect(doc.getNodeById('m1')?.getMainState(), NclStateType.occurring);
     });
 
     test('3x ctx nested', () {
@@ -98,13 +98,13 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromContent(xml);
+      final doc = NclDocument.fromContent(xml);
       doc.start();
-      expect(doc.getBodyState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('ctx1')?.getMainState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('ctx2')?.getMainState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('ctx3')?.getMainState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('m1')?.getMainState(), NCLState.OCCURRING);
+      expect(doc.getBodyState(), NclStateType.occurring);
+      expect(doc.getNodeById('ctx1')?.getMainState(), NclStateType.occurring);
+      expect(doc.getNodeById('ctx2')?.getMainState(), NclStateType.occurring);
+      expect(doc.getNodeById('ctx3')?.getMainState(), NclStateType.occurring);
+      expect(doc.getNodeById('m1')?.getMainState(), NclStateType.occurring);
     });
 
     test('4x ctx nested', () {
@@ -128,14 +128,14 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromContent(xml);
+      final doc = NclDocument.fromContent(xml);
       doc.start();
-      expect(doc.getBodyState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('ctx1')?.getMainState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('ctx2')?.getMainState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('ctx3')?.getMainState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('ctx4')?.getMainState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('m1')?.getMainState(), NCLState.OCCURRING);
+      expect(doc.getBodyState(), NclStateType.occurring);
+      expect(doc.getNodeById('ctx1')?.getMainState(), NclStateType.occurring);
+      expect(doc.getNodeById('ctx2')?.getMainState(), NclStateType.occurring);
+      expect(doc.getNodeById('ctx3')?.getMainState(), NclStateType.occurring);
+      expect(doc.getNodeById('ctx4')?.getMainState(), NclStateType.occurring);
+      expect(doc.getNodeById('m1')?.getMainState(), NclStateType.occurring);
     });
 
     test('1x ctx no ports', () {
@@ -148,10 +148,10 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromContent(xml);
+      final doc = NclDocument.fromContent(xml);
       doc.start();
-      expect(doc.getBodyState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('ctx1')?.getMainState(), NCLState.SLEEPING);
+      expect(doc.getBodyState(), NclStateType.occurring);
+      expect(doc.getNodeById('ctx1')?.getMainState(), NclStateType.sleeping);
     });
 
     test('2x ctx no ports', () {
@@ -167,11 +167,11 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromContent(xmlString);
+      final doc = NclDocument.fromContent(xmlString);
       doc.start();
-      expect(doc.getBodyState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('c1')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getNodeById('c2')?.getMainState(), NCLState.SLEEPING);
+      expect(doc.getBodyState(), NclStateType.occurring);
+      expect(doc.getNodeById('c1')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('c2')?.getMainState(), NclStateType.sleeping);
     });
 
     test('2x ctx nested no ports', () {
@@ -186,12 +186,12 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromContent(xml);
+      final doc = NclDocument.fromContent(xml);
       doc.start();
-      expect(doc.getBodyState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('ctx1')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getNodeById('ctx2')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getNodeById('m1')?.getMainState(), NCLState.SLEEPING);
+      expect(doc.getBodyState(), NclStateType.occurring);
+      expect(doc.getNodeById('ctx1')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('ctx2')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('m1')?.getMainState(), NclStateType.sleeping);
     });
 
     test('3x ctx nested no ports', () {
@@ -208,13 +208,13 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromContent(xml);
+      final doc = NclDocument.fromContent(xml);
       doc.start();
-      expect(doc.getBodyState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('ctx1')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getNodeById('ctx2')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getNodeById('ctx3')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getNodeById('m1')?.getMainState(), NCLState.SLEEPING);
+      expect(doc.getBodyState(), NclStateType.occurring);
+      expect(doc.getNodeById('ctx1')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('ctx2')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('ctx3')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('m1')?.getMainState(), NclStateType.sleeping);
     });
 
     test('4x ctx nested no ports', () {
@@ -233,14 +233,14 @@ void main() {
   </body>
 </ncl>
 ''';
-      final doc = NCLDocument.fromContent(xml);
+      final doc = NclDocument.fromContent(xml);
       doc.start();
-      expect(doc.getBodyState(), NCLState.OCCURRING);
-      expect(doc.getNodeById('ctx1')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getNodeById('ctx2')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getNodeById('ctx3')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getNodeById('ctx4')?.getMainState(), NCLState.SLEEPING);
-      expect(doc.getNodeById('m1')?.getMainState(), NCLState.SLEEPING);
+      expect(doc.getBodyState(), NclStateType.occurring);
+      expect(doc.getNodeById('ctx1')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('ctx2')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('ctx3')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('ctx4')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('m1')?.getMainState(), NclStateType.sleeping);
     });
   });
 }

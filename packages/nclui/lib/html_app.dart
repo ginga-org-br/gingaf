@@ -1,8 +1,8 @@
 import 'package:ccws/ccws.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:gingacc/ginga_config.dart';
 import 'package:logging/logging.dart';
-import 'package:ncldoc/ncl_document.dart' show GingaConfig;
 import 'package:webview_all/webview_all.dart';
 
 import 'ncl_media_widget.dart';
@@ -58,7 +58,7 @@ class HTMLAppState extends MediaState<HTMLApp> {
 
   Future<void> _loadHTML() async {
     try {
-      String content = await this.loadContent(widget.src);
+      String content = await loadContent(widget.src) ?? '';
 
       if (widget.ccws != null && widget.config.enableCCWS) {
         content = widget.ccws!.injectCcwsFetch(content);

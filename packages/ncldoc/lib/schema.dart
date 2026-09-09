@@ -1,13 +1,13 @@
 import 'package:xml/xml.dart';
 
-const int ATTR_OPTIONAL = 0;
-const int ATTR_ID = 1;
-const int ATTR_OPT_ID = 2;
-const int ATTR_REQUIRED = 3;
-const int ATTR_REQUIRED_NONEMPTY_NAME = 4;
-const int ATTR_OPT_IDREF = 5;
-const int ATTR_IDREF = 6;
-const int ATTR_NONEMPTY_NAME = 7;
+const int attrOptional = 0;
+const int attrId = 1;
+const int attrOptId = 2;
+const int attrRequired = 3;
+const int attrRequiredNonemptyName = 4;
+const int attrOptIdref = 5;
+const int attrIdref = 6;
+const int attrNonemptyName = 7;
 
 class ElementSyntax {
   final List<String> possibleParents;
@@ -42,10 +42,10 @@ class Schema {
       const ElementSyntax(
         possibleParents: [],
         attributes: {
-          "id": ATTR_OPT_ID,
-          "title": ATTR_OPTIONAL,
-          "schemaLocation": ATTR_OPTIONAL,
-          "xmlns": ATTR_OPTIONAL,
+          "id": attrOptId,
+          "title": attrOptional,
+          "schemaLocation": attrOptional,
+          "xmlns": attrOptional,
         },
       ),
     );
@@ -62,9 +62,9 @@ class Schema {
       const ElementSyntax(
         possibleParents: ["head"],
         attributes: {
-          "id": ATTR_OPT_ID,
-          "device": ATTR_OPTIONAL,
-          "region": ATTR_OPTIONAL,
+          "id": attrOptId,
+          "device": attrOptional,
+          "region": attrOptional,
         },
       ),
     );
@@ -89,15 +89,15 @@ class Schema {
       const ElementSyntax(
         possibleParents: ["region", "regionBase"],
         attributes: {
-          "id": ATTR_ID,
-          "title": ATTR_OPTIONAL,
-          "left": ATTR_OPTIONAL,
-          "right": ATTR_OPTIONAL,
-          "top": ATTR_OPTIONAL,
-          "bottom": ATTR_OPTIONAL,
-          "height": ATTR_OPTIONAL,
-          "width": ATTR_OPTIONAL,
-          "zIndex": ATTR_OPTIONAL,
+          "id": attrId,
+          "title": attrOptional,
+          "left": attrOptional,
+          "right": attrOptional,
+          "top": attrOptional,
+          "bottom": attrOptional,
+          "height": attrOptional,
+          "width": attrOptional,
+          "zIndex": attrOptional,
         },
       ),
     );
@@ -110,7 +110,7 @@ class Schema {
       "descriptorBase",
       const ElementSyntax(
         possibleParents: ["head"],
-        attributes: {"id": ATTR_OPT_ID},
+        attributes: {"id": attrOptId},
       ),
     );
     /* from NCL30Descriptor.xsd
@@ -127,31 +127,31 @@ class Schema {
       const ElementSyntax(
         possibleParents: ["descriptorBase"],
         attributes: {
-          "id": ATTR_ID,
-          "player": ATTR_OPTIONAL,
-          "explicitDur": ATTR_OPTIONAL,
-          "region": ATTR_OPT_IDREF,
-          "freeze": ATTR_OPTIONAL,
-          "moveLeft": ATTR_OPTIONAL,
-          "moveRight": ATTR_OPTIONAL,
-          "moveUp": ATTR_OPTIONAL,
-          "moveDown": ATTR_OPTIONAL,
-          "focusIndex": ATTR_OPTIONAL,
-          "focusBorderColor": ATTR_OPTIONAL,
-          "focusBorderWidth": ATTR_OPTIONAL,
-          "focusBorderTransparency": ATTR_OPTIONAL,
-          "focusSrc": ATTR_OPTIONAL,
-          "focusSelSrc": ATTR_OPTIONAL,
-          "selBorderColor": ATTR_OPTIONAL,
-          "transIn": ATTR_OPTIONAL,
-          "transOut": ATTR_OPTIONAL,
-          "left": ATTR_OPTIONAL,
-          "right": ATTR_OPTIONAL,
-          "top": ATTR_OPTIONAL,
-          "bottom": ATTR_OPTIONAL,
-          "height": ATTR_OPTIONAL,
-          "width": ATTR_OPTIONAL,
-          "zIndex": ATTR_OPTIONAL,
+          "id": attrId,
+          "player": attrOptional,
+          "explicitDur": attrOptional,
+          "region": attrOptIdref,
+          "freeze": attrOptional,
+          "moveLeft": attrOptional,
+          "moveRight": attrOptional,
+          "moveUp": attrOptional,
+          "moveDown": attrOptional,
+          "focusIndex": attrOptional,
+          "focusBorderColor": attrOptional,
+          "focusBorderWidth": attrOptional,
+          "focusBorderTransparency": attrOptional,
+          "focusSrc": attrOptional,
+          "focusSelSrc": attrOptional,
+          "selBorderColor": attrOptional,
+          "transIn": attrOptional,
+          "transOut": attrOptional,
+          "left": attrOptional,
+          "right": attrOptional,
+          "top": attrOptional,
+          "bottom": attrOptional,
+          "height": attrOptional,
+          "width": attrOptional,
+          "zIndex": attrOptional,
         },
       ),
     );
@@ -166,8 +166,8 @@ class Schema {
       const ElementSyntax(
         possibleParents: ["descriptor"],
         attributes: {
-          "name": ATTR_REQUIRED_NONEMPTY_NAME,
-          "value": ATTR_REQUIRED,
+          "name": attrRequiredNonemptyName,
+          "value": attrRequired,
         },
       ),
     );
@@ -180,7 +180,7 @@ class Schema {
       "connectorBase",
       const ElementSyntax(
         possibleParents: ["head"],
-        attributes: {"id": ATTR_OPT_ID},
+        attributes: {"id": attrOptId},
       ),
     );
     /* from NCL30CausalConnector.xsd
@@ -192,7 +192,7 @@ class Schema {
       "causalConnector",
       const ElementSyntax(
         possibleParents: ["connectorBase"],
-        attributes: {"id": ATTR_ID},
+        attributes: {"id": attrId},
       ),
     );
     /* from NCL30ConnectorCommonPart.xsd
@@ -205,7 +205,7 @@ class Schema {
       "connectorParam",
       const ElementSyntax(
         possibleParents: ["causalConnector"],
-        attributes: {"name": ATTR_NONEMPTY_NAME, "type": ATTR_OPTIONAL},
+        attributes: {"name": attrNonemptyName, "type": attrOptional},
       ),
     );
     /* from NCL30ConnectorCausalExpression.xsd
@@ -218,7 +218,7 @@ class Schema {
       "compoundCondition",
       const ElementSyntax(
         possibleParents: ["causalConnector", "compoundCondition"],
-        attributes: {"operator": ATTR_OPTIONAL, "delay": ATTR_OPTIONAL},
+        attributes: {"operator": attrOptional, "delay": attrOptional},
       ),
     );
     /* from NCL30ConnectorCausalExpression.xsd
@@ -238,14 +238,14 @@ class Schema {
       const ElementSyntax(
         possibleParents: ["causalConnector", "compoundCondition"],
         attributes: {
-          "role": ATTR_REQUIRED_NONEMPTY_NAME,
-          "eventType": ATTR_OPTIONAL,
-          "key": ATTR_OPTIONAL,
-          "transition": ATTR_OPTIONAL,
-          "delay": ATTR_OPTIONAL,
-          "min": ATTR_OPTIONAL,
-          "max": ATTR_OPTIONAL,
-          "qualifier": ATTR_OPTIONAL,
+          "role": attrRequiredNonemptyName,
+          "eventType": attrOptional,
+          "key": attrOptional,
+          "transition": attrOptional,
+          "delay": attrOptional,
+          "min": attrOptional,
+          "max": attrOptional,
+          "qualifier": attrOptional,
         },
       ),
     );
@@ -263,7 +263,7 @@ class Schema {
       "compoundAction",
       const ElementSyntax(
         possibleParents: ["causalConnector", "compoundAction"],
-        attributes: {"operator": ATTR_OPTIONAL, "delay": ATTR_OPTIONAL},
+        attributes: {"operator": attrOptional, "delay": attrOptional},
       ),
     );
     /* from NCL30ConnectorCausalExpression.xsd
@@ -285,18 +285,18 @@ class Schema {
       const ElementSyntax(
         possibleParents: ["causalConnector", "compoundAction"],
         attributes: {
-          "role": ATTR_REQUIRED_NONEMPTY_NAME,
-          "eventType": ATTR_OPTIONAL,
-          "actionType": ATTR_OPTIONAL,
-          "duration": ATTR_OPTIONAL,
-          "value": ATTR_OPTIONAL,
-          "delay": ATTR_OPTIONAL,
-          "min": ATTR_OPTIONAL,
-          "max": ATTR_OPTIONAL,
-          "qualifier": ATTR_OPTIONAL,
-          "repeat": ATTR_OPTIONAL,
-          "repeatDelay": ATTR_OPTIONAL,
-          "by": ATTR_OPTIONAL,
+          "role": attrRequiredNonemptyName,
+          "eventType": attrOptional,
+          "actionType": attrOptional,
+          "duration": attrOptional,
+          "value": attrOptional,
+          "delay": attrOptional,
+          "min": attrOptional,
+          "max": attrOptional,
+          "qualifier": attrOptional,
+          "repeat": attrOptional,
+          "repeatDelay": attrOptional,
+          "by": attrOptional,
         },
       ),
     );
@@ -314,7 +314,7 @@ class Schema {
       "compoundStatement",
       const ElementSyntax(
         possibleParents: ["compoundCondition", "compoundStatement"],
-        attributes: {"operator": ATTR_REQUIRED, "isNegated": ATTR_OPTIONAL},
+        attributes: {"operator": attrRequired, "isNegated": attrOptional},
       ),
     );
     /* from NCL30ConnectorAssessmentExpression.xsd
@@ -333,7 +333,7 @@ class Schema {
       "assessmentStatement",
       const ElementSyntax(
         possibleParents: ["compoundCondition", "compoundStatement"],
-        attributes: {"comparator": ATTR_REQUIRED},
+        attributes: {"comparator": attrRequired},
       ),
     );
     /* from NCL30ConnectorAssessmentExpression.xsd
@@ -350,11 +350,11 @@ class Schema {
       const ElementSyntax(
         possibleParents: ["assessmentStatement"],
         attributes: {
-          "role": ATTR_REQUIRED_NONEMPTY_NAME,
-          "eventType": ATTR_OPTIONAL,
-          "key": ATTR_OPTIONAL,
-          "attributeType": ATTR_OPTIONAL,
-          "offset": ATTR_OPTIONAL,
+          "role": attrRequiredNonemptyName,
+          "eventType": attrOptional,
+          "key": attrOptional,
+          "attributeType": attrOptional,
+          "offset": attrOptional,
         },
       ),
     );
@@ -367,7 +367,7 @@ class Schema {
       "valueAssessment",
       const ElementSyntax(
         possibleParents: ["assessmentStatement"],
-        attributes: {"value": ATTR_REQUIRED},
+        attributes: {"value": attrRequired},
       ),
     );
     /* from NCL30TestRule.xsd
@@ -379,7 +379,7 @@ class Schema {
       "ruleBase",
       const ElementSyntax(
         possibleParents: ["head"],
-        attributes: {"id": ATTR_OPT_ID},
+        attributes: {"id": attrOptId},
       ),
     );
     /* from NCL30TestRule.xsd
@@ -403,7 +403,7 @@ class Schema {
       "compositeRule",
       const ElementSyntax(
         possibleParents: ["ruleBase", "compositeRule"],
-        attributes: {"id": ATTR_ID, "operator": ATTR_REQUIRED},
+        attributes: {"id": attrId, "operator": attrRequired},
       ),
     );
     /* from NCL30TestRule.xsd
@@ -430,10 +430,10 @@ class Schema {
       const ElementSyntax(
         possibleParents: ["ruleBase", "compositeRule"],
         attributes: {
-          "id": ATTR_ID,
-          "var": ATTR_REQUIRED_NONEMPTY_NAME,
-          "comparator": ATTR_REQUIRED,
-          "value": ATTR_REQUIRED,
+          "id": attrId,
+          "var": attrRequiredNonemptyName,
+          "comparator": attrRequired,
+          "value": attrRequired,
         },
       ),
     );
@@ -446,7 +446,7 @@ class Schema {
       "transitionBase",
       const ElementSyntax(
         possibleParents: ["head"],
-        attributes: {"id": ATTR_OPT_ID},
+        attributes: {"id": attrOptId},
       ),
     );
     /* from NCL30Transition.xsd
@@ -460,18 +460,18 @@ class Schema {
       const ElementSyntax(
         possibleParents: ["transitionBase"],
         attributes: {
-          "id": ATTR_ID,
-          "type": ATTR_REQUIRED_NONEMPTY_NAME,
-          "subtype": ATTR_NONEMPTY_NAME,
-          "dur": ATTR_OPTIONAL,
-          "startProgress": ATTR_OPTIONAL,
-          "endProgress": ATTR_OPTIONAL,
-          "direction": ATTR_OPTIONAL,
-          "fadeColor": ATTR_OPTIONAL,
-          "horzRepeat": ATTR_OPTIONAL,
-          "vertRepeat": ATTR_OPTIONAL,
-          "borderWidth": ATTR_OPTIONAL,
-          "borderColor": ATTR_OPTIONAL,
+          "id": attrId,
+          "type": attrRequiredNonemptyName,
+          "subtype": attrNonemptyName,
+          "dur": attrOptional,
+          "startProgress": attrOptional,
+          "endProgress": attrOptional,
+          "direction": attrOptional,
+          "fadeColor": attrOptional,
+          "horzRepeat": attrOptional,
+          "vertRepeat": attrOptional,
+          "borderWidth": attrOptional,
+          "borderColor": attrOptional,
         },
       ),
     );
@@ -495,10 +495,10 @@ class Schema {
           "fontBase",
         ],
         attributes: {
-          "alias": ATTR_REQUIRED_NONEMPTY_NAME,
-          "documentURI": ATTR_REQUIRED,
-          "region": ATTR_OPTIONAL,
-          "baseId": ATTR_OPTIONAL,
+          "alias": attrRequiredNonemptyName,
+          "documentURI": attrRequired,
+          "region": attrOptional,
+          "baseId": attrOptional,
         },
       ),
     );
@@ -511,10 +511,10 @@ class Schema {
       const ElementSyntax(
         possibleParents: ["fontBase"],
         attributes: {
-          "fontFamily": ATTR_REQUIRED,
-          "src": ATTR_REQUIRED,
-          "fontStyle": ATTR_OPTIONAL,
-          "fontWeight": ATTR_OPTIONAL,
+          "fontFamily": attrRequired,
+          "src": attrRequired,
+          "fontStyle": attrOptional,
+          "fontWeight": attrOptional,
         },
       ),
     );
@@ -527,7 +527,7 @@ class Schema {
       "body",
       const ElementSyntax(
         possibleParents: ["ncl"],
-        attributes: {"id": ATTR_OPT_ID},
+        attributes: {"id": attrOptId},
       ),
     );
     /* from NCL30Context.xsd
@@ -539,7 +539,7 @@ class Schema {
       "context",
       const ElementSyntax(
         possibleParents: ["body", "context", "switch"],
-        attributes: {"id": ATTR_ID, "refer": ATTR_OPT_IDREF},
+        attributes: {"id": attrId, "refer": attrOptIdref},
       ),
     );
     /* from NCL30CompositeNodeInterface.xsd
@@ -554,9 +554,9 @@ class Schema {
       const ElementSyntax(
         possibleParents: ["body", "context"],
         attributes: {
-          "id": ATTR_ID,
-          "component": ATTR_IDREF,
-          "interface": ATTR_OPT_IDREF,
+          "id": attrId,
+          "component": attrIdref,
+          "interface": attrOptIdref,
         },
       ),
     );
@@ -572,7 +572,7 @@ class Schema {
       "switch",
       const ElementSyntax(
         possibleParents: ["body", "context", "switch"],
-        attributes: {"id": ATTR_ID, "refer": ATTR_OPT_IDREF},
+        attributes: {"id": attrId, "refer": attrOptIdref},
       ),
     );
     /* from NCL30SwitchInterface.xsd
@@ -587,7 +587,7 @@ class Schema {
       "switchPort",
       const ElementSyntax(
         possibleParents: ["switch"],
-        attributes: {"id": ATTR_ID},
+        attributes: {"id": attrId},
       ),
     );
     /* from NCL30SwitchInterface.xsd
@@ -600,7 +600,7 @@ class Schema {
       "mapping",
       const ElementSyntax(
         possibleParents: ["switchPort"],
-        attributes: {"component": ATTR_IDREF, "interface": ATTR_OPT_IDREF},
+        attributes: {"component": attrIdref, "interface": attrOptIdref},
       ),
     );
     /* from NCL30TestRuleUse.xsd
@@ -613,7 +613,7 @@ class Schema {
       "bindRule",
       const ElementSyntax(
         possibleParents: ["switch"],
-        attributes: {"constituent": ATTR_IDREF, "rule": ATTR_IDREF},
+        attributes: {"constituent": attrIdref, "rule": attrIdref},
       ),
     );
     /* from NCL30ContentControl.xsd
@@ -625,7 +625,7 @@ class Schema {
       "defaultComponent",
       const ElementSyntax(
         possibleParents: ["switch"],
-        attributes: {"component": ATTR_IDREF},
+        attributes: {"component": attrIdref},
       ),
     );
     /* from NCL30Media.xsd
@@ -640,12 +640,12 @@ class Schema {
       const ElementSyntax(
         possibleParents: ["body", "context", "switch"],
         attributes: {
-          "id": ATTR_ID,
-          "src": ATTR_OPTIONAL,
-          "type": ATTR_OPTIONAL,
-          "descriptor": ATTR_OPT_IDREF,
-          "refer": ATTR_OPT_IDREF,
-          "instance": ATTR_OPTIONAL,
+          "id": attrId,
+          "src": attrOptional,
+          "type": attrOptional,
+          "descriptor": attrOptIdref,
+          "refer": attrOptIdref,
+          "instance": attrOptional,
         },
       ),
     );
@@ -665,10 +665,10 @@ class Schema {
       const ElementSyntax(
         possibleParents: ["media"],
         attributes: {
-          "id": ATTR_ID,
-          "begin": ATTR_OPTIONAL,
-          "end": ATTR_OPTIONAL,
-          "label": ATTR_OPTIONAL,
+          "id": attrId,
+          "begin": attrOptional,
+          "end": attrOptional,
+          "label": attrOptional,
         },
       ),
     );
@@ -684,8 +684,8 @@ class Schema {
       const ElementSyntax(
         possibleParents: ["body", "context", "media"],
         attributes: {
-          "name": ATTR_REQUIRED_NONEMPTY_NAME,
-          "value": ATTR_OPTIONAL,
+          "name": attrRequiredNonemptyName,
+          "value": attrOptional,
         },
       ),
     );
@@ -703,7 +703,7 @@ class Schema {
       "link",
       const ElementSyntax(
         possibleParents: ["body", "context"],
-        attributes: {"id": ATTR_OPT_ID, "xconnector": ATTR_IDREF},
+        attributes: {"id": attrOptId, "xconnector": attrIdref},
       ),
     );
     /* from NCL30Linking.xsd
@@ -717,8 +717,8 @@ class Schema {
       const ElementSyntax(
         possibleParents: ["link"],
         attributes: {
-          "name": ATTR_REQUIRED_NONEMPTY_NAME,
-          "value": ATTR_REQUIRED,
+          "name": attrRequiredNonemptyName,
+          "value": attrRequired,
         },
       ),
     );
@@ -737,9 +737,9 @@ class Schema {
       const ElementSyntax(
         possibleParents: ["link"],
         attributes: {
-          "role": ATTR_REQUIRED_NONEMPTY_NAME,
-          "component": ATTR_IDREF,
-          "interface": ATTR_OPT_IDREF,
+          "role": attrRequiredNonemptyName,
+          "component": attrIdref,
+          "interface": attrOptIdref,
         },
       ),
     );
@@ -754,8 +754,8 @@ class Schema {
       const ElementSyntax(
         possibleParents: ["bind"],
         attributes: {
-          "name": ATTR_REQUIRED_NONEMPTY_NAME,
-          "value": ATTR_REQUIRED,
+          "name": attrRequiredNonemptyName,
+          "value": attrRequired,
         },
       ),
     );
@@ -764,7 +764,7 @@ class Schema {
       const ElementSyntax(
         possibleParents: ["head"],
         attributes: {
-          "id": ATTR_OPT_ID,
+          "id": attrOptId,
         },
       ),
     );
@@ -773,10 +773,10 @@ class Schema {
       const ElementSyntax(
         possibleParents: ["userBase"],
         attributes: {
-          "id": ATTR_ID,
-          "name": ATTR_OPTIONAL,
-          "age": ATTR_OPTIONAL,
-          "gender": ATTR_OPTIONAL,
+          "id": attrId,
+          "name": attrOptional,
+          "age": attrOptional,
+          "gender": attrOptional,
         },
       ),
     );
@@ -804,10 +804,10 @@ class Schema {
 
     syntax.attributes.forEach((attrName, flag) {
       final isRequired =
-          flag == ATTR_ID ||
-          flag == ATTR_REQUIRED ||
-          flag == ATTR_REQUIRED_NONEMPTY_NAME ||
-          flag == ATTR_IDREF;
+          flag == attrId ||
+          flag == attrRequired ||
+          flag == attrRequiredNonemptyName ||
+          flag == attrIdref;
       if (isRequired && !attributes.containsKey(attrName)) {
         errors.add(
           'Missing required attribute "$attrName" for element <$tagName>.',

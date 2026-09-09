@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart' hide Action;
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nclui/ncl_app.dart';
 import 'package:ncldoc/ncl_document.dart';
+import 'package:nclui/ncl_app.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 import 'mock_video_player.dart';
@@ -137,9 +138,9 @@ void main() {
     VideoPlayerPlatform.instance = fakePlatform;
   });
 
-  test('NCLDocument key selection, property SET, and layout change resolution',
+  test('NclDocument key selection, property SET, and layout change resolution',
       () {
-    final doc = NCLDocument.fromContent(
+    final doc = NclDocument.fromContent(
         '''<ncl id="joaoSyncIntTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
@@ -282,9 +283,9 @@ void main() {
 
     // Simulate end of promoVideo using the uiQueue
     doc.uiQueue.add(
-      Action(
-        event: promoVideo.getMainEvent(),
-        action: NCLAction.STOP,
+      NclAction(
+        event: promoVideo.getMainNclEvent(),
+        action: NclActionType.stop,
       ),
     );
     doc.tick(

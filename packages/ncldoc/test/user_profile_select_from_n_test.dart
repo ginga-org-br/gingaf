@@ -36,7 +36,7 @@ void main() {
 </ncl>
 ''';
 
-      final docAdultCC = NCLDocument.fromContent(
+      final docAdultCC = NclDocument.fromContent(
         xml,
         config: GingaConfig(
           users: Users(
@@ -49,7 +49,7 @@ void main() {
       expect(docAdultCC.evaluateRule('rAdultWithCC'), isTrue);
       expect(docAdultCC.resolveSwitch(sw1)?.id, equals('mAdultCCAd'));
 
-      final docAdultNoCC = NCLDocument.fromContent(
+      final docAdultNoCC = NclDocument.fromContent(
         xml,
         config: GingaConfig(
           users: Users(
@@ -87,7 +87,7 @@ void main() {
 </ncl>
 ''';
 
-      final doc = NCLDocument.fromContent(
+      final doc = NclDocument.fromContent(
         xml,
         config: GingaConfig(
           users: Users(
@@ -130,7 +130,7 @@ void main() {
 </ncl>
 ''';
 
-      final doc = NCLDocument.fromContent(
+      final doc = NclDocument.fromContent(
         xml,
         config: GingaConfig(
           users: Users(
@@ -177,7 +177,7 @@ void main() {
 </ncl>
 ''';
 
-      final doc = NCLDocument.fromContent(xml);
+      final doc = NclDocument.fromContent(xml);
       final u1 =
           UserData(id: 'u1', name: 'Adult', initialProperties: {'age': 25});
       final u2 =
@@ -229,7 +229,7 @@ void main() {
 </ncl>
 ''';
 
-      final doc = NCLDocument.fromContent(xml);
+      final doc = NclDocument.fromContent(xml);
       final users = doc.users;
       final u1 = UserData(
           id: 'u1',

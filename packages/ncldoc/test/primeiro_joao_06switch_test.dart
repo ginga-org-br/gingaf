@@ -3,8 +3,8 @@ import 'package:test/test.dart';
 
 void main() {
   group('primeiro_joao_06switch', () {
-    test('NCLDocument executes Switch default (PT) path correctly', () {
-      final doc = NCLDocument.fromContent(
+    test('NclDocument executes Switch default (PT) path correctly', () {
+      final doc = NclDocument.fromContent(
         '''<ncl id="nclSwitch" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <ruleBase>
@@ -140,8 +140,8 @@ void main() {
       final ptForm = doc.getNodeById('ptForm') as Media;
       final enForm = doc.getNodeById('enForm') as Media;
 
-      expect(ptForm.getMainState(), NCLState.SLEEPING);
-      expect(enForm.getMainState(), NCLState.SLEEPING);
+      expect(ptForm.getMainState(), NclStateType.sleeping);
+      expect(enForm.getMainState(), NclStateType.sleeping);
 
       doc.tick(45000);
       doc.triggerSelection('mIcon', 'RED');
@@ -150,24 +150,24 @@ void main() {
       var active = doc.getActiveMedia().map((m) => m.id).toList();
       expect(active, contains('ptForm'));
       expect(active, isNot(contains('enForm')));
-      expect(ptForm.getMainState(), NCLState.OCCURRING);
-      expect(enForm.getMainState(), NCLState.SLEEPING);
+      expect(ptForm.getMainState(), NclStateType.occurring);
+      expect(enForm.getMainState(), NclStateType.sleeping);
 
       final mMain = doc.getNodeById('mMain') as Media;
       final boundsProp = mMain.getProperties().firstWhere(
-        (p) => p.name == 'bounds',
-      );
+            (p) => p.name == 'bounds',
+          );
       expect(boundsProp.value, '5%,6.7%,45%,45%');
 
       doc.tick(15000);
       active = doc.getActiveMedia().map((m) => m.id).toList();
       expect(active, isNot(contains('ptForm')));
-      expect(ptForm.getMainState(), NCLState.SLEEPING);
+      expect(ptForm.getMainState(), NclStateType.sleeping);
       expect(boundsProp.value, '0,0,100%,100%');
     });
 
-    test('NCLDocument executes Switch English (EN) path correctly', () {
-      final doc = NCLDocument.fromContent(
+    test('NclDocument executes Switch English (EN) path correctly', () {
+      final doc = NclDocument.fromContent(
         '''<ncl id="nclSwitch" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <ruleBase>
@@ -303,8 +303,8 @@ void main() {
       final ptForm = doc.getNodeById('ptForm') as Media;
       final enForm = doc.getNodeById('enForm') as Media;
 
-      expect(ptForm.getMainState(), NCLState.SLEEPING);
-      expect(enForm.getMainState(), NCLState.SLEEPING);
+      expect(ptForm.getMainState(), NclStateType.sleeping);
+      expect(enForm.getMainState(), NclStateType.sleeping);
 
       doc.tick(45000);
       doc.triggerSelection('mIcon', 'RED');
@@ -313,19 +313,19 @@ void main() {
       var active = doc.getActiveMedia().map((m) => m.id).toList();
       expect(active, contains('enForm'));
       expect(active, isNot(contains('ptForm')));
-      expect(enForm.getMainState(), NCLState.OCCURRING);
-      expect(ptForm.getMainState(), NCLState.SLEEPING);
+      expect(enForm.getMainState(), NclStateType.occurring);
+      expect(ptForm.getMainState(), NclStateType.sleeping);
 
       final mMain = doc.getNodeById('mMain') as Media;
       final boundsProp = mMain.getProperties().firstWhere(
-        (p) => p.name == 'bounds',
-      );
+            (p) => p.name == 'bounds',
+          );
       expect(boundsProp.value, '5%,6.7%,45%,45%');
 
       doc.tick(15000);
       active = doc.getActiveMedia().map((m) => m.id).toList();
       expect(active, isNot(contains('enForm')));
-      expect(enForm.getMainState(), NCLState.SLEEPING);
+      expect(enForm.getMainState(), NclStateType.sleeping);
       expect(boundsProp.value, '0,0,100%,100%');
     });
   });

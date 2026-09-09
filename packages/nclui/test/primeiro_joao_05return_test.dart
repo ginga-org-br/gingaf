@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart' hide Action;
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nclui/ncl_app.dart';
 import 'package:ncldoc/ncl_document.dart';
+import 'package:nclui/ncl_app.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 import 'mock_video_player.dart';
@@ -142,8 +142,8 @@ void main() {
     VideoPlayerPlatform.instance = MockVideoPlayer();
   });
 
-  test('NCLDocument executes form return logic correctly', () {
-    final doc = NCLDocument.fromContent(
+  test('NclDocument executes form return logic correctly', () {
+    final doc = NclDocument.fromContent(
         '''<ncl id="nclReturn" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>

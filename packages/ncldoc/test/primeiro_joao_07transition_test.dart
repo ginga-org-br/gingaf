@@ -3,8 +3,10 @@ import 'package:test/test.dart';
 
 void main() {
   group('primeiro_joao_07transition', () {
-test('NCLDocument parses transitions and transition descriptors correctly', () {
-    final doc = NCLDocument.fromContent('''<ncl id="nclTransition" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+    test('NclDocument parses transitions and transition descriptors correctly',
+        () {
+      final doc = NclDocument.fromContent(
+          '''<ncl id="nclTransition" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <transitionBase>
       <transition id="trans1" type="fade" dur="2s"/>
@@ -17,21 +19,22 @@ test('NCLDocument parses transitions and transition descriptors correctly', () {
   <body/>
 </ncl>''');
 
-    final headChildren = doc.headChildren;
-    final transBase = headChildren.firstWhere((e) => e.xmlTagName == 'transitionBase');
-    expect(transBase.children.length, 2);
+      final headChildren = doc.headChildren;
+      final transBase =
+          headChildren.firstWhere((e) => e.xmlTagName == 'transitionBase');
+      expect(transBase.children.length, 2);
 
-    final trans1 = transBase.children.firstWhere((e) => e.rawAttributes['id'] == 'trans1');
-    expect(trans1.rawAttributes['type'], 'fade');
-    expect(trans1.rawAttributes['dur'], '2s');
+      final trans1 = transBase.children
+          .firstWhere((e) => e.rawAttributes['id'] == 'trans1');
+      expect(trans1.rawAttributes['type'], 'fade');
+      expect(trans1.rawAttributes['dur'], '2s');
 
-    final descBase = headChildren.firstWhere((e) => e.xmlTagName == 'descriptorBase');
-    final dribleDesc = descBase.children.firstWhere((e) => e.rawAttributes['id'] == 'dribleDesc');
-    expect(dribleDesc.rawAttributes['transIn'], 'trans1');
-    expect(dribleDesc.rawAttributes['transOut'], 'trans2');
-  });
-
-  
-
+      final descBase =
+          headChildren.firstWhere((e) => e.xmlTagName == 'descriptorBase');
+      final dribleDesc = descBase.children
+          .firstWhere((e) => e.rawAttributes['id'] == 'dribleDesc');
+      expect(dribleDesc.rawAttributes['transIn'], 'trans1');
+      expect(dribleDesc.rawAttributes['transOut'], 'trans2');
+    });
   });
 }

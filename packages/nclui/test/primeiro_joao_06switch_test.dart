@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart' hide Action;
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nclui/ncl_app.dart';
 import 'package:ncldoc/ncl_document.dart';
+import 'package:nclui/ncl_app.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 import 'mock_video_player.dart';
@@ -157,8 +157,8 @@ void main() {
     VideoPlayerPlatform.instance = MockVideoPlayer();
   });
 
-  test('NCLDocument executes Switch default (PT) path correctly', () {
-    final doc = NCLDocument.fromContent(
+  test('NclDocument executes Switch default (PT) path correctly', () {
+    final doc = NclDocument.fromContent(
         '''<ncl id="nclSwitch" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <ruleBase>
@@ -309,8 +309,8 @@ void main() {
     expect(boundsProp.value, '0,0,100%,100%');
   });
 
-  test('NCLDocument executes Switch English (EN) path correctly', () {
-    final doc = NCLDocument.fromContent(
+  test('NclDocument executes Switch English (EN) path correctly', () {
+    final doc = NclDocument.fromContent(
         '''<ncl id="nclSwitch" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <ruleBase>

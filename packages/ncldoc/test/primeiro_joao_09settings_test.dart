@@ -194,9 +194,9 @@ void main() {
 </ncl>''';
 
     test(
-      'NCLDocument evaluates settings conditional triggers correctly when true',
+      'NclDocument evaluates settings conditional triggers correctly when true',
       () {
-        final doc = NCLDocument.fromContent(xml);
+        final doc = NclDocument.fromContent(xml);
         doc.start();
         doc.tick(45000);
         final active = doc.getActiveMedia().map((m) => m.id).toList();
@@ -205,9 +205,9 @@ void main() {
     );
 
     test(
-      'NCLDocument evaluates settings conditional triggers correctly when false',
+      'NclDocument evaluates settings conditional triggers correctly when false',
       () {
-        final doc = NCLDocument.fromContent(xml);
+        final doc = NclDocument.fromContent(xml);
         doc.start();
         doc.triggerSelection('intOn', 'INFO');
         doc.tick(0);

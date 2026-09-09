@@ -10,7 +10,8 @@ void main() {
     });
 
     test('getBody is returned correctly when provided', () {
-      final doc = NCLDocument.fromContent('<ncl><body id="body"><context id="c1"/></body></ncl>');
+      final doc = NclDocument.fromContent(
+          '<ncl><body id="body"><context id="c1"/></body></ncl>');
       expect(doc.body.id, 'body');
       expect(doc.body.children.first.id, 'c1');
     });

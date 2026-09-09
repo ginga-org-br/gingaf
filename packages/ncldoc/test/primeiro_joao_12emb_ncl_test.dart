@@ -48,8 +48,8 @@ void main() {
   </body>
 </ncl>''';
 
-    test('NCLDocument runs embedded NCL document successfully', () {
-      final doc = NCLDocument.fromContent(xml);
+    test('NclDocument runs embedded NCL document successfully', () {
+      final doc = NclDocument.fromContent(xml);
       doc.start();
       doc.tick(45000);
       final active = doc.getActiveMedia().map((m) => m.id).toList();
