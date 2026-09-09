@@ -53,6 +53,11 @@ class UserData {
       initialProperties: initialProps.isNotEmpty ? initialProps : null,
     );
   }
+
+  @override
+  String toString() {
+    return 'UserData(id: $id, name: $name, properties: $_properties)';
+  }
 }
 
 class Users {
@@ -165,9 +170,14 @@ class Users {
   }
 
   void loadUserData(String usersDataJson) {
-    if (usersDataJson.trim().isEmpty) return;
+    final sanitized = usersDataJson
+        .split('\n')
+        .where((line) => !line.trimLeft().startsWith('//'))
+        .join('\n')
+        .trim();
+    if (sanitized.isEmpty) return;
 
-    final decoded = json.decode(usersDataJson.trim());
+    final decoded = json.decode(sanitized);
     if (decoded is Map<String, dynamic>) {
       if (decoded.containsKey('id')) {
         registerUser(UserData.fromJson(decoded));
@@ -182,6 +192,11 @@ class Users {
     } else if (decoded is List) {
       importUsers(decoded);
     }
+  }
+
+  @override
+  String toString() {
+    return 'Users(activeUserId: $_activeUserId, users: ${_users.values.toList()})';
   }
 }
 

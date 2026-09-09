@@ -134,6 +134,13 @@ void main(List<String> args) async {
       _logger.severe('Failed to load config: $e');
       config = GingaConfig();
     }
+  } else if (appSrc != null) {
+    try {
+      config = await GingaConfig.fromJson('ginga_config.json', appSrc);
+    } catch (e) {
+      _logger.severe('Failed to load config: $e');
+      config = GingaConfig();
+    }
   } else {
     config = GingaConfig();
   }

@@ -220,5 +220,15 @@ void main() {
       expect(config.enableCCWS, isFalse);
       expect(config.envVariables['system.language'], equals('eng'));
     });
+
+    test('toString includes users', () {
+      final config = GingaConfig(
+        appSrc: 'main.ncl',
+        users: Users('[{"id": "u1", "name": "Bob"}]'),
+      );
+      final str = config.toString();
+      expect(str, contains('users: Users'));
+      expect(str, contains('UserData(id: u1, name: Bob'));
+    });
   });
 }

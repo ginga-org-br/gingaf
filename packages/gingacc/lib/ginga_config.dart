@@ -94,7 +94,11 @@ class GingaConfig {
       }
       jsonString = loaded.trim();
     }
-    final dynamic decoded = jsonDecode(jsonString);
+    final sanitizedJson = jsonString
+        .split('\n')
+        .where((line) => !line.trimLeft().startsWith('//'))
+        .join('\n');
+    final dynamic decoded = jsonDecode(sanitizedJson);
     if (decoded is! Map) {
       throw const FormatException('Expected a JSON object for GingaConfig');
     }
@@ -171,6 +175,6 @@ class GingaConfig {
 
   @override
   String toString() {
-    return 'GingaConfig(appSrc: $appSrc, mainAvSrc: $mainAvSrc, enableCCWS: $enableCCWS, envVariables: $envVariables)';
+    return 'GingaConfig(appSrc: $appSrc, mainAvSrc: $mainAvSrc, enableCCWS: $enableCCWS, envVariables: $envVariables, users: $users)';
   }
 }

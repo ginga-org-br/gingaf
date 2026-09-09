@@ -27,7 +27,7 @@
       <property name="gender"/>
     </settings>
     <port id="pMain" component="mVideo"/>
-    <media id="mVideo" src="video.mp4">
+    <media id="mVideo" src="https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4">
       <area id="aSec2" begin="2s"/>
     </media>
     <media id="mMaleAd" src="ad_male.png" descriptor="dAd"/>
