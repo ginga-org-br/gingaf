@@ -267,10 +267,10 @@ class UserProfile extends Element {
   String? get gender => rawAttributes['gender'];
   UserProfile({super.rawAttributes});
 
-  NCLUserData toNCLUser() {
+  UserData toUserData() {
     final idVal = id ?? '';
     final nameVal = name ?? idVal;
-    return NCLUserData(
+    return UserData(
       id: idVal,
       name: nameVal,
       initialProperties: Map<String, dynamic>.from(rawAttributes),
