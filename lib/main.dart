@@ -132,17 +132,17 @@ void main(List<String> args) async {
       config = await GingaConfig.fromJson(configSrc);
     } catch (e) {
       _logger.severe('Failed to load config: $e');
-      config = GingaConfig();
+      config = GingaConfig(enableCCWS: true);
     }
   } else if (appSrc != null) {
     try {
       config = await GingaConfig.fromJson('ginga_config.json', appSrc);
     } catch (e) {
       _logger.severe('Failed to load config: $e');
-      config = GingaConfig();
+      config = GingaConfig(enableCCWS: true);
     }
   } else {
-    config = GingaConfig();
+    config = GingaConfig(enableCCWS: true);
   }
 
   final initialAppSrc = appSrc ?? config.appSrc;
