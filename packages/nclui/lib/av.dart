@@ -20,19 +20,23 @@ class AVWidget extends BaseWidget {
   AVWidgetState createState() => AVWidgetState();
 }
 
-class AVWidgetState extends MediaState<AVWidget> {
+class AVWidgetState<T extends AVWidget> extends MediaState<T> {
   VideoPlayerController? _controller;
   bool _initialized = false;
   bool _isCompleted = false;
+
+  VideoPlayerController? get controller => _controller;
+  bool get initialized => _initialized;
+  bool get isPlaying => true;
+  bool get isLooping => false;
+  bool get notifyCompletion => true;
 
   @override
   void initState() {
     super.initState();
     parseProperties(widget.media);
-    _initVideo();
+    initVideo();
   }
-
-  VideoPlayerController? get controller => _controller;
 
   @override
   void parseProperties([Media? targetMedia]) {
@@ -40,7 +44,30 @@ class AVWidgetState extends MediaState<AVWidget> {
     _controller?.setVolume(soundLevel);
   }
 
-  Future<void> _initVideo() async {
+  void _onVideoPositionChanged() {
+    final c = _controller;
+    if (c != null &&
+        !_isCompleted &&
+        c.value.isInitialized &&
+        c.value.duration.inMilliseconds > 0 &&
+        c.value.position >= c.value.duration) {
+      _isCompleted = true;
+      final media = widget.media;
+      if (media != null && mounted) {
+        final appState = context.findAncestorStateOfType<NclWidgetState>();
+        if (appState != null && appState.nclDocument != null) {
+          appState.nclDocument!.uiQueue.add(
+            NclAction(
+              event: media.getMainNclEvent(),
+              action: NclActionType.stop,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> initVideo() async {
     if (widget.src.trim().isEmpty) return;
     try {
       final gingacc = widget.document?.gingacc ?? GingaCC();
@@ -58,28 +85,14 @@ class AVWidgetState extends MediaState<AVWidget> {
 
       _controller = controller;
 
-      controller.addListener(() {
-        if (!_isCompleted &&
-            controller.value.isInitialized &&
-            controller.value.duration.inMilliseconds > 0 &&
-            controller.value.position >= controller.value.duration) {
-          _isCompleted = true;
-          final media = widget.media;
-          if (media != null && mounted) {
-            final appState = context.findAncestorStateOfType<NclWidgetState>();
-            if (appState != null && appState.nclDocument != null) {
-              appState.nclDocument!.uiQueue.add(
-                NclAction(
-                  event: media.getMainNclEvent(),
-                  action: NclActionType.stop,
-                ),
-              );
-            }
-          }
-        }
-      });
+      if (notifyCompletion) {
+        controller.addListener(_onVideoPositionChanged);
+      }
 
       await controller.initialize();
+      if (isLooping) {
+        await controller.setLooping(true);
+      }
       await controller.setVolume(soundLevel);
 
       if (mounted) {
@@ -88,10 +101,12 @@ class AVWidgetState extends MediaState<AVWidget> {
         });
       }
 
-      try {
-        await controller.play();
-      } catch (playErr) {
-        debugPrint("AVWidget play error: $playErr");
+      if (isPlaying) {
+        try {
+          await controller.play();
+        } catch (playErr) {
+          debugPrint("AVWidget play error: $playErr");
+        }
       }
     } catch (e) {
       debugPrint("AVWidget Error initializing video: $e");
@@ -104,19 +119,26 @@ class AVWidgetState extends MediaState<AVWidget> {
     super.dispose();
   }
 
+  Widget buildLoadingWidget(BuildContext context) {
+    return const Center(child: CircularProgressIndicator());
+  }
+
   @override
   Widget buildWidgetContent(BuildContext context) {
     final controller = _controller;
-    if (!_initialized || controller == null) {
-      return const Center(child: CircularProgressIndicator());
+    if (!_initialized || controller == null || !isPlaying) {
+      return buildLoadingWidget(context);
     }
-    return SizedBox.expand(
-      child: FittedBox(
-        fit: BoxFit.fill,
-        child: SizedBox(
-          width: controller.value.size.width,
-          height: controller.value.size.height,
-          child: VideoPlayer(controller),
+    return Container(
+      color: Colors.black,
+      child: SizedBox.expand(
+        child: FittedBox(
+          fit: BoxFit.fill,
+          child: SizedBox(
+            width: controller.value.size.width,
+            height: controller.value.size.height,
+            child: VideoPlayer(controller),
+          ),
         ),
       ),
     );
