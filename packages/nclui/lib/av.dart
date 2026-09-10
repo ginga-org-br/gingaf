@@ -78,9 +78,6 @@ class AVWidgetState extends MediaState<AVWidget> {
         });
       }
 
-      if (kIsWeb) {
-        await controller.setVolume(0.0);
-      }
       try {
         await controller.play();
       } catch (playErr) {
