@@ -14,6 +14,7 @@ dependencies:
   shelf: ^1.4.1
   shelf_router: ^1.1.4
   web: ^1.0.0
+  json5: ^0.8.2
 
 dev_dependencies:
   test: ^1.24.0

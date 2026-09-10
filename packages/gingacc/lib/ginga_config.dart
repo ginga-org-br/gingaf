@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:json5/json5.dart';
+
 import 'gingacc.dart';
 
 /// Ginga environment configuration.
@@ -104,9 +106,16 @@ class GingaConfig {
     GingaCC? gingacc,
   ]) async {
     gingacc ??= GingaCC();
-    final trimmed = jsonOrSrc.trim();
+    var trimmed = jsonOrSrc.trim();
     if (trimmed.isEmpty) {
       return GingaConfig();
+    }
+    if ((trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+        (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+      final unquoted = trimmed.substring(1, trimmed.length - 1).trim();
+      if (unquoted.startsWith('{') || unquoted.startsWith('[')) {
+        trimmed = unquoted;
+      }
     }
     String jsonString;
     if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
@@ -120,11 +129,13 @@ class GingaConfig {
       }
       jsonString = loaded.trim();
     }
-    final sanitizedJson = jsonString
-        .split('\n')
-        .where((line) => !line.trimLeft().startsWith('//'))
-        .join('\n');
-    final dynamic decoded = jsonDecode(sanitizedJson);
+    final dynamic decoded;
+    try {
+      decoded = json5Decode(jsonString);
+    } catch (e) {
+      if (e is FormatException) rethrow;
+      throw FormatException(e.toString());
+    }
     if (decoded is! Map) {
       throw const FormatException('Expected a JSON object for GingaConfig');
     }

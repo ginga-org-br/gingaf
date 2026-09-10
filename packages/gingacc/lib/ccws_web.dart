@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:js_interop';
 
+import 'package:json5/json5.dart';
 import 'package:logging/logging.dart';
 import 'package:shelf/shelf.dart';
 import 'package:web/web.dart' as web;
@@ -97,7 +98,7 @@ class CCWS {
 
       if (rawData is String && rawData.trim().startsWith('{')) {
         try {
-          final decoded = jsonDecode(rawData);
+          final decoded = json5Decode(rawData);
           if (decoded is Map) {
             mapData = Map<String, dynamic>.from(decoded);
           }

@@ -246,5 +246,26 @@ void main() {
       expect(configEmpty.users.isEmpty, isTrue);
       expect(configEmpty.mainAvSrc, isEmpty);
     });
+
+    test('fromJson parses relaxed JSON with single quotes and unquoted keys',
+        () async {
+      final config1 = await GingaConfig.fromJson("{'enableMainAv': true}");
+      expect(config1.enableMainAv, isTrue);
+
+      final config2 = await GingaConfig.fromJson('{enableMainAv: true}');
+      expect(config2.enableMainAv, isTrue);
+
+      final config3 = await GingaConfig.fromJson('"{ \'enableMainAv\': true }"');
+      expect(config3.enableMainAv, isTrue);
+
+      final config5 = await GingaConfig.fromJson("{'enableMainAv': false}");
+      expect(config5.enableMainAv, isFalse);
+
+      final config6 = await GingaConfig.fromJson(
+        "{'enableMainAv': true, 'mainAvSrc': 'custom.mp4',}",
+      );
+      expect(config6.enableMainAv, isTrue);
+      expect(config6.mainAvSrc, equals('custom.mp4'));
+    });
   });
 }

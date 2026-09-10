@@ -1,7 +1,6 @@
-import 'dart:convert';
-
 import 'package:gingacc/ccws.dart';
 import 'package:http/http.dart' as http;
+import 'package:json5/json5.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -26,7 +25,7 @@ void main() {
         final response = await http.get(uri);
 
         expect(response.statusCode, equals(200));
-        final data = jsonDecode(response.body);
+        final data = json5Decode(response.body);
         expect(data['serviceContextId'], equals('ctx-ginga-001'));
         expect(data['serviceName'], equals('DTV'));
       } catch (e) {
