@@ -222,14 +222,29 @@ void main() {
       expect(config.envVariables['system.language'], equals('eng'));
     });
 
-    test('toString includes users', () {
-      final config = GingaConfig(
+    test('toString includes users when not empty and omits when empty', () {
+      final configWithUsers = GingaConfig(
         appSrc: 'main.ncl',
         users: Users('[{"id": "u1", "name": "Bob"}]'),
       );
-      final str = config.toString();
-      expect(str, contains('users: Users'));
-      expect(str, contains('UserData(id: u1, name: Bob'));
+      final strWithUsers = configWithUsers.toString();
+      expect(strWithUsers, contains('users: Users'));
+      expect(strWithUsers, contains('UserData(id: u1, name: Bob'));
+      expect(strWithUsers, isNot(contains('mainAvSrc:')));
+
+      final configCustom = GingaConfig(
+        appSrc: 'main.ncl',
+        mainAvSrc: 'custom.mp4',
+      );
+      final strCustom = configCustom.toString();
+      expect(strCustom, contains('mainAvSrc: custom.mp4'));
+
+      final configEmpty = GingaConfig(
+        appSrc: 'main.ncl',
+        mainAvSrc: '',
+      );
+      expect(configEmpty.users.isEmpty, isTrue);
+      expect(configEmpty.mainAvSrc, isEmpty);
     });
   });
 }

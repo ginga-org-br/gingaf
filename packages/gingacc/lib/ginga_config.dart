@@ -202,6 +202,15 @@ class GingaConfig {
 
   @override
   String toString() {
-    return 'GingaConfig(appSrc: $appSrc, mainAvSrc: $mainAvSrc, enableCCWS: $enableCCWS, enableMainAv: $enableMainAv, envVariables: $envVariables, users: $users)';
+    final parts = <String>[
+      'appSrc: $appSrc',
+      if (mainAvSrc.isNotEmpty && mainAvSrc != defaultMainAvSrc)
+        'mainAvSrc: $mainAvSrc',
+      'enableCCWS: $enableCCWS',
+      'enableMainAv: $enableMainAv',
+      'envVariables: $envVariables',
+      if (users.isNotEmpty) 'users: $users',
+    ];
+    return 'GingaConfig(${parts.join(', ')})';
   }
 }

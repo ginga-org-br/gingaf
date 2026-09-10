@@ -138,6 +138,8 @@ class Users {
   }
 
   List<UserData> get allUsers => _users.values.toList();
+  bool get isEmpty => _users.isEmpty;
+  bool get isNotEmpty => _users.isNotEmpty;
 
   dynamic getUserProperty(String userId, String propertyName) {
     final user = _users[userId];
