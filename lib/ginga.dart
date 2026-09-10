@@ -8,7 +8,8 @@ import 'package:logging/logging.dart';
 import 'package:nclui/html.dart' as html;
 import 'package:nclui/main_av.dart';
 import 'package:nclui/ncl.dart' as ncl;
-import 'web_utils_stub.dart' if (dart.library.html) 'web_utils_web.dart';
+
+import 'web_utils_stub.dart' if (dart.library.js_interop) 'web_utils_web.dart';
 
 final _logger = Logger('ginga');
 

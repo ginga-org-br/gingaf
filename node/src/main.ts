@@ -466,7 +466,8 @@ export async function initPlayground(mode: string): Promise<void> {
       document.getElementById('editor-overlay')?.classList.remove('hidden');
       runBtn.textContent = 'Stop';
 
-      iframe.src = playerBaseUrl;
+      const srcUrl = `${playerBaseUrl}?app=${encodeURIComponent(currentExample.mainFile)}`;
+      iframe.src = srcUrl;
       iframe.onload = () => {
         syncIframeStorage(iframe.contentWindow, currentExample, allFiles);
       };

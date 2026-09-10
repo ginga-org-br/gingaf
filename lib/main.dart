@@ -7,7 +7,7 @@ import 'package:logging/logging.dart';
 import 'package:video_player_media_kit/video_player_media_kit.dart';
 
 import 'ginga.dart';
-import 'web_utils_stub.dart' if (dart.library.html) 'web_utils_web.dart';
+import 'web_utils_stub.dart' if (dart.library.js_interop) 'web_utils_web.dart';
 
 final _logger = Logger('ginga');
 
@@ -168,5 +168,21 @@ void main(List<String> args) async {
 
   _logger.info(config.toString());
 
-  runApp(Ginga(gingacc: GingaCC(config: config)));
+  Map<String, String>? virtualFiles;
+  if (kIsWeb) {
+    try {
+      final webFiles = getGingaAppFiles();
+      if (webFiles != null) {
+        virtualFiles = webFiles.map((k, v) => MapEntry(k, v.toString()));
+      }
+    } catch (e) {
+      _logger.warning('Failed to load web virtual files: $e');
+    }
+  }
+  runApp(Ginga(
+    gingacc: GingaCC(
+      config: config,
+      virtualFiles: virtualFiles,
+    ),
+  ));
 }
