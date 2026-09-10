@@ -177,4 +177,153 @@ void main() {
     expect(activeMedia, contains('imgChorinho'));
     expect(activeMedia, contains('imgRock'));
   });
+
+  testWidgets('NclWidget handles key navigation and selection switching',
+      (WidgetTester tester) async {
+    final gingacc = GingaCC(
+      virtualFiles: {'joao10menu.ncl': _joao10menuNcl},
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: NclWidget(
+            src: 'joao10menu.ncl',
+            gingacc: gingacc,
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
+    expect(nclState.nclDocument, isNotNull);
+
+    nclState.tick(5000);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(nclState.nclDocument!.currentFocusNodeId, equals('imgChorinho'));
+
+    final choroFinder = find.byWidgetPredicate(
+      (w) => w is AVWidget && w.media?.id == 'choro',
+    );
+    expect(choroFinder, findsOneWidget);
+    final choroState = tester.state<AVWidgetState>(choroFinder);
+    expect(choroState.soundLevel, equals(1.0));
+
+    nclState.handleKeyPress('RIGHT');
+    await tester.pump();
+    expect(nclState.nclDocument!.currentFocusNodeId, equals('imgRock'));
+
+    nclState.handleKeyPress('ENTER');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    var active = nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
+    expect(active, contains('rock'));
+    final docVal = nclState.nclDocument!.getPropertyValue(nclState.nclDocument!.getNodeById('choro')!, 'soundLevel');
+    expect(docVal, equals('0'));
+    expect(choroState.soundLevel, equals(0.0));
+    expect(choroState.controller?.value.volume, equals(0.0));
+
+    nclState.handleKeyPress('RIGHT');
+    await tester.pump();
+    expect(nclState.nclDocument!.currentFocusNodeId, equals('imgTechno'));
+
+    nclState.handleKeyPress('ENTER');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    active = nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
+    expect(active, contains('techno'));
+    expect(active, isNot(contains('rock')));
+    expect(choroState.soundLevel, equals(0.0));
+    expect(choroState.controller?.value.volume, equals(0.0));
+  });
+
+  testWidgets('NclWidget handles mouse tap on focusable media',
+      (WidgetTester tester) async {
+    final gingacc = GingaCC(
+      virtualFiles: {'joao10menu.ncl': _joao10menuNcl},
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: NclWidget(
+            src: 'joao10menu.ncl',
+            gingacc: gingacc,
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
+    nclState.tick(5000);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(nclState.nclDocument!.currentFocusNodeId, equals('imgChorinho'));
+
+    final choroFinder = find.byWidgetPredicate(
+      (w) => w is AVWidget && w.media?.id == 'choro',
+    );
+    expect(choroFinder, findsOneWidget);
+    final choroState = tester.state<AVWidgetState>(choroFinder);
+    expect(choroState.soundLevel, equals(1.0));
+
+    final rockFinder = find.byWidgetPredicate(
+      (w) => w is ImageWidget && w.media?.id == 'imgRock',
+    );
+    expect(rockFinder, findsOneWidget);
+
+    await tester.tap(rockFinder);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(nclState.nclDocument!.currentFocusNodeId, equals('imgRock'));
+    expect(nclState.nclDocument!.envVariables['service.currentFocus'], equals('imgRock'));
+
+    var active = nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
+    expect(active, contains('rock'));
+    expect(choroState.soundLevel, equals(0.0));
+    expect(choroState.controller?.value.volume, equals(0.0));
+
+    final technoFinder = find.byWidgetPredicate(
+      (w) => w is ImageWidget && w.media?.id == 'imgTechno',
+    );
+    expect(technoFinder, findsOneWidget);
+
+    await tester.tap(technoFinder);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(nclState.nclDocument!.currentFocusNodeId, equals('imgTechno'));
+    expect(nclState.nclDocument!.envVariables['service.currentFocus'], equals('imgTechno'));
+
+    active = nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
+    expect(active, contains('techno'));
+    expect(active, isNot(contains('rock')));
+    expect(choroState.soundLevel, equals(0.0));
+    expect(choroState.controller?.value.volume, equals(0.0));
+
+    final choroImgFinder = find.byWidgetPredicate(
+      (w) => w is ImageWidget && w.media?.id == 'imgChorinho',
+    );
+    expect(choroImgFinder, findsOneWidget);
+
+    await tester.tap(choroImgFinder);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(nclState.nclDocument!.currentFocusNodeId, equals('imgChorinho'));
+    expect(choroState.soundLevel, equals(1.0));
+    expect(choroState.controller?.value.volume, equals(1.0));
+  });
 }

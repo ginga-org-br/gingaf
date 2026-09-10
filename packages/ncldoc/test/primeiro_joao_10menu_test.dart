@@ -148,5 +148,60 @@ void main() {
       expect(active, contains('imgChorinho'));
       expect(active, contains('imgRock'));
     });
+
+    test('D-pad navigation and onSelection switches music constituent', () {
+      final doc = NclDocument.fromContent(xml);
+      doc.start();
+      doc.tick(5000);
+
+      expect(doc.currentFocusNodeId, equals('imgChorinho'));
+      expect(doc.envVariables['service.currentFocus'], equals('imgChorinho'));
+
+      doc.handleKey('RIGHT');
+      expect(doc.currentFocusNodeId, equals('imgRock'));
+      expect(doc.envVariables['service.currentFocus'], equals('imgRock'));
+
+      doc.handleKey('ENTER');
+      doc.tick(0);
+
+      var activeMedia = doc.getActiveMedia().map((m) => m.id).toList();
+      expect(activeMedia, contains('rock'));
+      expect(doc.getPropertyValue(doc.getNodeById('choro')!, 'soundLevel'), equals('0'));
+
+      doc.handleKey('RIGHT');
+      expect(doc.currentFocusNodeId, equals('imgTechno'));
+      expect(doc.envVariables['service.currentFocus'], equals('imgTechno'));
+
+      doc.handleKey('ENTER');
+      doc.tick(0);
+
+      activeMedia = doc.getActiveMedia().map((m) => m.id).toList();
+      expect(activeMedia, contains('techno'));
+      expect(activeMedia, isNot(contains('rock')));
+
+      doc.handleKey('RIGHT');
+      expect(doc.currentFocusNodeId, equals('imgCartoon'));
+      expect(doc.envVariables['service.currentFocus'], equals('imgCartoon'));
+
+      doc.handleKey('ENTER');
+      doc.tick(0);
+
+      activeMedia = doc.getActiveMedia().map((m) => m.id).toList();
+      expect(activeMedia, contains('cartoon'));
+      expect(activeMedia, isNot(contains('techno')));
+
+      doc.handleKey('RIGHT');
+      expect(doc.currentFocusNodeId, equals('imgChorinho'));
+      expect(doc.envVariables['service.currentFocus'], equals('imgChorinho'));
+
+      doc.handleKey('ENTER');
+      doc.tick(0);
+
+      activeMedia = doc.getActiveMedia().map((m) => m.id).toList();
+      expect(activeMedia, isNot(contains('rock')));
+      expect(activeMedia, isNot(contains('techno')));
+      expect(activeMedia, isNot(contains('cartoon')));
+      expect(doc.getPropertyValue(doc.getNodeById('choro')!, 'soundLevel'), equals('1'));
+    });
   });
 }
