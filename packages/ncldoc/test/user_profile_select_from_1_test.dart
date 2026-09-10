@@ -75,7 +75,8 @@ void main() {
     </ncl>
     ''';
       final gingacc = GingaCC(
-        users: Users('''
+        config: GingaConfig(
+          users: Users('''
     {
       "id": "uViewer1",
       "name": "Alice",
@@ -97,6 +98,7 @@ void main() {
       }
     }
     '''),
+        ),
       );
       final doc = NclDocument.fromContent(
         xml,

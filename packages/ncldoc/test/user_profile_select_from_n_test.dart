@@ -39,8 +39,10 @@ void main() {
       final docAdultCC = NclDocument.fromContent(
         xml,
         gingacc: GingaCC(
-          users: Users(
-            '[{"id": "u1", "name": "AdultCC", "properties": {"age": "25", "closedCaptioning": "true"}}]',
+          config: GingaConfig(
+            users: Users(
+              '[{"id": "u1", "name": "AdultCC", "properties": {"age": "25", "closedCaptioning": "true"}}]',
+            ),
           ),
         ),
       );
@@ -52,8 +54,10 @@ void main() {
       final docAdultNoCC = NclDocument.fromContent(
         xml,
         gingacc: GingaCC(
-          users: Users(
-            '[{"id": "u2", "name": "AdultNoCC", "properties": {"age": "25", "closedCaptioning": "false"}}]',
+          config: GingaConfig(
+            users: Users(
+              '[{"id": "u2", "name": "AdultNoCC", "properties": {"age": "25", "closedCaptioning": "false"}}]',
+            ),
           ),
         ),
       );
@@ -90,8 +94,10 @@ void main() {
       final doc = NclDocument.fromContent(
         xml,
         gingacc: GingaCC(
-          users: Users(
-            '[{"id": "u1", "name": "YoungUser", "properties": {"age": "16"}}]',
+          config: GingaConfig(
+            users: Users(
+              '[{"id": "u1", "name": "YoungUser", "properties": {"age": "16"}}]',
+            ),
           ),
         ),
       );
@@ -133,8 +139,10 @@ void main() {
       final doc = NclDocument.fromContent(
         xml,
         gingacc: GingaCC(
-          users: Users(
-            '[{"id": "u1", "name": "User PT", "properties": {"lang": "pt-BR"}}, {"id": "u2", "name": "User EN", "properties": {"lang": "en-US"}}]',
+          config: GingaConfig(
+            users: Users(
+              '[{"id": "u1", "name": "User PT", "properties": {"lang": "pt-BR"}}, {"id": "u2", "name": "User EN", "properties": {"lang": "en-US"}}]',
+            ),
           ),
         ),
       );

@@ -7,7 +7,6 @@ import 'package:path/path.dart' as path;
 
 import 'ccws.dart';
 import 'ginga_config.dart';
-import 'users.dart';
 
 export 'ccws.dart';
 export 'ginga_config.dart';
@@ -17,20 +16,13 @@ const bool _isWeb = bool.fromEnvironment('dart.library.js_interop');
 
 class GingaCC {
   final GingaConfig config;
-  final Users users;
   late final CCWS ccws;
   final Map<String, String>? virtualFiles;
 
   GingaCC({
     GingaConfig? config,
-    Users? users,
     this.virtualFiles,
-  })  : users = users ?? config?.users ?? Users(),
-        config = config != null
-            ? (users != null && config.users != users
-                ? config.copyWith(users: users)
-                : config)
-            : GingaConfig(users: users) {
+  }) : config = config ?? GingaConfig() {
     if (this.config.enableCCWS) {
       ccws = CCWS();
     }

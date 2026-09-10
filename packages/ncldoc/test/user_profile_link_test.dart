@@ -58,8 +58,10 @@ void main() {
 ''';
 
         final gingacc = GingaCC(
-          users: Users(
-            '[{"id": "u1", "name": "Bob", "gender": "male", "age": 30}]',
+          config: GingaConfig(
+            users: Users(
+              '[{"id": "u1", "name": "Bob", "gender": "male", "age": 30}]',
+            ),
           ),
         );
         final doc = NclDocument.fromContent(
@@ -138,8 +140,10 @@ void main() {
 ''';
 
         final gingacc = GingaCC(
-          users: Users(
-            '[{"id": "u2", "name": "Alice", "gender": "female", "age": 30}]',
+          config: GingaConfig(
+            users: Users(
+              '[{"id": "u2", "name": "Alice", "gender": "female", "age": 30}]',
+            ),
           ),
         );
         final doc = NclDocument.fromContent(

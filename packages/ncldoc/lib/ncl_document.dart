@@ -29,7 +29,7 @@ class NclDocument {
   final String docSrc;
 
   late final NclScheduler scheduler = NclScheduler(this);
-  Users get users => gingacc.users;
+  Users get users => gingacc.config.users;
   GingaConfig get config => gingacc.config;
   final Map<String, UserProfileQuery> _loadedProfiles = {};
   Map<String, UserProfileQuery> get loadedProfiles => _loadedProfiles;

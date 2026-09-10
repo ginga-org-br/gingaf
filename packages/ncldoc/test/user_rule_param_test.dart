@@ -35,7 +35,8 @@ void main() {
         final doc = NclDocument.fromContent(
           xml,
           gingacc: GingaCC(
-            users: Users('''
+            config: GingaConfig(
+              users: Users('''
         {
           "id": "u1",
           "name": "Bob",
@@ -45,6 +46,7 @@ void main() {
           }
         }
         '''),
+            ),
           ),
         );
 
@@ -85,7 +87,8 @@ void main() {
       final doc = NclDocument.fromContent(
         xml,
         gingacc: GingaCC(
-          users: Users('''
+          config: GingaConfig(
+            users: Users('''
       {
         "id": "u1",
         "name": "Alice",
@@ -94,6 +97,7 @@ void main() {
         }
       }
       '''),
+          ),
         ),
       );
 
@@ -134,7 +138,8 @@ void main() {
       final doc = NclDocument.fromContent(
         xml,
         gingacc: GingaCC(
-          users: Users('''
+          config: GingaConfig(
+            users: Users('''
       [
         {
           "id": "user1",
@@ -148,6 +153,7 @@ void main() {
         }
       ]
       '''),
+          ),
         ),
       );
 
@@ -196,13 +202,15 @@ void main() {
       final doc = NclDocument.fromContent(
         xml,
         gingacc: GingaCC(
-          users: Users('''
+          config: GingaConfig(
+            users: Users('''
       {
         "id": "u1",
         "name": "User One",
         "properties": {"gender": "male", "age": 16}
       }
       '''),
+          ),
         ),
       );
 
