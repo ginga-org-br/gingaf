@@ -237,6 +237,7 @@ class Media extends Node {
   final String mimeType;
   final String uri;
   String? get src => rawAttributes['src'];
+  String? get descriptorId => rawAttributes['descriptor'];
   Media({
     super.rawAttributes,
     this.uri = '',

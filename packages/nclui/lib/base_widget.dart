@@ -216,7 +216,15 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
     height = _resolveDim(heightStr, screenHeight);
     rect = Rect.fromLTWH(left, top, width, height);
 
-    final content = Visibility(
+    final isFocused = document?.currentFocusNodeId != null &&
+        document?.currentFocusNodeId == id;
+    final activeBorderColor = isFocused
+        ? (focusBorderColor != Colors.transparent
+            ? focusBorderColor
+            : Colors.yellowAccent)
+        : Colors.transparent;
+
+    Widget content = Visibility(
       visible: visible,
       child: Opacity(
         opacity: alpha / 255.0,
@@ -225,14 +233,40 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
             color: background,
             border: selBorderColor != Colors.transparent
                 ? Border.all(color: selBorderColor, width: 3.0)
-                : (focusBorderColor != Colors.transparent
-                    ? Border.all(color: focusBorderColor, width: 2.0)
+                : (activeBorderColor != Colors.transparent
+                    ? Border.all(color: activeBorderColor, width: 2.0)
                     : null),
           ),
           child: buildWidgetContent(context),
         ),
       ),
     );
+
+    final desc = (document != null && media != null)
+        ? document!.getDescriptorForMedia(media!)
+        : null;
+    final hasFocusIndex = desc?.focusIndex != null;
+    final hasSelectionLink = id != null &&
+        document != null &&
+        document!.scheduler.getLinksForComponent(id!).any((l) =>
+            l.children.whereType<Bind>().any((b) =>
+                (b.role == 'onSelection' || b.role == 'onSelect') &&
+                b.component == id));
+    final canReceiveTap = hasFocusIndex || hasSelectionLink;
+
+    if (id != null && document != null && canReceiveTap) {
+      content = MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            document?.setFocus(id!);
+            document?.handleSelection(id);
+          },
+          child: content,
+        ),
+      );
+    }
     if (!isPositioned || rect == Rect.zero) {
       return content;
     }

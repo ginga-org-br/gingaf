@@ -38,6 +38,7 @@ class NclDocument {
   Map<String, String> get systemProperties => envVariables;
 
   final GingaCC gingacc;
+  void Function()? onStateChanged;
 
   static Future<NclDocument> fromSrc(
     String docSrc, {
@@ -240,7 +241,7 @@ class NclDocument {
       // NOT COMPLIANT ends
       var systemVal = envVariables[varName];
       if (systemVal == null) {
-        for (final s in _body.children.whereType<Settings>()) {
+        for (final s in getAllSettingsNodes()) {
           var propName = varName;
           if (s.id != null && varName.startsWith('${s.id}.')) {
             propName = varName.substring(s.id!.length + 1);
@@ -274,6 +275,34 @@ class NclDocument {
         }
       }
       // NOT COMPLIANT ends
+
+      if (varName == 'service.currentFocus') {
+        final currentFocus = systemVal ??
+            envVariables['service.currentFocus'] ??
+            _currentFocusNodeId ??
+            '';
+        bool isFocusMatch(String expected) {
+          if (currentFocus == expected) return true;
+          final focusedNode = getNodeById(currentFocus);
+          if (focusedNode is Media) {
+            final fIndex = getFocusIndexForMedia(focusedNode);
+            if (fIndex != null && fIndex == expected) return true;
+          }
+          final targetNode = getNodeById(expected);
+          if (targetNode is Media) {
+            final fIndex = getFocusIndexForMedia(targetNode);
+            if (fIndex != null && fIndex == currentFocus) return true;
+          }
+          return false;
+        }
+
+        if (comparator == 'eq') {
+          return isFocusMatch(value);
+        } else if (comparator == 'ne') {
+          return !isFocusMatch(value);
+        }
+      }
+
       systemVal ??= '';
 
       switch (comparator) {
@@ -447,4 +476,160 @@ class NclDocument {
       );
   void triggerSelection(String componentId, String keyCode) =>
       scheduler.triggerSelection(componentId, keyCode);
+
+  String? _currentFocusNodeId;
+  String? get currentFocusNodeId => _currentFocusNodeId;
+
+  Descriptor? getDescriptorForMedia(Media media) {
+    var descId = media.descriptorId;
+    if (descId == null && media.rawAttributes['refer'] != null) {
+      final referNode = getNodeById(media.rawAttributes['refer']!);
+      if (referNode is Media) {
+        descId = referNode.descriptorId;
+      }
+    }
+    if (descId == null) return null;
+    final descEl = getElementById(descId);
+    return descEl is Descriptor ? descEl : null;
+  }
+
+  String? getFocusIndexForMedia(Media media) {
+    return getDescriptorForMedia(media)?.focusIndex;
+  }
+
+  Media? getActiveMediaByFocusIndex(String focusIndex) {
+    for (var m in getActiveMedia()) {
+      if (getFocusIndexForMedia(m) == focusIndex || m.id == focusIndex) {
+        return m;
+      }
+    }
+    return null;
+  }
+
+  List<Settings> getAllSettingsNodes() {
+    final list = <Settings>[];
+    void search(Element el) {
+      if (el is Settings) list.add(el);
+      for (var c in el.children) {
+        search(c);
+      }
+    }
+    search(_body);
+    return list;
+  }
+
+  void setFocus(String mediaId) {
+    if (mediaId.isEmpty) return;
+    var actualId = mediaId;
+    final mediaByIndex = getActiveMediaByFocusIndex(mediaId);
+    if (mediaByIndex != null && mediaByIndex.id != null) {
+      actualId = mediaByIndex.id!;
+    }
+    _currentFocusNodeId = actualId;
+    envVariables['service.currentFocus'] = actualId;
+    for (var node in getAllSettingsNodes()) {
+      node.setPropertyValue('service.currentFocus', actualId);
+    }
+    onStateChanged?.call();
+  }
+
+  void moveFocus(String direction) {
+    final active = getActiveMedia();
+    if (active.isEmpty) return;
+
+    Media? currentMedia;
+    if (_currentFocusNodeId != null) {
+      currentMedia =
+          active.where((m) => m.id == _currentFocusNodeId).firstOrNull;
+    }
+    if (currentMedia == null) {
+      final focusable =
+          active.where((m) => getFocusIndexForMedia(m) != null).toList();
+      if (focusable.isNotEmpty) {
+        focusable.sort((a, b) {
+          final fa = int.tryParse(getFocusIndexForMedia(a)!) ?? 9999;
+          final fb = int.tryParse(getFocusIndexForMedia(b)!) ?? 9999;
+          return fa.compareTo(fb);
+        });
+        setFocus(focusable.first.id ?? '');
+      }
+      return;
+    }
+
+    final desc = getDescriptorForMedia(currentMedia);
+    if (desc == null) return;
+
+    String? targetIndex;
+    final dir = direction.toUpperCase();
+    if (dir == 'RIGHT' || dir == 'CURSOR_RIGHT') {
+      targetIndex = desc.moveRight;
+    } else if (dir == 'LEFT' || dir == 'CURSOR_LEFT') {
+      targetIndex = desc.moveLeft;
+    } else if (dir == 'UP' || dir == 'CURSOR_UP') {
+      targetIndex = desc.moveUp;
+    } else if (dir == 'DOWN' || dir == 'CURSOR_DOWN') {
+      targetIndex = desc.moveDown;
+    }
+
+    if (targetIndex != null && targetIndex.isNotEmpty) {
+      final targetMedia = getActiveMediaByFocusIndex(targetIndex);
+      if (targetMedia != null && targetMedia.id != null) {
+        setFocus(targetMedia.id!);
+      }
+    }
+  }
+
+  void handleSelection([String? componentId, String keyCode = 'ENTER']) {
+    var targetId = componentId ?? _currentFocusNodeId;
+    if (targetId == null) {
+      moveFocus('NONE');
+      targetId = _currentFocusNodeId;
+    }
+    if (targetId != null && targetId.isNotEmpty) {
+      setFocus(targetId);
+      scheduler.triggerSelection(targetId, keyCode);
+      onStateChanged?.call();
+    }
+  }
+
+  bool handleKey(String keyCode) {
+    final keyUpper = keyCode.toUpperCase();
+    if (keyUpper == 'RIGHT' ||
+        keyUpper == 'CURSOR_RIGHT' ||
+        keyUpper == 'LEFT' ||
+        keyUpper == 'CURSOR_LEFT' ||
+        keyUpper == 'UP' ||
+        keyUpper == 'CURSOR_UP' ||
+        keyUpper == 'DOWN' ||
+        keyUpper == 'CURSOR_DOWN') {
+      moveFocus(keyUpper);
+      return true;
+    }
+
+    if (keyUpper == 'ENTER' || keyUpper == 'OK' || keyUpper == 'SELECT') {
+      handleSelection(null, 'ENTER');
+      return true;
+    }
+
+    bool triggeredAny = false;
+    for (var media in getActiveMedia()) {
+      if (media.id != null) {
+        final links = scheduler.getLinksForComponent(media.id!);
+        final hasLink = links.any((l) => l.children.whereType<Bind>().any((b) =>
+            (b.role == 'onSelection' || b.role == 'onSelect') &&
+            b.component == media.id &&
+            (b.children.whereType<BindParam>().any((bp) =>
+                    (bp.name == 'keyCode' || bp.name == 'key') &&
+                    bp.value?.toUpperCase() == keyUpper) ||
+                l.children.whereType<BindParam>().any((bp) =>
+                    (bp.name == 'keyCode' || bp.name == 'key') &&
+                    bp.value?.toUpperCase() == keyUpper))));
+        if (hasLink) {
+          scheduler.triggerSelection(media.id!, keyUpper);
+          triggeredAny = true;
+        }
+      }
+    }
+    return triggeredAny;
+  }
 }

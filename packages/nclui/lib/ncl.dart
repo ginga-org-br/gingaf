@@ -207,6 +207,11 @@ class NclWidgetState extends MediaState<NclWidget> {
       if (!mounted) return;
 
       nclDocument = doc;
+      doc.onStateChanged = () {
+        if (mounted) {
+          tick(0);
+        }
+      };
       doc.start();
       _syncActiveMedia(doc.getActiveMedia());
 
@@ -226,27 +231,14 @@ class NclWidgetState extends MediaState<NclWidget> {
             final now = DateTime.now();
             final deltaMs = now.difference(lastTick).inMilliseconds;
             lastTick = now;
-            final changedMedia = nclDocument?.tick(deltaMs) ?? <Media>{};
+            tick(deltaMs);
 
-            if (nclDocument != null) {
-              for (var media in changedMedia) {
-                _mediaStateKeys[media.id ?? '']?.currentState?.syncProperties();
-              }
-
-              final currentActiveMedia = nclDocument!.getActiveMedia();
-              if (_syncActiveMedia(currentActiveMedia)) {
-                if (mounted) {
-                  setState(() {});
-                }
-              }
-
-              if (!nclDocument!.isPlaying) {
-                _ticker?.cancel();
-                _ticker = null;
-                nclDocument = null;
-                if (mounted) {
-                  NclWidgetExitNotification().dispatch(context);
-                }
+            if (nclDocument != null && !nclDocument!.isPlaying) {
+              _ticker?.cancel();
+              _ticker = null;
+              nclDocument = null;
+              if (mounted) {
+                NclWidgetExitNotification().dispatch(context);
               }
             }
           });
@@ -267,15 +259,40 @@ class NclWidgetState extends MediaState<NclWidget> {
     }
   }
 
+  String? _previousFocusId;
+
   void tick(int ms) {
     if (nclDocument != null) {
       final changedMedia = nclDocument!.tick(ms);
       for (var media in changedMedia) {
         _mediaStateKeys[media.id ?? '']?.currentState?.syncProperties();
       }
-      _syncActiveMedia(nclDocument!.getActiveMedia());
-      if (mounted) {
+
+      final currentFocus = nclDocument!.currentFocusNodeId;
+      bool focusChanged = false;
+      if (currentFocus != _previousFocusId) {
+        focusChanged = true;
+        if (_previousFocusId != null) {
+          _mediaStateKeys[_previousFocusId!]?.currentState?.syncProperties();
+        }
+        if (currentFocus != null) {
+          _mediaStateKeys[currentFocus]?.currentState?.syncProperties();
+        }
+        _previousFocusId = currentFocus;
+      }
+
+      final activeChanged = _syncActiveMedia(nclDocument!.getActiveMedia());
+      if (mounted && (activeChanged || focusChanged || ms == 0)) {
         setState(() {});
+      }
+    }
+  }
+
+  void handleKeyPress(String keyCode) {
+    if (nclDocument != null) {
+      final handled = nclDocument!.handleKey(keyCode);
+      if (handled) {
+        tick(0);
       }
     }
   }

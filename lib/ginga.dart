@@ -92,6 +92,70 @@ class _GingaState extends State<Ginga> {
         _cleanup();
         return true;
       }
+      String? nclKey;
+      final lk = event.logicalKey;
+      if (lk == LogicalKeyboardKey.arrowRight) {
+        nclKey = 'RIGHT';
+      } else if (lk == LogicalKeyboardKey.arrowLeft) {
+        nclKey = 'LEFT';
+      } else if (lk == LogicalKeyboardKey.arrowUp) {
+        nclKey = 'UP';
+      } else if (lk == LogicalKeyboardKey.arrowDown) {
+        nclKey = 'DOWN';
+      } else if (lk == LogicalKeyboardKey.enter ||
+          lk == LogicalKeyboardKey.numpadEnter ||
+          lk == LogicalKeyboardKey.select) {
+        nclKey = 'ENTER';
+      } else if (lk == LogicalKeyboardKey.f1 ||
+          lk == LogicalKeyboardKey.keyR) {
+        nclKey = 'RED';
+      } else if (lk == LogicalKeyboardKey.f2 ||
+          lk == LogicalKeyboardKey.keyG) {
+        nclKey = 'GREEN';
+      } else if (lk == LogicalKeyboardKey.f3 ||
+          lk == LogicalKeyboardKey.keyY) {
+        nclKey = 'YELLOW';
+      } else if (lk == LogicalKeyboardKey.f4 ||
+          lk == LogicalKeyboardKey.keyB) {
+        nclKey = 'BLUE';
+      } else if (lk == LogicalKeyboardKey.f5 ||
+          lk == LogicalKeyboardKey.keyI) {
+        nclKey = 'INFO';
+      } else if (lk == LogicalKeyboardKey.digit0 ||
+          lk == LogicalKeyboardKey.numpad0) {
+        nclKey = '0';
+      } else if (lk == LogicalKeyboardKey.digit1 ||
+          lk == LogicalKeyboardKey.numpad1) {
+        nclKey = '1';
+      } else if (lk == LogicalKeyboardKey.digit2 ||
+          lk == LogicalKeyboardKey.numpad2) {
+        nclKey = '2';
+      } else if (lk == LogicalKeyboardKey.digit3 ||
+          lk == LogicalKeyboardKey.numpad3) {
+        nclKey = '3';
+      } else if (lk == LogicalKeyboardKey.digit4 ||
+          lk == LogicalKeyboardKey.numpad4) {
+        nclKey = '4';
+      } else if (lk == LogicalKeyboardKey.digit5 ||
+          lk == LogicalKeyboardKey.numpad5) {
+        nclKey = '5';
+      } else if (lk == LogicalKeyboardKey.digit6 ||
+          lk == LogicalKeyboardKey.numpad6) {
+        nclKey = '6';
+      } else if (lk == LogicalKeyboardKey.digit7 ||
+          lk == LogicalKeyboardKey.numpad7) {
+        nclKey = '7';
+      } else if (lk == LogicalKeyboardKey.digit8 ||
+          lk == LogicalKeyboardKey.numpad8) {
+        nclKey = '8';
+      } else if (lk == LogicalKeyboardKey.digit9 ||
+          lk == LogicalKeyboardKey.numpad9) {
+        nclKey = '9';
+      }
+      if (nclKey != null) {
+        _nclAppKey.currentState?.handleKeyPress(nclKey);
+        return true;
+      }
     }
     return false;
   }
