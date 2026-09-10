@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:ncldoc/elements.dart';
 import 'package:video_player/video_player.dart';
 
 import 'base_widget.dart';
@@ -44,6 +45,14 @@ class MainAVWidgetState extends MediaState<MainAVWidget> {
     _initVideo();
   }
 
+  VideoPlayerController? get controller => _controller;
+
+  @override
+  void parseProperties([Media? targetMedia]) {
+    super.parseProperties(targetMedia);
+    _controller?.setVolume(soundLevel);
+  }
+
   Future<void> _initVideo() async {
     if (widget.src.trim().isEmpty) return;
     try {
@@ -63,6 +72,7 @@ class MainAVWidgetState extends MediaState<MainAVWidget> {
       _controller = controller;
       await controller.initialize();
       await controller.setLooping(true);
+      await controller.setVolume(soundLevel);
 
       if (mounted) {
         setState(() {

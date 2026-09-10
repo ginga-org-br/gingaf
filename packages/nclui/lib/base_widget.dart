@@ -37,6 +37,7 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
   String widthStr = '100%';
   String heightStr = '100%';
   bool isPositioned = false;
+  double soundLevel = 1.0;
 
   Media? _media;
   NclDocument? _document;
@@ -108,6 +109,17 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
         heightVal = prop.value;
       } else if (prop.name == 'zIndex' || prop.name == 'zOrder') {
         zIndexVal = prop.value;
+      } else if (prop.name == 'soundLevel') {
+        final slStr = prop.value?.trim() ?? '';
+        if (slStr.endsWith('%')) {
+          final pct = double.tryParse(slStr.substring(0, slStr.length - 1));
+          if (pct != null) soundLevel = (pct / 100.0).clamp(0.0, 1.0);
+        } else {
+          final val = double.tryParse(slStr);
+          if (val != null) {
+            soundLevel = val.clamp(0.0, 1.0);
+          }
+        }
       }
     }
 
