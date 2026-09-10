@@ -26,6 +26,7 @@ class NclWidgetExitNotification extends Notification {}
 
 class NclWidget extends BaseWidget {
   final GlobalKey<MainAVWidgetState>? mainAvKey;
+  final VoidCallback? onRequestMainAv;
 
   const NclWidget({
     super.key,
@@ -34,6 +35,7 @@ class NclWidget extends BaseWidget {
     super.document,
     super.gingacc,
     this.mainAvKey,
+    this.onRequestMainAv,
   });
 
   static Widget? createMediaWidget({
@@ -156,10 +158,16 @@ class NclWidgetState extends MediaState<NclWidget> {
       final isSbtvd = media.src?.startsWith('sbtvd://') == true ||
           media.uri.startsWith('sbtvd://');
       if (isSbtvd && widget.mainAvKey != null) {
+        if (widget.mainAvKey!.currentState == null) {
+          widget.onRequestMainAv?.call();
+        }
         if (!_mediaStateKeys.containsKey(id)) {
-          widget.mainAvKey!.currentState?.setMedia(media, nclDocument);
           _mediaStateKeys[id] = widget.mainAvKey!;
+          if (widget.mainAvKey!.currentState != null) {
+            widget.mainAvKey!.currentState?.setMedia(media, nclDocument);
+          }
           WidgetsBinding.instance.addPostFrameCallback((_) {
+            widget.mainAvKey?.currentState?.setMedia(media, nclDocument);
             widget.mainAvKey?.currentState?.syncProperties();
           });
         }

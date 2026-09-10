@@ -129,13 +129,13 @@ void main() {
   });
 
   testWidgets(
-      'Ginga with enableMainAv controls MainAVWidget via sbtvd media string application',
+      'Ginga with startWithMainAv controls MainAVWidget via sbtvd media string application',
       (WidgetTester tester) async {
     final config = GingaConfig(
       appSrc: sbtvdVideoNcl,
       mainAvSrc: 'examples/primeiro-joao/media/animGar.mp4',
-      enableMainAv: true,
-      enableCCWS: false,
+      startWithMainAv: true,
+      startWithCCWS: false,
     );
     final gingacc = GingaCC(config: config);
     await tester.pumpWidget(Ginga(gingacc: gingacc));
@@ -177,6 +177,51 @@ void main() {
 
     expect(mainAvState.soundLevel, equals(0.0));
     expect(mainAvState.controller?.value.volume, equals(0.0));
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets(
+      'Ginga does not mount MainAVWidget when startWithMainAv is false and no sbtvd application runs',
+      (WidgetTester tester) async {
+    final config = GingaConfig(
+      appSrc: '<ncl><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>',
+      mainAvSrc: 'examples/primeiro-joao/media/animGar.mp4',
+      startWithMainAv: false,
+      startWithCCWS: false,
+    );
+    final gingacc = GingaCC(config: config);
+    await tester.pumpWidget(Ginga(gingacc: gingacc));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.byType(MainAVWidget), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets(
+      'Ginga mounts MainAVWidget on demand when startWithMainAv is false and sbtvd application runs',
+      (WidgetTester tester) async {
+    final config = GingaConfig(
+      appSrc: sbtvdVideoNcl,
+      mainAvSrc: 'examples/primeiro-joao/media/animGar.mp4',
+      startWithMainAv: false,
+      startWithCCWS: false,
+    );
+    final gingacc = GingaCC(config: config);
+    await tester.pumpWidget(Ginga(gingacc: gingacc));
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.byType(MainAVWidget), findsOneWidget);
+    final mainAvState =
+        tester.state<MainAVWidgetState>(find.byType(MainAVWidget));
+    expect(mainAvState.isPlaying, isTrue);
+    expect(mainAvState.media?.id, equals('video'));
+    expect(mainAvState.leftStr, equals('25%'));
+    expect(mainAvState.topStr, equals('25%'));
+    expect(mainAvState.soundLevel, equals(0.5));
 
     await tester.pumpWidget(const SizedBox());
   });

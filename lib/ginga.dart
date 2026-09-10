@@ -38,6 +38,17 @@ class _GingaState extends State<Ginga> {
   final GlobalKey<MainAVWidgetState> _mainAvKey =
       GlobalKey<MainAVWidgetState>();
 
+  void _ensureMainAvMounted() {
+    if (mainAVWidget == null) {
+      setState(() {
+        mainAVWidget = MainAVWidget(
+          key: _mainAvKey,
+          src: _gingacc.config.mainAvSrc,
+        );
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -79,6 +90,7 @@ class _GingaState extends State<Ginga> {
             src: appSrc,
             mainAvKey: _mainAvKey,
             gingacc: _gingacc,
+            onRequestMainAv: _ensureMainAvMounted,
           );
         }
       }
