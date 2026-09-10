@@ -16,17 +16,15 @@ const bool _isWeb = bool.fromEnvironment('dart.library.js_interop');
 
 class GingaCC {
   final GingaConfig config;
-  late final CCWS ccws;
+  final CCWS ccws;
   final Map<String, String>? virtualFiles;
 
   GingaCC({
     GingaConfig? config,
     this.virtualFiles,
-  }) : config = config ?? GingaConfig() {
-    if (this.config.enableCCWS) {
-      ccws = CCWS();
-    }
-  }
+    CCWS? ccws,
+  })  : config = config ?? GingaConfig(),
+        ccws = ccws ?? CCWS();
 
   Uri resolveUri(String src, [String? baseDirSrc]) {
     final rawSrc = src.trim();
@@ -191,13 +189,13 @@ class GingaCC {
   }
 
   Future<void> start() async {
-    if (config.enableCCWS) {
+    if (config.startWithCCWS) {
       await ccws.start();
     }
   }
 
   Future<void> stop() async {
-    if (config.enableCCWS) {
+    if (ccws.isRunning) {
       await ccws.stop();
     }
   }

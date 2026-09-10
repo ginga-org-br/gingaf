@@ -11,7 +11,8 @@ import 'gingacc.dart';
 /// {
 ///   "appSrc": "main.ncl",
 ///   "mainAvSrc": "video.mp4",
-///   "enableCCWS": true,
+///   "startWithCCWS": true,
+///   "startWithMainAv": true,
 ///   "envVariables": {
 ///     "system.language": "por",
 ///     "user.age": "30",
@@ -53,15 +54,15 @@ class GingaConfig {
 
   String? appSrc;
   final String mainAvSrc;
-  final bool enableCCWS;
-  final bool enableMainAv;
+  final bool startWithCCWS;
+  final bool startWithMainAv;
   final Map<String, String> envVariables;
   final Users users;
 
   GingaConfig({
     this.appSrc,
-    this.enableCCWS = false,
-    this.enableMainAv = false,
+    this.startWithCCWS = false,
+    this.startWithMainAv = false,
     this.mainAvSrc = defaultMainAvSrc,
     Map<String, String>? envVariables,
     Users? users,
@@ -70,24 +71,6 @@ class GingaConfig {
           ...?envVariables,
         },
         users = users ?? Users();
-
-  GingaConfig copyWith({
-    String? appSrc,
-    String? mainAvSrc,
-    bool? enableCCWS,
-    bool? enableMainAv,
-    Map<String, String>? envVariables,
-    Users? users,
-  }) {
-    return GingaConfig(
-      appSrc: appSrc ?? this.appSrc,
-      mainAvSrc: mainAvSrc ?? this.mainAvSrc,
-      enableCCWS: enableCCWS ?? this.enableCCWS,
-      enableMainAv: enableMainAv ?? this.enableMainAv,
-      envVariables: envVariables ?? this.envVariables,
-      users: users ?? this.users,
-    );
-  }
 
   Map<String, String> getGroup(String group) {
     final prefix = group.endsWith('.') ? group : '$group.';
@@ -180,7 +163,7 @@ class GingaConfig {
     }
 
     final users = Users();
-    final usersObj = decoded['usersDataJson'];
+    final usersObj = decoded['usersDataJson'] ?? decoded['userDataJson'];
     if (usersObj is String) {
       final trimmedUsers = usersObj.trim();
       if (trimmedUsers.startsWith('{') || trimmedUsers.startsWith('[')) {
@@ -201,11 +184,33 @@ class GingaConfig {
       users.loadUserData(jsonEncode(Map<String, dynamic>.from(usersObj)));
     }
 
+    const allowedKeys = {
+      'appSrc',
+      'mainAvSrc',
+      'startWithCCWS',
+      'startWithMainAv',
+      'envVariables',
+      'usersDataJson',
+      'userDataJson',
+    };
+
+    for (final key in decoded.keys) {
+      final keyStr = key.toString();
+      if (allowedKeys.contains(keyStr)) continue;
+      final isGroup = supportedGroups.any((g) =>
+          keyStr == g ||
+          keyStr == g.substring(0, g.length - 1) ||
+          keyStr.startsWith(g));
+      if (!isGroup) {
+        throw FormatException("Format error: bad key '$keyStr'");
+      }
+    }
+
     return GingaConfig(
       appSrc: decoded['appSrc'] as String?,
       mainAvSrc: decoded['mainAvSrc'] as String? ?? defaultMainAvSrc,
-      enableCCWS: decoded['enableCCWS'] as bool? ?? true,
-      enableMainAv: decoded['enableMainAv'] as bool? ?? true,
+      startWithCCWS: decoded['startWithCCWS'] as bool? ?? false,
+      startWithMainAv: decoded['startWithMainAv'] as bool? ?? false,
       envVariables: envVars,
       users: users,
     );
@@ -217,8 +222,8 @@ class GingaConfig {
       'appSrc: $appSrc',
       if (mainAvSrc.isNotEmpty && mainAvSrc != defaultMainAvSrc)
         'mainAvSrc: $mainAvSrc',
-      'enableCCWS: $enableCCWS',
-      'enableMainAv: $enableMainAv',
+      'startWithCCWS: $startWithCCWS',
+      'startWithMainAv: $startWithMainAv',
       'envVariables: $envVariables',
       if (users.isNotEmpty) 'users: $users',
     ];

@@ -47,7 +47,7 @@ void main() {
 
     setUp(() async {
       gingacc = GingaCC(
-        config: GingaConfig(enableCCWS: true),
+        config: GingaConfig(startWithCCWS: true),
         virtualFiles: {'test_ccws.html': _testCcwsHtml},
       );
       await gingacc.start();

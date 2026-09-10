@@ -86,12 +86,12 @@ void main() {
     });
 
     test('HtmlWidget accepts gingacc parameter', () {
-      final gingacc = GingaCC(config: GingaConfig(enableCCWS: true));
+      final gingacc = GingaCC(config: GingaConfig(startWithCCWS: true));
       final htmlWidget = HtmlWidget(
         src: 'app.html',
         gingacc: gingacc,
       );
-      expect(htmlWidget.gingacc?.config.enableCCWS, isTrue);
+      expect(htmlWidget.gingacc?.config.startWithCCWS, isTrue);
       expect(htmlWidget.src, equals('app.html'));
     });
 
@@ -100,8 +100,8 @@ void main() {
       final config = GingaConfig(
         appSrc: 'test.ncl',
         mainAvSrc: 'examples/primeiro-joao/media/animGar.mp4',
-        enableMainAv: true,
-        enableCCWS: false,
+        startWithMainAv: true,
+        startWithCCWS: false,
       );
       final gingacc = GingaCC(
         config: config,

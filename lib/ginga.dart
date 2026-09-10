@@ -42,7 +42,7 @@ class _GingaState extends State<Ginga> {
   void initState() {
     super.initState();
     _gingacc = widget.gingacc ?? GingaCC();
-    if (_gingacc.config.enableMainAv) {
+    if (_gingacc.config.startWithMainAv) {
       mainAVWidget = MainAVWidget(
         key: _mainAvKey,
         src: _gingacc.config.mainAvSrc,
@@ -50,9 +50,9 @@ class _GingaState extends State<Ginga> {
     }
 
     final isConfigEmpty =
-        _gingacc.config.appSrc == null && !_gingacc.config.enableMainAv;
+        _gingacc.config.appSrc == null && !_gingacc.config.startWithMainAv;
     if (isConfigEmpty && !kIsWeb) {
-      _logger.severe('Both APP and MAINAV are disabled or empty, exiting.');
+      _logger.severe('both APP and CONFIG are empty, exiting');
       _cleanup();
       return;
     }

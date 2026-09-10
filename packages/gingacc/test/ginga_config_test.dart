@@ -14,8 +14,8 @@ void main() {
     test('constructor initializes envVariables and defaults', () {
       final config = GingaConfig();
       expect(config.appSrc, isNull);
-      expect(config.enableCCWS, isFalse);
-      expect(config.enableMainAv, isFalse);
+      expect(config.startWithCCWS, isFalse);
+      expect(config.startWithMainAv, isFalse);
       expect(config.envVariables['system.language'], equals('por'));
       expect(config.users, isNotNull);
     });
@@ -202,7 +202,7 @@ void main() {
         "usersDataJson": [
           {"id": "u1", "name": "Bob"}
         ],
-        "enableCCWS": false,
+        "startWithCCWS": false,
         "envVariables": {
           "system.language": "eng",
           "user.age": "30",
@@ -218,7 +218,7 @@ void main() {
       expect(config.appSrc, equals('main.ncl'));
       expect(config.mainAvSrc, equals('video.mp4'));
       expect(config.users.getUser('u1')?.name, equals('Bob'));
-      expect(config.enableCCWS, isFalse);
+      expect(config.startWithCCWS, isFalse);
       expect(config.envVariables['system.language'], equals('eng'));
     });
 
@@ -249,23 +249,49 @@ void main() {
 
     test('fromJson parses relaxed JSON with single quotes and unquoted keys',
         () async {
-      final config1 = await GingaConfig.fromJson("{'enableMainAv': true}");
-      expect(config1.enableMainAv, isTrue);
+      final config1 = await GingaConfig.fromJson("{'startWithMainAv': true}");
+      expect(config1.startWithMainAv, isTrue);
 
-      final config2 = await GingaConfig.fromJson('{enableMainAv: true}');
-      expect(config2.enableMainAv, isTrue);
+      final config2 = await GingaConfig.fromJson('{startWithMainAv: true}');
+      expect(config2.startWithMainAv, isTrue);
 
-      final config3 = await GingaConfig.fromJson('"{ \'enableMainAv\': true }"');
-      expect(config3.enableMainAv, isTrue);
+      final config3 =
+          await GingaConfig.fromJson('"{ \'startWithMainAv\': true }"');
+      expect(config3.startWithMainAv, isTrue);
 
-      final config5 = await GingaConfig.fromJson("{'enableMainAv': false}");
-      expect(config5.enableMainAv, isFalse);
+      final config5 = await GingaConfig.fromJson("{'startWithMainAv': false}");
+      expect(config5.startWithMainAv, isFalse);
 
       final config6 = await GingaConfig.fromJson(
-        "{'enableMainAv': true, 'mainAvSrc': 'custom.mp4',}",
+        "{'startWithMainAv': true, 'mainAvSrc': 'custom.mp4',}",
       );
-      expect(config6.enableMainAv, isTrue);
+      expect(config6.startWithMainAv, isTrue);
       expect(config6.mainAvSrc, equals('custom.mp4'));
+
+      final config7 = await GingaConfig.fromJson(
+        "{'startWithCCWS': true, 'startWithMainAv': false}",
+      );
+      expect(config7.startWithCCWS, isTrue);
+      expect(config7.startWithMainAv, isFalse);
+    });
+
+    test('fromJson throws FormatException when legacy keys are used', () async {
+      expect(
+        () => GingaConfig.fromJson("{'enableMainAv': true}"),
+        throwsA(isA<FormatException>()),
+      );
+      expect(
+        () => GingaConfig.fromJson("{'enableMainAV': true}"),
+        throwsA(isA<FormatException>()),
+      );
+      expect(
+        () => GingaConfig.fromJson("{'enableCCWS': true}"),
+        throwsA(isA<FormatException>()),
+      );
+      expect(
+        () => GingaConfig.fromJson("{'enableCCWS': false}"),
+        throwsA(isA<FormatException>()),
+      );
     });
   });
 }

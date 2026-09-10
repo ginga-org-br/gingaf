@@ -63,7 +63,7 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
           GingaCC();
       String content = await gingacc.loadContent(widget.src) ?? '';
 
-      if (gingacc.config.enableCCWS) {
+      if (gingacc.ccws.isRunning) {
         content = gingacc.ccws.injectCcwsFetch(content);
       }
 
