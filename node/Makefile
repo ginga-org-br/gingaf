@@ -16,13 +16,13 @@ deps:
 	npm install --no-audit --no-fund
 
 build: deps
-	npm run build
+	npm run build --silent
 
 clean:
-	npm run clean
+	npm run clean --silent
 
 serve: build
-	npm run serve
+	npm run serve --silent
 
 serve-examples: build
 	node scripts/serve.js --express examples/playground-app-example.html examples/player-app-example.html
