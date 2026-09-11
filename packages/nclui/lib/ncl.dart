@@ -27,6 +27,7 @@ class NclWidgetExitNotification extends Notification {}
 class NclWidget extends BaseWidget {
   final GlobalKey<MainAVWidgetState>? mainAvKey;
   final VoidCallback? onRequestMainAv;
+  final Rectangle<double>? bounds;
 
   const NclWidget({
     super.key,
@@ -36,7 +37,23 @@ class NclWidget extends BaseWidget {
     super.gingacc,
     this.mainAvKey,
     this.onRequestMainAv,
+    this.bounds,
   });
+
+  static NclWidgetState of(BuildContext context) {
+    final state = maybeOf(context);
+    if (state == null) {
+      throw FlutterError(
+          'NclWidget.of() called with a context that does not contain an NclWidget.');
+    }
+    return state;
+  }
+
+  static NclWidgetState? maybeOf(BuildContext context) {
+    return context
+        .dependOnInheritedWidgetOfExactType<_NclInheritedWidget>()
+        ?.state;
+  }
 
   static Widget? createMediaWidget({
     Key? key,
@@ -123,6 +140,20 @@ class NclWidgetState extends MediaState<NclWidget> {
   Timer? _ticker;
   String errorMsg = "";
   bool _loading = false;
+
+  Rectangle<double> get bounds {
+    if (widget.bounds != null) return widget.bounds!;
+    if (rect != Rect.zero) {
+      return Rectangle<double>(0.0, 0.0, rect.width, rect.height);
+    }
+    final size = MediaQuery.maybeOf(context)?.size;
+    if (size != null && size != Size.zero) {
+      return Rectangle<double>(0.0, 0.0, size.width, size.height);
+    }
+    return widget.gingacc?.config.graphsPlaneBounds ??
+        nclDocument?.config.graphsPlaneBounds ??
+        const Rectangle<double>(0.0, 0.0, 720.0, 480.0);
+  }
 
   bool get hasSbtvdMedia {
     if (nclDocument == null) return false;
@@ -323,8 +354,9 @@ class NclWidgetState extends MediaState<NclWidget> {
 
   @override
   Widget buildWidgetContent(BuildContext context) {
+    final Widget content;
     if (errorMsg.isNotEmpty) {
-      return Scaffold(
+      content = Scaffold(
         backgroundColor: Colors.black,
         body: Center(
           child: Padding(
@@ -340,10 +372,8 @@ class NclWidgetState extends MediaState<NclWidget> {
           ),
         ),
       );
-    }
-
-    if (nclDocument == null && _cachedWidgets.isEmpty) {
-      return Scaffold(
+    } else if (nclDocument == null && _cachedWidgets.isEmpty) {
+      content = Scaffold(
         backgroundColor: Colors.transparent,
         body: Center(
           child: errorMsg.isNotEmpty
@@ -351,43 +381,65 @@ class NclWidgetState extends MediaState<NclWidget> {
               : const CircularProgressIndicator(),
         ),
       );
-    }
+    } else {
+      final activeMedia = List<Media>.from(nclDocument?.getActiveMedia() ?? []);
+      activeMedia.sort((a, b) {
+        int getZIndex(Media media) {
+          final zIndexProp = media
+              .getProperties()
+              .where((p) => p.name == 'zIndex' || p.name == 'zOrder')
+              .firstOrNull;
+          if (zIndexProp != null && zIndexProp.value != null) {
+            return int.tryParse(zIndexProp.value!) ?? 0;
+          }
+          final resolvedZ = media.rawAttributes['resolvedZIndex'];
+          if (resolvedZ != null) {
+            return int.tryParse(resolvedZ) ?? 0;
+          }
+          return 0;
+        }
 
-    final activeMedia = List<Media>.from(nclDocument?.getActiveMedia() ?? []);
-    activeMedia.sort((a, b) {
-      int getZIndex(Media media) {
-        final zIndexProp = media
-            .getProperties()
-            .where((p) => p.name == 'zIndex' || p.name == 'zOrder')
-            .firstOrNull;
-        if (zIndexProp != null && zIndexProp.value != null) {
-          return int.tryParse(zIndexProp.value!) ?? 0;
+        return getZIndex(a).compareTo(getZIndex(b));
+      });
+
+      final List<Widget> children = [];
+      for (var media in activeMedia) {
+        final widget = _cachedWidgets[media.id ?? ''];
+        if (widget != null) {
+          children.add(widget);
         }
-        final resolvedZ = media.rawAttributes['resolvedZIndex'];
-        if (resolvedZ != null) {
-          return int.tryParse(resolvedZ) ?? 0;
-        }
-        return 0;
       }
 
-      return getZIndex(a).compareTo(getZIndex(b));
-    });
-
-    final List<Widget> children = [];
-    for (var media in activeMedia) {
-      final widget = _cachedWidgets[media.id ?? ''];
-      if (widget != null) {
-        children.add(widget);
-      }
+      content = Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Stack(
+          key: const Key('ncl_app_stack'),
+          fit: StackFit.expand,
+          children: children,
+        ),
+      );
     }
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Stack(
-        key: const Key('ncl_app_stack'),
-        fit: StackFit.expand,
-        children: children,
-      ),
+    return _NclInheritedWidget(
+      state: this,
+      bounds: bounds,
+      child: content,
     );
+  }
+}
+
+class _NclInheritedWidget extends InheritedWidget {
+  final NclWidgetState state;
+  final Rectangle<double> bounds;
+
+  const _NclInheritedWidget({
+    required this.state,
+    required this.bounds,
+    required super.child,
+  });
+
+  @override
+  bool updateShouldNotify(_NclInheritedWidget oldWidget) {
+    return bounds != oldWidget.bounds || state != oldWidget.state;
   }
 }

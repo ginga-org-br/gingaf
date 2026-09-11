@@ -210,7 +210,8 @@ abstract class Node extends Element {
     existing.rawAttributes['value'] = value;
   }
 
-  NclStateType getAreaNclEventState(String areaId) => getAreaNclEvent(areaId).state;
+  NclStateType getAreaNclEventState(String areaId) =>
+      getAreaNclEvent(areaId).state;
   List<Property> getProperties() => children.whereType<Property>().toList();
   List<Area> getAreas() => children.whereType<Area>().toList();
   Node({super.rawAttributes});

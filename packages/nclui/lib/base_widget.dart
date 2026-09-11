@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ncldoc/ncl_document.dart';
 
+import 'ncl.dart';
+
 export 'package:gingacc/gingacc.dart';
 
 abstract class BaseWidget extends StatefulWidget {
@@ -205,15 +207,20 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final screenWidth = size.width;
-    final screenHeight = size.height;
+    final parentBounds = NclWidget.maybeOf(context)?.bounds;
+    final size = MediaQuery.maybeOf(context)?.size;
+    final planeWidth = parentBounds?.width ??
+        size?.width ??
+        (document?.config.graphsPlaneBounds.width ?? 720.0);
+    final planeHeight = parentBounds?.height ??
+        size?.height ??
+        (document?.config.graphsPlaneBounds.height ?? 480.0);
 
     double left, top, width, height;
-    left = _resolveDim(leftStr, screenWidth);
-    top = _resolveDim(topStr, screenHeight);
-    width = _resolveDim(widthStr, screenWidth);
-    height = _resolveDim(heightStr, screenHeight);
+    left = _resolveDim(leftStr, planeWidth);
+    top = _resolveDim(topStr, planeHeight);
+    width = _resolveDim(widthStr, planeWidth);
+    height = _resolveDim(heightStr, planeHeight);
     rect = Rect.fromLTWH(left, top, width, height);
 
     final isFocused = document?.currentFocusNodeId != null &&
@@ -248,8 +255,9 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
     final hasFocusIndex = desc?.focusIndex != null;
     final hasSelectionLink = id != null &&
         document != null &&
-        document!.scheduler.getLinksForComponent(id!).any((l) =>
-            l.children.whereType<Bind>().any((b) =>
+        document!.scheduler.getLinksForComponent(id!).any((l) => l.children
+            .whereType<Bind>()
+            .any((b) =>
                 (b.role == 'onSelection' || b.role == 'onSelect') &&
                 b.component == id));
     final canReceiveTap = hasFocusIndex || hasSelectionLink;
