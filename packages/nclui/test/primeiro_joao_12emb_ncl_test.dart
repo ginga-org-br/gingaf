@@ -5,7 +5,8 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 
 import 'mock_video_player.dart';
 
-const _joao12embNcl = '''<ncl id="_03prepPassiveDevicesEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+const _joao12embNcl =
+    '''<ncl id="_03prepPassiveDevicesEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
       <region id="screenReg" width="100%" height="100%" zIndex="1">
@@ -49,7 +50,8 @@ const _joao12embNcl = '''<ncl id="_03prepPassiveDevicesEx" xmlns="http://www.ncl
   </body>
 </ncl>''';
 
-const _advertNcl = '''<ncl id="_00prepPassiveDevicesEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+const _advertNcl =
+    '''<ncl id="_00prepPassiveDevicesEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>
     <regionBase>
       <region id="backgroundReg" width="100%" height="100%" zIndex="5">
@@ -69,7 +71,7 @@ const _advertNcl = '''<ncl id="_00prepPassiveDevicesEx" xmlns="http://www.ncl.or
   </head>
   <body id="adv">
     <port id="pIcon" component="icon"/>
-    <media id="icon" src="../media/iconPassive.png" descriptor="iconDesc"/>
+    <media id="icon" src="media/iconPassive.png" descriptor="iconDesc"/>
   </body>
 </ncl>''';
 

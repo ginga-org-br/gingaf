@@ -21,10 +21,10 @@
   </head>
   <body id="adv">
     <port id="pIcon" component="icon"/>
-    <media id="icon" src="../media/iconPassive.png" descriptor="iconDesc"/>
-    <media id="background" src="../media/backgroundPassive.png" descriptor="backgroundDesc"/>
-    <media id="shoes" src="../media/shoes.mp4" descriptor="shoesDesc"/>
-    <media id="ptForm" src="../media/ptForm.htm" descriptor="formDesc"/>
+    <media id="icon" src="media/iconPassive.png" descriptor="iconDesc"/>
+    <media id="background" src="media/backgroundPassive.png" descriptor="backgroundDesc"/>
+    <media id="shoes" src="media/shoes.mp4" descriptor="shoesDesc"/>
+    <media id="ptForm" src="media/ptForm.htm" descriptor="formDesc"/>
     <link id="lBegingAdvert" xconnector="conEx#onSelectionStopStart">
       <bind role="onSelection" component="icon"/>
       <bind role="stop" component="icon"/>
