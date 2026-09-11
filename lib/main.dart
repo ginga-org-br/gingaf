@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:gingacc/gingacc.dart';
 import 'package:logging/logging.dart';
+import 'package:path/path.dart' as path;
 import 'package:video_player_media_kit/video_player_media_kit.dart';
 
 import 'ginga.dart';
@@ -142,50 +143,10 @@ void main(List<String> args) async {
     }
   }
 
-  final initialGingacc = GingaCC(virtualFiles: virtualFiles);
-
-  GingaConfig config;
-  if (configSrc != null) {
-    try {
-      config = await GingaConfig.fromJson(configSrc, appSrc, initialGingacc);
-    } catch (e) {
-      _logger.severe('Failed to load config: $e');
-      if (!kIsWeb) {
-        exit(1);
-      }
-      config = GingaConfig(startWithCCWS: true);
-    }
-  } else if (appSrc != null) {
-    try {
-      config = await GingaConfig.fromJson('ginga_config.json', appSrc, initialGingacc);
-    } catch (e) {
-      _logger.severe('Failed to load config: $e');
-      config = GingaConfig(startWithCCWS: true);
-    }
-  } else {
-    config = GingaConfig(startWithCCWS: true);
-  }
-
-  final initialAppSrc = appSrc ?? config.appSrc;
-  String? effectiveAppSrc = initialAppSrc;
-  if (!kIsWeb && initialAppSrc != null) {
-    _logger.info('Initial working directory: ${Directory.current.path}');
-    try {
-      final file = File(initialAppSrc).absolute;
-      _logger.info('Resolved app path: ${file.path}');
-      if (file.existsSync()) {
-        Directory.current = file.parent.path;
-        _logger.info('Switched working directory to ${Directory.current.path}');
-        effectiveAppSrc = file.path.split('/').last.split('\\').last;
-      }
-    } catch (e) {
-      _logger.severe('Failed to set working directory: $e');
-    }
-  }
-
-  if (effectiveAppSrc != null) {
-    config.appSrc = effectiveAppSrc;
-  }
+  final config = await resolveGingaConfig(
+    appSrc: appSrc,
+    configSrc: configSrc,
+  );
 
   _logger.info(config.toString());
 
@@ -196,3 +157,94 @@ void main(List<String> args) async {
     ),
   ));
 }
+
+Future<GingaConfig> resolveGingaConfig({
+  String? appSrc,
+  String? configSrc,
+  GingaCC? gingacc,
+}) async {
+  String? effectiveAppSrc = appSrc;
+  String? effectiveConfigSrc = configSrc;
+
+  if (!kIsWeb) {
+    final appFile = (appSrc != null &&
+            !appSrc.startsWith('http://') &&
+            !appSrc.startsWith('https://'))
+        ? File(appSrc).absolute
+        : null;
+    final configFile = (configSrc != null &&
+            !configSrc.startsWith('http://') &&
+            !configSrc.startsWith('https://'))
+        ? File(configSrc).absolute
+        : null;
+
+    if (appFile != null && appFile.existsSync()) {
+      Directory.current = appFile.parent.path;
+      effectiveAppSrc = path.basename(appFile.path);
+      if (configFile != null && configFile.existsSync()) {
+        effectiveConfigSrc = configFile.path;
+      }
+    } else if (configFile != null && configFile.existsSync()) {
+      Directory.current = configFile.parent.path;
+      effectiveConfigSrc = path.basename(configFile.path);
+    }
+  }
+
+  final initialGingacc = gingacc ?? GingaCC();
+
+  GingaConfig config;
+  if (effectiveConfigSrc != null) {
+    try {
+      config = await GingaConfig.fromJson(
+        effectiveConfigSrc,
+        effectiveAppSrc,
+        initialGingacc,
+      );
+    } catch (e) {
+      _logger.severe('Failed to load config: $e');
+      if (!kIsWeb) {
+        exit(1);
+      }
+      config = GingaConfig(startWithCCWS: true);
+    }
+  } else if (effectiveAppSrc != null) {
+    final localConfigFile = File('ginga_config.json');
+    if (localConfigFile.existsSync()) {
+      try {
+        config = await GingaConfig.fromJson(
+          'ginga_config.json',
+          effectiveAppSrc,
+          initialGingacc,
+        );
+      } catch (e) {
+        _logger.warning('Failed to load config: $e');
+        config = GingaConfig(startWithCCWS: true);
+      }
+    } else {
+      config = GingaConfig(startWithCCWS: true);
+    }
+  } else {
+    config = GingaConfig(startWithCCWS: true);
+  }
+
+  final initialAppSrc = effectiveAppSrc ?? config.appSrc;
+  String? resolvedAppSrc = initialAppSrc;
+  if (!kIsWeb && initialAppSrc != null) {
+    try {
+      final file = File(initialAppSrc).absolute;
+      if (file.existsSync()) {
+        Directory.current = file.parent.path;
+        resolvedAppSrc = path.basename(file.path);
+      }
+    } catch (e) {
+      _logger.severe('Failed to set working directory: $e');
+    }
+  }
+
+  if (resolvedAppSrc != null) {
+    config.appSrc = resolvedAppSrc;
+  }
+
+  return config;
+}
+

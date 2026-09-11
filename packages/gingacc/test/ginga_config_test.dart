@@ -1,5 +1,4 @@
-import 'package:gingacc/ginga_config.dart';
-import 'package:gingacc/users.dart';
+import 'package:gingacc/gingacc.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -330,3 +329,4 @@ void main() {
     });
   });
 }
+
