@@ -1,0 +1,5 @@
+{
+    // to run do: flutter run -d windows --dart-define="CONFIG=examples/sbtvd_only/ginga_config.json"
+    "startWithMainAv": true,
+    "mainAvSrc": "https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4"
+}
