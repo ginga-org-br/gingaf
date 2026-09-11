@@ -293,5 +293,40 @@ void main() {
         throwsA(isA<FormatException>()),
       );
     });
+
+    test('graphsPlaneBounds defaults to 0, 0, 720, 480', () {
+      final config = GingaConfig();
+      expect(config.graphsPlaneBounds, isA<Rectangle<double>>());
+      expect(config.graphsPlaneBounds.left, equals(0.0));
+      expect(config.graphsPlaneBounds.top, equals(0.0));
+      expect(config.graphsPlaneBounds.width, equals(720.0));
+      expect(config.graphsPlaneBounds.height, equals(480.0));
+    });
+
+    test('fromJson parses graphsPlaneBounds from map or list or legacy keys', () async {
+      final configMap = await GingaConfig.fromJson(
+        '{"graphsPlaneBounds": {"left": 10, "top": 20, "width": 1280, "height": 720}}',
+      );
+      expect(configMap.graphsPlaneBounds.left, equals(10.0));
+      expect(configMap.graphsPlaneBounds.top, equals(20.0));
+      expect(configMap.graphsPlaneBounds.width, equals(1280.0));
+      expect(configMap.graphsPlaneBounds.height, equals(720.0));
+
+      final configList = await GingaConfig.fromJson(
+        '{"graphsPlaneBounds": [5, 15, 1920, 1080]}',
+      );
+      expect(configList.graphsPlaneBounds.left, equals(5.0));
+      expect(configList.graphsPlaneBounds.top, equals(15.0));
+      expect(configList.graphsPlaneBounds.width, equals(1920.0));
+      expect(configList.graphsPlaneBounds.height, equals(1080.0));
+
+      final configLegacy = await GingaConfig.fromJson(
+        '{"graphsPlaneWidth": 1920, "graphsPlaneHeight": 1080}',
+      );
+      expect(configLegacy.graphsPlaneBounds.left, equals(0.0));
+      expect(configLegacy.graphsPlaneBounds.top, equals(0.0));
+      expect(configLegacy.graphsPlaneBounds.width, equals(1920.0));
+      expect(configLegacy.graphsPlaneBounds.height, equals(1080.0));
+    });
   });
 }

@@ -69,7 +69,8 @@ class GingaCC {
       if (matched != null) {
         final parsedMatched = Uri.tryParse(matched);
         if (parsedMatched != null &&
-            (parsedMatched.isScheme('http') || parsedMatched.isScheme('https'))) {
+            (parsedMatched.isScheme('http') ||
+                parsedMatched.isScheme('https'))) {
           return await _fetchHttp(parsedMatched);
         }
         return matched;
@@ -164,7 +165,9 @@ class GingaCC {
 
     for (final entry in virtualFiles!.entries) {
       final k = entry.key.replaceAll('\\', '/');
-      if (k == normalized || normalized.endsWith('/$k') || k.endsWith('/$normalized')) {
+      if (k == normalized ||
+          normalized.endsWith('/$k') ||
+          k.endsWith('/$normalized')) {
         return entry.value;
       }
     }
