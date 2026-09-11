@@ -327,6 +327,17 @@ void main() {
       expect(configLegacy.graphsPlaneBounds.width, equals(1920.0));
       expect(configLegacy.graphsPlaneBounds.height, equals(1080.0));
     });
+
+    test('isHttp detects HTTP and HTTPS schemes for String and Uri', () {
+      expect(isHttp('http://example.com'), isTrue);
+      expect(isHttp('https://example.com'), isTrue);
+      expect(isHttp(Uri.parse('http://example.com')), isTrue);
+      expect(isHttp(Uri.parse('https://example.com')), isTrue);
+      expect(isHttp('file:///path/to/file'), isFalse);
+      expect(isHttp('main.ncl'), isFalse);
+      expect(isHttp(null), isFalse);
+      expect(isHttp(123), isFalse);
+    });
   });
 }
 

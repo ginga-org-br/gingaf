@@ -13,6 +13,16 @@ export 'users.dart';
 
 const bool _isWeb = bool.fromEnvironment('dart.library.js_interop');
 
+bool isHttp(Object? source) {
+  if (source is Uri) {
+    return source.isScheme('http') || source.isScheme('https');
+  }
+  if (source is String) {
+    return source.startsWith('http://') || source.startsWith('https://');
+  }
+  return false;
+}
+
 class GingaCC {
   final GingaConfig config;
   final CCWS ccws;
@@ -67,16 +77,14 @@ class GingaCC {
           (uri.isScheme('file') ? _lookupVirtualFile(uri.toFilePath()) : null);
       if (matched != null) {
         final parsedMatched = Uri.tryParse(matched);
-        if (parsedMatched != null &&
-            (parsedMatched.isScheme('http') ||
-                parsedMatched.isScheme('https'))) {
+        if (parsedMatched != null && isHttp(parsedMatched)) {
           return await _fetchHttp(parsedMatched);
         }
         return matched;
       }
     }
 
-    if (uri.isScheme('http') || uri.isScheme('https')) {
+    if (isHttp(uri)) {
       return await _fetchHttp(uri);
     }
 
