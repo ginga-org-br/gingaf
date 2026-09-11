@@ -117,6 +117,11 @@ void main(List<String> args) async {
     }
   }
 
+  if (appArg != null && appArg.toLowerCase().endsWith('.json')) {
+    configArg ??= appArg;
+    appArg = null;
+  }
+
   final appSrc = (appArg != null && appArg.trim().isNotEmpty)
       ? appArg.trim()
       : ((appEnv != null && appEnv.trim().isNotEmpty) ? appEnv.trim() : null);

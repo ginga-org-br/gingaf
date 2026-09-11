@@ -160,6 +160,12 @@ export async function resolveTargetExample(appParam: string | null): Promise<Exa
 
     if (examples[appParam]) return examples[appParam];
     if (examples[cleanParam]) return examples[cleanParam];
+    if (cleanParam.startsWith('examples/')) {
+        const sub = cleanParam.replace(/^examples\//, '');
+        if (examples[sub]) return examples[sub];
+    }
+    if (cleanParam === 'sbtvd/main.ncl' || cleanParam === 'sbtvd') return examples['sbtvd'];
+    if (cleanParam === 'sbtvd_video' || cleanParam === 'sbtvd_video.ncl') return examples['sbtvd'];
     if (examples[extractedFileName]) return examples[extractedFileName];
     if (examples[extractedKey]) return examples[extractedKey];
 
@@ -280,7 +286,7 @@ export async function initPlayer(): Promise<void> {
 
 function buildExampleOptions(): string {
     const groups: Record<string, { key: string; label: string }[]> = {
-        'General Examples': [],
+        'General': [],
         'Embedded': [],
         'Primeiro João': [],
         'Multiuser': []
@@ -296,7 +302,8 @@ function buildExampleOptions(): string {
         } else if (cat === 'multiuser') {
             groups['Multiuser'].push({ key, label: `${key}/${ex.mainFile}` });
         } else {
-            groups['General Examples'].push({ key, label: ex.mainFile });
+            const label = key === 'sbtvd' ? `${key}/${ex.mainFile}` : ex.mainFile;
+            groups['General'].push({ key, label });
         }
     }
 

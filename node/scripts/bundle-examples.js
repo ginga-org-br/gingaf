@@ -44,13 +44,16 @@ const examples = {
     files: {},
     fileUrls: {}
   },
-  sbtvd_video: {
-    mainFile: 'sbtvd_video.ncl',
-    category: 'media',
+  sbtvd: {
+    mainFile: 'main.ncl',
+    category: 'general',
     description: 'SBTVD broadcast video example',
-    relDir: '',
+    relDir: 'sbtvd',
     files: {},
-    fileUrls: {}
+    fileUrls: {},
+    extraFiles: [
+      'ginga_config.json'
+    ]
   },
   lua_canvas: {
     mainFile: 'lua_canvas.ncl',

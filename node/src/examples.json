@@ -9,15 +9,16 @@
     },
     "rawMainUrl": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/video.ncl"
   },
-  "sbtvd_video": {
-    "mainFile": "sbtvd_video.ncl",
-    "category": "media",
+  "sbtvd": {
+    "mainFile": "main.ncl",
+    "category": "general",
     "description": "SBTVD broadcast video example",
     "files": {},
     "fileUrls": {
-      "sbtvd_video.ncl": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/sbtvd_video.ncl"
+      "main.ncl": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/sbtvd/main.ncl",
+      "ginga_config.json": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/sbtvd/ginga_config.json"
     },
-    "rawMainUrl": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/sbtvd_video.ncl"
+    "rawMainUrl": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/sbtvd/main.ncl"
   },
   "lua_canvas": {
     "mainFile": "lua_canvas.ncl",
