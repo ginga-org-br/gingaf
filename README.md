@@ -6,12 +6,20 @@
 
 ## Architecture
 
-The `gingaf` repository is organized as a monorepo: the root directory contains the Flutter host application. It depends on core Dart packages in  `packages/gingacc/` (the common configuration, users, and CCWS library, see [packages/gingacc/README.md](packages/gingacc/README.md)), `packages/ncldoc/` (the headless execution engine, see [packages/ncldoc/README.md](packages/ncldoc/README.md)), and `packages/nclui/` (the visual execution engine, see [packages/nclui/README.md](packages/nclui/README.md)). While [`node/`](node/README.md) contains web interactive playground and npm package.
+The `gingaf` repository is organized as a monorepo: the root directory contains the Flutter host application. See the main components below.
+
+- `packages/gingacc/`: configuration, users, and CCWS
+- `packages/ncldoc/`: NCL headless execution engine
+- `packages/nclui/`: NCL and visual widgets
+- `node/`: npm package which also contains web interactive playground
 
 ```mermaid
 block-beta
 columns 3
   playground["playground"]
+  space
+  space
+  ginga_node["ginga-node"]
   ginga_code["ginga-code"]
   space
   web["gingaf (web)"]
@@ -23,11 +31,9 @@ columns 3
   gingacc["gingacc"]:1
 ```
 
-## Developing Ginga Applciations
+## Developing Ginga Applications using `gingaf`
 
-You can use `gingaf` to develop Ginga applications:
-- at web by using the playground or acessing [ginga.org.br/gingaf/playground](ginga.org.br/gingaf/playground).
-- at desktop by the Visual Studeio code extension [ginga-code](https://github.com/ginga-org-br/ginga-code).
+You can use `gingaf` to develop Ginga applications at web by using the playground or acessing [ginga.org.br/gingaf/playground](ginga.org.br/gingaf/playground) or at desktop by the Visual Studio Code extension [ginga-code](https://github.com/ginga-org-br/ginga-code).
 
 ## Demonstration Videos
 
