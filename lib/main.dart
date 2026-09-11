@@ -27,20 +27,6 @@ void main(List<String> args) async {
   });
 
   if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
-    if (args.contains('-h') || args.contains('--help')) {
-      stdout.writeln('Usage: gingaf [options] [APP_FILE] [CONFIG_FILE]');
-      stdout.writeln('');
-      stdout.writeln('Options:');
-      stdout.writeln('  -h, --help           Show this help message');
-      stdout.writeln('  -c, --config <path>  Path to configuration file');
-      stdout.writeln('  -a, --app <path>     Path to application file');
-      stdout.writeln('');
-      stdout.writeln('Environment Variables alternatives (mobile, web):');
-      stdout.writeln('  APP         Path to the application file');
-      stdout.writeln('  CONFIG      Path to the configuration file');
-      stdout.flush();
-      exit(0);
-    }
 
     try {
       if (stdin.hasTerminal) {
@@ -104,10 +90,18 @@ void main(List<String> args) async {
       if (i + 1 < args.length) {
         configArg = args[++i];
       }
+    } else if (arg.startsWith('--config=')) {
+      configArg = arg.substring('--config='.length);
+    } else if (arg.startsWith('-c=')) {
+      configArg = arg.substring('-c='.length);
     } else if (arg == '--app' || arg == '-a') {
       if (i + 1 < args.length) {
         appArg = args[++i];
       }
+    } else if (arg.startsWith('--app=')) {
+      appArg = arg.substring('--app='.length);
+    } else if (arg.startsWith('-a=')) {
+      appArg = arg.substring('-a='.length);
     } else if (!arg.startsWith('-')) {
       if (appArg == null) {
         appArg = arg;
@@ -130,6 +124,11 @@ void main(List<String> args) async {
       : ((configEnv != null && configEnv.trim().isNotEmpty)
           ? configEnv.trim()
           : null);
+
+  if (!kIsWeb && appSrc == null && configSrc == null) {
+    _logger.severe('both APP and CONFIG are empty, exiting');
+    exit(1);
+  }
 
   Map<String, String>? virtualFiles;
   if (kIsWeb) {

@@ -6,6 +6,7 @@
 #endif
 
 #include "flutter/generated_plugin_registrant.h"
+#include "usage.h"
 
 struct _MyApplication {
   GtkApplication parent_instance;
@@ -83,6 +84,27 @@ static gboolean my_application_local_command_line(GApplication* application,
                                                   gchar*** arguments,
                                                   int* exit_status) {
   MyApplication* self = MY_APPLICATION(application);
+
+  for (gchar** arg = *arguments + 1; *arg != nullptr; ++arg) {
+    if (g_strcmp0(*arg, "-h") == 0 || g_strcmp0(*arg, "--help") == 0) {
+      g_print("%s", kUsageMessage);
+      *exit_status = 0;
+      return TRUE;
+    }
+  }
+
+  gboolean has_args = (*arguments != nullptr && *(*arguments + 1) != nullptr);
+  const gchar* app_env = g_getenv("APP");
+  const gchar* config_env = g_getenv("CONFIG");
+  gboolean has_env = (app_env != nullptr && *app_env != '\0') ||
+                     (config_env != nullptr && *config_env != '\0');
+
+  if (!has_args && !has_env) {
+    g_printerr("%s", kUsageMessage);
+    *exit_status = 1;
+    return TRUE;
+  }
+
   // Strip out the first argument as it is the binary name.
   self->dart_entrypoint_arguments = g_strdupv(*arguments + 1);
 
