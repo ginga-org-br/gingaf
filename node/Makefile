@@ -1,16 +1,17 @@
 MAKEFLAGS += -s --no-print-directory
 
-.PHONY: help deps build serve serve-examples
+.PHONY: help deps build clean serve serve-examples
 
 help:
-	@echo Usage: make [target]
-	@echo.
-	@echo Targets:
-	@echo   deps                          Install npm dependencies
-	@echo   build                         Build Flutter web, copy assets, and compile TypeScript with esbuild
-	@echo   clean                         Remove built artifacts
-	@echo   serve                         Serve Playground application
-	@echo   serve-examples                Serve all 3 examples (Playground app, Player app, Node Express app)
+	@printf "%s\n" \
+		"Usage: make [target]" \
+		"" \
+		"Targets:" \
+		"  deps                          Install npm dependencies" \
+		"  build                         Build Flutter web, copy assets, and compile TypeScript with esbuild" \
+		"  clean                         Remove built artifacts" \
+		"  serve                         Serve Playground application" \
+		"  serve-examples                Serve all 3 examples (Playground app, Player app, Node Express app)"
 
 deps:
 	npm install --no-audit --no-fund

@@ -39,15 +39,16 @@ endif
 ZIP_NAME := gingaf-v$(VERSION)-$(PLATFORM).zip
 
 help:
-	@echo Usage: make [target]
-	@echo.
-	@echo Targets:
-	@echo   deps                 Install dependencies for Flutter workspace
-	@echo   test                 Run tests for Flutter workspace
-	@echo   release              Zip current platform release build
-	@echo   release-publish      Publish release to GitHub Releases via gh
-	@echo   clean                Clean build artifacts
-	@echo   run-example          Run NCL example application (e.g. make run-example app=video.ncl)
+	@printf "%s\n" \
+		"Usage: make [target]" \
+		"" \
+		"Targets:" \
+		"  deps                 Install dependencies for Flutter workspace" \
+		"  test                 Run tests for Flutter workspace" \
+		"  release              Zip current platform release build" \
+		"  release-publish      Publish release to GitHub Releases via gh" \
+		"  clean                Clean build artifacts" \
+		"  run-example          Run NCL example application (e.g. make run-example app=video.ncl)"
 
 deps:
 	flutter pub get
@@ -75,7 +76,7 @@ check-app:
 	$(if $(wildcard examples/$(APP_EXAMPLE)),,$(error File examples/$(APP_EXAMPLE) does not exist))
 
 run-example: check-app
-	@echo ======================================================================
-	@echo Running Example: $(APP_EXAMPLE)
-	@echo ======================================================================
+	$(info ======================================================================)
+	$(info Running Example: $(APP_EXAMPLE))
+	$(info ======================================================================)
 	flutter run --no-pub -d $(RUN_OS) --dart-define="APP=examples/$(APP_EXAMPLE)" || true
