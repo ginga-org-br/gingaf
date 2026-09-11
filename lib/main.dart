@@ -126,10 +126,24 @@ void main(List<String> args) async {
           ? configEnv.trim()
           : null);
 
+  Map<String, String>? virtualFiles;
+  if (kIsWeb) {
+    try {
+      final webFiles = getGingaAppFiles();
+      if (webFiles != null) {
+        virtualFiles = webFiles.map((k, v) => MapEntry(k, v.toString()));
+      }
+    } catch (e) {
+      _logger.warning('Failed to load web virtual files: $e');
+    }
+  }
+
+  final initialGingacc = GingaCC(virtualFiles: virtualFiles);
+
   GingaConfig config;
   if (configSrc != null) {
     try {
-      config = await GingaConfig.fromJson(configSrc, appSrc);
+      config = await GingaConfig.fromJson(configSrc, appSrc, initialGingacc);
     } catch (e) {
       _logger.severe('Failed to load config: $e');
       if (!kIsWeb) {
@@ -139,7 +153,7 @@ void main(List<String> args) async {
     }
   } else if (appSrc != null) {
     try {
-      config = await GingaConfig.fromJson('ginga_config.json', appSrc);
+      config = await GingaConfig.fromJson('ginga_config.json', appSrc, initialGingacc);
     } catch (e) {
       _logger.severe('Failed to load config: $e');
       config = GingaConfig(startWithCCWS: true);
@@ -171,17 +185,6 @@ void main(List<String> args) async {
 
   _logger.info(config.toString());
 
-  Map<String, String>? virtualFiles;
-  if (kIsWeb) {
-    try {
-      final webFiles = getGingaAppFiles();
-      if (webFiles != null) {
-        virtualFiles = webFiles.map((k, v) => MapEntry(k, v.toString()));
-      }
-    } catch (e) {
-      _logger.warning('Failed to load web virtual files: $e');
-    }
-  }
   runApp(Ginga(
     gingacc: GingaCC(
       config: config,

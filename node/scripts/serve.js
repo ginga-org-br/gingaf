@@ -43,6 +43,7 @@ app.use('/examples', (req, res, next) => {
     else if (ext === '.wav') res.setHeader('Content-Type', 'audio/wav');
     else if (ext === '.png') res.setHeader('Content-Type', 'image/png');
     else if (ext === '.jpg' || ext === '.jpeg') res.setHeader('Content-Type', 'image/jpeg');
+    else if (ext === '.json') res.setHeader('Content-Type', 'application/json');
 
     res.setHeader('Access-Control-Allow-Origin', '*');
     fs.createReadStream(filePath).pipe(res);

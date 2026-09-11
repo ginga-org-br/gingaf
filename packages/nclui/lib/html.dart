@@ -1,4 +1,4 @@
-import 'dart:io' if (dart.library.js_interop) '';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -64,7 +64,7 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
           widget.document?.gingacc ??
           GingaCC();
       final uri = gingacc.resolveUri(widget.src);
-      if (uri.isScheme('file') || !uri.hasScheme) {
+      if (!kIsWeb && (uri.isScheme('file') || !uri.hasScheme)) {
         final filePath = uri.isScheme('file') ? uri.toFilePath() : widget.src;
         final file = File(filePath).absolute;
         if (file.existsSync()) {

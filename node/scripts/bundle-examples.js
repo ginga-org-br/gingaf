@@ -20,11 +20,14 @@ function getReferencedFiles(relDirPath, fileName, visited = new Set()) {
   let match;
   while ((match = regex.exec(content)) !== null) {
     const ref = match[1].trim();
-    if (!ref.startsWith('http://') && !ref.startsWith('https://')) {
-      result.push(ref);
-      if (ref.endsWith('.ncl') || ref.endsWith('.xml') || ref.endsWith('.html') || ref.endsWith('.htm')) {
-        const subRefs = getReferencedFiles(relDirPath, ref, visited);
-        result.push(...subRefs);
+    if (!ref.includes('://') && !ref.startsWith('data:')) {
+      const refPath = path.join(examplesDir, relDirPath, ref);
+      if (fs.existsSync(refPath)) {
+        result.push(ref);
+        if (ref.endsWith('.ncl') || ref.endsWith('.xml') || ref.endsWith('.html') || ref.endsWith('.htm')) {
+          const subRefs = getReferencedFiles(relDirPath, ref, visited);
+          result.push(...subRefs);
+        }
       }
     }
   }
@@ -37,6 +40,14 @@ const examples = {
     mainFile: 'video.ncl',
     category: 'media',
     description: 'Video media presentation example',
+    relDir: '',
+    files: {},
+    fileUrls: {}
+  },
+  sbtvd_video: {
+    mainFile: 'sbtvd_video.ncl',
+    category: 'media',
+    description: 'SBTVD broadcast video example',
     relDir: '',
     files: {},
     fileUrls: {}
@@ -73,6 +84,35 @@ const examples = {
     files: {},
     fileUrls: {}
   },
+  emb_ncl: {
+    mainFile: 'emb_ncl.ncl',
+    category: 'embedded',
+    description: 'Embedded NCL application example',
+    relDir: '',
+    files: {},
+    fileUrls: {}
+  },
+  emb_html: {
+    mainFile: 'emb_html.ncl',
+    category: 'embedded',
+    description: 'Embedded HTML application example',
+    relDir: '',
+    files: {},
+    fileUrls: {}
+  },
+  multiuser1: {
+    mainFile: 'main.ncl',
+    category: 'multiuser',
+    description: 'Multi-user personalization example',
+    relDir: 'multiuser1',
+    files: {},
+    fileUrls: {},
+    extraFiles: [
+      'ginga_config.json',
+      'users_data_with_adult_male.json',
+      'users_data_no_adult_male.json'
+    ]
+  },
   pj_00syncProp: { mainFile: '00syncProp.ncl', category: 'primeiro-joao', description: 'Primeiro João: Property sync example', relDir: 'primeiro-joao', files: {}, fileUrls: {} },
   pj_01sync: { mainFile: '01sync.ncl', category: 'primeiro-joao', description: 'Primeiro João: Sync example', relDir: 'primeiro-joao', files: {}, fileUrls: {} },
   pj_02syncInt: { mainFile: '02syncInt.ncl', category: 'primeiro-joao', description: 'Primeiro João: Interactive sync example', relDir: 'primeiro-joao', files: {}, fileUrls: {} },
@@ -97,12 +137,16 @@ for (const key of Object.keys(examples)) {
 
   item.rawMainUrl = baseRawUrl;
 
-  const referencedFiles = getReferencedFiles(relDir, mainFile);
+  const referencedFiles = [
+    ...getReferencedFiles(relDir, mainFile),
+    ...(item.extraFiles || [])
+  ];
   for (const refFile of referencedFiles) {
     const rawRefUrl = relDir ? `${RAW_GITHUB_BASE}${relDir}/${refFile}` : `${RAW_GITHUB_BASE}${refFile}`;
     item.fileUrls[refFile] = rawRefUrl;
   }
 
+  delete item.extraFiles;
   delete item.relDir;
 }
 
