@@ -1,3 +1,5 @@
+import 'dart:io' if (dart.library.js_interop) '';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
@@ -61,13 +63,28 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
       final gingacc = widget.gingacc ??
           widget.document?.gingacc ??
           GingaCC();
-      String content = await gingacc.loadContent(widget.src) ?? '';
-
-      if (gingacc.ccws.isRunning) {
-        content = gingacc.ccws.injectCcwsFetch(content);
+      final uri = gingacc.resolveUri(widget.src);
+      if (uri.isScheme('file') || !uri.hasScheme) {
+        final filePath = uri.isScheme('file') ? uri.toFilePath() : widget.src;
+        final file = File(filePath).absolute;
+        if (file.existsSync()) {
+          await _controller!.loadFile(file.path);
+        } else {
+          String content = await gingacc.loadContent(widget.src) ?? '';
+          if (gingacc.ccws.isRunning) {
+            content = gingacc.ccws.injectCcwsFetch(content);
+          }
+          await _controller!.loadHtmlString(content);
+        }
+      } else if (uri.isScheme('http') || uri.isScheme('https')) {
+        await _controller!.loadRequest(uri);
+      } else {
+        String content = await gingacc.loadContent(widget.src) ?? '';
+        if (gingacc.ccws.isRunning) {
+          content = gingacc.ccws.injectCcwsFetch(content);
+        }
+        await _controller!.loadHtmlString(content);
       }
-
-      await _controller!.loadHtmlString(content);
       if (mounted) {
         setState(() => _initialized = true);
       }

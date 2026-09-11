@@ -79,7 +79,10 @@ class _GingaState extends State<Ginga> {
       _initialized = true;
       final appSrc = _gingacc.config.appSrc;
       if (appSrc != null) {
-        if (appSrc.toLowerCase().endsWith('.html')) {
+        final lowerSrc = appSrc.toLowerCase();
+        if (lowerSrc.endsWith('.html') ||
+            lowerSrc.endsWith('.htm') ||
+            lowerSrc.endsWith('.xhtml')) {
           htmlApp = html.HtmlWidget(
             src: appSrc,
             gingacc: _gingacc,
@@ -118,20 +121,15 @@ class _GingaState extends State<Ginga> {
           lk == LogicalKeyboardKey.numpadEnter ||
           lk == LogicalKeyboardKey.select) {
         nclKey = 'ENTER';
-      } else if (lk == LogicalKeyboardKey.f1 ||
-          lk == LogicalKeyboardKey.keyR) {
+      } else if (lk == LogicalKeyboardKey.f1 || lk == LogicalKeyboardKey.keyR) {
         nclKey = 'RED';
-      } else if (lk == LogicalKeyboardKey.f2 ||
-          lk == LogicalKeyboardKey.keyG) {
+      } else if (lk == LogicalKeyboardKey.f2 || lk == LogicalKeyboardKey.keyG) {
         nclKey = 'GREEN';
-      } else if (lk == LogicalKeyboardKey.f3 ||
-          lk == LogicalKeyboardKey.keyY) {
+      } else if (lk == LogicalKeyboardKey.f3 || lk == LogicalKeyboardKey.keyY) {
         nclKey = 'YELLOW';
-      } else if (lk == LogicalKeyboardKey.f4 ||
-          lk == LogicalKeyboardKey.keyB) {
+      } else if (lk == LogicalKeyboardKey.f4 || lk == LogicalKeyboardKey.keyB) {
         nclKey = 'BLUE';
-      } else if (lk == LogicalKeyboardKey.f5 ||
-          lk == LogicalKeyboardKey.keyI) {
+      } else if (lk == LogicalKeyboardKey.f5 || lk == LogicalKeyboardKey.keyI) {
         nclKey = 'INFO';
       } else if (lk == LogicalKeyboardKey.digit0 ||
           lk == LogicalKeyboardKey.numpad0) {
