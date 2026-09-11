@@ -17,7 +17,7 @@
         "dev": "node scripts/bundle-examples.js && node scripts/build.js && node scripts/serve.js index.html",
         "serve": "node scripts/serve.js index.html",
         "serve-examples": "node scripts/serve.js --express examples/playground-app-example.html examples/player-app-example.html",
-        "build": "npm run flutter:build && npm run copy:assets && npm run bundle:examples && node scripts/build.js && tsc"
+        "build": "npm run flutter:build && npm run copy:assets && npm run bundle:examples && node scripts/build.js && npx tsc"
     },
     "peerDependencies": {
         "express": "^4.0.0"

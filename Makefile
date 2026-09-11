@@ -62,6 +62,9 @@ release:
 release-publish: release
 	gh release upload v$(VERSION) $(ZIP_NAME) --clobber || gh release create v$(VERSION) $(ZIP_NAME) --generate-notes
 
+serve:
+	make -C node serve
+
 clean:
 	flutter clean
 

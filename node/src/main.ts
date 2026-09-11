@@ -77,9 +77,11 @@ export async function loadExampleFiles(example: Example): Promise<void> {
 }
 
 export function getAllFiles(example: Example): Record<string, string> {
-  return example.category === 'primeiro-joao'
-    ? { ...pjMediaFiles, ...example.files }
-    : { ...example.files };
+  return {
+    ...(example.fileUrls || {}),
+    ...(example.category === 'primeiro-joao' ? pjMediaFiles : {}),
+    ...example.files,
+  };
 }
 
 export function getEffectiveSearch(): string {
