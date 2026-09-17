@@ -1,3 +1,11 @@
+/// Main Ginga player application and widgets.
+library ginga;
+
+export 'main.dart';
+export 'menu/settings_menu.dart';
+export 'menu/users_menu.dart';
+export 'web_utils_stub.dart' if (dart.library.js_interop) 'web_utils_web.dart';
+
 import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;

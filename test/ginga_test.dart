@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingaf/ginga.dart';
-import 'package:gingaf/menu/users_menu.dart';
 import 'package:nclui/ncl.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
@@ -265,7 +264,7 @@ void main() {
 
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(
-          body: UserSelectionOverlay(
+          body: UsersMenu(
             users: users,
             onClose: () => closed = true,
             onUserSelected: (u) => selected = u,
@@ -303,7 +302,7 @@ void main() {
       users.clear();
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(
-          body: UserSelectionOverlay(
+          body: UsersMenu(
             users: users,
             onClose: () {},
           ),

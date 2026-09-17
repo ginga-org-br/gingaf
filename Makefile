@@ -1,6 +1,6 @@
 MAKEFLAGS += -s --no-print-directory
 
-.PHONY: help deps test release release-publish clean run-example check-app
+.PHONY: help deps test doc release release-publish clean run-example check-app
 
 BASE_HREF ?= /
 
@@ -45,6 +45,7 @@ help:
 		"Targets:" \
 		"  deps                 Install dependencies for Flutter workspace" \
 		"  test                 Run tests for Flutter workspace" \
+		"  doc                  Generate Dart documentation" \
 		"  release              Zip current platform release build" \
 		"  release-publish      Publish release to GitHub Releases via gh" \
 		"  clean                Clean build artifacts" \
@@ -55,6 +56,9 @@ deps:
 
 test:
 	flutter test test packages/gingacc/test packages/ncldoc/test packages/nclui/test --no-pub
+
+doc:
+	dart doc
 
 release:
 	$(RELEASE_BUILD)
@@ -68,6 +72,7 @@ serve:
 
 clean:
 	flutter clean
+	rm -rf doc/api packages/*/doc/api
 
 check-app:
 	$(if $(app),,$(error Please specify app (e.g. app=video.ncl)))

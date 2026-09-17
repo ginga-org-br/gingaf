@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 
-typedef ControlMenu = SettingsMenu;
-typedef FloatingControlMenu = SettingsMenu;
-
 class SettingsMenu extends StatefulWidget {
   final VoidCallback? onReload;
   final VoidCallback? onRestart;

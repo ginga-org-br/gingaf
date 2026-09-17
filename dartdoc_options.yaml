@@ -1,0 +1,6 @@
+dartdoc:
+  include:
+    - ginga
+    - gingacc
+    - ncldoc
+    - nclui

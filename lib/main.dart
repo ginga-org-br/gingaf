@@ -8,7 +8,6 @@ import 'package:path/path.dart' as path;
 import 'package:video_player_media_kit/video_player_media_kit.dart';
 
 import 'ginga.dart';
-import 'web_utils_stub.dart' if (dart.library.js_interop) 'web_utils_web.dart';
 
 final _logger = Logger('ginga');
 

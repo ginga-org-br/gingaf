@@ -1,6 +1,6 @@
 MAKEFLAGS += -s --no-print-directory
 
-.PHONY: help test deps clean
+.PHONY: help test deps doc clean
 
 help:
 	@printf "%s\n" \
@@ -9,6 +9,7 @@ help:
 		"Targets:" \
 		"  deps   Install Flutter dependencies" \
 		"  test   Run Flutter tests" \
+		"  doc    Generate Dart documentation" \
 		"  clean  Clean Flutter build artifacts"
 
 deps:
@@ -17,5 +18,9 @@ deps:
 test:
 	flutter test
 
+doc:
+	dart doc
+
 clean:
 	flutter clean
+	rm -rf doc/api

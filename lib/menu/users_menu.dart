@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gingacc/users.dart';
 
-typedef UserMenu = UsersMenu;
-typedef UserSelectionOverlay = UsersMenu;
-
 class UsersMenu extends StatefulWidget {
   final Users users;
   final VoidCallback onClose;

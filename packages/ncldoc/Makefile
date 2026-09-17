@@ -1,6 +1,6 @@
 MAKEFLAGS += -s --no-print-directory
 
-.PHONY: help test deps clean run-example check-app
+.PHONY: help test deps doc clean run-example check-app
 
 help:
 	@printf "%s\n" \
@@ -9,6 +9,7 @@ help:
 		"Targets:" \
 		"  deps         Install Flutter/Dart dependencies" \
 		"  test         Run unit tests" \
+		"  doc          Generate Dart documentation" \
 		"  clean        Clean build artifacts" \
 		"  run-example  Run headless NCL example (e.g. make run-example app=video.ncl)"
 
@@ -18,8 +19,12 @@ deps:
 test:
 	flutter test
 
+doc:
+	dart doc
+
 clean:
 	flutter clean
+	rm -rf doc/api
 
 check-app:
 	$(if $(app),,$(error Please specify app (e.g. app=video.ncl)))
