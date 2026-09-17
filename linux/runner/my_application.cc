@@ -96,8 +96,10 @@ static gboolean my_application_local_command_line(GApplication* application,
   gboolean has_args = (*arguments != nullptr && *(*arguments + 1) != nullptr);
   const gchar* app_env = g_getenv("APP");
   const gchar* config_env = g_getenv("CONFIG");
+  const gchar* flutter_engine_env = g_getenv("FLUTTER_ENGINE_SWITCHES");
   gboolean has_env = (app_env != nullptr && *app_env != '\0') ||
-                     (config_env != nullptr && *config_env != '\0');
+                     (config_env != nullptr && *config_env != '\0') ||
+                     (flutter_engine_env != nullptr && *flutter_engine_env != '\0');
 
   if (!has_args && !has_env) {
     g_printerr("%s", kUsageMessage);

@@ -1,3 +1,6 @@
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+#endif
 #include <flutter/dart_project.h>
 #include <flutter/flutter_view_controller.h>
 #include <windows.h>
@@ -29,8 +32,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
 
   const char* app_env = std::getenv("APP");
   const char* config_env = std::getenv("CONFIG");
+  const char* flutter_engine_env = std::getenv("FLUTTER_ENGINE_SWITCHES");
   bool has_env = (app_env != nullptr && app_env[0] != '\0') ||
-                 (config_env != nullptr && config_env[0] != '\0');
+                 (config_env != nullptr && config_env[0] != '\0') ||
+                 (flutter_engine_env != nullptr && flutter_engine_env[0] != '\0');
 
   if (command_line_arguments.empty() && !has_env) {
     std::cerr << kUsageMessage << std::endl;
