@@ -72,6 +72,10 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
     }
   }
 
+  void pause() {}
+
+  void resume() {}
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();

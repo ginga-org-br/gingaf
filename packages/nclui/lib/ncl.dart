@@ -140,6 +140,42 @@ class NclWidgetState extends MediaState<NclWidget> {
   Timer? _ticker;
   String errorMsg = "";
   bool _loading = false;
+  bool _isPaused = false;
+  bool get isPaused => _isPaused;
+
+  @override
+  void pause() {
+    if (_isPaused) return;
+    _isPaused = true;
+    widget.mainAvKey?.currentState?.controller?.pause();
+    for (final key in _mediaStateKeys.values) {
+      key.currentState?.pause();
+    }
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void resume() {
+    if (!_isPaused) return;
+    _isPaused = false;
+    widget.mainAvKey?.currentState?.controller?.play();
+    for (final key in _mediaStateKeys.values) {
+      key.currentState?.resume();
+    }
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void togglePause() {
+    if (_isPaused) {
+      resume();
+    } else {
+      pause();
+    }
+  }
 
   Rectangle<double> get bounds {
     if (widget.bounds != null) return widget.bounds!;
@@ -215,6 +251,11 @@ class NclWidgetState extends MediaState<NclWidget> {
           _mediaStateKeys[id] = key;
           _cachedWidgets[id] = mediaWidget;
           changed = true;
+          if (_isPaused) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              key.currentState?.pause();
+            });
+          }
         }
       }
     }
@@ -265,6 +306,10 @@ class NclWidgetState extends MediaState<NclWidget> {
           _ticker = Timer.periodic(const Duration(milliseconds: 100), (timer) {
             if (!mounted || _ticker == null) {
               timer.cancel();
+              return;
+            }
+            if (_isPaused) {
+              lastTick = DateTime.now();
               return;
             }
             final now = DateTime.now();

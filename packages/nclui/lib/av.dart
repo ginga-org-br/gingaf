@@ -24,12 +24,30 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
   VideoPlayerController? _controller;
   bool _initialized = false;
   bool _isCompleted = false;
+  bool _isPaused = false;
 
   VideoPlayerController? get controller => _controller;
   bool get initialized => _initialized;
   bool get isPlaying => true;
   bool get isLooping => false;
   bool get notifyCompletion => true;
+  bool get isPaused => _isPaused;
+
+  @override
+  void pause() {
+    _isPaused = true;
+    _controller?.pause();
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void resume() {
+    _isPaused = false;
+    if (isPlaying) {
+      _controller?.play();
+    }
+    if (mounted) setState(() {});
+  }
 
   @override
   void initState() {
@@ -45,6 +63,7 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
   }
 
   void _onVideoPositionChanged() {
+    if (_isPaused) return;
     final c = _controller;
     if (c != null &&
         !_isCompleted &&
@@ -101,7 +120,7 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
         });
       }
 
-      if (isPlaying) {
+      if (isPlaying && !_isPaused) {
         try {
           await controller.play();
         } catch (playErr) {

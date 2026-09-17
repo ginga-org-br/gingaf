@@ -29,6 +29,34 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
   WebViewController? _controller;
   bool _initialized = false;
   bool _loadStarted = false;
+  bool _isPaused = false;
+  bool get isPaused => _isPaused;
+
+  @override
+  void pause() {
+    if (_isPaused) return;
+    _isPaused = true;
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void resume() {
+    if (!_isPaused) return;
+    _isPaused = false;
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void togglePause() {
+    if (_isPaused) {
+      resume();
+    } else {
+      pause();
+    }
+  }
 
   @override
   void initState() {
