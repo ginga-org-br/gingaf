@@ -27,24 +27,13 @@ void main(List<String> args) async {
         '[${record.loggerName}] ${record.level.name}: ${record.message}');
   });
 
-  if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
-
+  if (!kIsWeb &&
+      (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
     try {
-      if (stdin.hasTerminal) {
-        stdin.echoMode = false;
-        stdin.lineMode = false;
-        stdin.listen((List<int> codes) {
-          if (codes.contains(27)) {
-            _logger.info('Captured ESC, stopping app.');
-            exit(0);
-          }
-        }, onError: (e) {
-          _logger.warning('stdin error: $e');
-        });
-      }
-    } catch (e) {
-      _logger.severe('Failed to setup stdin listener: $e');
-    }
+      ProcessSignal.sigint.watch().listen((_) {
+        exit(0);
+      });
+    } catch (_) {}
   }
 
   String? appEnv;
@@ -242,4 +231,3 @@ Future<GingaConfig> resolveGingaConfig({
 
   return config;
 }
-

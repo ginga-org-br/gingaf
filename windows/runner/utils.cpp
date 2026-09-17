@@ -5,9 +5,13 @@
 #include <stdio.h>
 #include <windows.h>
 
+#include <cstdlib>
 #include <iostream>
 
 void CreateAndAttachConsole() {
+  if (std::getenv("FLUTTER_ENGINE_SWITCHES") != nullptr) {
+    return;
+  }
   if (::AttachConsole(ATTACH_PARENT_PROCESS) || (::IsDebuggerPresent() && ::AllocConsole())) {
     HANDLE hOut = ::GetStdHandle(STD_OUTPUT_HANDLE);
     if (hOut == NULL || hOut == INVALID_HANDLE_VALUE) {
