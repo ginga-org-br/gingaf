@@ -11,11 +11,14 @@ const ccwsDefaultPort = 44642;
 final _logger = Logger('ginga-ccws');
 
 class CCWS {
+  final int _port;
   HttpServer? _server;
   bool _running = false;
-  int get port => _server?.port ?? 0;
+  int get port => _server?.port ?? _port;
   bool get isRunning => _running;
   String injectCcwsFetch(String content) => content;
+
+  CCWS({int port = ccwsDefaultPort}) : _port = port;
 
   Handler get handler =>
       Pipeline().addMiddleware(logRequests(logger: (message, isError) {
@@ -27,26 +30,27 @@ class CCWS {
       })).addHandler(CCWSRouter.getHandler());
 
   Future<void> start() async {
-    int currentPort = ccwsDefaultPort;
-    const maxRetry = 100;
-
-    for (int i = 0; i < maxRetry; i++) {
-      try {
-        _server =
-            await io.serve(handler, InternetAddress.loopbackIPv4, currentPort);
-        _logger.info(
-            'Server running on http://${_server!.address.address}:${_server!.port}');
-        _running = true;
-        return;
-      } catch (e) {
-        if (e is SocketException) {
-          currentPort++;
-          continue;
+    try {
+      _server =
+          await io.serve(handler, InternetAddress.loopbackIPv4, _port);
+      _logger.info(
+          'Server running on http://${_server!.address.address}:${_server!.port}');
+      _running = true;
+      return;
+    } catch (e) {
+      if (e is SocketException) {
+        try {
+          _server = await io.serve(handler, InternetAddress.loopbackIPv4, 0);
+          _logger.info(
+              'Server running on dynamic port http://${_server!.address.address}:${_server!.port}');
+          _running = true;
+          return;
+        } catch (e2) {
+          _logger.severe('Server failed to start on dynamic port: $e2');
         }
-        rethrow;
       }
+      _logger.severe('Server failed to start on port $_port: $e');
     }
-    _logger.severe('Server failed to start after $maxRetry port attempts');
   }
 
   Future<void> stop() async {

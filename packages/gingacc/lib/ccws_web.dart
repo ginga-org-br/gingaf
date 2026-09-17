@@ -8,12 +8,17 @@ import 'package:web/web.dart' as web;
 
 import 'router.dart';
 
+const ccwsDefaultPort = 44642;
+
 final _logger = Logger('ginga-ccws');
 
 class CCWS {
+  final int _port;
   bool _running = false;
-  int get port => 44642;
+  int get port => _port;
   bool get isRunning => _running;
+
+  CCWS({int port = ccwsDefaultPort}) : _port = port;
 
   Handler get handler =>
       Pipeline().addMiddleware(logRequests(logger: (message, isError) {

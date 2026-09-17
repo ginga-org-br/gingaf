@@ -16,6 +16,16 @@ void main() {
       await ccws.stop();
     });
 
+    test('Verify default port is ccwsDefaultPort', () {
+      final defaultCcws = CCWS();
+      expect(defaultCcws.port, equals(ccwsDefaultPort));
+    });
+
+    test('Verify custom port can be configured', () {
+      final customCcws = CCWS(port: 8080);
+      expect(customCcws.port, equals(8080));
+    });
+
     test('Verify current-service HTTP Endpoint Response on dynamic port',
         () async {
       expect(ccws.isRunning, isTrue);
