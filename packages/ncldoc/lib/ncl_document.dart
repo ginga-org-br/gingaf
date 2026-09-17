@@ -159,36 +159,42 @@ class NclDocument {
 
   Node? getNodeById(String id) {
     if (_body.id == id) return _body;
+    return _body.descendants
+        .whereType<Node>()
+        .where((n) => n.id == id)
+        .firstOrNull;
+  }
 
-    Node? search(Composition comp) {
-      for (var node in comp.getNodes()) {
-        if (node.id == id) return node;
-        if (node is Composition) {
-          final res = search(node);
-          if (res != null) return res;
-        }
-      }
-      return null;
-    }
+  Context? getContextById(String id) {
+    if (_body.id == id) return _body;
+    return _body.descendants
+        .whereType<Context>()
+        .where((c) => c.id == id)
+        .firstOrNull;
+  }
 
-    return search(_body);
+  Switch? getSwitchById(String id) {
+    return _body.descendants
+        .whereType<Switch>()
+        .where((s) => s.id == id)
+        .firstOrNull;
+  }
+
+  Media? getMediaById(String id) {
+    return _body.descendants
+        .whereType<Media>()
+        .where((m) => m.id == id)
+        .firstOrNull;
   }
 
   Element? getElementById(String id) {
-    Element? search(Element element) {
-      if (element.id == id) return element;
-      for (var child in element.children) {
-        final res = search(child);
-        if (res != null) return res;
-      }
-      return null;
-    }
-
-    for (var el in headChildren) {
-      final res = search(el);
-      if (res != null) return res;
-    }
-    return search(_body);
+    if (_body.id == id) return _body;
+    final inHead = headChildren
+        .expand((el) => [el, ...el.descendants])
+        .where((el) => el.id == id)
+        .firstOrNull;
+    if (inHead != null) return inHead;
+    return _body.descendants.where((el) => el.id == id).firstOrNull;
   }
 
   List<Element> get headChildren => _head ?? const [];
@@ -375,45 +381,26 @@ class NclDocument {
     return null;
   }
 
-  List<Media> getActiveMedia() {
-    final active = <Media>[];
-    void search(Composition comp) {
-      for (var node in comp.getNodes()) {
-        if (node is Media && node.getMainState() == NclStateType.occurring) {
-          active.add(node);
-        } else if (node is Composition) {
-          search(node);
-        }
-      }
-    }
+  List<Media> getActiveMedia() => _body.descendants
+      .whereType<Media>()
+      .where((m) => m.getMainState() == NclStateType.occurring)
+      .toList();
 
-    search(_body);
-    return active;
-  }
-
-  Element? getConnectorById(String id) {
-    final connBase = headChildren
-        .where((el) => el.xmlTagName == 'connectorBase')
-        .firstOrNull;
-    if (connBase != null) {
-      for (var child in connBase.children) {
-        if (child.rawAttributes['id'] == id) {
-          return child;
-        }
-      }
-    }
-    return null;
-  }
+  Element? getConnectorById(String id) => headChildren
+      .where((el) => el.xmlTagName == 'connectorBase')
+      .firstOrNull
+      ?.children
+      .where((c) => c.rawAttributes['id'] == id)
+      .firstOrNull;
 
   bool _hasUserSettingsMedia(Element root) {
     if (root.rawAttributes['type'] == 'application/x-ncl-user-settings' &&
         root.rawAttributes['user'] == 'currentUser') {
       return true;
     }
-    for (var child in root.children) {
-      if (_hasUserSettingsMedia(child)) return true;
-    }
-    return false;
+    return root.descendants.any((child) =>
+        child.rawAttributes['type'] == 'application/x-ncl-user-settings' &&
+        child.rawAttributes['user'] == 'currentUser');
   }
 
   String? getPropertyValue(Node node, String propertyName) {

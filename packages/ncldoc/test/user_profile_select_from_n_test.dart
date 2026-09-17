@@ -47,7 +47,7 @@ void main() {
         ),
       );
 
-      final sw1 = docAdultCC.getNodeById('swAd') as Switch;
+      final sw1 = docAdultCC.getSwitchById('swAd')!;
       expect(docAdultCC.evaluateRule('rAdultWithCC'), isTrue);
       expect(docAdultCC.resolveSwitch(sw1)?.id, equals('mAdultCCAd'));
 
@@ -62,7 +62,7 @@ void main() {
         ),
       );
 
-      final sw2 = docAdultNoCC.getNodeById('swAd') as Switch;
+      final sw2 = docAdultNoCC.getSwitchById('swAd')!;
       expect(docAdultNoCC.evaluateRule('rAdultWithCC'), isFalse);
       expect(docAdultNoCC.evaluateRule('rAdult'), isTrue);
       expect(docAdultNoCC.resolveSwitch(sw2)?.id, equals('mAdultAd'));
@@ -102,7 +102,7 @@ void main() {
         ),
       );
 
-      final sw = doc.getNodeById('swContent') as Switch;
+      final sw = doc.getSwitchById('swContent')!;
       expect(doc.evaluateRule('rAdult'), isFalse);
       expect(doc.resolveSwitch(sw)?.id, equals('mPublic'));
 
@@ -147,7 +147,7 @@ void main() {
         ),
       );
 
-      final sw = doc.getNodeById('swLang') as Switch;
+      final sw = doc.getSwitchById('swLang')!;
       expect(doc.users.activeUser?.id, equals('u1'));
       expect(doc.evaluateRule('rPortuguese'), isTrue);
       expect(doc.resolveSwitch(sw)?.id, equals('mPT'));
@@ -195,7 +195,7 @@ void main() {
       doc.users.registerUser(u2);
 
       doc.users.setActiveUser('u1');
-      final sw = doc.getNodeById('swAd') as Switch;
+      final sw = doc.getSwitchById('swAd')!;
       expect(doc.evaluateRule('rAdult'), isTrue);
       expect(doc.resolveSwitch(sw)?.id, equals('mAdult'));
 
@@ -252,7 +252,7 @@ void main() {
       users.registerUser(u2);
 
       users.setActiveUser('u1');
-      final sw = doc.getNodeById('swAd') as Switch;
+      final sw = doc.getSwitchById('swAd')!;
       expect(doc.evaluateRule('rAdultEN'), isTrue);
       expect(doc.resolveSwitch(sw)?.id, equals('mAdultEN'));
 

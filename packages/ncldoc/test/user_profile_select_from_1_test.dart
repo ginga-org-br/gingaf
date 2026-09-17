@@ -38,7 +38,7 @@ void main() {
         doc.users.registerUser(user);
         doc.users.setActiveUser('u1');
 
-        final sw = doc.getNodeById('swSub') as Switch;
+        final sw = doc.getSwitchById('swSub')!;
         expect(doc.evaluateRule('rCC'), isFalse);
         expect(doc.resolveSwitch(sw)?.id, equals('mNoSub'));
 

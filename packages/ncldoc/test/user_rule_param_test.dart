@@ -50,7 +50,7 @@ void main() {
           ),
         );
 
-        final sw = doc.getNodeById('swAd') as Switch;
+        final sw = doc.getSwitchById('swAd')!;
         expect(doc.evaluateRule('rMale'), isTrue);
         expect(doc.evaluateRule('rFemale'), isFalse);
         expect(doc.resolveSwitch(sw)?.id, equals('mMaleAd'));
@@ -101,7 +101,7 @@ void main() {
         ),
       );
 
-      final sw = doc.getNodeById('swAge') as Switch;
+      final sw = doc.getSwitchById('swAge')!;
       expect(doc.evaluateRule('rAge30'), isFalse);
       expect(doc.resolveSwitch(sw)?.id, equals('mChild'));
 
@@ -157,7 +157,7 @@ void main() {
         ),
       );
 
-      final sw = doc.getNodeById('swTier') as Switch;
+      final sw = doc.getSwitchById('swTier')!;
       expect(doc.evaluateRule('rPremium'), isFalse);
       expect(doc.resolveSwitch(sw)?.id, equals('mFreeContent'));
 
@@ -214,7 +214,7 @@ void main() {
         ),
       );
 
-      final sw = doc.getNodeById('swContent') as Switch;
+      final sw = doc.getSwitchById('swContent')!;
       expect(doc.evaluateRule('rAdultMaleCombined'), isFalse);
       expect(doc.resolveSwitch(sw)?.id, equals('mDefault'));
 

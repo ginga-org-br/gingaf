@@ -11,6 +11,13 @@ class Element {
   String? xmlTagName;
   Element({Map<String, String> rawAttributes = const {}, this.xmlTagName})
       : rawAttributes = Map<String, String>.from(rawAttributes);
+
+  Iterable<Element> get descendants sync* {
+    for (final child in children) {
+      yield child;
+      yield* child.descendants;
+    }
+  }
 }
 
 class Port extends Element {
@@ -221,6 +228,8 @@ abstract class Composition extends Node {
   int activeNodes = 0;
   List<Node> getNodes() => children.whereType<Node>().toList();
   List<Media> getMedias() => children.whereType<Media>().toList();
+  List<Context> getContexts() => children.whereType<Context>().toList();
+  List<Switch> getSwitches() => children.whereType<Switch>().toList();
   Composition({super.rawAttributes});
 }
 
