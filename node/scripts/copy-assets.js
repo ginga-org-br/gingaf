@@ -17,3 +17,12 @@ if (fs.existsSync(idx)) {
   content = content.replace(/<base href="[^"]*">/, dynamicBaseScript);
   fs.writeFileSync(idx, content, 'utf8');
 }
+
+const playgroundDest = path.resolve(__dirname, '..', 'playground', 'gingaf-web');
+if (fs.existsSync(path.dirname(playgroundDest))) {
+  if (fs.existsSync(playgroundDest)) {
+    fs.rmSync(playgroundDest, { recursive: true, force: true });
+  }
+  fs.mkdirSync(playgroundDest, { recursive: true });
+  fs.cpSync(dest, playgroundDest, { recursive: true });
+}

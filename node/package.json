@@ -9,8 +9,7 @@
         "assets"
     ],
     "scripts": {
-        "flutter:build": "node -e \"const fs=require('fs'); const cp=require('child_process'); if (!fs.existsSync('../build/web/index.html')) cp.execSync('cd .. && flutter build web --release', { stdio: 'inherit' }); else console.log('Flutter web build exists, skipping build.');\"",
-        "flutter:build:force": "cd .. && flutter build web --release",
+        "flutter:build": "flutter build web --release",
         "copy:assets": "node scripts/copy-assets.js",
         "bundle:examples": "node scripts/bundle-examples.js",
         "clean": "node scripts/clean.js",
