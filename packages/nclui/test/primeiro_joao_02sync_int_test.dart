@@ -236,46 +236,39 @@ void main() {
 </ncl>''');
     doc.start();
 
-    // Verify mainVideo starts, btnIcon is sleeping
-    var active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('mainVideo'));
-    expect(active, isNot(contains('btnIcon')));
+    final mainVideo = doc.getMediaById('mainVideo')!;
+    final btnIcon = doc.getMediaById('btnIcon')!;
+    final promoVideo = doc.getMediaById('promoVideo')!;
 
-    // Tick to 45s (45000ms), segIcon triggers, starting btnIcon
+    expect(mainVideo.getMainState(), NclStateType.occurring);
+    expect(btnIcon.getMainState(), NclStateType.sleeping);
+    expect(promoVideo.getMainState(), NclStateType.sleeping);
+
     doc.tick(45000);
-    active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('mainVideo'));
-    expect(active, contains('btnIcon'));
-    expect(active, isNot(contains('promoVideo')));
+    expect(mainVideo.getMainState(), NclStateType.occurring);
+    expect(btnIcon.getMainState(), NclStateType.occurring);
+    expect(promoVideo.getMainState(), NclStateType.sleeping);
 
-    // Trigger key RED selection on btnIcon
     doc.triggerSelection('btnIcon', 'RED');
     doc.tick(0);
 
-    // btnIcon should stop, promoVideo should start, and mainVideo's bounds should be updated
-    active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('mainVideo'));
-    expect(active, isNot(contains('btnIcon')));
-    expect(active, contains('promoVideo'));
+    expect(mainVideo.getMainState(), NclStateType.occurring);
+    expect(btnIcon.getMainState(), NclStateType.sleeping);
+    expect(promoVideo.getMainState(), NclStateType.occurring);
 
-    final mainVideo = doc.getNodeById('mainVideo') as Media;
     final boundsProp =
         mainVideo.getProperties().firstWhere((p) => p.name == 'bounds');
     expect(boundsProp.value, '5%,6.7%,45%,45%');
 
-    // Stop promoVideo (simulate video naturally ending)
-    final promoVideo = doc.getNodeById('promoVideo') as Media;
-
-    // Simulate end of promoVideo using the uiQueue
     doc.uiQueue.add(
       NclAction(
         event: promoVideo.getMainNclEvent(),
         action: NclActionType.stop,
       ),
     );
-    doc.tick(
-        0); // triggers link7 (onEnd promoVideo -> set mainVideo bounds to 0,0,100%,100%)
+    doc.tick(0);
 
+    expect(promoVideo.getMainState(), NclStateType.sleeping);
     expect(boundsProp.value, '0,0,100%,100%');
   });
 

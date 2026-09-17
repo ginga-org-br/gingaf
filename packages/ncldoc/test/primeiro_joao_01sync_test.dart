@@ -66,14 +66,10 @@ void main() {
       );
       doc.start();
 
-      var active = doc.getActiveMedia().map((m) => m.id).toList();
-      expect(active, contains('mainVideo'));
-      expect(active, isNot(contains('bgMusic')));
-
-      final mainVideo = doc.getNodeById('mainVideo') as Media;
-      final bgMusic = doc.getNodeById('bgMusic') as Media;
-      final insertVideo = doc.getNodeById('insertVideo') as Media;
-      final popupPic = doc.getNodeById('popupPic') as Media;
+      final mainVideo = doc.getMediaById('mainVideo')!;
+      final bgMusic = doc.getMediaById('bgMusic')!;
+      final insertVideo = doc.getMediaById('insertVideo')!;
+      final popupPic = doc.getMediaById('popupPic')!;
 
       expect(mainVideo.getMainState(), NclStateType.occurring);
       expect(bgMusic.getMainState(), NclStateType.sleeping);
@@ -81,22 +77,16 @@ void main() {
       expect(popupPic.getMainState(), NclStateType.sleeping);
 
       doc.tick(4000);
-      active = doc.getActiveMedia().map((m) => m.id).toList();
-      expect(active, contains('mainVideo'));
-      expect(active, isNot(contains('bgMusic')));
+      expect(mainVideo.getMainState(), NclStateType.occurring);
       expect(bgMusic.getMainState(), NclStateType.sleeping);
 
       doc.tick(1000);
-      active = doc.getActiveMedia().map((m) => m.id).toList();
-      expect(active, contains('mainVideo'));
-      expect(active, contains('bgMusic'));
+      expect(mainVideo.getMainState(), NclStateType.occurring);
       expect(bgMusic.getMainState(), NclStateType.occurring);
 
       doc.tick(7000);
-      active = doc.getActiveMedia().map((m) => m.id).toList();
-      expect(active, contains('mainVideo'));
-      expect(active, contains('bgMusic'));
-      expect(active, contains('insertVideo'));
+      expect(mainVideo.getMainState(), NclStateType.occurring);
+      expect(bgMusic.getMainState(), NclStateType.occurring);
       expect(insertVideo.getMainState(), NclStateType.occurring);
 
       expect(popupPic.explicitDurMs, 5000);

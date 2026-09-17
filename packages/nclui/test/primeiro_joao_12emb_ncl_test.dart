@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ncldoc/ncl_document.dart';
 import 'package:nclui/ncl.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
@@ -109,8 +110,9 @@ void main() {
     nclState.tick(45000);
     await tester.pump();
 
-    final activeMedia =
-        nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
-    expect(activeMedia, contains('advert'));
+    expect(
+      nclState.nclDocument?.getMediaById('advert')?.getMainState(),
+      NclStateType.occurring,
+    );
   });
 }

@@ -71,27 +71,29 @@ void main() {
       );
       doc.start();
 
-      var active = doc.getActiveMedia().map((m) => m.id).toList();
-      expect(active, contains('animation'));
-      expect(active, isNot(contains('music')));
+      final animation = doc.getMediaById('animation')!;
+      final music = doc.getMediaById('music')!;
+      final img1 = doc.getMediaById('img1')!;
+      final img2 = doc.getMediaById('img2')!;
+
+      expect(animation.getMainState(), NclStateType.occurring);
+      expect(music.getMainState(), NclStateType.sleeping);
+      expect(img1.getMainState(), NclStateType.sleeping);
+      expect(img2.getMainState(), NclStateType.sleeping);
 
       doc.tick(4000);
-      active = doc.getActiveMedia().map((m) => m.id).toList();
-      expect(active, contains('animation'));
-      expect(active, isNot(contains('music')));
+      expect(animation.getMainState(), NclStateType.occurring);
+      expect(music.getMainState(), NclStateType.sleeping);
 
       doc.tick(1000);
-      active = doc.getActiveMedia().map((m) => m.id).toList();
-      expect(active, contains('animation'));
-      expect(active, contains('music'));
+      expect(animation.getMainState(), NclStateType.occurring);
+      expect(music.getMainState(), NclStateType.occurring);
 
       doc.tick(7000);
-      active = doc.getActiveMedia().map((m) => m.id).toList();
-      expect(active, contains('animation'));
-      expect(active, contains('music'));
-      expect(active, contains('img1'));
+      expect(animation.getMainState(), NclStateType.occurring);
+      expect(music.getMainState(), NclStateType.occurring);
+      expect(img1.getMainState(), NclStateType.occurring);
 
-      final img1 = doc.getNodeById('img1') as Media;
       final leftProp = img1.getProperties().firstWhere((p) => p.name == 'left');
       expect(leftProp.value, '5%');
       final zIndexProp = img1.getProperties().firstWhere(

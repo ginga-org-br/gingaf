@@ -118,32 +118,23 @@ void main() {
         );
         doc.start();
 
-        final mainVideo = doc.getNodeById('mainVideo') as Media;
-        final btnIcon = doc.getNodeById('btnIcon') as Media;
-        final promoVideo = doc.getNodeById('promoVideo') as Media;
+        final mainVideo = doc.getMediaById('mainVideo')!;
+        final btnIcon = doc.getMediaById('btnIcon')!;
+        final promoVideo = doc.getMediaById('promoVideo')!;
 
         expect(mainVideo.getMainState(), NclStateType.occurring);
         expect(btnIcon.getMainState(), NclStateType.sleeping);
         expect(promoVideo.getMainState(), NclStateType.sleeping);
 
-        var active = doc.getActiveMedia().map((m) => m.id).toList();
-        expect(active, contains('mainVideo'));
-        expect(active, isNot(contains('btnIcon')));
-
         doc.tick(45000);
-        active = doc.getActiveMedia().map((m) => m.id).toList();
-        expect(active, contains('mainVideo'));
-        expect(active, contains('btnIcon'));
-        expect(active, isNot(contains('promoVideo')));
+        expect(mainVideo.getMainState(), NclStateType.occurring);
         expect(btnIcon.getMainState(), NclStateType.occurring);
+        expect(promoVideo.getMainState(), NclStateType.sleeping);
 
         doc.triggerSelection('btnIcon', 'RED');
         doc.tick(0);
 
-        active = doc.getActiveMedia().map((m) => m.id).toList();
-        expect(active, contains('mainVideo'));
-        expect(active, isNot(contains('btnIcon')));
-        expect(active, contains('promoVideo'));
+        expect(mainVideo.getMainState(), NclStateType.occurring);
         expect(btnIcon.getMainState(), NclStateType.sleeping);
         expect(promoVideo.getMainState(), NclStateType.occurring);
 

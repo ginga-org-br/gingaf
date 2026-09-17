@@ -46,7 +46,7 @@ void main() {
         doc.start();
         doc.tick(10000);
 
-        final m2 = doc.getNodeById('m2') as Media;
+        final m2 = doc.getMediaById('m2')!;
         final prop = m2.getPropertyNclEvent('p');
 
         expect(m2.getMainState(), NclStateType.occurring);

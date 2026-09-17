@@ -221,10 +221,15 @@ void main() {
     final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
     expect(nclState.nclDocument, isNotNull);
 
+    final menuCtx = nclState.nclDocument!.getContextById('menu')!;
+    expect(menuCtx.getMainState(), NclStateType.sleeping);
+
     nclState.tick(5000);
     await tester.pump();
 
-    final changesMedia = nclState.nclDocument!.getNodeById('changes') as Media;
+    expect(menuCtx.getMainState(), NclStateType.occurring);
+
+    final changesMedia = nclState.nclDocument!.getMediaById('changes')!;
     final addProp =
         changesMedia.getProperties().firstWhere((p) => p.name == 'add');
     expect(addProp.value, isNull);
@@ -234,5 +239,6 @@ void main() {
     await tester.pump();
 
     expect(addProp.value, '1');
+    expect(menuCtx.getMainState(), NclStateType.occurring);
   });
 }

@@ -199,7 +199,7 @@ void main() {
     doc.start();
     doc.tick(10000);
 
-    final m2 = doc.getNodeById('m2') as Media;
+    final m2 = doc.getMediaById('m2')!;
     final prop = m2.getPropertyNclEvent('p');
 
     expect(m2.getMainState(), NclStateType.occurring);
@@ -247,11 +247,8 @@ void main() {
     nclState.tick(41000);
     await tester.pump();
 
-    final activeMedia =
-        nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
-    expect(activeMedia, contains('photo'));
-
-    final photo = nclState.nclDocument!.getNodeById('photo') as Media;
+    final photo = nclState.nclDocument!.getMediaById('photo')!;
+    expect(photo.getMainState(), NclStateType.occurring);
     final prop = photo.getPropertyNclEvent('top');
 
     nclState.tick(1000);

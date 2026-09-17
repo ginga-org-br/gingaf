@@ -120,35 +120,30 @@ void main() {
       );
 
       doc.start();
-      var active = doc.getActiveMedia().map((m) => m.id).toList();
-      expect(active, contains('mMain'));
 
-      final mMain = doc.getNodeById('mMain') as Media;
-      final mIcon = doc.getNodeById('mIcon') as Media;
-      final mShoes = doc.getNodeById('mShoes') as Media;
+      final mMain = doc.getMediaById('mMain')!;
+      final mIcon = doc.getMediaById('mIcon')!;
+      final mShoes = doc.getMediaById('mShoes')!;
+      final ctxAdvert = doc.getContextById('ctxAdvert')!;
 
+      expect(ctxAdvert.getMainState(), NclStateType.sleeping);
       expect(mMain.getMainState(), NclStateType.occurring);
       expect(mIcon.getMainState(), NclStateType.sleeping);
       expect(mShoes.getMainState(), NclStateType.sleeping);
 
       doc.tick(45000);
-      active = doc.getActiveMedia().map((m) => m.id).toList();
-      expect(active, contains('mMain'));
-      expect(active, contains('mIcon'));
       expect(mMain.getMainState(), NclStateType.occurring);
       expect(mIcon.getMainState(), NclStateType.occurring);
       expect(mShoes.getMainState(), NclStateType.sleeping);
+      expect(ctxAdvert.getMainState(), NclStateType.occurring);
 
       doc.triggerSelection('mIcon', 'RED');
       doc.tick(0);
 
-      active = doc.getActiveMedia().map((m) => m.id).toList();
-      expect(active, contains('mMain'));
-      expect(active, isNot(contains('mIcon')));
-      expect(active, contains('mShoes'));
       expect(mMain.getMainState(), NclStateType.occurring);
       expect(mIcon.getMainState(), NclStateType.sleeping);
       expect(mShoes.getMainState(), NclStateType.occurring);
+      expect(ctxAdvert.getMainState(), NclStateType.occurring);
 
       final boundsProp = mMain.getProperties().firstWhere(
             (p) => p.name == 'bounds',
@@ -161,6 +156,7 @@ void main() {
       doc.tick(0);
 
       expect(mShoes.getMainState(), NclStateType.sleeping);
+      expect(ctxAdvert.getMainState(), NclStateType.sleeping);
       expect(boundsProp.value, '0,0,100%,100%');
     });
   });

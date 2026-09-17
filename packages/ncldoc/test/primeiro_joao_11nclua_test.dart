@@ -152,10 +152,16 @@ void main() {
       'NclDocument runs lua script configuration and triggers property modifications successfully',
       () {
         final doc = NclDocument.fromContent(xml);
-        doc.start();
-        doc.tick(5000);
+        final menuCtx = doc.getContextById('menu')!;
+        expect(menuCtx.getMainState(), NclStateType.sleeping);
 
-        final changesMedia = doc.getNodeById('changes') as Media;
+        doc.start();
+        expect(menuCtx.getMainState(), NclStateType.sleeping);
+
+        doc.tick(5000);
+        expect(menuCtx.getMainState(), NclStateType.occurring);
+
+        final changesMedia = doc.getMediaById('changes')!;
         final addProp = changesMedia.getProperties().firstWhere(
               (p) => p.name == 'add',
             );
@@ -165,6 +171,7 @@ void main() {
         doc.tick(0);
 
         expect(addProp.value, '1');
+        expect(menuCtx.getMainState(), NclStateType.occurring);
       },
     );
   });

@@ -248,29 +248,42 @@ void main() {
 </ncl>''');
 
     doc.start();
+    final mMain = doc.getMediaById('mMain')!;
+    final mIcon = doc.getMediaById('mIcon')!;
+    final mShoes = doc.getMediaById('mShoes')!;
+    final mForm = doc.getMediaById('mForm')!;
+    final ctxAdvert = doc.getContextById('ctxAdvert')!;
+
+    expect(ctxAdvert.getMainState(), NclStateType.sleeping);
+    expect(mMain.getMainState(), NclStateType.occurring);
+    expect(mIcon.getMainState(), NclStateType.sleeping);
+    expect(mShoes.getMainState(), NclStateType.sleeping);
+    expect(mForm.getMainState(), NclStateType.sleeping);
+
     doc.tick(45000);
-    var active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('mMain'));
-    expect(active, contains('mIcon'));
+    expect(mMain.getMainState(), NclStateType.occurring);
+    expect(mIcon.getMainState(), NclStateType.occurring);
+    expect(mShoes.getMainState(), NclStateType.sleeping);
+    expect(mForm.getMainState(), NclStateType.sleeping);
+    expect(ctxAdvert.getMainState(), NclStateType.occurring);
 
     doc.triggerSelection('mIcon', 'RED');
     doc.tick(0);
 
-    active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('mMain'));
-    expect(active, isNot(contains('mIcon')));
-    expect(active, contains('mShoes'));
-    expect(active, contains('mForm'));
+    expect(mMain.getMainState(), NclStateType.occurring);
+    expect(mIcon.getMainState(), NclStateType.sleeping);
+    expect(mShoes.getMainState(), NclStateType.occurring);
+    expect(mForm.getMainState(), NclStateType.occurring);
+    expect(ctxAdvert.getMainState(), NclStateType.occurring);
 
-    final mMain = doc.getNodeById('mMain') as Media;
     final boundsProp =
         mMain.getProperties().firstWhere((p) => p.name == 'bounds');
     expect(boundsProp.value, '5%,6.7%,45%,45%');
 
     doc.tick(15000);
-    active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('mMain'));
-    expect(active, isNot(contains('mForm')));
+    expect(mMain.getMainState(), NclStateType.occurring);
+    expect(mForm.getMainState(), NclStateType.sleeping);
+    expect(ctxAdvert.getMainState(), NclStateType.occurring);
     expect(boundsProp.value, '0,0,100%,100%');
   });
 
@@ -295,13 +308,27 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
+    expect(
+      nclState.nclDocument?.getContextById('ctxAdvert')?.getMainState(),
+      NclStateType.sleeping,
+    );
 
     nclState.tick(45000);
     await tester.pump();
 
+    expect(
+      nclState.nclDocument?.getContextById('ctxAdvert')?.getMainState(),
+      NclStateType.occurring,
+    );
+
     nclState.nclDocument?.triggerSelection('mIcon', 'RED');
     nclState.tick(0);
     await tester.pump();
+
+    expect(
+      nclState.nclDocument?.getContextById('ctxAdvert')?.getMainState(),
+      NclStateType.occurring,
+    );
 
     final posList =
         tester.widgetList<Positioned>(find.byType(Positioned)).toList();
@@ -309,6 +336,11 @@ void main() {
 
     nclState.tick(15000);
     await tester.pump();
+
+    expect(
+      nclState.nclDocument?.getContextById('ctxAdvert')?.getMainState(),
+      NclStateType.occurring,
+    );
 
     final posList2 =
         tester.widgetList<Positioned>(find.byType(Positioned)).toList();

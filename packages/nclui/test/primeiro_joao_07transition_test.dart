@@ -204,9 +204,13 @@ void main() {
     nclState.tick(5000);
     await tester.pump();
 
-    final activeMedia =
-        nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
-    expect(activeMedia, contains('background'));
-    expect(activeMedia, contains('choro'));
+    expect(
+      nclState.nclDocument?.getMediaById('background')?.getMainState(),
+      NclStateType.occurring,
+    );
+    expect(
+      nclState.nclDocument?.getMediaById('choro')?.getMainState(),
+      NclStateType.occurring,
+    );
   });
 }

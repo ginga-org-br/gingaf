@@ -273,22 +273,31 @@ void main() {
 
     doc.systemVariables['system.language'] = 'por';
     doc.start();
+    final ptForm = doc.getMediaById('ptForm')!;
+    final enForm = doc.getMediaById('enForm')!;
+    final ctxAdvert = doc.getContextById('ctxAdvert')!;
+
+    expect(ctxAdvert.getMainState(), NclStateType.sleeping);
+    expect(ptForm.getMainState(), NclStateType.sleeping);
+    expect(enForm.getMainState(), NclStateType.sleeping);
+
     doc.tick(45000);
+    expect(ctxAdvert.getMainState(), NclStateType.occurring);
     doc.triggerSelection('mIcon', 'RED');
     doc.tick(0);
 
-    var active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('ptForm'));
-    expect(active, isNot(contains('enForm')));
+    expect(ptForm.getMainState(), NclStateType.occurring);
+    expect(enForm.getMainState(), NclStateType.sleeping);
+    expect(ctxAdvert.getMainState(), NclStateType.occurring);
 
-    final mMain = doc.getNodeById('mMain') as Media;
+    final mMain = doc.getMediaById('mMain')!;
     final boundsProp =
         mMain.getProperties().firstWhere((p) => p.name == 'bounds');
     expect(boundsProp.value, '5%,6.7%,45%,45%');
 
     doc.tick(15000);
-    active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, isNot(contains('ptForm')));
+    expect(ptForm.getMainState(), NclStateType.sleeping);
+    expect(ctxAdvert.getMainState(), NclStateType.occurring);
     expect(boundsProp.value, '0,0,100%,100%');
   });
 
@@ -425,22 +434,31 @@ void main() {
 
     doc.systemVariables['system.language'] = 'eng';
     doc.start();
+    final ptForm = doc.getMediaById('ptForm')!;
+    final enForm = doc.getMediaById('enForm')!;
+    final ctxAdvert = doc.getContextById('ctxAdvert')!;
+
+    expect(ctxAdvert.getMainState(), NclStateType.sleeping);
+    expect(ptForm.getMainState(), NclStateType.sleeping);
+    expect(enForm.getMainState(), NclStateType.sleeping);
+
     doc.tick(45000);
+    expect(ctxAdvert.getMainState(), NclStateType.occurring);
     doc.triggerSelection('mIcon', 'RED');
     doc.tick(0);
 
-    var active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('enForm'));
-    expect(active, isNot(contains('ptForm')));
+    expect(enForm.getMainState(), NclStateType.occurring);
+    expect(ptForm.getMainState(), NclStateType.sleeping);
+    expect(ctxAdvert.getMainState(), NclStateType.occurring);
 
-    final mMain = doc.getNodeById('mMain') as Media;
+    final mMain = doc.getMediaById('mMain')!;
     final boundsProp =
         mMain.getProperties().firstWhere((p) => p.name == 'bounds');
     expect(boundsProp.value, '5%,6.7%,45%,45%');
 
     doc.tick(15000);
-    active = doc.getActiveMedia().map((m) => m.id).toList();
-    expect(active, isNot(contains('enForm')));
+    expect(enForm.getMainState(), NclStateType.sleeping);
+    expect(ctxAdvert.getMainState(), NclStateType.occurring);
     expect(boundsProp.value, '0,0,100%,100%');
   });
 
@@ -466,13 +484,27 @@ void main() {
 
     final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
     nclState.nclDocument?.systemVariables['system.language'] = 'eng';
+    expect(
+      nclState.nclDocument?.getContextById('ctxAdvert')?.getMainState(),
+      NclStateType.sleeping,
+    );
 
     nclState.tick(45000);
     await tester.pump();
 
+    expect(
+      nclState.nclDocument?.getContextById('ctxAdvert')?.getMainState(),
+      NclStateType.occurring,
+    );
+
     nclState.nclDocument?.triggerSelection('mIcon', 'RED');
     nclState.tick(0);
     await tester.pump();
+
+    expect(
+      nclState.nclDocument?.getContextById('ctxAdvert')?.getMainState(),
+      NclStateType.occurring,
+    );
 
     final posList =
         tester.widgetList<Positioned>(find.byType(Positioned)).toList();

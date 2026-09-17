@@ -224,12 +224,23 @@ void main() {
     final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
     expect(nclState.nclDocument, isNotNull);
 
+    final interactivityCtx =
+        nclState.nclDocument!.getContextById('interactivity')!;
+    final advertCtx =
+        nclState.nclDocument!.getContextById('advert')!;
+
+    expect(interactivityCtx.getMainState(), NclStateType.occurring);
+    expect(advertCtx.getMainState(), NclStateType.sleeping);
+
     nclState.tick(45000);
     await tester.pump();
 
-    final activeMedia =
-        nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
-    expect(activeMedia, contains('icon'));
+    expect(
+      nclState.nclDocument!.getMediaById('icon')?.getMainState(),
+      NclStateType.occurring,
+    );
+    expect(interactivityCtx.getMainState(), NclStateType.occurring);
+    expect(advertCtx.getMainState(), NclStateType.occurring);
   });
 
   testWidgets(
@@ -256,20 +267,33 @@ void main() {
     final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
     expect(nclState.nclDocument, isNotNull);
 
+    final interactivityCtx =
+        nclState.nclDocument!.getContextById('interactivity')!;
+    final advertCtx =
+        nclState.nclDocument!.getContextById('advert')!;
+
+    expect(interactivityCtx.getMainState(), NclStateType.occurring);
+    expect(advertCtx.getMainState(), NclStateType.sleeping);
+
     nclState.nclDocument!.triggerSelection('intOn', 'INFO');
     nclState.tick(0);
     await tester.pump();
 
-    final globalVar = nclState.nclDocument!.getNodeById('globalVar') as Media;
+    final globalVar = nclState.nclDocument!.getMediaById('globalVar')!;
     final propVal = nclState.nclDocument!
         .getPropertyValue(globalVar, 'service.interactivity');
     expect(propVal, 'false');
+    expect(interactivityCtx.getMainState(), NclStateType.occurring);
+    expect(advertCtx.getMainState(), NclStateType.sleeping);
 
     nclState.tick(45000);
     await tester.pump();
 
-    final activeMedia =
-        nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
-    expect(activeMedia, isNot(contains('icon')));
+    expect(
+      nclState.nclDocument!.getMediaById('icon')?.getMainState(),
+      NclStateType.sleeping,
+    );
+    expect(interactivityCtx.getMainState(), NclStateType.occurring);
+    expect(advertCtx.getMainState(), NclStateType.sleeping);
   });
 }

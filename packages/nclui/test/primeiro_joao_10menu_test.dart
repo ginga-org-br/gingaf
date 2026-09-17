@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ncldoc/ncl_document.dart';
 import 'package:nclui/ncl.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
@@ -169,13 +170,22 @@ void main() {
     final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
     expect(nclState.nclDocument, isNotNull);
 
+    final menuCtx = nclState.nclDocument!.getContextById('menu')!;
+    expect(menuCtx.getMainState(), NclStateType.sleeping);
+
     nclState.tick(5000);
     await tester.pump();
 
-    final activeMedia =
-        nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
-    expect(activeMedia, contains('imgChorinho'));
-    expect(activeMedia, contains('imgRock'));
+    expect(menuCtx.getMainState(), NclStateType.occurring);
+
+    expect(
+      nclState.nclDocument!.getMediaById('imgChorinho')?.getMainState(),
+      NclStateType.occurring,
+    );
+    expect(
+      nclState.nclDocument!.getMediaById('imgRock')?.getMainState(),
+      NclStateType.occurring,
+    );
   });
 
   testWidgets('NclWidget handles key navigation and selection switching',
@@ -201,9 +211,14 @@ void main() {
     final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
     expect(nclState.nclDocument, isNotNull);
 
+    final menuCtx = nclState.nclDocument!.getContextById('menu')!;
+    expect(menuCtx.getMainState(), NclStateType.sleeping);
+
     nclState.tick(5000);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
+
+    expect(menuCtx.getMainState(), NclStateType.occurring);
 
     expect(nclState.nclDocument!.currentFocusNodeId, equals('imgChorinho'));
 
@@ -222,9 +237,12 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
-    var active = nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('rock'));
-    final docVal = nclState.nclDocument!.getPropertyValue(nclState.nclDocument!.getNodeById('choro')!, 'soundLevel');
+    expect(
+      nclState.nclDocument!.getMediaById('rock')?.getMainState(),
+      NclStateType.occurring,
+    );
+    final docVal = nclState.nclDocument!.getPropertyValue(
+        nclState.nclDocument!.getMediaById('choro')!, 'soundLevel');
     expect(docVal, equals('0'));
     expect(choroState.soundLevel, equals(0.0));
     expect(choroState.controller?.value.volume, equals(0.0));
@@ -237,9 +255,14 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
-    active = nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('techno'));
-    expect(active, isNot(contains('rock')));
+    expect(
+      nclState.nclDocument!.getMediaById('techno')?.getMainState(),
+      NclStateType.occurring,
+    );
+    expect(
+      nclState.nclDocument!.getMediaById('rock')?.getMainState(),
+      NclStateType.sleeping,
+    );
     expect(choroState.soundLevel, equals(0.0));
     expect(choroState.controller?.value.volume, equals(0.0));
   });
@@ -265,9 +288,14 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
+    final menuCtx = nclState.nclDocument!.getContextById('menu')!;
+    expect(menuCtx.getMainState(), NclStateType.sleeping);
+
     nclState.tick(5000);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
+
+    expect(menuCtx.getMainState(), NclStateType.occurring);
 
     expect(nclState.nclDocument!.currentFocusNodeId, equals('imgChorinho'));
 
@@ -290,8 +318,10 @@ void main() {
     expect(nclState.nclDocument!.currentFocusNodeId, equals('imgRock'));
     expect(nclState.nclDocument!.envVariables['service.currentFocus'], equals('imgRock'));
 
-    var active = nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('rock'));
+    expect(
+      nclState.nclDocument!.getMediaById('rock')?.getMainState(),
+      NclStateType.occurring,
+    );
     expect(choroState.soundLevel, equals(0.0));
     expect(choroState.controller?.value.volume, equals(0.0));
 
@@ -307,9 +337,14 @@ void main() {
     expect(nclState.nclDocument!.currentFocusNodeId, equals('imgTechno'));
     expect(nclState.nclDocument!.envVariables['service.currentFocus'], equals('imgTechno'));
 
-    active = nclState.nclDocument!.getActiveMedia().map((m) => m.id).toList();
-    expect(active, contains('techno'));
-    expect(active, isNot(contains('rock')));
+    expect(
+      nclState.nclDocument!.getMediaById('techno')?.getMainState(),
+      NclStateType.occurring,
+    );
+    expect(
+      nclState.nclDocument!.getMediaById('rock')?.getMainState(),
+      NclStateType.sleeping,
+    );
     expect(choroState.soundLevel, equals(0.0));
     expect(choroState.controller?.value.volume, equals(0.0));
 

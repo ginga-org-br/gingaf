@@ -197,10 +197,20 @@ void main() {
       'NclDocument evaluates settings conditional triggers correctly when true',
       () {
         final doc = NclDocument.fromContent(xml);
+        final interactivityCtx = doc.getContextById('interactivity')!;
+        final advertCtx = doc.getContextById('advert')!;
+
+        expect(interactivityCtx.getMainState(), NclStateType.sleeping);
+        expect(advertCtx.getMainState(), NclStateType.sleeping);
+
         doc.start();
+        expect(interactivityCtx.getMainState(), NclStateType.occurring);
+        expect(advertCtx.getMainState(), NclStateType.sleeping);
+
         doc.tick(45000);
-        final active = doc.getActiveMedia().map((m) => m.id).toList();
-        expect(active, contains('icon'));
+        expect(doc.getMediaById('icon')?.getMainState(), NclStateType.occurring);
+        expect(interactivityCtx.getMainState(), NclStateType.occurring);
+        expect(advertCtx.getMainState(), NclStateType.occurring);
       },
     );
 
@@ -208,17 +218,30 @@ void main() {
       'NclDocument evaluates settings conditional triggers correctly when false',
       () {
         final doc = NclDocument.fromContent(xml);
+        final interactivityCtx = doc.getContextById('interactivity')!;
+        final advertCtx = doc.getContextById('advert')!;
+
+        expect(interactivityCtx.getMainState(), NclStateType.sleeping);
+        expect(advertCtx.getMainState(), NclStateType.sleeping);
+
         doc.start();
+        expect(interactivityCtx.getMainState(), NclStateType.occurring);
+        expect(advertCtx.getMainState(), NclStateType.sleeping);
+
         doc.triggerSelection('intOn', 'INFO');
         doc.tick(0);
-        final globalVar = doc.getNodeById('globalVar') as Media;
+        final globalVar = doc.getMediaById('globalVar')!;
         expect(
           doc.getPropertyValue(globalVar, 'service.interactivity'),
           'false',
         );
+        expect(interactivityCtx.getMainState(), NclStateType.occurring);
+        expect(advertCtx.getMainState(), NclStateType.sleeping);
+
         doc.tick(45000);
-        final active = doc.getActiveMedia().map((m) => m.id).toList();
-        expect(active, isNot(contains('icon')));
+        expect(doc.getMediaById('icon')?.getMainState(), NclStateType.sleeping);
+        expect(interactivityCtx.getMainState(), NclStateType.occurring);
+        expect(advertCtx.getMainState(), NclStateType.sleeping);
       },
     );
   });
