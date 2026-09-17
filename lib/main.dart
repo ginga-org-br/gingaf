@@ -135,6 +135,7 @@ void main(List<String> args) async {
   final config = await resolveGingaConfig(
     appSrc: appSrc,
     configSrc: configSrc,
+    gingacc: GingaCC(virtualFiles: virtualFiles),
   );
 
   _logger.info(config.toString());
@@ -192,19 +193,27 @@ Future<GingaConfig> resolveGingaConfig({
       config = GingaConfig(startWithCCWS: true);
     }
   } else if (effectiveAppSrc != null) {
-    final localConfigFile = File('ginga_config.json');
-    if (localConfigFile.existsSync()) {
-      try {
+    try {
+      final configUri =
+          initialGingacc.resolveUri('ginga_config.json', effectiveAppSrc);
+      final hasConfig = await initialGingacc.loadContent(configUri) != null;
+      if (hasConfig) {
         config = await GingaConfig.fromJson(
           'ginga_config.json',
           effectiveAppSrc,
           initialGingacc,
         );
-      } catch (e) {
-        _logger.warning('Failed to load config: $e');
+      } else if (!kIsWeb && File('ginga_config.json').existsSync()) {
+        config = await GingaConfig.fromJson(
+          'ginga_config.json',
+          effectiveAppSrc,
+          initialGingacc,
+        );
+      } else {
         config = GingaConfig(startWithCCWS: true);
       }
-    } else {
+    } catch (e) {
+      _logger.warning('Failed to load config: $e');
       config = GingaConfig(startWithCCWS: true);
     }
   } else {

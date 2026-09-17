@@ -91,7 +91,6 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
     try {
       final gingacc = widget.document?.gingacc ?? GingaCC();
       final parsedUri = gingacc.resolveUri(widget.src);
-      final src = parsedUri.toString();
       final VideoPlayerController controller;
 
       if (kIsWeb || (parsedUri.hasScheme && parsedUri.scheme != 'file')) {
@@ -99,7 +98,8 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
       } else if (parsedUri.isScheme('file')) {
         controller = VideoPlayerController.file(File(parsedUri.toFilePath()));
       } else {
-        controller = VideoPlayerController.file(File(src));
+        controller = VideoPlayerController.file(
+            File(Uri.decodeComponent(parsedUri.path)));
       }
 
       _controller = controller;

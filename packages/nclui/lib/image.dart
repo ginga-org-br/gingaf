@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import 'base_widget.dart';
@@ -39,7 +40,8 @@ class ImageWidgetState extends MediaState<ImageWidget> {
       return const SizedBox.shrink();
     }
     final uriStr = parsedUri.toString();
-    final isHttpOrData = parsedUri.scheme == 'http' ||
+    final isHttpOrData = kIsWeb ||
+        parsedUri.scheme == 'http' ||
         parsedUri.scheme == 'https' ||
         parsedUri.scheme == 'data' ||
         parsedUri.scheme == 'blob';
@@ -60,8 +62,9 @@ class ImageWidgetState extends MediaState<ImageWidget> {
         },
       );
     } else {
-      final localPath =
-          (parsedUri.isScheme('file')) ? parsedUri.toFilePath() : uriStr;
+      final localPath = (parsedUri.isScheme('file'))
+          ? parsedUri.toFilePath()
+          : Uri.decodeComponent(parsedUri.path);
       return Image.file(
         File(localPath),
         fit: BoxFit.fill,

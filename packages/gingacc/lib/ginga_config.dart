@@ -173,7 +173,8 @@ class GingaConfig {
       if (trimmedUsers.startsWith('{') || trimmedUsers.startsWith('[')) {
         users.loadUserData(trimmedUsers);
       } else {
-        final uri = gingacc.resolveUri(trimmedUsers, baseDirSrc);
+        final base = baseDirSrc ?? (trimmed.startsWith('{') ? null : trimmed);
+        final uri = gingacc.resolveUri(trimmedUsers, base);
         final loaded = (await gingacc.loadContent(uri)) ??
             (await gingacc.loadContent(trimmedUsers));
         if (loaded != null && loaded.isNotEmpty) {

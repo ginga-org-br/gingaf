@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:gingacc/gingacc.dart';
 import 'package:test/test.dart';
 
@@ -337,6 +339,49 @@ void main() {
       expect(isHttp('main.ncl'), isFalse);
       expect(isHttp(null), isFalse);
       expect(isHttp(123), isFalse);
+    });
+
+    test('loads ginga_config.json from the same folder of the application', () async {
+      final tempDir = Directory.systemTemp.createTempSync('ginga_config_folder_test_');
+      try {
+        final subDir = Directory('${tempDir.path}/app')..createSync();
+        final appFile = File('${subDir.path}/main.ncl')..writeAsStringSync('<ncl/>');
+        File('${subDir.path}/ginga_config.json')
+            .writeAsStringSync('{"mainAvSrc": "https://example.com/custom.mp4", "startWithCCWS": true}');
+
+        final config = await GingaConfig.fromJson('ginga_config.json', appFile.path);
+        expect(config.mainAvSrc, equals('https://example.com/custom.mp4'));
+        expect(config.startWithCCWS, isTrue);
+      } finally {
+        tempDir.deleteSync(recursive: true);
+      }
+    });
+
+    test('loads ginga_config.json with directory baseDirSrc', () async {
+      final tempDir = Directory.systemTemp.createTempSync('ginga_config_dir_test_');
+      try {
+        final subDir = Directory('${tempDir.path}/app')..createSync();
+        File('${subDir.path}/ginga_config.json')
+            .writeAsStringSync('{"mainAvSrc": "https://example.com/dir_custom.mp4"}');
+
+        final config = await GingaConfig.fromJson('ginga_config.json', subDir.path);
+        expect(config.mainAvSrc, equals('https://example.com/dir_custom.mp4'));
+      } finally {
+        tempDir.deleteSync(recursive: true);
+      }
+    });
+
+    test('loads ginga_config.json from virtualFiles in the same folder of the application', () async {
+      final gingacc = GingaCC(
+        virtualFiles: {
+          'app/main.ncl': '<ncl/>',
+          'app/ginga_config.json': '{"mainAvSrc": "https://example.com/virtual_custom.mp4", "startWithMainAv": true}',
+        },
+      );
+
+      final config = await GingaConfig.fromJson('ginga_config.json', 'app/main.ncl', gingacc);
+      expect(config.mainAvSrc, equals('https://example.com/virtual_custom.mp4'));
+      expect(config.startWithMainAv, isTrue);
     });
   });
 }

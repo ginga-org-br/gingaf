@@ -34,9 +34,11 @@ void main() {
       try {
         final subDir = Directory(path.join(tempDir.path, 'sub'))..createSync();
         File(path.join(subDir.path, 'main.ncl')).writeAsStringSync('<ncl/>');
-        File(path.join(tempDir.path, 'users.json')).writeAsStringSync('[{"id": "u1", "name": "User 1"}]');
+        File(path.join(tempDir.path, 'users.json'))
+            .writeAsStringSync('[{"id": "u1", "name": "User 1"}]');
         final configFile = File(path.join(tempDir.path, 'config.json'))
-          ..writeAsStringSync('{"appSrc": "sub/main.ncl", "usersDataJson": "users.json"}');
+          ..writeAsStringSync(
+              '{"appSrc": "sub/main.ncl", "usersDataJson": "users.json"}');
 
         final config = await resolveGingaConfig(configSrc: configFile.path);
         expect(config.appSrc, equals('main.ncl'));
@@ -53,6 +55,47 @@ void main() {
         appSrc: 'http://example.com/app.ncl',
       );
       expect(config.appSrc, equals('http://example.com/app.ncl'));
+    });
+
+    test('loads ginga_config.json from the same folder of the application',
+        () async {
+      final prevCwd = Directory.current;
+      final tempDir =
+          Directory.systemTemp.createTempSync('main_config_folder_');
+      try {
+        final appDir = Directory(path.join(tempDir.path, 'my_app'))
+          ..createSync();
+        final appFile = File(path.join(appDir.path, 'main.ncl'))
+          ..writeAsStringSync('<ncl/>');
+        File(path.join(appDir.path, 'ginga_config.json')).writeAsStringSync(
+            '{"mainAvSrc": "https://example.com/stream.mp4", "startWithCCWS": false}');
+
+        final config = await resolveGingaConfig(appSrc: appFile.path);
+        expect(config.appSrc, equals('main.ncl'));
+        expect(config.mainAvSrc, equals('https://example.com/stream.mp4'));
+        expect(config.startWithCCWS, isFalse);
+      } finally {
+        Directory.current = prevCwd;
+        tempDir.deleteSync(recursive: true);
+      }
+    });
+
+    test(
+        'loads ginga_config.json from virtualFiles in the same folder of application',
+        () async {
+      final gingacc = GingaCC(
+        virtualFiles: {
+          'demo/main.ncl': '<ncl/>',
+          'demo/ginga_config.json':
+              '{"mainAvSrc": "https://example.com/virtual.mp4", "startWithMainAv": true}',
+        },
+      );
+      final config = await resolveGingaConfig(
+        appSrc: 'demo/main.ncl',
+        gingacc: gingacc,
+      );
+      expect(config.mainAvSrc, equals('https://example.com/virtual.mp4'));
+      expect(config.startWithMainAv, isTrue);
     });
   });
 }

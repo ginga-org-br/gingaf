@@ -7,6 +7,7 @@ import 'package:path/path.dart' as path;
 
 import 'ccws.dart';
 import 'ginga_config.dart';
+
 export 'ccws.dart';
 export 'ginga_config.dart';
 export 'users.dart';
@@ -42,16 +43,43 @@ class GingaCC {
 
     final srcUri = _parseUri(rawSrc);
     if (baseDirSrc == null || baseDirSrc.trim().isEmpty) {
+      if (!_isWeb && !srcUri.hasScheme) {
+        final decoded = Uri.decodeComponent(srcUri.path);
+        return File(decoded).absolute.uri;
+      }
       return srcUri;
     }
 
-    final baseUri = _parseUri(baseDirSrc.trim());
+    Uri baseUri = _parseUri(baseDirSrc.trim());
     if (baseUri.isScheme('data')) {
+      if (!_isWeb && !srcUri.hasScheme) {
+        final decoded = Uri.decodeComponent(srcUri.path);
+        return File(decoded).absolute.uri;
+      }
       return srcUri;
+    }
+
+    if (!_isWeb && !baseUri.hasScheme) {
+      final decodedBase = Uri.decodeComponent(baseUri.path);
+      final isDir = decodedBase.endsWith('/') ||
+          decodedBase.endsWith('\\') ||
+          Directory(decodedBase).existsSync();
+      if (isDir) {
+        baseUri = Directory(decodedBase).absolute.uri;
+      } else {
+        baseUri = File(decodedBase).absolute.uri;
+      }
     }
 
     final resolved = baseUri.resolveUri(srcUri);
-    return _lookupVirtualUri(resolved.toString()) ?? resolved;
+    final virtualResolved = _lookupVirtualUri(resolved.toString());
+    if (virtualResolved != null) return virtualResolved;
+
+    if (!_isWeb && !resolved.hasScheme) {
+      final decoded = Uri.decodeComponent(resolved.path);
+      return File(decoded).absolute.uri;
+    }
+    return resolved;
   }
 
   Future<String?> loadContent(dynamic srcOrUri) async {
@@ -90,7 +118,9 @@ class GingaCC {
 
     if (uri.isScheme('file') || (!uri.hasScheme && !_isWeb)) {
       try {
-        final filePath = uri.hasScheme ? uri.toFilePath() : rawInput;
+        final filePath = uri.isScheme('file')
+            ? uri.toFilePath()
+            : Uri.decodeComponent(uri.path);
         final file = File(filePath);
         if (file.existsSync()) {
           return await file.readAsString();
@@ -117,6 +147,9 @@ class GingaCC {
     if (virtualFiles == null) return null;
     final matched = _lookupVirtualFile(rawSrc);
     if (matched != null) {
+      if (matched.startsWith('data:')) {
+        return Uri.tryParse(matched) ?? Uri.dataFromString(matched);
+      }
       final parsed = Uri.tryParse(matched);
       if (parsed != null &&
           (parsed.isScheme('http') ||
@@ -165,23 +198,44 @@ class GingaCC {
     if (virtualFiles == null) return null;
     final clean = rawSrc.trim().split('?')[0].split('#')[0];
     final normalized = clean.replaceAll('\\', '/');
+    final decodedNormalized = Uri.decodeComponent(normalized);
 
     if (virtualFiles!.containsKey(rawSrc)) return virtualFiles![rawSrc];
     if (virtualFiles!.containsKey(clean)) return virtualFiles![clean];
     if (virtualFiles!.containsKey(normalized)) return virtualFiles![normalized];
+    if (virtualFiles!.containsKey(decodedNormalized)) {
+      return virtualFiles![decodedNormalized];
+    }
 
     for (final entry in virtualFiles!.entries) {
       final k = entry.key.replaceAll('\\', '/');
+      final decodedK = Uri.decodeComponent(k);
       if (k == normalized ||
+          k == decodedNormalized ||
+          decodedK == normalized ||
+          decodedK == decodedNormalized ||
           normalized.endsWith('/$k') ||
-          k.endsWith('/$normalized')) {
+          normalized.endsWith('/$decodedK') ||
+          decodedNormalized.endsWith('/$k') ||
+          decodedNormalized.endsWith('/$decodedK') ||
+          k.endsWith('/$normalized') ||
+          k.endsWith('/$decodedNormalized') ||
+          decodedK.endsWith('/$normalized') ||
+          decodedK.endsWith('/$decodedNormalized')) {
         return entry.value;
       }
     }
 
     final fileName = path.basename(normalized);
+    final decodedFileName = path.basename(decodedNormalized);
     for (final entry in virtualFiles!.entries) {
-      if (path.basename(entry.key.replaceAll('\\', '/')) == fileName) {
+      final k = entry.key.replaceAll('\\', '/');
+      final entryBase = path.basename(k);
+      final decodedEntryBase = path.basename(Uri.decodeComponent(k));
+      if (entryBase == fileName ||
+          entryBase == decodedFileName ||
+          decodedEntryBase == fileName ||
+          decodedEntryBase == decodedFileName) {
         return entry.value;
       }
     }
@@ -201,5 +255,3 @@ class GingaCC {
     }
   }
 }
-
-

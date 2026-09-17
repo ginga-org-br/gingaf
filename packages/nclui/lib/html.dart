@@ -93,7 +93,9 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
           GingaCC();
       final uri = gingacc.resolveUri(widget.src);
       if (!kIsWeb && (uri.isScheme('file') || !uri.hasScheme)) {
-        final filePath = uri.isScheme('file') ? uri.toFilePath() : widget.src;
+        final filePath = uri.isScheme('file')
+            ? uri.toFilePath()
+            : Uri.decodeComponent(uri.path);
         final file = File(filePath).absolute;
         if (file.existsSync()) {
           await _controller!.loadFile(file.path);
