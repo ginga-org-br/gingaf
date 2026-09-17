@@ -13,23 +13,7 @@ The `gingaf` repository is organized as a monorepo: the root directory contains 
 - `packages/nclui/`: NCL and visual widgets
 - `node/`: npm package which also contains web interactive playground
 
-```mermaid
-block-beta
-columns 3
-  playground["playground"]
-  space
-  space
-  ginga_node["ginga-node"]
-  ginga_code["ginga-code"]
-  space
-  web["gingaf (web)"]
-  desktop["gingaf (desktop)"]
-  mobile["gingaf (mobile)"]
-  gingaf["gingaf"]:3
-  nclui["nclui"]:3
-  ncldoc["ncldoc"]:2
-  gingacc["gingacc"]:1
-```
+![architecture](doc/architecture.svg)
 
 ## Developing Ginga Applications using `gingaf`
 

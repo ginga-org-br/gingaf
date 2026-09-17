@@ -4,3 +4,9 @@ dartdoc:
     - gingacc
     - ncldoc
     - nclui
+  categories:
+    "Setup":
+      markdown: SETUP.md
+      name: "Setup"
+  categoryOrder: ["Setup"]
+

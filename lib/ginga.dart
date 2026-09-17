@@ -1,4 +1,6 @@
 /// Main Ginga player application and widgets.
+///
+/// {@category Setup}
 library ginga;
 
 export 'main.dart';

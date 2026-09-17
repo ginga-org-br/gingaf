@@ -1,6 +1,6 @@
 MAKEFLAGS += -s --no-print-directory
 
-.PHONY: help deps test doc release release-publish clean run-example check-app
+.PHONY: help deps test doc release release-publish clean run-example check-app architecture-svg
 
 BASE_HREF ?= /
 
@@ -46,6 +46,7 @@ help:
 		"  deps                 Install dependencies for Flutter workspace" \
 		"  test                 Run tests for Flutter workspace" \
 		"  doc                  Generate Dart documentation" \
+		"  architecture-svg     Generate doc/architecture.svg from doc/architecture.mmd" \
 		"  release              Zip current platform release build" \
 		"  release-publish      Publish release to GitHub Releases via gh" \
 		"  clean                Clean build artifacts" \
@@ -59,6 +60,9 @@ test:
 
 doc:
 	dart doc
+
+architecture-svg:
+	npx -y @mermaid-js/mermaid-cli -i doc/architecture.mmd -o doc/architecture.svg -b transparent
 
 release:
 	$(RELEASE_BUILD)
