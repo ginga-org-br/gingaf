@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingaf/ginga.dart';
+import 'package:gingaf/menu/users_menu.dart';
 import 'package:nclui/ncl.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
@@ -27,6 +28,35 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
 
       expect(find.byType(NclWidget), findsOneWidget);
+    });
+
+    testWidgets('NclWidget pauses and resumes AVWidget media',
+        (WidgetTester tester) async {
+      final gingacc = GingaCC(
+        virtualFiles: testVirtualFiles,
+      );
+      await tester.pumpWidget(MaterialApp(
+        home: NclWidget(
+          src: 'test.ncl',
+          gingacc: gingacc,
+        ),
+      ));
+
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.byType(AVWidget), findsOneWidget);
+
+      final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
+      final avState = tester.state<AVWidgetState>(find.byType(AVWidget));
+      expect(avState.isPaused, isFalse);
+
+      nclState.pause();
+      await tester.pump();
+      expect(avState.isPaused, isTrue);
+
+      nclState.resume();
+      await tester.pump();
+      expect(avState.isPaused, isFalse);
+      await tester.pumpWidget(const SizedBox());
     });
 
     testWidgets('NclWidget mounts with config parameter',
@@ -116,6 +146,171 @@ void main() {
       expect(find.byType(MainAVWidget), findsOneWidget);
       expect(find.byType(NclWidget), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets(
+        'FloatingControlMenu toggles, pauses, reloads, and opens Netflix users overlay',
+        (WidgetTester tester) async {
+      final config = GingaConfig(
+        appSrc: 'test.ncl',
+        startWithCCWS: false,
+        users: Users(
+            '[{"id": "u1", "name": "Alice"}, {"id": "u2", "name": "Bob"}]'),
+      );
+      final gingacc = GingaCC(
+        config: config,
+        virtualFiles: testVirtualFiles,
+      );
+      await tester.pumpWidget(Ginga(
+        gingacc: gingacc,
+      ));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byKey(const Key('floating_control_menu')), findsOneWidget);
+      expect(
+          find.byKey(const Key('floating_menu_toggle_button')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('floating_menu_toggle_button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.byKey(const Key('floating_restart_button')), findsOneWidget);
+      expect(find.byKey(const Key('floating_pause_button')), findsOneWidget);
+      expect(find.byKey(const Key('floating_users_button')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('floating_pause_button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
+      expect(nclState.isPaused, isTrue);
+
+      await tester.tap(find.byKey(const Key('floating_pause_button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(nclState.isPaused, isFalse);
+
+      await tester.tap(find.byKey(const Key('floating_restart_button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.byType(NclWidget), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('floating_menu_toggle_button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.byKey(const Key('floating_users_button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.byKey(const Key('user_selection_overlay')), findsOneWidget);
+      expect(find.text("Who's watching?"), findsOneWidget);
+      expect(find.text('Alice'), findsOneWidget);
+      expect(find.text('Bob'), findsOneWidget);
+      expect(find.byKey(const Key('delete_badge_u1')), findsNothing);
+
+      expect(gingacc.config.users.allUsers.length, equals(2));
+      await tester
+          .tap(find.byKey(const Key('user_selection_manage_users_button')));
+      await tester.pump();
+      expect(find.byKey(const Key('remove_user_u1')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('remove_user_u1')));
+      await tester.pump(const Duration(milliseconds: 250));
+
+      expect(gingacc.config.users.allUsers.length, equals(1));
+      expect(find.text('Alice'), findsNothing);
+      expect(find.text('Bob'), findsOneWidget);
+      expect(find.byKey(const Key('add_user_card')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('add_user_card')));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Add User'), findsWidgets);
+      await tester.enterText(
+          find.byKey(const Key('add_user_name_input')), 'Charlie');
+      await tester.enterText(
+          find.byKey(const Key('add_user_age_input')), '25');
+      await tester.enterText(
+          find.byKey(const Key('add_user_gender_input')), 'female');
+
+      await tester.tap(find.byKey(const Key('add_user_save_button')));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(gingacc.config.users.allUsers.length, equals(2));
+      expect(find.text('Charlie'), findsOneWidget);
+      final charlie = gingacc.config.users.allUsers
+          .firstWhere((u) => u.name == 'Charlie');
+      expect(charlie.getProperty('age'), equals(25));
+      expect(charlie.getProperty('gender'), equals('female'));
+
+      await tester
+          .tap(find.byKey(const Key('user_selection_manage_users_button')));
+      await tester.pump();
+      expect(find.byKey(const Key('add_user_card')), findsNothing);
+
+      await tester.tap(find.byKey(const Key('user_selection_close_button')));
+      await tester.pump(const Duration(milliseconds: 250));
+
+      expect(find.byKey(const Key('user_selection_overlay')), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets(
+        'UserSelectionOverlay manages users, selects active user, and shows empty state',
+        (WidgetTester tester) async {
+      final users = Users(
+          '[{"id": "u1", "name": "Dad"}, {"id": "u2", "name": "Quinn"}]');
+      bool closed = false;
+      UserData? selected;
+
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: UserSelectionOverlay(
+            users: users,
+            onClose: () => closed = true,
+            onUserSelected: (u) => selected = u,
+          ),
+        ),
+      ));
+      await tester.pump();
+
+      expect(find.text("Who's watching?"), findsOneWidget);
+      expect(find.text('Dad'), findsOneWidget);
+      expect(find.text('Quinn'), findsOneWidget);
+
+      await tester
+          .tap(find.byKey(const Key('user_selection_manage_users_button')));
+      await tester.pump();
+      expect(find.text('Done'), findsOneWidget);
+      expect(find.byKey(const Key('remove_user_u1')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('remove_user_u1')));
+      await tester.pump();
+      expect(users.getUser('u1'), isNull);
+      expect(find.text('Dad'), findsNothing);
+      expect(find.text('Quinn'), findsOneWidget);
+
+      await tester
+          .tap(find.byKey(const Key('user_selection_manage_users_button')));
+      await tester.pump();
+      expect(find.text('Manage Users'), findsOneWidget);
+
+      await tester.tap(find.text('Quinn'));
+      await tester.pump();
+      expect(selected?.id, equals('u2'));
+      expect(closed, isTrue);
+
+      users.clear();
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: UserSelectionOverlay(
+            users: users,
+            onClose: () {},
+          ),
+        ),
+      ));
+      await tester.pump();
+      expect(find.text('No users found'), findsOneWidget);
     });
   });
 }

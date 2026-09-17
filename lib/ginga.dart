@@ -9,6 +9,8 @@ import 'package:nclui/html.dart' as html;
 import 'package:nclui/main_av.dart';
 import 'package:nclui/ncl.dart' as ncl;
 
+import 'menu/settings_menu.dart';
+import 'menu/users_menu.dart';
 import 'web_utils_stub.dart' if (dart.library.js_interop) 'web_utils_web.dart';
 
 final _logger = Logger('ginga');
@@ -32,11 +34,11 @@ class _GingaState extends State<Ginga> {
   Widget? nclApp;
   bool _isExiting = false;
   bool _initialized = false;
+  bool _isPaused = false;
+  bool _showUsersOverlay = false;
 
-  final GlobalKey<ncl.NclWidgetState> _nclAppKey =
-      GlobalKey<ncl.NclWidgetState>();
-  final GlobalKey<MainAVWidgetState> _mainAvKey =
-      GlobalKey<MainAVWidgetState>();
+  GlobalKey<ncl.NclWidgetState> _nclAppKey = GlobalKey<ncl.NclWidgetState>();
+  GlobalKey<MainAVWidgetState> _mainAvKey = GlobalKey<MainAVWidgetState>();
 
   void _ensureMainAvMounted() {
     if (mainAVWidget == null) {
@@ -60,14 +62,6 @@ class _GingaState extends State<Ginga> {
       );
     }
 
-    final isConfigEmpty =
-        _gingacc.config.appSrc == null && !_gingacc.config.startWithMainAv;
-    if (isConfigEmpty && !kIsWeb) {
-      _logger.severe('both APP and CONFIG are empty, exiting');
-      _cleanup();
-      return;
-    }
-
     _gingacc.start();
     HardwareKeyboard.instance.addHandler(_handleKeyPress);
   }
@@ -77,27 +71,77 @@ class _GingaState extends State<Ginga> {
     super.didChangeDependencies();
     if (!_initialized) {
       _initialized = true;
-      final appSrc = _gingacc.config.appSrc;
-      if (appSrc != null) {
-        final lowerSrc = appSrc.toLowerCase();
-        if (lowerSrc.endsWith('.html') ||
-            lowerSrc.endsWith('.htm') ||
-            lowerSrc.endsWith('.xhtml')) {
-          htmlApp = html.HtmlWidget(
-            src: appSrc,
-            gingacc: _gingacc,
-          );
-        } else {
-          nclApp = ncl.NclWidget(
-            key: _nclAppKey,
-            src: appSrc,
-            mainAvKey: _mainAvKey,
-            gingacc: _gingacc,
-            onRequestMainAv: _ensureMainAvMounted,
-          );
-        }
+      _setupApp();
+    }
+  }
+
+  void _setupApp() {
+    final appSrc = _gingacc.config.appSrc;
+    if (appSrc != null) {
+      final lowerSrc = appSrc.toLowerCase();
+      if (lowerSrc.endsWith('.html') ||
+          lowerSrc.endsWith('.htm') ||
+          lowerSrc.endsWith('.xhtml')) {
+        htmlApp = html.HtmlWidget(
+          src: appSrc,
+          gingacc: _gingacc,
+        );
+      } else {
+        nclApp = ncl.NclWidget(
+          key: _nclAppKey,
+          src: appSrc,
+          mainAvKey: _mainAvKey,
+          gingacc: _gingacc,
+          onRequestMainAv: _ensureMainAvMounted,
+        );
       }
     }
+  }
+
+  void _restart() {
+    _logger.info('Restarting Ginga application');
+    setState(() {
+      _isPaused = false;
+      _showUsersOverlay = false;
+      htmlApp = null;
+      nclApp = null;
+      mainAVWidget = null;
+    });
+    _stopServices();
+    _gingacc.start();
+    _nclAppKey = GlobalKey<ncl.NclWidgetState>();
+    _mainAvKey = GlobalKey<MainAVWidgetState>();
+    if (_gingacc.config.startWithMainAv) {
+      _ensureMainAvMounted();
+    }
+    setState(() {
+      _setupApp();
+    });
+  }
+
+  void _togglePause() {
+    setState(() {
+      _isPaused = !_isPaused;
+    });
+    if (_isPaused) {
+      _nclAppKey.currentState?.pause();
+      _mainAvKey.currentState?.controller?.pause();
+    } else {
+      _nclAppKey.currentState?.resume();
+      _mainAvKey.currentState?.controller?.play();
+    }
+  }
+
+  void _openUsersOverlay() {
+    setState(() {
+      _showUsersOverlay = true;
+    });
+  }
+
+  void _closeUsersOverlay() {
+    setState(() {
+      _showUsersOverlay = false;
+    });
   }
 
   bool _handleKeyPress(KeyEvent event) {
@@ -222,6 +266,18 @@ class _GingaState extends State<Ginga> {
                     if (mainAVWidget != null) mainAVWidget!,
                     if (htmlApp != null) htmlApp!,
                     if (nclApp != null) nclApp!,
+                    if (!_showUsersOverlay)
+                      SettingsMenu(
+                        isPaused: _isPaused,
+                        onReload: _restart,
+                        onTogglePause: _togglePause,
+                        onOpenUsers: _openUsersOverlay,
+                      ),
+                    if (_showUsersOverlay)
+                      UsersMenu(
+                        users: _gingacc.config.users,
+                        onClose: _closeUsersOverlay,
+                      ),
                   ],
                 ),
         ),
