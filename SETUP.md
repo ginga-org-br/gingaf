@@ -1,6 +1,12 @@
 # Setup
 
-`gignaf` is based in Flutter. So first [install Flutter SDK from](https://docs.flutter.dev/install/manual)
+`gingaf` is based in Flutter. So first [install Flutter SDK from](https://docs.flutter.dev/install/manual).
+
+## Table of Contents
+
+- [At Windows, build for Windows and Chrome](#at-windows-build-for-windows-and-chrome)
+- [At Windows, build for Android](#at-windows-build-for-android)
+- [At Linux, build for Android](#at-linux-build-for-android)
 
 ### At windows, build for windows and chrome
 

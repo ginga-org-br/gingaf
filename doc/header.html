@@ -1,0 +1,60 @@
+<style>
+/* Allow markdown descriptions and topics to use full width */
+.markdown.desc {
+  max-width: 100% !important;
+}
+
+/* Hide category badges side-by-side with element names */
+.category {
+  display: none !important;
+}
+
+/* Constrain architecture diagram SVG size */
+img[src*="architecture"],
+img[alt="architecture"] {
+  max-width: 480px !important;
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 16px 0;
+}
+
+/* Ensure fenced code blocks don't overflow or clip */
+pre {
+  overflow-x: auto !important;
+  max-width: 100% !important;
+  padding: 12px !important;
+  border-radius: 6px !important;
+}
+
+pre code {
+  white-space: pre !important;
+}
+</style>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  var baseHref = document.body.getAttribute("data-base-href") || "";
+  var sidebarNav = document.querySelector("#dartdoc-sidebar-left ol#sidebar-nav") || document.querySelector("#dartdoc-sidebar-left ol");
+  if (sidebarNav) {
+    var found = false;
+    sidebarNav.querySelectorAll(".section-title").forEach(function(el) {
+      if (el.textContent.trim().toLowerCase() === "topics") {
+        el.textContent = "Guides";
+        found = true;
+      }
+    });
+    if (!found) {
+      var guidesTitle = document.createElement("li");
+      guidesTitle.className = "section-title";
+      guidesTitle.textContent = "Guides";
+      var guidesItem = document.createElement("li");
+      var a = document.createElement("a");
+      a.href = baseHref + "topics/Setup-topic.html";
+      a.textContent = "Setup";
+      guidesItem.appendChild(a);
+      sidebarNav.insertBefore(guidesItem, sidebarNav.firstChild);
+      sidebarNav.insertBefore(guidesTitle, guidesItem);
+    }
+  }
+});
+</script>

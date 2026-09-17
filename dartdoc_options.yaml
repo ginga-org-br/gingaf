@@ -1,4 +1,6 @@
 dartdoc:
+  header:
+    - doc/header.html
   include:
     - ginga
     - gingacc
@@ -8,5 +10,3 @@ dartdoc:
     "Setup":
       markdown: SETUP.md
       name: "Setup"
-  categoryOrder: ["Setup"]
-

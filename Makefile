@@ -60,6 +60,9 @@ test:
 
 doc:
 	dart doc
+	touch doc/api/.nojekyll
+	mkdir -p doc/api/doc
+	cp doc/architecture.svg doc/api/doc/architecture.svg
 
 architecture-svg:
 	npx -y @mermaid-js/mermaid-cli -i doc/architecture.mmd -o doc/architecture.svg -b transparent

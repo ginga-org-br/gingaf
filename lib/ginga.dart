@@ -1,6 +1,4 @@
 /// Main Ginga player application and widgets.
-///
-/// {@category Setup}
 library ginga;
 
 export 'main.dart';
@@ -25,6 +23,7 @@ import 'web_utils_stub.dart' if (dart.library.js_interop) 'web_utils_web.dart';
 
 final _logger = Logger('ginga');
 
+/// {@category Setup}
 class Ginga extends StatefulWidget {
   final GingaCC? gingacc;
 

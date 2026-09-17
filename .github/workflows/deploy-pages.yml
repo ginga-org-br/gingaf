@@ -1,4 +1,4 @@
-name: Deploy site to Pages
+name: Deploy Pages
 on:
   workflow_dispatch:
 permissions:
@@ -28,13 +28,17 @@ jobs:
         run: |
           npm install
           npm run build
+      - name: Generate documentation
+        run: make doc
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v6
       - name: Prepare site directory
         run: |
           mkdir -p site
+          touch site/.nojekyll
           cp -r node/playground site/playground
+          cp -r doc/api site/docs
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
         with:

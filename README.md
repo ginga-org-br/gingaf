@@ -1,8 +1,9 @@
 # gingaf
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Documentation](https://img.shields.io/badge/docs-ginga.org.br-blue.svg)](https://ginga.org.br/gingaf/docs/)
 
-`gingaf` is an MIT-licensed, multi-platform implementation of the interactive TV middleware Ginga standardised by ITU-T and SBTVD.
+`gingaf` is an MIT-licensed, multi-platform implementation of the interactive TV middleware Ginga standardised by ITU-T and SBTVD. Documentation is available at [ginga.org.br/gingaf/docs](https://ginga.org.br/gingaf/docs/).
 
 ## Architecture
 
@@ -13,11 +14,11 @@ The `gingaf` repository is organized as a monorepo: the root directory contains 
 - `packages/nclui/`: NCL and visual widgets
 - `node/`: npm package which also contains web interactive playground
 
-![architecture](doc/architecture.svg)
+<img src="doc/architecture.svg" alt="architecture" width="480">
 
 ## Developing Ginga Applications using `gingaf`
 
-You can use `gingaf` to develop Ginga applications at web by using the playground or acessing [ginga.org.br/gingaf/playground](ginga.org.br/gingaf/playground) or at desktop by the Visual Studio Code extension [ginga-code](https://github.com/ginga-org-br/ginga-code).
+You can use `gingaf` to develop Ginga applications at web by using the playground or acessing [ginga.org.br/gingaf/playground](https://ginga.org.br/gingaf/playground), browse the API documentation at [ginga.org.br/gingaf/docs](https://ginga.org.br/gingaf/docs/), or at desktop by the Visual Studio Code extension [ginga-code](https://github.com/ginga-org-br/ginga-code).
 
 ## Demonstration Videos
 
