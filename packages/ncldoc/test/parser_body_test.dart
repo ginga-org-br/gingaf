@@ -1,7 +1,6 @@
 import 'dart:io';
 
-import 'package:ncldoc/elements.dart';
-import 'package:ncldoc/parser.dart';
+import 'package:ncldoc/ncl_document.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -243,6 +242,16 @@ void main() {
       expect(mediaNodes.length, equals(2));
       expect(mediaNodes[0].uri, equals('video2.mp4'));
       expect(mediaNodes[1].uri, equals('image.png'));
+    });
+
+    test('parses media node without crashing on non-existent file', () {
+      final p = NclParser(
+        docUri: Uri.parse('file:///non_existent_dir/doc.ncl'),
+      );
+      const xml =
+          '<ncl><body><media id="m1" src="non_existent_file.mp4"/></body></ncl>';
+      final (_, body) = p.parseString(xml);
+      expect(body.children.length, equals(1));
     });
   });
 }
