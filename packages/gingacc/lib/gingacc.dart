@@ -140,7 +140,49 @@ class GingaCC {
       try {
         final file = File(filePath);
         if (file.existsSync()) {
-          return await file.readAsString();
+          return file.readAsStringSync();
+        }
+      } catch (_) {}
+    }
+
+    return null;
+  }
+
+  String? loadContentSync(dynamic srcOrUri, [String? baseDirSrc]) {
+    final String rawInput =
+        (srcOrUri is Uri ? srcOrUri.toString() : srcOrUri.toString()).trim();
+    if (rawInput.isEmpty) return null;
+
+    if (isXmlString(rawInput)) {
+      return rawInput;
+    }
+
+    if (rawInput.startsWith('data:')) {
+      return _decodeDataUri(rawInput);
+    }
+
+    final Uri uri =
+        srcOrUri is Uri ? srcOrUri : resolveUri(rawInput, baseDirSrc);
+    if (uri.isScheme('data')) {
+      return _decodeDataUri(rawInput, uri);
+    }
+
+    if (virtualFiles != null) {
+      final matched = _lookupVirtualFile(rawInput) ??
+          (uri.isScheme('file') ? _lookupVirtualFile(uri.toFilePath()) : null);
+      if (matched != null) {
+        return matched;
+      }
+    }
+
+    if (uri.isScheme('file') || (!uri.hasScheme && !_isWeb)) {
+      final filePath = uri.isScheme('file')
+          ? uri.toFilePath()
+          : Uri.decodeComponent(uri.path);
+      try {
+        final file = File(filePath);
+        if (file.existsSync()) {
+          return file.readAsStringSync();
         }
       } catch (_) {}
     }
