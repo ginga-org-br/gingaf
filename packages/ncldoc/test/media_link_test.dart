@@ -85,9 +85,9 @@ void main() {
     </connectorBase>
   </head>
   <body>
-    <settings id="sysSettings" type="application/x-ncl-settings">
+    <media id="sysSettings" type="application/x-ncl-settings">
       <property name="gender" value="male"/>
-    </settings>
+    </media>
     <port id="pMain" component="mVideo"/>
     <media id="mVideo" src="video.mp4">
       <area id="aSec2" begin="2s"/>
@@ -154,9 +154,9 @@ void main() {
     </connectorBase>
   </head>
   <body>
-    <settings id="sysSettings" type="application/x-ncl-settings">
+    <media id="sysSettings" type="application/x-ncl-settings">
       <property name="gender" value="female"/>
-    </settings>
+    </media>
     <port id="pMain" component="mVideo"/>
     <media id="mVideo" src="video.mp4">
       <area id="aSec2" begin="2s"/>

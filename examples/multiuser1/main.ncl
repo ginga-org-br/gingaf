@@ -27,9 +27,9 @@
     </userBase>
   </head>
   <body id="body">
-    <settings id="uSettings" type="application/x-ncl-user-settings" user="pAdult">
+    <media id="uSettings" type="application/x-ncl-user-settings" user="pAdult">
       <property name="gender"/>
-    </settings>
+    </media>
     <port id="pMain" component="mVideo"/>
     <media id="mVideo" src="https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4">
       <area id="aSec2" begin="2s"/>

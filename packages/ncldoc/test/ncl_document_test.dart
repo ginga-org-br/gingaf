@@ -86,7 +86,7 @@ void main() {
 
     test('getSettings is returned correctly when provided', () {
       final doc = NclDocument.fromContent(
-        '<ncl><body id="body"><settings id="s1"/></body></ncl>',
+        '<ncl><body id="body"><media id="s1" type="application/x-ncl-settings"/></body></ncl>',
       );
       doc.start();
       expect(doc.getSettings().id, 's1');

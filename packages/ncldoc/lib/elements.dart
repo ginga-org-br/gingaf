@@ -276,11 +276,9 @@ class NCLua extends Media {
     super.mimeType = 'application/x-ginga-NCLua',
     this.document,
     NCLuaRuntime? runtime,
-    NCLuaRuntime? engine,
   }) {
-    final effectiveRuntime = runtime ?? engine;
-    if (effectiveRuntime != null) {
-      this.runtime = effectiveRuntime;
+    if (runtime != null) {
+      this.runtime = runtime;
     } else if (document != null) {
       this.runtime = NCLuaRuntime(
         document: document!,

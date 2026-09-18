@@ -100,12 +100,6 @@ class NclParser {
       case 'switch':
         element = Switch(rawAttributes: attrs);
         break;
-      case 'settings':
-        element = Settings(
-          rawAttributes: attrs,
-          mimeType: attrs['type'] ?? 'application/x-ncl-settings',
-        );
-        break;
       case 'transition':
         element = Transition(rawAttributes: attrs);
         break;
