@@ -1,6 +1,6 @@
 {
     "name": "ginga-node",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "description": "Node.js middleware and static asset distribution package for GingaF Flutter Web",
     "main": "playground/index.js",
     "types": "playground/index.d.ts",

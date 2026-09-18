@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3
+
+- Support to settings menu to allow pause, resume, and maange users.
+- Support to ginga_config.json as param, or automatically load when present in app folder.
+- Support to embed NCL in NCL and embed HTML in NCL.
+- New gingacc package to concentrate ccws, configuration, user data, and src functions.
+
 ## 0.2
 
 - Move vscode to [ginga-code](https://github.com/ginga-org-br/ginga-code) and update `make release` for Windows and Linux to generate the zip used by ginga-code.
