@@ -6,6 +6,7 @@ export 'package:ncldoc/event.dart';
 export 'package:ncldoc/lua_runtime.dart';
 export 'package:ncldoc/mimetype.dart';
 export 'package:ncldoc/ncl_document.dart' show NclDocument;
+export 'package:ncldoc/ncl_strings.dart';
 export 'package:ncldoc/ncl_scheduler.dart';
 export 'package:ncldoc/parser.dart';
 export 'package:ncldoc/schema.dart';
