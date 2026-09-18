@@ -565,7 +565,7 @@ class NclParser {
         final nodeArg = parsed.args[1];
         final parentComp = doc.getNodeById(compositeId);
         if (parentComp is Composition) {
-          if (nodeArg.trim().startsWith('<')) {
+          if (isXmlString(nodeArg)) {
             final newNode = parseXml(nodeArg);
             if (newNode is Node) {
               parentComp.children.add(newNode);

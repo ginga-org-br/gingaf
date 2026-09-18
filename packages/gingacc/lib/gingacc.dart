@@ -14,7 +14,7 @@ export 'users.dart';
 
 const bool _isWeb = bool.fromEnvironment('dart.library.js_interop');
 
-bool isHttp(Object? source) {
+bool isHttpUri(Object? source) {
   if (source is Uri) {
     return source.isScheme('http') || source.isScheme('https');
   }
@@ -22,6 +22,11 @@ bool isHttp(Object? source) {
     return source.startsWith('http://') || source.startsWith('https://');
   }
   return false;
+}
+
+bool isXmlString(String? src) {
+  if (src == null) return false;
+  return src.trim().startsWith('<');
 }
 
 class GingaCC {
@@ -35,11 +40,6 @@ class GingaCC {
     CCWS? ccws,
   })  : config = config ?? GingaConfig(),
         ccws = ccws ?? CCWS();
-
-  bool isXmlString(String? src) {
-    if (src == null) return false;
-    return src.trim().startsWith('<');
-  }
 
   Uri resolveUri(String src, [String? baseDirSrc]) {
     final rawSrc = src.trim();
@@ -122,14 +122,14 @@ class GingaCC {
           (uri.isScheme('file') ? _lookupVirtualFile(uri.toFilePath()) : null);
       if (matched != null) {
         final parsedMatched = Uri.tryParse(matched);
-        if (parsedMatched != null && isHttp(parsedMatched)) {
+        if (parsedMatched != null && isHttpUri(parsedMatched)) {
           return await _fetchHttp(parsedMatched);
         }
         return matched;
       }
     }
 
-    if (isHttp(uri)) {
+    if (isHttpUri(uri)) {
       return await _fetchHttp(uri);
     }
 

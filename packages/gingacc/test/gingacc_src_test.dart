@@ -124,13 +124,23 @@ void main() {
     });
 
     test('isXmlString detects XML markup correctly', () {
-      final gingacc = GingaCC();
-      expect(gingacc.isXmlString(null), isFalse);
-      expect(gingacc.isXmlString(''), isFalse);
-      expect(gingacc.isXmlString('  '), isFalse);
-      expect(gingacc.isXmlString('image.png'), isFalse);
-      expect(gingacc.isXmlString('<ncl><head/><body/></ncl>'), isTrue);
-      expect(gingacc.isXmlString(' <ncl>content</ncl>'), isTrue);
+      expect(isXmlString(null), isFalse);
+      expect(isXmlString(''), isFalse);
+      expect(isXmlString('  '), isFalse);
+      expect(isXmlString('image.png'), isFalse);
+      expect(isXmlString('<ncl><head/><body/></ncl>'), isTrue);
+      expect(isXmlString(' <ncl>content</ncl>'), isTrue);
+    });
+
+    test('isHttpUri detects HTTP and HTTPS schemes for String and Uri', () {
+      expect(isHttpUri('http://example.com'), isTrue);
+      expect(isHttpUri('https://example.com'), isTrue);
+      expect(isHttpUri(Uri.parse('http://example.com')), isTrue);
+      expect(isHttpUri(Uri.parse('https://example.com')), isTrue);
+      expect(isHttpUri('file:///path/to/file'), isFalse);
+      expect(isHttpUri('main.ncl'), isFalse);
+      expect(isHttpUri(null), isFalse);
+      expect(isHttpUri(123), isFalse);
     });
   });
 

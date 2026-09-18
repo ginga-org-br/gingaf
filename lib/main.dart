@@ -157,8 +157,8 @@ Future<GingaConfig> resolveGingaConfig({
 
   if (!kIsWeb) {
     final appFile =
-        (appSrc != null && !isHttp(appSrc)) ? File(appSrc).absolute : null;
-    final configFile = (configSrc != null && !isHttp(configSrc))
+        (appSrc != null && !isHttpUri(appSrc)) ? File(appSrc).absolute : null;
+    final configFile = (configSrc != null && !isHttpUri(configSrc))
         ? File(configSrc).absolute
         : null;
 
@@ -221,7 +221,7 @@ Future<GingaConfig> resolveGingaConfig({
 
   final initialAppSrc = effectiveAppSrc ?? config.appSrc;
   String? resolvedAppSrc = initialAppSrc;
-  if (!kIsWeb && initialAppSrc != null && !isHttp(initialAppSrc)) {
+  if (!kIsWeb && initialAppSrc != null && !isHttpUri(initialAppSrc)) {
     try {
       final file = File(initialAppSrc).absolute;
       if (file.existsSync()) {
