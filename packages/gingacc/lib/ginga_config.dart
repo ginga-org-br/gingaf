@@ -15,7 +15,7 @@ export 'dart:math' show Rectangle;
 ///   "mainAvSrc": "video.mp4",
 ///   "startWithCCWS": true,
 ///   "startWithMainAv": true,
-///   "envVariables": {
+///   "systemVariables": {
 ///     "system.language": "por",
 ///     "user.age": "30",
 ///     "default.font": "sans",
@@ -59,7 +59,7 @@ class GingaConfig {
   final bool startWithCCWS;
   final bool startWithMainAv;
   final Rectangle<double> graphsPlaneBounds;
-  final Map<String, String> envVariables;
+  final Map<String, String> systemVariables;
   final Users users;
 
   GingaConfig({
@@ -68,18 +68,18 @@ class GingaConfig {
     this.startWithMainAv = false,
     this.mainAvSrc = defaultMainAvSrc,
     this.graphsPlaneBounds = const Rectangle<double>(0.0, 0.0, 720.0, 480.0),
-    Map<String, String>? envVariables,
+    Map<String, String>? systemVariables,
     Users? users,
-  })  : envVariables = {
+  })  : systemVariables = {
           'system.language': 'por',
-          ...?envVariables,
+          ...?systemVariables,
         },
         users = users ?? Users();
 
   Map<String, String> getGroup(String group) {
     final prefix = group.endsWith('.') ? group : '$group.';
     final result = <String, String>{};
-    for (final entry in envVariables.entries) {
+    for (final entry in systemVariables.entries) {
       if (entry.key.startsWith(prefix)) {
         result[entry.key.substring(prefix.length)] = entry.value;
       }
@@ -142,7 +142,7 @@ class GingaConfig {
       }
     }
 
-    final rawEnv = decoded['envVariables'];
+    final rawEnv = decoded['systemVariables'] ?? decoded['envVariables'];
     if (rawEnv is Map) {
       extractFromMap(rawEnv);
     }
@@ -197,6 +197,7 @@ class GingaConfig {
       'graphsPlaneBounds',
       'graphsPlaneWidth',
       'graphsPlaneHeight',
+      'systemVariables',
       'envVariables',
       'usersDataJson',
       'userDataJson',
@@ -250,7 +251,7 @@ class GingaConfig {
       startWithCCWS: decoded['startWithCCWS'] as bool? ?? false,
       startWithMainAv: decoded['startWithMainAv'] as bool? ?? false,
       graphsPlaneBounds: planeBounds,
-      envVariables: envVars,
+      systemVariables: envVars,
       users: users,
     );
   }
@@ -263,7 +264,7 @@ class GingaConfig {
         'mainAvSrc: $mainAvSrc',
       'startWithCCWS: $startWithCCWS',
       'startWithMainAv: $startWithMainAv',
-      'envVariables: $envVariables',
+      'systemVariables: $systemVariables',
       if (users.isNotEmpty) 'users: $users',
     ];
     return 'GingaConfig(${parts.join(', ')})';

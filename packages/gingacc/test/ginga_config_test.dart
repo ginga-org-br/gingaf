@@ -12,12 +12,12 @@ void main() {
       expect(GingaConfig(appSrc: 'APP.HTML').appSrc, 'APP.HTML');
     });
 
-    test('constructor initializes envVariables and defaults', () {
+    test('constructor initializes systemVariables and defaults', () {
       final config = GingaConfig();
       expect(config.appSrc, isNull);
       expect(config.startWithCCWS, isFalse);
       expect(config.startWithMainAv, isFalse);
-      expect(config.envVariables['system.language'], equals('por'));
+      expect(config.systemVariables['system.language'], equals('por'));
       expect(config.users, isNotNull);
     });
 
@@ -118,11 +118,11 @@ void main() {
     });
 
     test(
-        'envVariables supports all groups: system, user, default, service, si, channel, shared',
+        'systemVariables supports all groups: system, user, default, service, si, channel, shared',
         () async {
       const json = '''
       {
-        "envVariables": {
+        "systemVariables": {
           "system.language": "por",
           "user.age": "30",
           "default.focus": "true",
@@ -134,13 +134,13 @@ void main() {
       }
       ''';
       final config = await GingaConfig.fromJson(json);
-      expect(config.envVariables['system.language'], equals('por'));
-      expect(config.envVariables['user.age'], equals('30'));
-      expect(config.envVariables['default.focus'], equals('true'));
-      expect(config.envVariables['service.id'], equals('svc_01'));
-      expect(config.envVariables['si.network'], equals('net_01'));
-      expect(config.envVariables['channel.number'], equals('7'));
-      expect(config.envVariables['shared.token'], equals('abc123'));
+      expect(config.systemVariables['system.language'], equals('por'));
+      expect(config.systemVariables['user.age'], equals('30'));
+      expect(config.systemVariables['default.focus'], equals('true'));
+      expect(config.systemVariables['service.id'], equals('svc_01'));
+      expect(config.systemVariables['si.network'], equals('net_01'));
+      expect(config.systemVariables['channel.number'], equals('7'));
+      expect(config.systemVariables['shared.token'], equals('abc123'));
 
       expect(config.getGroup('system')['language'], equals('por'));
       expect(config.getGroup('user')['age'], equals('30'));
@@ -151,7 +151,7 @@ void main() {
       expect(config.getGroup('shared')['token'], equals('abc123'));
     });
 
-    test('fromJson parses nested groups under envVariables and top-level groups',
+    test('fromJson parses nested groups under systemVariables and top-level groups',
         () async {
       const json = '''
       {
@@ -161,29 +161,29 @@ void main() {
       }
       ''';
       final config = await GingaConfig.fromJson(json);
-      expect(config.envVariables['system.language'], equals('eng'));
-      expect(config.envVariables['user.name'], equals('Alice'));
-      expect(config.envVariables['service.name'], equals('TV HD'));
+      expect(config.systemVariables['system.language'], equals('eng'));
+      expect(config.systemVariables['user.name'], equals('Alice'));
+      expect(config.systemVariables['service.name'], equals('TV HD'));
     });
 
-    test('fromJson parses envVariables directly', () async {
+    test('fromJson parses systemVariables directly', () async {
       const json =
-          '{"envVariables": {"system.language": "eng", "custom": "val"}}';
+          '{"systemVariables": {"system.language": "eng", "custom": "val"}}';
       final config = await GingaConfig.fromJson(json);
-      expect(config.envVariables['system.language'], equals('eng'));
-      expect(config.envVariables['custom'], equals('val'));
+      expect(config.systemVariables['system.language'], equals('eng'));
+      expect(config.systemVariables['custom'], equals('val'));
     });
 
     test('fromJson loads content from jsonSrc URI', () async {
       const dataUri =
-          'data:application/json,{"envVariables":{"system.language":"deu"}}';
+          'data:application/json,{"systemVariables":{"system.language":"deu"}}';
       final config = await GingaConfig.fromJson(dataUri);
-      expect(config.envVariables['system.language'], equals('deu'));
+      expect(config.systemVariables['system.language'], equals('deu'));
     });
 
     test('fromJson handles empty string gracefully', () async {
       final config = await GingaConfig.fromJson('');
-      expect(config.envVariables['system.language'], equals('por'));
+      expect(config.systemVariables['system.language'], equals('por'));
     });
 
     test('fromJson throws FormatException on invalid json', () async {
@@ -204,7 +204,7 @@ void main() {
           {"id": "u1", "name": "Bob"}
         ],
         "startWithCCWS": false,
-        "envVariables": {
+        "systemVariables": {
           "system.language": "eng",
           "user.age": "30",
           "default.font": "sans",
@@ -220,7 +220,7 @@ void main() {
       expect(config.mainAvSrc, equals('video.mp4'));
       expect(config.users.getUser('u1')?.name, equals('Bob'));
       expect(config.startWithCCWS, isFalse);
-      expect(config.envVariables['system.language'], equals('eng'));
+      expect(config.systemVariables['system.language'], equals('eng'));
     });
 
     test('toString includes users when not empty and omits when empty', () {

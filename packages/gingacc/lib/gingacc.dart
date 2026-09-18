@@ -37,9 +37,8 @@ class GingaCC {
   GingaCC({
     GingaConfig? config,
     this.virtualFiles,
-    CCWS? ccws,
   })  : config = config ?? GingaConfig(),
-        ccws = ccws ?? CCWS();
+        ccws = CCWS();
 
   Uri resolveUri(String src, [String? baseDirSrc]) {
     final rawSrc = src.trim();
