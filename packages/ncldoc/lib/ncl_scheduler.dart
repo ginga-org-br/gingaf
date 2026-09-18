@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:logging/logging.dart';
 
 import 'ncl_document.dart';
+import 'ncl_strings.dart';
 
 final _logger = Logger('ncl_doc');
 
@@ -535,25 +536,9 @@ class NclScheduler {
                 }
                 String? setValue;
                 if (actionType == NclActionType.set) {
-                  for (var child in bind.children) {
-                    if (child is BindParam &&
-                        (child.name == 'value' || child.name == 'var')) {
-                      setValue = child.value;
-                      break;
-                    }
-                  }
-                  if (setValue == null &&
-                      bind.rawAttributes.containsKey('value')) {
-                    setValue = bind.rawAttributes['value'];
-                  }
+                  setValue = _resolveSetValue(bind, link);
                   if (setValue == null) {
-                    for (var child in link.children) {
-                      if (child is BindParam &&
-                          (child.name == 'value' || child.name == 'var')) {
-                        setValue = child.value;
-                        break;
-                      }
-                    }
+                    continue;
                   }
                 }
                 if (actionType == NclActionType.set && durationMs > 0) {
@@ -790,25 +775,9 @@ class NclScheduler {
                 }
                 String? setValue;
                 if (actionType == NclActionType.set) {
-                  for (var child in bind.children) {
-                    if (child is BindParam &&
-                        (child.name == 'value' || child.name == 'var')) {
-                      setValue = child.value;
-                      break;
-                    }
-                  }
-                  if (setValue == null &&
-                      bind.rawAttributes.containsKey('value')) {
-                    setValue = bind.rawAttributes['value'];
-                  }
+                  setValue = _resolveSetValue(bind, link);
                   if (setValue == null) {
-                    for (var child in link.children) {
-                      if (child is BindParam &&
-                          (child.name == 'value' || child.name == 'var')) {
-                        setValue = child.value;
-                        break;
-                      }
-                    }
+                    continue;
                   }
                 }
                 if (actionType == NclActionType.set && durationMs > 0) {
@@ -925,6 +894,126 @@ class NclScheduler {
     }
 
     stopNode(document.body);
+  }
+
+  String? _resolveSetValue(Bind bind, Link link) {
+    String? rawValue;
+    for (var child in bind.children) {
+      if (child is BindParam &&
+          (child.name == 'value' || child.name == 'var')) {
+        rawValue = child.value;
+        break;
+      }
+    }
+    if (rawValue == null && bind.rawAttributes.containsKey('value')) {
+      rawValue = bind.rawAttributes['value'];
+    }
+    if (rawValue == null) {
+      for (var child in link.children) {
+        if (child is BindParam &&
+            (child.name == 'value' || child.name == 'var')) {
+          rawValue = child.value;
+          break;
+        }
+      }
+    }
+    if (rawValue == null) {
+      final xconn = link.rawAttributes['xconnector'];
+      if (xconn != null) {
+        final connId = xconn.contains('#') ? xconn.split('#')[1] : xconn;
+        final connector = document.getElementById(connId);
+        if (connector != null) {
+          Element? findAction(Element el) {
+            if (el.rawAttributes['role'] == 'set' &&
+                (el.xmlTagName == 'simpleAction' || el.xmlTagName == 'action')) {
+              return el;
+            }
+            for (var ch in el.children) {
+              final res = findAction(ch);
+              if (res != null) return res;
+            }
+            return null;
+          }
+
+          final action = findAction(connector);
+          if (action != null) {
+            rawValue = action.rawAttributes['value'];
+          }
+        }
+      }
+    }
+
+    if (rawValue == null) {
+      return null;
+    }
+
+    if (!rawValue.startsWith(r'$')) {
+      return rawValue;
+    }
+
+    var roleName = rawValue.substring(1);
+    final param = bind.children
+            .whereType<BindParam>()
+            .where((bp) => bp.name == roleName)
+            .firstOrNull ??
+        link.children
+            .whereType<BindParam>()
+            .where((bp) => bp.name == roleName)
+            .firstOrNull;
+
+    if (param != null && param.value != null) {
+      if (param.value!.startsWith(r'$')) {
+        roleName = param.value!.substring(1);
+      } else {
+        return param.value;
+      }
+    }
+
+    final matchingBinds = link.children
+        .whereType<Bind>()
+        .where((b) => b.role == roleName)
+        .toList();
+
+    if (matchingBinds.isEmpty) {
+      return null;
+    }
+
+    Bind? roleBind;
+    if (matchingBinds.length == 1) {
+      roleBind = matchingBinds.first;
+    } else {
+      final targetProp = bind.interface?.toLowerCase() ?? '';
+      roleBind = matchingBinds.where((b) {
+        final bProp = b.interface?.toLowerCase() ?? '';
+        return bProp == targetProp ||
+            (bProp.isNotEmpty &&
+                (targetProp.contains(bProp) || bProp.contains(targetProp)));
+      }).firstOrNull;
+
+      if (roleBind == null) {
+        final setBinds = link.children
+            .whereType<Bind>()
+            .where((b) => b.role == 'set')
+            .toList();
+        final idx = setBinds.indexOf(bind);
+        if (idx >= 0 && idx < matchingBinds.length) {
+          roleBind = matchingBinds[idx];
+        } else {
+          roleBind = matchingBinds.first;
+        }
+      }
+    }
+
+    if (roleBind.component == null || roleBind.interface == null) {
+      return null;
+    }
+
+    final roleNode = document.getNodeById(roleBind.component!);
+    if (roleNode == null) {
+      return null;
+    }
+
+    return document.getPropertyValue(roleNode, roleBind.interface!);
   }
 
   int? _parseTimeMs(String? timeStr) {
