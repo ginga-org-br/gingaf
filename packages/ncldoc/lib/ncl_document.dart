@@ -8,6 +8,7 @@ import 'package:logging/logging.dart';
 
 import 'elements.dart';
 import 'event.dart';
+import 'ncl_strings.dart';
 import 'ncl_scheduler.dart';
 import 'parser.dart';
 
@@ -16,6 +17,7 @@ export 'package:gingacc/gingacc.dart';
 export 'elements.dart';
 export 'event.dart';
 export 'lua_runtime.dart';
+export 'ncl_strings.dart';
 export 'ncl_scheduler.dart';
 export 'parser.dart';
 
@@ -524,6 +526,32 @@ class NclDocument {
     onStateChanged?.call();
   }
 
+  String? get currentKeyMaster {
+    final env = envVariables['service.currentKeyMaster'];
+    if (env != null && env.isNotEmpty) return env;
+    for (final s in getAllSettingsNodes()) {
+      final val = getPropertyValue(s, 'service.currentKeyMaster');
+      if (val != null && val.isNotEmpty) return val;
+    }
+    return null;
+  }
+
+  void setKeyMaster(String? mediaId) {
+    if (mediaId == null || mediaId.isEmpty) {
+      envVariables.remove('service.currentKeyMaster');
+      for (final s in getAllSettingsNodes()) {
+        s.children.removeWhere(
+            (p) => p is Property && p.name == 'service.currentKeyMaster');
+      }
+    } else {
+      envVariables['service.currentKeyMaster'] = mediaId;
+      for (final s in getAllSettingsNodes()) {
+        s.setPropertyValue('service.currentKeyMaster', mediaId);
+      }
+    }
+    onStateChanged?.call();
+  }
+
   void moveFocus(String direction) {
     final active = getActiveMedia();
     if (active.isEmpty) return;
@@ -538,32 +566,37 @@ class NclDocument {
           active.where((m) => getFocusIndexForMedia(m) != null).toList();
       if (focusable.isNotEmpty) {
         focusable.sort((a, b) {
-          final fa = int.tryParse(getFocusIndexForMedia(a)!) ?? 9999;
-          final fb = int.tryParse(getFocusIndexForMedia(b)!) ?? 9999;
+          final fa = int.tryParse(getFocusIndexForMedia(a) ?? '') ?? 999;
+          final fb = int.tryParse(getFocusIndexForMedia(b) ?? '') ?? 999;
           return fa.compareTo(fb);
         });
-        setFocus(focusable.first.id ?? '');
+        setFocus(focusable.first.id!);
       }
       return;
     }
 
-    final desc = getDescriptorForMedia(currentMedia);
-    if (desc == null) return;
+    final currentDesc = getDescriptorForMedia(currentMedia);
+    if (currentDesc == null) return;
 
-    String? targetIndex;
-    final dir = direction.toUpperCase();
-    if (dir == 'RIGHT' || dir == 'CURSOR_RIGHT') {
-      targetIndex = desc.moveRight;
-    } else if (dir == 'LEFT' || dir == 'CURSOR_LEFT') {
-      targetIndex = desc.moveLeft;
-    } else if (dir == 'UP' || dir == 'CURSOR_UP') {
-      targetIndex = desc.moveUp;
-    } else if (dir == 'DOWN' || dir == 'CURSOR_DOWN') {
-      targetIndex = desc.moveDown;
+    String? targetFocusIndex;
+    final dir = NclKeys.normalizeKey(direction);
+    switch (dir) {
+      case NclKeys.cursorRight:
+        targetFocusIndex = currentDesc.moveRight;
+        break;
+      case NclKeys.cursorLeft:
+        targetFocusIndex = currentDesc.moveLeft;
+        break;
+      case NclKeys.cursorUp:
+        targetFocusIndex = currentDesc.moveUp;
+        break;
+      case NclKeys.cursorDown:
+        targetFocusIndex = currentDesc.moveDown;
+        break;
     }
 
-    if (targetIndex != null && targetIndex.isNotEmpty) {
-      final targetMedia = getActiveMediaByFocusIndex(targetIndex);
+    if (targetFocusIndex != null) {
+      final targetMedia = getActiveMediaByFocusIndex(targetFocusIndex);
       if (targetMedia != null && targetMedia.id != null) {
         setFocus(targetMedia.id!);
       }
@@ -583,22 +616,28 @@ class NclDocument {
     }
   }
 
+  void handleKeyRelease(String keyCode) {
+    final keyUpper = NclKeys.normalizeKey(keyCode);
+    scheduler.stackKeyAction('release', keyUpper);
+    scheduler.tick(0);
+  }
+
   bool handleKey(String keyCode) {
-    final keyUpper = keyCode.toUpperCase();
-    if (keyUpper == 'RIGHT' ||
-        keyUpper == 'CURSOR_RIGHT' ||
-        keyUpper == 'LEFT' ||
-        keyUpper == 'CURSOR_LEFT' ||
-        keyUpper == 'UP' ||
-        keyUpper == 'CURSOR_UP' ||
-        keyUpper == 'DOWN' ||
-        keyUpper == 'CURSOR_DOWN') {
-      moveFocus(keyUpper);
+    final keyUpper = NclKeys.normalizeKey(keyCode);
+    scheduler.stackKeyAction('press', keyUpper);
+    scheduler.tick(0);
+    if (keyUpper == NclKeys.cursorRight ||
+        keyUpper == NclKeys.cursorLeft ||
+        keyUpper == NclKeys.cursorUp ||
+        keyUpper == NclKeys.cursorDown) {
+      if (currentKeyMaster == null) {
+        moveFocus(keyUpper);
+      }
       return true;
     }
 
-    if (keyUpper == 'ENTER' || keyUpper == 'OK' || keyUpper == 'SELECT') {
-      handleSelection(null, 'ENTER');
+    if (keyUpper == NclKeys.enter) {
+      handleSelection(null, NclKeys.enter);
       return true;
     }
 

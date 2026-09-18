@@ -18,6 +18,21 @@ class NclScheduler {
 
   NclScheduler(this.document);
 
+  void stackKeyAction(String type, String keyCode) {
+    final targetNode = (document.currentFocusNodeId != null
+            ? document.getNodeById(document.currentFocusNodeId!)
+            : null) ??
+        document.body;
+    _actionStack.add(
+      NclAction(
+        event: targetNode.getMainNclEvent(),
+        action: NclActionType.key,
+        value: keyCode.toUpperCase(),
+        keyType: type,
+      ),
+    );
+  }
+
   void _init() {
     _gatherTimedNodes();
     _stackMainEvtNclAction(document.body, NclActionType.start);
@@ -129,6 +144,23 @@ class NclScheduler {
     final changedNodes = <Node>{};
     while (_actionStack.isNotEmpty) {
       final actionItem = _actionStack.removeAt(0);
+      if (actionItem.action == NclActionType.key) {
+        final keyType = actionItem.keyType ?? 'press';
+        final keyCode = actionItem.value;
+        final isCursor = _isCursorKey(keyCode);
+        final keyMaster = document.currentKeyMaster;
+        for (final luaNode in document.getActiveMedia().whereType<NCLua>()) {
+          if (isCursor && keyMaster != luaNode.id) {
+            continue;
+          }
+          luaNode.runtime.postNclEvent({
+            'class': 'key',
+            'type': keyType,
+            'key': keyCode,
+          });
+        }
+        continue;
+      }
       if (actionItem.action == NclActionType.set) {
         if (actionItem.value.isNotEmpty &&
             actionItem.event.propertyName != null) {
@@ -136,9 +168,21 @@ class NclScheduler {
             actionItem.event.propertyName!,
             actionItem.value,
           );
+          if (actionItem.event.targetNode is NCLua) {
+            final luaNode = actionItem.event.targetNode as NCLua;
+            luaNode.runtime.postNclEvent({
+              'class': 'ncl',
+              'type': 'attribution',
+              'action': 'start',
+              'name': actionItem.event.propertyName,
+              'value': actionItem.value,
+            });
+          }
           final propName = actionItem.event.propertyName!;
           if (propName == 'service.currentFocus') {
             document.setFocus(actionItem.value);
+          } else if (propName == 'service.currentKeyMaster') {
+            document.setKeyMaster(actionItem.value);
           } else if (propName.startsWith('service.') ||
               propName.startsWith('system.')) {
             document.envVariables[propName] = actionItem.value;
@@ -894,5 +938,9 @@ class NclScheduler {
       }
     }
     return int.tryParse(timeStr);
+  }
+
+  bool _isCursorKey(String keyCode) {
+    return NclKeys.isCursorKey(keyCode);
   }
 }

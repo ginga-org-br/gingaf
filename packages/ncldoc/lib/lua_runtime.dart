@@ -105,6 +105,9 @@ class NCLuaRuntime {
   final List<Map<String, dynamic>> _inEventQueue = [];
   Timer? _inEventTimer;
   String? lastErrorMessage;
+  String? lastKey;
+  String? lastKeyType;
+  Map<String, dynamic>? lastEvent;
 
   NCLuaRuntime({
     required this.document,
@@ -631,6 +634,11 @@ class NCLuaRuntime {
   }
 
   void postNclEvent(Map<String, dynamic> event) {
+    lastEvent = event;
+    if (event['class'] == 'key') {
+      lastKey = event['key']?.toString();
+      lastKeyType = event['type']?.toString();
+    }
     for (final refId in List<int>.from(_registeredCallbackRefs)) {
       _lua.rawGetI(luaRegistryIndex, refId);
       if (_lua.isFunction(-1)) {
@@ -745,6 +753,9 @@ class NCLuaRuntime {
       _lua.unRef(luaRegistryIndex, refId);
     }
     _registeredCallbackRefs.clear();
+    lastKey = null;
+    lastKeyType = null;
+    lastEvent = null;
   }
 }
 

@@ -208,8 +208,6 @@ class NclWidgetState extends MediaState<NclWidget> {
     });
   }
 
-  final Map<String, String> persistentVars = {};
-
   bool _syncActiveMedia(List<Media> activeMedia) {
     bool changed = false;
     final currentIds = activeMedia.map((m) => m.id ?? '').toSet();
@@ -387,6 +385,10 @@ class NclWidgetState extends MediaState<NclWidget> {
         tick(0);
       }
     }
+  }
+
+  void handleKeyRelease(String keyCode) {
+    nclDocument?.handleKeyRelease(keyCode);
   }
 
   @override

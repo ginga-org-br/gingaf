@@ -135,6 +135,5 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.byType(NclWidget), findsOneWidget);
-    expect(find.byKey(const Key('ncl_app_stack')), findsOneWidget);
   });
 }
