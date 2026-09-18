@@ -4,7 +4,7 @@ enum NclStateType { occurring, paused, sleeping }
 
 enum NclEventType { presentation, attribution, selection, preparation }
 
-enum NclActionType { abort, pause, resume, start, stop, set }
+enum NclActionType { abort, pause, resume, start, stop, set, key }
 
 class NclEvent {
   final NclEventType type;
@@ -40,6 +40,7 @@ class NclEvent {
         if (state == NclStateType.paused) state = NclStateType.occurring;
         break;
       case NclActionType.set:
+      case NclActionType.key:
         break;
     }
     return state;
@@ -59,6 +60,8 @@ class NclEvent {
         return NclActionType.resume;
       case 'set':
         return NclActionType.set;
+      case 'key':
+        return NclActionType.key;
       default:
         throw ArgumentError('Unknown action string: $str');
     }
@@ -95,6 +98,7 @@ class NclAction {
   final String value;
   final int duration;
   final int delay;
+  final String? keyType;
 
   NclAction({
     required this.event,
@@ -102,5 +106,6 @@ class NclAction {
     this.value = '',
     this.duration = 0,
     this.delay = 0,
+    this.keyType,
   });
 }
