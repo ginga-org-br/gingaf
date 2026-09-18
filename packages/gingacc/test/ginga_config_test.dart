@@ -48,7 +48,7 @@ void main() {
       final config = GingaConfig(
         users: Users('{"age": 45, "preferredLang": "en-US"}'),
       );
-      final active = config.users.activeUser;
+      final active = config.users.currentUser;
       expect(active, isNotNull);
       expect(active?.getProperty('age'), equals(45));
       expect(active?.getProperty('preferredLang'), equals('en-US'));

@@ -124,7 +124,8 @@ void main() {
       expect(htmlWidget.src, equals('app.html'));
     });
 
-    testWidgets('Ginga mounts single MainAVWidget and plays when app is running',
+    testWidgets(
+        'Ginga mounts single MainAVWidget and plays when app is running',
         (WidgetTester tester) async {
       final config = GingaConfig(
         appSrc: 'test.ncl',
@@ -227,8 +228,7 @@ void main() {
       expect(find.text('Add User'), findsWidgets);
       await tester.enterText(
           find.byKey(const Key('add_user_name_input')), 'Charlie');
-      await tester.enterText(
-          find.byKey(const Key('add_user_age_input')), '25');
+      await tester.enterText(find.byKey(const Key('add_user_age_input')), '25');
       await tester.enterText(
           find.byKey(const Key('add_user_gender_input')), 'female');
 
@@ -237,8 +237,8 @@ void main() {
 
       expect(gingacc.config.users.allUsers.length, equals(2));
       expect(find.text('Charlie'), findsOneWidget);
-      final charlie = gingacc.config.users.allUsers
-          .firstWhere((u) => u.name == 'Charlie');
+      final charlie =
+          gingacc.config.users.allUsers.firstWhere((u) => u.name == 'Charlie');
       expect(charlie.getProperty('age'), equals(25));
       expect(charlie.getProperty('gender'), equals('female'));
 
@@ -255,10 +255,10 @@ void main() {
     });
 
     testWidgets(
-        'UserSelectionOverlay manages users, selects active user, and shows empty state',
+        'UserSelectionOverlay manages users, selects current user, and shows empty state',
         (WidgetTester tester) async {
-      final users = Users(
-          '[{"id": "u1", "name": "Dad"}, {"id": "u2", "name": "Quinn"}]');
+      final users =
+          Users('[{"id": "u1", "name": "Dad"}, {"id": "u2", "name": "Quinn"}]');
       bool closed = false;
       UserData? selected;
 

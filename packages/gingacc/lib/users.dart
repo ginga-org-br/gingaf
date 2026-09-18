@@ -62,7 +62,7 @@ class UserData {
 
 class Users {
   final Map<String, UserData> _users = {};
-  String? _activeUserId;
+  String? _currentUserId;
 
   Users([String? initialData]) {
     if (initialData != null) {
@@ -83,12 +83,8 @@ class Users {
         .toList();
   }
 
-  int countMatchingUsers(UserProfileQuery profile) {
-    return getMatchingUsersForProfile(profile).length;
-  }
-
-  dynamic getActiveUserProperty(String propertyName) {
-    return activeUser?.getProperty(propertyName);
+  dynamic getCurrentUserProperty(String propertyName) {
+    return currentUser?.getProperty(propertyName);
   }
 
   bool evaluateProfile(UserProfileQuery profile) {
@@ -112,13 +108,13 @@ class Users {
 
   void registerUser(UserData user) {
     _users[user.id] = user;
-    _activeUserId ??= user.id;
+    _currentUserId ??= user.id;
   }
 
   void removeUser(String id) {
     _users.remove(id);
-    if (_activeUserId == id) {
-      _activeUserId = _users.keys.firstOrNull;
+    if (_currentUserId == id) {
+      _currentUserId = _users.keys.firstOrNull;
     }
   }
 
@@ -126,14 +122,16 @@ class Users {
     return _users[id];
   }
 
-  UserData? get activeUser {
-    if (_activeUserId == null) return null;
-    return _users[_activeUserId];
+  String? get currentUserId => _currentUserId;
+
+  UserData? get currentUser {
+    if (_currentUserId == null) return null;
+    return _users[_currentUserId];
   }
 
-  void setActiveUser(String id) {
+  void setCurrentUser(String id) {
     if (_users.containsKey(id)) {
-      _activeUserId = id;
+      _currentUserId = id;
     }
   }
 
@@ -168,7 +166,7 @@ class Users {
 
   void clear() {
     _users.clear();
-    _activeUserId = null;
+    _currentUserId = null;
   }
 
   void loadUserData(String usersDataJson) {
@@ -185,7 +183,7 @@ class Users {
         registerUser(UserData.fromJson(decoded));
       } else {
         final defaultUser =
-            activeUser ?? UserData(id: 'defaultUser', name: 'Default User');
+            currentUser ?? UserData(id: 'defaultUser', name: 'Default User');
         for (var entry in decoded.entries) {
           defaultUser.setProperty(entry.key, entry.value);
         }
@@ -198,7 +196,7 @@ class Users {
 
   @override
   String toString() {
-    return 'Users(activeUserId: $_activeUserId, users: ${_users.values.toList()})';
+    return 'Users(currentUserId: $_currentUserId, users: ${_users.values.toList()})';
   }
 }
 

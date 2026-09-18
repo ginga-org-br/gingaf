@@ -38,7 +38,7 @@ class _UsersMenuState extends State<UsersMenu> {
 
   void _selectUser(UserData user) {
     if (_isManaging) return;
-    widget.users.setActiveUser(user.id);
+    widget.users.setCurrentUser(user.id);
     widget.onUserSelected?.call(user);
     widget.onClose();
   }
@@ -164,7 +164,7 @@ class _UsersMenuState extends State<UsersMenu> {
   @override
   Widget build(BuildContext context) {
     final allUsers = widget.users.allUsers;
-    final activeId = widget.users.activeUser?.id;
+    final activeId = widget.users.currentUser?.id;
 
     return Material(
       key: const Key('user_selection_overlay'),

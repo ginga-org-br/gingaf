@@ -21,7 +21,7 @@ void main() {
       expect(user.getProperty('theme'), equals('dark'));
     });
 
-    test('Users registers and sets active users', () {
+    test('Users registered', () {
       final manager = Users();
 
       final user1 = UserData(id: 'u1', name: 'User One');
@@ -31,10 +31,10 @@ void main() {
       manager.registerUser(user2);
 
       expect(manager.allUsers.length, equals(2));
-      expect(manager.activeUser?.id, equals('u1'));
+      expect(manager.currentUser?.id, equals('u1'));
 
-      manager.setActiveUser('u2');
-      expect(manager.activeUser?.id, equals('u2'));
+      manager.setCurrentUser('u2');
+      expect(manager.currentUser?.id, equals('u2'));
       expect(manager.getUser('u1')?.name, equals('User One'));
     });
 
@@ -48,7 +48,7 @@ void main() {
 
       manager.removeUser('u1');
       expect(manager.getUser('u1'), isNull);
-      expect(manager.activeUser, isNull);
+      expect(manager.currentUser, isNull);
     });
 
     test('loads user data via JSON param', () {
@@ -151,7 +151,9 @@ void main() {
       expect(profileOr.matches(user), isTrue);
     });
 
-    test('evaluates profile directly with evaluateProfile and evaluateProfileForUser', () {
+    test(
+        'evaluates profile directly with evaluateProfile and evaluateProfileForUser',
+        () {
       final users = Users();
       final u1 = UserData(
         id: 'u1',
@@ -181,7 +183,9 @@ void main() {
       expect(users.evaluateProfileForUser(profileGold, 'nonexistent'), isFalse);
     });
 
-    test('evaluates profile for specific user ID and retrieves all matching users for profile', () {
+    test(
+        'evaluates profile for specific user ID and retrieves all matching users for profile',
+        () {
       final users = Users();
       final u1 = UserData(
         id: 'u1',
@@ -210,12 +214,13 @@ void main() {
       expect(users.evaluateProfileForUser(profileAdmin, 'u1'), isTrue);
       expect(users.evaluateProfileForUser(profileAdmin, 'u2'), isFalse);
       expect(users.evaluateProfileForUser(profileAdmin, 'u3'), isTrue);
-      expect(users.evaluateProfileForUser(profileAdmin, 'nonexistent'), isFalse);
+      expect(
+          users.evaluateProfileForUser(profileAdmin, 'nonexistent'), isFalse);
 
       final matchingAdmins = users.getMatchingUsersForProfile(profileAdmin);
       expect(matchingAdmins, containsAll([u1, u3]));
       expect(matchingAdmins, isNot(contains(u2)));
-      expect(users.countMatchingUsers(profileAdmin), equals(2));
+      expect(users.getMatchingUsersForProfile(profileAdmin).length, equals(2));
     });
 
     test('supports UserProfileQuery fromJson and toJson serialization', () {
@@ -245,7 +250,9 @@ void main() {
       expect(profileFlat.query['attribute'], equals('tier'));
     });
 
-    test('supports user property removal and clearing across UserData and Users', () {
+    test(
+        'supports user property removal and clearing across UserData and Users',
+        () {
       final user = UserData(
         id: 'u1',
         name: 'User 1',
@@ -258,7 +265,7 @@ void main() {
 
       users.clear();
       expect(users.allUsers, isEmpty);
-      expect(users.activeUser, isNull);
+      expect(users.currentUser, isNull);
     });
 
     test('evaluates neq comparator and Users batch helper methods', () {
@@ -285,7 +292,7 @@ void main() {
       users.registerUsers([u1, u2]);
 
       expect(users.allUsers.length, equals(2));
-      expect(users.getActiveUserProperty('role'), equals('admin'));
+      expect(users.getCurrentUserProperty('role'), equals('admin'));
 
       final admins = users.getUsersByProperty('role', 'admin');
       expect(admins, equals([u1]));
@@ -296,7 +303,7 @@ void main() {
 
       expect(pNeq.matches(u1), isTrue);
       expect(pNeq.matches(u2), isFalse);
-      expect(users.countMatchingUsers(pNeq), equals(1));
+      expect(users.getMatchingUsersForProfile(pNeq).length, equals(1));
     });
   });
 }
