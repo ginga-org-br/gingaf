@@ -39,8 +39,7 @@ class NclParser {
       }
     }
 
-
-
+    _validateUserSettings(head, body);
     _resolveMediaProperties(head, body);
 
     return (head, body);
@@ -880,6 +879,50 @@ class NclParser {
     }
 
     resolveMedia(body);
+  }
+
+  void _validateUserSettings(Head head, Body body) {
+    final profileIds = <String>{};
+    void collectProfiles(Element el) {
+      if (el is UserProfile || el.xmlTagName == 'userProfile') {
+        final profileId = el.id ?? el.rawAttributes['id'];
+        if (profileId != null && profileId.isNotEmpty) {
+          profileIds.add(profileId);
+        }
+      }
+      for (final child in el.children) {
+        collectProfiles(child);
+      }
+    }
+
+    for (final el in head) {
+      collectProfiles(el);
+    }
+    collectProfiles(body);
+
+    void checkUserSettings(Element el) {
+      if (el is UserSettings) {
+        final user = el.rawAttributes['user'];
+        if (user == null || user.isEmpty) {
+          throw FormatException(
+            'UserSettings "${el.id ?? ''}" must have a "user" attribute',
+          );
+        }
+        if (user != 'currentUser' && !profileIds.contains(user)) {
+          throw FormatException(
+            'UserSettings "${el.id ?? ''}" has invalid user "$user": must point to a <userProfile> or equal to "currentUser"',
+          );
+        }
+      }
+      for (final child in el.children) {
+        checkUserSettings(child);
+      }
+    }
+
+    checkUserSettings(body);
+    for (final el in head) {
+      checkUserSettings(el);
+    }
   }
 }
 

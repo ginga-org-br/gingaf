@@ -3,116 +3,6 @@ import 'package:test/test.dart';
 
 void main() {
   group('NclDocument Users and UserSettings Tests', () {
-    test(
-        'parses UserSettings element and attributes with JSON user configuration',
-        () {
-      const xml = '''
-<ncl>
-  <head>
-    <userBase>
-      <userProfile id="u1" max="1"/>
-    </userBase>
-  </head>
-  <body>
-    <media id="uSettings" type="application/x-ncl-user-settings" user="u1">
-      <property name="id"/>
-      <property name="name"/>
-    </media>
-    <media id="uMedia" type="application/x-ncl-user-settings" user="currentUser"/>
-    <media id="uDefault" type="application/x-ncl-user-settings"/>
-  </body>
-</ncl>
-''';
-      const usersJson = '''
-[
-  {
-    "id": "u1",
-    "name": "User One"
-  },
-  {
-    "id": "u2",
-    "name": "User Two"
-  }
-]
-''';
-      final doc = NclDocument.fromContent(
-        xml,
-        gingacc: GingaCC(
-          config: GingaConfig(
-            users: Users(usersJson),
-          ),
-        ),
-      );
-
-      final userSettings = doc.body.children.whereType<UserSettings>().toList();
-      expect(userSettings.length, equals(3));
-      expect(userSettings[0].id, equals('uSettings'));
-      expect(userSettings[0].user, equals('u1'));
-      expect(
-          userSettings[0].mimeType, equals('application/x-ncl-user-settings'));
-      expect(userSettings[1].id, equals('uMedia'));
-      expect(userSettings[1].user, equals('currentUser'));
-      expect(userSettings[2].id, equals('uDefault'));
-      expect(userSettings[2].user, equals('currentUser'));
-
-      expect(doc.getPropertyValue(userSettings[0], 'id'), equals('u1'));
-      expect(doc.getPropertyValue(userSettings[0], 'name'), equals('User One'));
-    });
-
-    test(
-        'verifies current User dynamic property update and instant switch constituent re-evaluation',
-        () {
-      const xml = '''
-<ncl id="dynPropDoc">
-<head>
-<userBase>
-  <userProfile id="u1" max="1"/>
-</userBase>
-<ruleBase>
-  <rule id="rCC" user="currentUser" var="closedCaptioning" comparator="eq" value="true"/>
-</ruleBase>
-</head>
-<body>
-<media id="userSettings" type="application/x-ncl-user-settings" user="currentUser">
-  <property name="closedCaptioning"/>
-</media>
-<port id="p1" component="swSub"/>
-<switch id="swSub">
-  <bindRule rule="rCC" constituent="mSub"/>
-  <defaultComponent component="mNoSub"/>
-  <media id="mSub" src="video_cc.mp4"/>
-  <media id="mNoSub" src="video.mp4"/>
-</switch>
-</body>
-</ncl>
-''';
-      const usersJson = '''
-{
-  "id": "u1",
-  "name": "Viewer",
-  "properties": {
-    "closedCaptioning": false
-  }
-}
-''';
-      final doc = NclDocument.fromContent(
-        xml,
-        gingacc: GingaCC(
-          config: GingaConfig(
-            users: Users(usersJson),
-          ),
-        ),
-      );
-
-      final sw = doc.getSwitchById('swSub')!;
-      expect(doc.evaluateRule('rCC'), isFalse);
-      expect(doc.resolveSwitch(sw)?.id, equals('mNoSub'));
-
-      doc.users.setUserProperty('u1', 'closedCaptioning', true);
-      expect(doc.evaluateRule('rCC'), isTrue);
-      expect(doc.resolveSwitch(sw)?.id, equals('mSub'));
-    });
-
     test('verifies all required viewer profile basic attributes', () {
       const xml = '''
 <ncl>
@@ -205,6 +95,115 @@ void main() {
           equals('false'));
       expect(
           doc.getPropertyValue(settingsNode, 'voiceGuidance'), equals('false'));
+    });
+
+    test('fails to parse UserSettings without user attribute', () {
+      const xml = '''
+<ncl>
+  <head>
+    <userBase>
+      <userProfile id="u1" max="1"/>
+    </userBase>
+  </head>
+  <body>
+    <media id="uSettings" type="application/x-ncl-user-settings"/>
+  </body>
+</ncl>
+''';
+      expect(() => NclDocument.fromContent(xml), throwsFormatException);
+    });
+
+    test(
+        'fails to parse UserSettings when user attribute does not match userProfile or currentUser',
+        () {
+      const xml = '''
+<ncl>
+  <head>
+    <userBase>
+      <userProfile id="u1" max="1"/>
+    </userBase>
+  </head>
+  <body>
+    <media id="uSettings" type="application/x-ncl-user-settings" user="uUnknown"/>
+  </body>
+</ncl>
+''';
+      expect(() => NclDocument.fromContent(xml), throwsFormatException);
+    });
+
+    test('parses UserSettings with valid user attribute', () {
+      const xml = '''
+<ncl>
+  <head>
+    <userBase>
+      <userProfile id="u1" max="1"/>
+    </userBase>
+  </head>
+  <body>
+    <media id="uSettings1" type="application/x-ncl-user-settings" user="currentUser"/>
+    <media id="uSettings2" type="application/x-ncl-user-settings" user="u1"/>
+  </body>
+</ncl>
+''';
+      final doc = NclDocument.fromContent(xml);
+      final s1 = doc.getElementById('uSettings1') as UserSettings;
+      final s2 = doc.getElementById('uSettings2') as UserSettings;
+      expect(s1.user, equals('currentUser'));
+      expect(s2.user, equals('u1'));
+    });
+
+    test(
+        'verifies current User dynamic property update and instant switch constituent re-evaluation',
+        () {
+      const xml = '''
+<ncl id="dynPropDoc">
+<head>
+<userBase>
+  <userProfile id="u1" max="1"/>
+</userBase>
+<ruleBase>
+  <rule id="rCC" user="currentUser" var="closedCaptioning" comparator="eq" value="true"/>
+</ruleBase>
+</head>
+<body>
+<media id="userSettings" type="application/x-ncl-user-settings" user="currentUser">
+  <property name="closedCaptioning"/>
+</media>
+<port id="p1" component="swSub"/>
+<switch id="swSub">
+  <bindRule rule="rCC" constituent="mSub"/>
+  <defaultComponent component="mNoSub"/>
+  <media id="mSub" src="video_cc.mp4"/>
+  <media id="mNoSub" src="video.mp4"/>
+</switch>
+</body>
+</ncl>
+''';
+      const usersJson = '''
+{
+  "id": "u1",
+  "name": "Viewer",
+  "properties": {
+    "closedCaptioning": false
+  }
+}
+''';
+      final doc = NclDocument.fromContent(
+        xml,
+        gingacc: GingaCC(
+          config: GingaConfig(
+            users: Users(usersJson),
+          ),
+        ),
+      );
+
+      final sw = doc.getSwitchById('swSub')!;
+      expect(doc.evaluateRule('rCC'), isFalse);
+      expect(doc.resolveSwitch(sw)?.id, equals('mNoSub'));
+
+      doc.users.setUserProperty('u1', 'closedCaptioning', true);
+      expect(doc.evaluateRule('rCC'), isTrue);
+      expect(doc.resolveSwitch(sw)?.id, equals('mSub'));
     });
 
     test('verifies multi-user profile evaluation with composite rules', () {
@@ -666,6 +665,8 @@ void main() {
 <ncl>
   <head>
     <userBase>
+      <userProfile id="u1" max="1"/>
+      <userProfile id="u2" max="1"/>
       <userProfile id="profileGte" max="1"/>
       <userProfile id="profileLt" max="1"/>
       <userProfile id="profileGt" max="1"/>
@@ -745,6 +746,7 @@ void main() {
 <ncl>
   <head>
     <userBase>
+      <userProfile id="u1" max="1"/>
       <userProfile id="profileAnd" max="1"/>
       <userProfile id="profileOr" max="1"/>
     </userBase>
@@ -802,6 +804,7 @@ void main() {
 <ncl>
   <head>
     <userBase>
+      <userProfile id="u1" max="1"/>
       <userProfile id="profileGold" max="1"/>
       <userProfile id="profileVip" max="1"/>
     </userBase>
@@ -845,6 +848,7 @@ void main() {
 <ncl>
   <head>
     <userBase>
+      <userProfile id="u1" max="1"/>
       <userProfile id="profileAdmin" max="1"/>
     </userBase>
   </head>
@@ -888,6 +892,7 @@ void main() {
 <ncl>
   <head>
     <userBase>
+      <userProfile id="u1" max="1"/>
       <userProfile id="profileGte" max="1"/>
     </userBase>
   </head>
@@ -929,6 +934,8 @@ void main() {
 <ncl>
   <head>
     <userBase>
+      <userProfile id="u1" max="1"/>
+      <userProfile id="u2" max="1"/>
       <userProfile id="pNeq" max="1"/>
     </userBase>
   </head>
