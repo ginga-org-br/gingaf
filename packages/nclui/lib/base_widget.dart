@@ -197,7 +197,7 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
     }
   }
 
-  double _resolveDim(String val, double parentDim) {
+  double resolveDim(String val, double parentDim) {
     final trimmed = val.trim();
     if (trimmed.endsWith('%')) {
       final pct =
@@ -221,10 +221,10 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
         (document?.config.graphsPlaneBounds.height ?? 480.0);
 
     double left, top, width, height;
-    left = _resolveDim(leftStr, planeWidth);
-    top = _resolveDim(topStr, planeHeight);
-    width = _resolveDim(widthStr, planeWidth);
-    height = _resolveDim(heightStr, planeHeight);
+    left = resolveDim(leftStr, planeWidth);
+    top = resolveDim(topStr, planeHeight);
+    width = resolveDim(widthStr, planeWidth);
+    height = resolveDim(heightStr, planeHeight);
     rect = Rect.fromLTWH(left, top, width, height);
 
     final isFocused = document?.currentFocusNodeId != null &&
