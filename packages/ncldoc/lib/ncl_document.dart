@@ -47,7 +47,7 @@ class NclDocument {
     _logger.info('Loading NCL document from src: $docSrc');
     gingacc ??= GingaCC();
     final String? xml;
-    if (docSrc.trim().startsWith('<')) {
+    if (gingacc.isXmlString(docSrc)) {
       xml = docSrc;
     } else {
       final docUri = gingacc.resolveUri(docSrc);
@@ -73,13 +73,9 @@ class NclDocument {
     final resolvedDocSrc = docSrc ?? 'tmp.ncl';
     _logger.fine('Creating NclDocument from content (src: $resolvedDocSrc)');
     final cc = gingacc ?? GingaCC();
-    final Uri? resolvedUri = docSrc != null ? cc.resolveUri(docSrc) : null;
-    final (head, body) = NclParser(
-      docUri: resolvedUri,
-    ).parseString(xml);
-    return NclDocument._(
-      head: head,
-      body: body,
+    final Uri? resolvedUri =
+        (docSrc != null && !cc.isXmlString(docSrc)) ? cc.resolveUri(docSrc) : null;
+    final doc = NclDocument._(
       docSrc: resolvedDocSrc,
       docUri: resolvedUri,
       gingacc: cc,

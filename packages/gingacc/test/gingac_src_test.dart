@@ -118,5 +118,15 @@ void main() {
       expect(gingacc.resolveUri('pic.png', 'folder%20with%20spaces/main.ncl').toString(),
           equals('https://example.com/pic.png'));
     });
+
+    test('isXmlString detects XML markup correctly', () {
+      final gingacc = GingaCC();
+      expect(gingacc.isXmlString(null), isFalse);
+      expect(gingacc.isXmlString(''), isFalse);
+      expect(gingacc.isXmlString('  '), isFalse);
+      expect(gingacc.isXmlString('image.png'), isFalse);
+      expect(gingacc.isXmlString('<ncl><head/><body/></ncl>'), isTrue);
+      expect(gingacc.isXmlString(' <ncl>content</ncl>'), isTrue);
+    });
   });
 }

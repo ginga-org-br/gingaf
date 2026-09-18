@@ -36,38 +36,54 @@ class GingaCC {
   })  : config = config ?? GingaConfig(),
         ccws = ccws ?? CCWS();
 
+  bool isXmlString(String? src) {
+    if (src == null) return false;
+    return src.trim().startsWith('<');
+  }
+
   Uri resolveUri(String src, [String? baseDirSrc]) {
     final rawSrc = src.trim();
     final virtualUri = _lookupVirtualUri(rawSrc);
     if (virtualUri != null) return virtualUri;
 
     final srcUri = _parseUri(rawSrc);
-    if (baseDirSrc == null || baseDirSrc.trim().isEmpty) {
+    final effectiveBaseDir =
+        (baseDirSrc != null && !isXmlString(baseDirSrc))
+            ? baseDirSrc.trim()
+            : null;
+    if (effectiveBaseDir == null || effectiveBaseDir.isEmpty) {
       if (!_isWeb && !srcUri.hasScheme) {
         final decoded = Uri.decodeComponent(srcUri.path);
-        return File(decoded).absolute.uri;
+        return File(path.normalize(decoded)).absolute.uri;
       }
       return srcUri;
     }
 
-    Uri baseUri = _parseUri(baseDirSrc.trim());
+    Uri baseUri = _parseUri(effectiveBaseDir);
     if (baseUri.isScheme('data')) {
       if (!_isWeb && !srcUri.hasScheme) {
         final decoded = Uri.decodeComponent(srcUri.path);
-        return File(decoded).absolute.uri;
+        return File(path.normalize(decoded)).absolute.uri;
       }
       return srcUri;
     }
 
-    if (!_isWeb && !baseUri.hasScheme) {
-      final decodedBase = Uri.decodeComponent(baseUri.path);
-      final isDir = decodedBase.endsWith('/') ||
-          decodedBase.endsWith('\\') ||
-          Directory(decodedBase).existsSync();
-      if (isDir) {
-        baseUri = Directory(decodedBase).absolute.uri;
-      } else {
-        baseUri = File(decodedBase).absolute.uri;
+    if (!_isWeb) {
+      if (baseUri.isScheme('file')) {
+        final filePath = baseUri.toFilePath();
+        if (Directory(filePath).existsSync() && !baseUri.path.endsWith('/')) {
+          baseUri = Uri.directory(filePath);
+        }
+      } else if (!baseUri.hasScheme) {
+        final decodedBase = Uri.decodeComponent(baseUri.path);
+        final isDir = decodedBase.endsWith('/') ||
+            decodedBase.endsWith('\\') ||
+            Directory(decodedBase).existsSync();
+        if (isDir) {
+          baseUri = Directory(decodedBase).absolute.uri;
+        } else {
+          baseUri = File(decodedBase).absolute.uri;
+        }
       }
     }
 
@@ -77,17 +93,17 @@ class GingaCC {
 
     if (!_isWeb && !resolved.hasScheme) {
       final decoded = Uri.decodeComponent(resolved.path);
-      return File(decoded).absolute.uri;
+      return File(path.normalize(decoded)).absolute.uri;
     }
     return resolved;
   }
 
-  Future<String?> loadContent(dynamic srcOrUri) async {
+  Future<String?> loadContent(dynamic srcOrUri, [String? baseDirSrc]) async {
     final String rawInput =
         (srcOrUri is Uri ? srcOrUri.toString() : srcOrUri.toString()).trim();
     if (rawInput.isEmpty) return null;
 
-    if (rawInput.startsWith('<')) {
+    if (isXmlString(rawInput)) {
       return rawInput;
     }
 
@@ -95,7 +111,8 @@ class GingaCC {
       return _decodeDataUri(rawInput);
     }
 
-    final Uri uri = srcOrUri is Uri ? srcOrUri : resolveUri(rawInput);
+    final Uri uri =
+        srcOrUri is Uri ? srcOrUri : resolveUri(rawInput, baseDirSrc);
     if (uri.isScheme('data')) {
       return _decodeDataUri(rawInput, uri);
     }
@@ -117,27 +134,29 @@ class GingaCC {
     }
 
     if (uri.isScheme('file') || (!uri.hasScheme && !_isWeb)) {
+      final filePath = uri.isScheme('file')
+          ? uri.toFilePath()
+          : Uri.decodeComponent(uri.path);
       try {
-        final filePath = uri.isScheme('file')
-            ? uri.toFilePath()
-            : Uri.decodeComponent(uri.path);
         final file = File(filePath);
         if (file.existsSync()) {
           return await file.readAsString();
         }
-      } catch (_) {
-        return null;
-      }
+      } catch (_) {}
     }
 
     return null;
   }
+
 
   Uri _parseUri(String raw) {
     if (raw.startsWith('data:')) {
       return Uri.tryParse(raw) ?? Uri.dataFromString(raw);
     }
     if (RegExp(r'^[a-zA-Z]:[\\/]').hasMatch(raw)) {
+      if (!_isWeb && Directory(raw).existsSync()) {
+        return Uri.directory(raw);
+      }
       return Uri.file(raw);
     }
     return Uri.tryParse(raw) ?? Uri(path: raw);
