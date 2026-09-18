@@ -151,7 +151,7 @@ class NclDocument {
             if (child.xmlTagName == 'userProfile') {
               final id = child.rawAttributes['id'];
               final src = child.rawAttributes['src'];
-              if (id != null && id.isNotEmpty) {
+              if (id != null && id.isNotEmpty && src != null && src.isNotEmpty) {
                 await _loadUserProfile(id, src);
               }
             }
@@ -159,6 +159,40 @@ class NclDocument {
         }
       }
     }
+  }
+
+  UserProfile? getUserProfileById(String id) {
+    if (_head != null) {
+      for (var el in headChildren) {
+        if (el.xmlTagName == 'userBase') {
+          for (var child in el.children) {
+            if (child.xmlTagName == 'userProfile' &&
+                child.id == id &&
+                child is UserProfile) {
+              return child;
+            }
+          }
+        }
+      }
+    }
+    final node = getElementById(id);
+    return node is UserProfile ? node : null;
+  }
+
+  bool _isUserProfile(String id) {
+    if (_head != null) {
+      for (var el in headChildren) {
+        if (el.xmlTagName == 'userBase') {
+          for (var child in el.children) {
+            if (child.xmlTagName == 'userProfile' &&
+                child.rawAttributes['id'] == id) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 
   Future<void> _loadUserProfile(String id, String? src) async {
@@ -275,41 +309,35 @@ class NclDocument {
       final varName = ruleEl.rawAttributes['var'] ?? '';
       final value = ruleEl.rawAttributes['value'] ?? '';
       final comparator = ruleEl.rawAttributes['comparator'] ?? 'eq';
+      var systemVal = _systemVariables[varName];
+
       // NOT COMPLIANT: <rule> with user
       final userAttr = ruleEl.rawAttributes['user'];
-      // NOT COMPLIANT ends
-      var systemVal = envVariables[varName];
-      if (systemVal == null) {
-        for (final s in getAllSettingsNodes()) {
+      if (systemVal == null && userAttr != null && userAttr.isNotEmpty) {
+        for (final s in body.children.whereType<UserSettings>()) {
+          final profileId = s.user;
+          if (profileId != userAttr &&
+              profileId != 'currentUser' &&
+              userAttr != 'currentUser') {
+            continue;
+          }
           var propName = varName;
           if (s.id != null && varName.startsWith('${s.id}.')) {
             propName = varName.substring(s.id!.length + 1);
           }
-          // NOT COMPLIANT: <rule> with user
-          if (userAttr != null && userAttr.isNotEmpty) {
-            final profileId = s.rawAttributes['user'];
-            if (profileId != null &&
-                profileId != userAttr &&
-                profileId != 'currentUser' &&
-                userAttr != 'currentUser') {
-              continue;
-            }
-          }
-          // NOT COMPLIANT ends
           final val = getPropertyValue(s, propName);
           if (val != null) {
             systemVal = val;
             break;
           }
         }
-      }
-      // NOT COMPLIANT: <rule> with user
-      if (systemVal == null && userAttr != null && userAttr.isNotEmpty) {
-        final activeUser = users.activeUser;
-        if (activeUser != null) {
-          final userVal = activeUser.getProperty(varName);
-          if (userVal != null) {
-            systemVal = userVal.toString();
+        if (systemVal == null) {
+          final currentUser = users.currentUser;
+          if (currentUser != null) {
+            final userVal = currentUser.getProperty(varName);
+            if (userVal != null) {
+              systemVal = userVal.toString();
+            }
           }
         }
       }
@@ -317,7 +345,7 @@ class NclDocument {
 
       if (varName == 'service.currentFocus') {
         final currentFocus = systemVal ??
-            envVariables['service.currentFocus'] ??
+            _systemVariables['service.currentFocus'] ??
             _currentFocusNodeId ??
             '';
         bool isFocusMatch(String expected) {
@@ -426,43 +454,38 @@ class NclDocument {
       .where((c) => c.rawAttributes['id'] == id)
       .firstOrNull;
 
-  bool _hasUserSettingsMedia(Element root) {
-    if (root.rawAttributes['type'] == 'application/x-ncl-user-settings' &&
-        root.rawAttributes['user'] == 'currentUser') {
-      return true;
+  String? getPropertyValue(Node? node, String propertyName) {
+    if (node == null || node is Settings) {
+      return _systemVariables[propertyName];
     }
-    return root.descendants.any((child) =>
-        child.rawAttributes['type'] == 'application/x-ncl-user-settings' &&
-        child.rawAttributes['user'] == 'currentUser');
-  }
 
-  String? getPropertyValue(Node node, String propertyName) {
-    if (node is Settings) {
-      final isUserSetting =
-          node.mimeType == 'application/x-ncl-user-settings' ||
-              node.rawAttributes['type'] == 'application/x-ncl-user-settings';
-
-      bool hasCurrentUser = node.rawAttributes['user'] == 'currentUser';
-      if (!hasCurrentUser && node == _settings) {
-        hasCurrentUser = _hasUserSettingsMedia(_body);
-      }
-
-      if (isUserSetting || hasCurrentUser) {
-        // NOT COMPLIANT: <rule> with user
-        final hasPropertyDecl = node.children.whereType<Property>().any(
-              (p) => p.name == propertyName,
-            );
-        // NOT COMPLIANT ends
-        if (hasPropertyDecl) {
-          final user = users.activeUser;
-          if (user != null) {
-            final userVal = user.getProperty(propertyName);
-            if (userVal != null) {
-              return userVal.toString();
-            }
+    if (node is UserSettings) {
+      final hasPropertyDecl = node.children.whereType<Property>().any(
+            (p) => p.name == propertyName,
+          );
+      if (hasPropertyDecl) {
+        final userAttr = node.user;
+        final UserData? targetUser;
+        if (userAttr != 'currentUser') {
+          if (_isUserProfile(userAttr)) {
+            final profile = _loadedProfiles[userAttr];
+            targetUser = profile != null
+                ? users.getMatchingUsersForProfile(profile).firstOrNull
+                : (users.getUser(userAttr) ?? users.currentUser);
+          } else {
+            targetUser = users.getUser(userAttr);
           }
+        } else {
+          targetUser = users.currentUser;
         }
+        final userVal = targetUser?.getProperty(propertyName);
+        if (userVal != null) {
+          return userVal.toString();
+        }
+        return _systemVariables['user.$propertyName'] ??
+            _systemVariables[propertyName];
       }
+      return null;
     }
 
     var currentNode = node;

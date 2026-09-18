@@ -39,6 +39,8 @@ class NclParser {
       }
     }
 
+
+
     _resolveMediaProperties(head, body);
 
     return (head, body);
@@ -200,9 +202,11 @@ class NclParser {
       return Media(rawAttributes: rawAttributes);
     }
     if (type == 'application/x-ncl-settings' ||
-        type == 'application/x-ginga-settings' ||
-        type == 'application/x-ncl-user-settings') {
+        type == 'application/x-ginga-settings') {
       return Settings(rawAttributes: rawAttributes, mimeType: type);
+    }
+    if (type == 'application/x-ncl-user-settings') {
+      return UserSettings(rawAttributes: rawAttributes, mimeType: type);
     }
     final uri = src.isNotEmpty ? (baseUri?.resolve(src).toString() ?? src) : '';
     final mimeType = type.isNotEmpty ? type : getMimeTypeFromExtension(src);

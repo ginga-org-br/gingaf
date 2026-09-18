@@ -266,6 +266,15 @@ class Settings extends Media {
   });
 }
 
+class UserSettings extends Media {
+  String get user => rawAttributes['user'] ?? 'currentUser';
+
+  UserSettings({
+    super.rawAttributes,
+    super.mimeType = 'application/x-ncl-user-settings',
+  });
+}
+
 class NCLua extends Media {
   late NCLuaRuntime runtime;
   NclDocument? document;
@@ -279,9 +288,11 @@ class NCLua extends Media {
   }) {
     if (runtime != null) {
       this.runtime = runtime;
+      runtime.media = this;
     } else if (document != null) {
       this.runtime = NCLuaRuntime(
         document: document!,
+        media: this,
         src: uri.isNotEmpty ? uri : src,
       );
     }
@@ -304,7 +315,10 @@ class UserProfile extends Element {
   String? get name => rawAttributes['name'];
   String? get age => rawAttributes['age'];
   String? get gender => rawAttributes['gender'];
+  String? get src => rawAttributes['src'];
+  String? get max => rawAttributes['max'];
   UserProfile({super.rawAttributes});
+
 
   UserData toUserData() {
     final idVal = id ?? '';
