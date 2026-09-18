@@ -266,6 +266,33 @@ class Settings extends Media {
   });
 }
 
+class NCLua extends Media {
+  late NCLuaRuntime runtime;
+  NclDocument? document;
+
+  NCLua({
+    super.rawAttributes,
+    super.uri,
+    super.mimeType = 'application/x-ginga-NCLua',
+    this.document,
+    NCLuaRuntime? runtime,
+    NCLuaRuntime? engine,
+  }) {
+    final effectiveRuntime = runtime ?? engine;
+    if (effectiveRuntime != null) {
+      this.runtime = effectiveRuntime;
+    } else if (document != null) {
+      this.runtime = NCLuaRuntime(
+        document: document!,
+        src: uri.isNotEmpty ? uri : src,
+      );
+    }
+  }
+
+  NCLuaRuntime get engine => runtime;
+  set engine(NCLuaRuntime val) => runtime = val;
+}
+
 class UserBase extends Element {
   List<UserProfile> get userProfiles =>
       children.whereType<UserProfile>().toList();

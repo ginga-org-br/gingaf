@@ -488,5 +488,33 @@ void main() {
       expect(runtime.luaState.toStr(-1), equals('hard'));
       runtime.luaState.pop(1);
     });
+
+    test('NCL dynamically adds settings via editing command consumed by Lua',
+        () {
+      const xml = '''
+<ncl id="testDoc">
+  <body>
+    <media type="application/x-ginga-settings" id="programSettings"/>
+  </body>
+</ncl>
+''';
+      final doc = NclDocument.fromContent(xml);
+      doc.start();
+
+      final engine = NCLuaRuntime(document: doc);
+
+      engine.execute('_G.val1 = settings.user.level');
+      engine.luaState.getGlobal('val1');
+      expect(engine.luaState.isNil(-1), isTrue);
+      engine.luaState.pop(1);
+
+      doc.doNclEditingCommand(
+          'setPropertyValue("programSettings", "user.level", "5")');
+
+      engine.execute('_G.val2 = settings.user.level');
+      engine.luaState.getGlobal('val2');
+      expect(engine.luaState.toStr(-1), equals('5'));
+      engine.luaState.pop(1);
+    });
   });
 }

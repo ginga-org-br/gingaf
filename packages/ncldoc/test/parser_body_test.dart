@@ -177,6 +177,26 @@ void main() {
       expect(settingsNode, isA<Settings>());
     });
 
+    test('instantiates NCLua only for media with Lua MIME type and not for <lua> elements', () {
+      const xml = '''
+<ncl>
+  <body>
+    <media id="luaMedia1" src="script.lua" />
+    <media id="luaMedia2" type="application/x-ginga-NCLua" />
+    <lua id="ignoredLua" />
+  </body>
+</ncl>
+''';
+      final (_, body) = parser.parseString(xml);
+      final luaMedia1 = body.children.where((e) => e.id == 'luaMedia1').firstOrNull;
+      final luaMedia2 = body.children.where((e) => e.id == 'luaMedia2').firstOrNull;
+      final ignoredLua = body.children.where((e) => e.id == 'ignoredLua').firstOrNull;
+
+      expect(luaMedia1, isA<NCLua>());
+      expect(luaMedia2, isA<NCLua>());
+      expect(ignoredLua, isNull);
+    });
+
     test('validate and parse sbtvd:// media with id="mainAV" successfully', () {
       const xml = '''
 <ncl>

@@ -196,7 +196,19 @@ class NclScheduler {
                 _stackMainEvtNclAction(activeNode, NclActionType.start);
               }
             }
+            if (actionItem.event.targetNode is NCLua) {
+              final luaNode = actionItem.event.targetNode as NCLua;
+              if (prevState == NclStateType.paused) {
+                luaNode.runtime.resume();
+              } else {
+                luaNode.runtime.start();
+              }
+            }
           } else if (newState == NclStateType.sleeping) {
+            if (actionItem.event.targetNode is NCLua) {
+              final luaNode = actionItem.event.targetNode as NCLua;
+              luaNode.runtime.stop();
+            }
             for (var area in actionItem.event.targetNode.getAreas()) {
               final areaEvt = actionItem.event.targetNode.getAreaNclEvent(
                 area.id ?? '',
@@ -214,6 +226,11 @@ class NclScheduler {
                 }
               }
             }
+          } else if (newState == NclStateType.paused) {
+            if (actionItem.event.targetNode is NCLua) {
+              final luaNode = actionItem.event.targetNode as NCLua;
+              luaNode.runtime.pause();
+            }
           }
 
           final parent = actionItem.event.targetNode.parent;
@@ -229,6 +246,24 @@ class NclScheduler {
                 _stackMainEvtNclAction(parent, NclActionType.stop);
               }
             }
+          }
+        } else if (actionItem.event.targetNode is NCLua) {
+          final lua = actionItem.event.targetNode as NCLua;
+          final iface = actionItem.event.interfaceId;
+          if (newState == NclStateType.occurring) {
+            lua.runtime.postNclEvent({
+              'class': 'ncl',
+              'type': 'presentation',
+              'action': 'start',
+              if (iface != null) 'label': iface,
+            });
+          } else if (newState == NclStateType.sleeping) {
+            lua.runtime.postNclEvent({
+              'class': 'ncl',
+              'type': 'presentation',
+              'action': 'stop',
+              if (iface != null) 'label': iface,
+            });
           }
         }
       }

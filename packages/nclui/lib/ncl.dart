@@ -87,6 +87,14 @@ class NclWidget extends BaseWidget {
         document: document,
       );
     }
+    if (media is NCLua) {
+      return LuaWidget(
+        key: key,
+        src: src,
+        media: media,
+        document: document,
+      );
+    }
     switch (mimeType) {
       case 'application/x-ncl-NCLua':
       case 'application/x-ginga-NCLua':

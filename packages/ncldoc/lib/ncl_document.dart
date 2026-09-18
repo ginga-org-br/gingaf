@@ -15,7 +15,7 @@ export 'package:gingacc/gingacc.dart';
 
 export 'elements.dart';
 export 'event.dart';
-export 'lua.dart';
+export 'lua_runtime.dart';
 export 'ncl_scheduler.dart';
 export 'parser.dart';
 
@@ -47,7 +47,7 @@ class NclDocument {
     _logger.info('Loading NCL document from src: $docSrc');
     gingacc ??= GingaCC();
     final String? xml;
-    if (gingacc.isXmlString(docSrc)) {
+    if (isXmlString(docSrc)) {
       xml = docSrc;
     } else {
       final docUri = gingacc.resolveUri(docSrc);
@@ -74,22 +74,29 @@ class NclDocument {
     _logger.fine('Creating NclDocument from content (src: $resolvedDocSrc)');
     final cc = gingacc ?? GingaCC();
     final Uri? resolvedUri =
-        (docSrc != null && !cc.isXmlString(docSrc)) ? cc.resolveUri(docSrc) : null;
+        (docSrc != null && !isXmlString(docSrc)) ? cc.resolveUri(docSrc) : null;
     final doc = NclDocument._(
       docSrc: resolvedDocSrc,
       docUri: resolvedUri,
       gingacc: cc,
     );
+    final (head, body) = NclParser(
+      docUri: resolvedUri,
+      document: doc,
+    ).parseString(xml);
+    doc._init(head: head, body: body);
+    return doc;
   }
 
   NclDocument._({
-    Head? head,
-    required Body body,
     required this.docSrc,
     this.docUri,
     GingaCC? gingacc,
   }) : gingacc = gingacc ?? GingaCC() {
     envVariables = this.gingacc.config.envVariables;
+  }
+
+  void _init({Head? head, required Body body}) {
     _head = head;
     _body = body;
     _gatherSettings();
@@ -150,7 +157,7 @@ class NclDocument {
   Settings getSettings() => _settings;
 
   void doNclEditingCommand(String command) {
-    NclParser(docUri: docUri).doNclEditingCommand(this, command);
+    NclParser(docUri: docUri, document: this).doNclEditingCommand(this, command);
   }
 
   Node? getNodeById(String id) {

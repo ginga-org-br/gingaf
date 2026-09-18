@@ -7,10 +7,12 @@ import 'schema.dart';
 class NclParser {
   final Schema schema = Schema();
   final Uri? docUri;
+  final NclDocument? document;
   Uri? get baseUri => docUri?.resolve('.');
 
   NclParser({
     this.docUri,
+    this.document,
   });
 
   (Head, Body) parseString(String xmlString) {
@@ -210,6 +212,17 @@ class NclParser {
     }
     final uri = src.isNotEmpty ? (baseUri?.resolve(src).toString() ?? src) : '';
     final mimeType = type.isNotEmpty ? type : getMimeTypeFromExtension(src);
+    if (type == 'application/x-ncl-NCLua' ||
+        type == 'application/x-ginga-NCLua' ||
+        mimeType == 'application/x-ncl-NCLua' ||
+        mimeType == 'application/x-ginga-NCLua') {
+      return NCLua(
+        rawAttributes: rawAttributes,
+        uri: uri,
+        mimeType: mimeType,
+        document: document,
+      );
+    }
     if (mimeType.startsWith('video/') || mimeType.startsWith('audio/')) {
       final avMedia = AVMedia(
         rawAttributes: rawAttributes,
@@ -570,6 +583,15 @@ class NclParser {
             if (newNode is Node) {
               parentComp.children.add(newNode);
               newNode.parent = parentComp;
+              if (newNode is NCLua) {
+                if (newNode.document == null) {
+                  newNode.document = doc;
+                  newNode.runtime = NCLuaRuntime(
+                    document: doc,
+                    src: newNode.uri.isNotEmpty ? newNode.uri : newNode.src,
+                  );
+                }
+              }
             }
           } else {
             final nodeId = nodeArg;
