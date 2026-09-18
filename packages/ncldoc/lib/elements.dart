@@ -319,7 +319,6 @@ class UserProfile extends Element {
   String? get max => rawAttributes['max'];
   UserProfile({super.rawAttributes});
 
-
   UserData toUserData() {
     final idVal = id ?? '';
     final nameVal = name ?? idVal;

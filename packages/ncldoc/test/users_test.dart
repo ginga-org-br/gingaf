@@ -1370,5 +1370,150 @@ void main() {
       expect(doc.resolveSwitch(sw)?.id, equals('mTargeted'));
     });
     // NOT COMPLIANT ends
+
+    test(
+      'current_user sets user properties on lua media using virtual files',
+      () async {
+        const currentUserNcl = '''<ncl id="multiUserDoc">
+  <head>
+    <regionBase>
+      <region id="rgTop" left="5%" top="3%" width="90%" height="12%" zIndex="10"/>
+    </regionBase>
+    <descriptorBase>
+      <descriptor id="dTop" region="rgTop"/>
+    </descriptorBase>
+    <connectorBase>
+      <causalConnector id="onEndStop">
+        <simpleCondition role="onEnd"/>
+        <simpleAction role="stop"/>
+      </causalConnector>
+      <causalConnector id="onBeginSet">
+        <connectorParam name="var"/>
+        <simpleCondition role="onBegin"/>
+        <simpleAction role="set" value="\$var" max="unbounded" qualifier="par"/>
+      </causalConnector>
+    </connectorBase>
+  </head>
+  <body id="body">
+    <media id="uSettings" type="application/x-ncl-user-settings" user="currentUser">
+      <property name="id"/>
+      <property name="name"/>
+      <property name="gender"/>
+      <property name="age"/>
+    </media>
+    <port id="pMain" component="mVideo"/>
+    <port id="pTop" component="mUserLua"/>
+    <media id="mUserLua" src="user_info.lua" descriptor="dTop">
+      <property name="userId"/>
+      <property name="userName"/>
+      <property name="userGender"/>
+      <property name="userAge"/>
+    </media>
+    <media id="mVideo" src="https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4"/>
+    <link xconnector="onBeginSet">
+      <bind role="onBegin" component="mVideo"/>
+      <bind role="get" component="uSettings" interface="id"/>
+      <bind role="get" component="uSettings" interface="name"/>
+      <bind role="get" component="uSettings" interface="gender"/>
+      <bind role="get" component="uSettings" interface="age"/>
+      <bind role="set" component="mUserLua" interface="userId">
+        <bindParam name="var" value="\$get"/>
+      </bind>
+      <bind role="set" component="mUserLua" interface="userName">
+        <bindParam name="var" value="\$get"/>
+      </bind>
+      <bind role="set" component="mUserLua" interface="userGender">
+        <bindParam name="var" value="\$get"/>
+      </bind>
+      <bind role="set" component="mUserLua" interface="userAge">
+        <bindParam name="var" value="\$get"/>
+      </bind>
+    </link>
+  </body>
+</ncl>''';
+
+        const userInfoLua = '''local event = event or require('event')
+
+local userId = ""
+local userName = ""
+local userGender = ""
+local userAge = ""
+
+local function draw()
+    canvas:clear()
+    local w, h = canvas:attrSize()
+    w = w or 1280
+    h = h or 100
+    canvas:attrColor(15, 20, 30, 220)
+    canvas:drawRoundRect('fill', 0, 0, w, h, 12, 12)
+    canvas:attrColor(80, 120, 200, 255)
+    canvas:drawRoundRect('frame', 0, 0, w, h, 12, 12)
+    canvas:attrColor(255, 255, 255, 255)
+    canvas:attrFont('default', 22, 'normal', 'bold')
+    local text = string.format('User Settings: "id": %s    "name": %s    "gender": %s    "age": %s',
+        tostring(userId), tostring(userName), tostring(userGender), tostring(userAge))
+    canvas:drawTextRect(text, 20, 0, w - 40, h, 'center', 'center')
+    canvas:flush()
+end
+
+draw()
+
+event.register(function(evt)
+    if evt.class == 'ncl' and evt.type == 'attribution' then
+        local prop = evt.name
+        local val = evt.value
+        if prop == 'userId' or prop == 'id' then
+            userId = val
+        elseif prop == 'userName' or prop == 'name' then
+            userName = val
+        elseif prop == 'userGender' or prop == 'gender' then
+            userGender = val
+        elseif prop == 'userAge' or prop == 'age' then
+            userAge = val
+        end
+        draw()
+    end
+end)
+''';
+
+        const usersDataJson = '''[
+  {
+    "id": "u1",
+    "name": "Bob",
+    "gender": "male",
+    "age": 30
+  },
+  {
+    "id": "u3",
+    "name": "Kid",
+    "gender": "female",
+    "age": 10
+  }
+]''';
+
+        final gingacc = GingaCC(
+          virtualFiles: {
+            'current_user.ncl': currentUserNcl,
+            'user_info.lua': userInfoLua,
+            'users_data_with_adult_male.json': usersDataJson,
+          },
+          config: GingaConfig(
+            appSrc: 'current_user.ncl',
+            users: Users(usersDataJson),
+          ),
+        );
+
+        final doc =
+            await NclDocument.fromSrc('current_user.ncl', gingacc: gingacc);
+        doc.start();
+
+        final mUserLua = doc.getElementById('mUserLua') as Media;
+        expect(doc.getPropertyValue(mUserLua, 'userId'), equals('u1'));
+        expect(doc.getPropertyValue(mUserLua, 'userName'), equals('Bob'));
+        expect(doc.getPropertyValue(mUserLua, 'userGender'), equals('male'));
+        expect(doc.getPropertyValue(mUserLua, 'userAge'), equals('30'));
+      },
+    );
   });
 }
+

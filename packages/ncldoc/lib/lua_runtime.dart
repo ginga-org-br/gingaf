@@ -713,6 +713,17 @@ class NCLuaRuntime {
       'type': 'presentation',
       'action': 'start',
     });
+    for (final prop in media.getProperties()) {
+      if (prop.name != null && prop.value != null && prop.value!.isNotEmpty) {
+        postNclEvent({
+          'class': 'ncl',
+          'type': 'attribution',
+          'action': 'start',
+          'name': prop.name,
+          'value': prop.value,
+        });
+      }
+    }
   }
 
   void stop() {
