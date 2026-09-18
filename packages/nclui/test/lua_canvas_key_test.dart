@@ -394,7 +394,7 @@ end)
       expect(
           rectAfterKeys.rect, equals(const Rect.fromLTWH(200, 150, 300, 200)));
 
-      nclState.nclDocument?.setKeyMaster('lua');
+      nclState.nclDocument?.setSystemVariable('service.currentKeyMaster', 'lua');
 
       nclState.handleKeyPress('CURSOR_UP');
       await tester.pump();

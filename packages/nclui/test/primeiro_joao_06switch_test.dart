@@ -269,9 +269,14 @@ void main() {
       <bind role="stop" component="mAudio"/>
     </link>
   </body>
-</ncl>''');
+</ncl>''',
+      gingacc: GingaCC(
+        config: GingaConfig(
+          systemVariables: {'system.language': 'por'},
+        ),
+      ),
+    );
 
-    doc.systemVariables['system.language'] = 'por';
     doc.start();
     final ptForm = doc.getMediaById('ptForm')!;
     final enForm = doc.getMediaById('enForm')!;
@@ -430,9 +435,14 @@ void main() {
       <bind role="stop" component="mAudio"/>
     </link>
   </body>
-</ncl>''');
+</ncl>''',
+      gingacc: GingaCC(
+        config: GingaConfig(
+          systemVariables: {'system.language': 'eng'},
+        ),
+      ),
+    );
 
-    doc.systemVariables['system.language'] = 'eng';
     doc.start();
     final ptForm = doc.getMediaById('ptForm')!;
     final enForm = doc.getMediaById('enForm')!;
@@ -465,6 +475,9 @@ void main() {
   testWidgets('NclWidget updates Switch layout in response to language rule',
       (WidgetTester tester) async {
     final gingacc = GingaCC(
+      config: GingaConfig(
+        systemVariables: {'system.language': 'eng'},
+      ),
       virtualFiles: {'joao06switch.ncl': _joao06switchNcl},
     );
 
@@ -483,7 +496,6 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
-    nclState.nclDocument?.systemVariables['system.language'] = 'eng';
     expect(
       nclState.nclDocument?.getContextById('ctxAdvert')?.getMainState(),
       NclStateType.sleeping,

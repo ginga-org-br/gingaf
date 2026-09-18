@@ -150,6 +150,9 @@ void main() {
   testWidgets('NclWidget parses and runs menu configuration successfully',
       (WidgetTester tester) async {
     final gingacc = GingaCC(
+      config: GingaConfig(
+        systemVariables: {'system.language': 'por'},
+      ),
       virtualFiles: {'joao10menu.ncl': _joao10menuNcl},
     );
 
@@ -191,6 +194,9 @@ void main() {
   testWidgets('NclWidget handles key navigation and selection switching',
       (WidgetTester tester) async {
     final gingacc = GingaCC(
+      config: GingaConfig(
+        systemVariables: {'system.language': 'por'},
+      ),
       virtualFiles: {'joao10menu.ncl': _joao10menuNcl},
     );
 
@@ -270,6 +276,9 @@ void main() {
   testWidgets('NclWidget handles mouse tap on focusable media',
       (WidgetTester tester) async {
     final gingacc = GingaCC(
+      config: GingaConfig(
+        systemVariables: {'system.language': 'por'},
+      ),
       virtualFiles: {'joao10menu.ncl': _joao10menuNcl},
     );
 
@@ -316,7 +325,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(nclState.nclDocument!.currentFocusNodeId, equals('imgRock'));
-    expect(nclState.nclDocument!.envVariables['service.currentFocus'], equals('imgRock'));
+    expect(nclState.nclDocument!.getSystemVariable('service.currentFocus'), equals('imgRock'));
 
     expect(
       nclState.nclDocument!.getMediaById('rock')?.getMainState(),
@@ -335,7 +344,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(nclState.nclDocument!.currentFocusNodeId, equals('imgTechno'));
-    expect(nclState.nclDocument!.envVariables['service.currentFocus'], equals('imgTechno'));
+    expect(nclState.nclDocument!.getSystemVariable('service.currentFocus'), equals('imgTechno'));
 
     expect(
       nclState.nclDocument!.getMediaById('techno')?.getMainState(),

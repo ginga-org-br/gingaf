@@ -133,9 +133,13 @@ void main() {
     </link>
   </body>
 </ncl>''',
+        gingacc: GingaCC(
+          config: GingaConfig(
+            systemVariables: {'system.language': 'por'},
+          ),
+        ),
       );
 
-      doc.systemVariables['system.language'] = 'por';
       doc.start();
       final ptForm = doc.getMediaById('ptForm')!;
       final enForm = doc.getMediaById('enForm')!;
@@ -296,9 +300,13 @@ void main() {
     </link>
   </body>
 </ncl>''',
+        gingacc: GingaCC(
+          config: GingaConfig(
+            systemVariables: {'system.language': 'eng'},
+          ),
+        ),
       );
 
-      doc.systemVariables['system.language'] = 'eng';
       doc.start();
       final ptForm = doc.getMediaById('ptForm')!;
       final enForm = doc.getMediaById('enForm')!;

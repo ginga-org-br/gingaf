@@ -112,8 +112,8 @@ void main() {
     });
 
     test('Lua settings table read-only and group access', () {
-      doc.getSettings().setPropertyValue('system.language', 'por');
-      doc.getSettings().setPropertyValue('user.age', '25');
+      doc.setSystemVariable('system.language', 'por');
+      doc.setSystemVariable('user.age', '25');
       final script = '''
         _G.lang = settings.system.language
         _G.age = settings.user.age
@@ -186,9 +186,9 @@ void main() {
       expect(runtime.luaState.toBoolean(-1), false);
       runtime.luaState.pop(1);
 
-      expect(doc.getPropertyValue(doc.getSettings(), 'service.var1'), 'hello');
-      expect(doc.getPropertyValue(doc.getSettings(), 'channel.var2'), '42');
-      expect(doc.getPropertyValue(doc.getSettings(), 'persistent.var3'), 'direct');
+      expect(doc.getSystemVariable('service.var1'), 'hello');
+      expect(doc.getSystemVariable('channel.var2'), '42');
+      expect(doc.getSystemVariable('persistent.var3'), 'direct');
     });
 
     test('Lua helper module: dir', () {
@@ -450,7 +450,7 @@ void main() {
       expect(runtime.luaState.toStr(-1), equals('100'));
       runtime.luaState.pop(1);
 
-      doc.getSettings().setPropertyValue('user.score', '250');
+      doc.setSystemVariable('user.score', '250');
 
       runtime.execute('_G.score2 = settings.user.score');
       runtime.luaState.getGlobal('score2');
@@ -480,8 +480,7 @@ void main() {
 
       runtime.execute('settings.user.difficulty = "hard"');
 
-      expect(doc.getPropertyValue(doc.getSettings(), 'user.difficulty'),
-          equals('hard'));
+      expect(doc.getSystemVariable('user.difficulty'), equals('hard'));
 
       runtime.execute('_G.updatedDiff = settings.user.difficulty');
       runtime.luaState.getGlobal('updatedDiff');
@@ -515,6 +514,32 @@ void main() {
       engine.luaState.getGlobal('val2');
       expect(engine.luaState.toStr(-1), equals('5'));
       engine.luaState.pop(1);
+    });
+
+    test('Lua attribution event updates properties of own NCLua media', () {
+      const xml = '''
+<ncl id="testDoc">
+  <body>
+    <media id="mScript" src="main.lua" type="application/x-ncl-NCLua">
+      <property name="score" value="10"/>
+    </media>
+  </body>
+</ncl>
+''';
+      final doc = NclDocument.fromContent(xml);
+      final media = doc.getMediaById('mScript') as NCLua;
+      expect(doc.getPropertyValue(media, 'score'), equals('10'));
+
+      media.runtime.execute('''
+        event.post('out', {
+          class = 'ncl',
+          type = 'attribution',
+          name = 'score',
+          value = '50',
+        })
+      ''');
+
+      expect(doc.getPropertyValue(media, 'score'), equals('50'));
     });
   });
 }

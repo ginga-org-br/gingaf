@@ -8,8 +8,8 @@ import 'package:logging/logging.dart';
 
 import 'elements.dart';
 import 'event.dart';
-import 'ncl_strings.dart';
 import 'ncl_scheduler.dart';
+import 'ncl_strings.dart';
 import 'parser.dart';
 
 export 'package:gingacc/gingacc.dart';
@@ -17,7 +17,6 @@ export 'package:gingacc/gingacc.dart';
 export 'elements.dart';
 export 'event.dart';
 export 'lua_runtime.dart';
-export 'ncl_strings.dart';
 export 'ncl_scheduler.dart';
 export 'parser.dart';
 
@@ -26,7 +25,6 @@ final _logger = Logger('ncl_doc');
 class NclDocument {
   late final Head? _head;
   late final Context _body;
-  late final Settings _settings;
   Uri? docUri;
   final String docSrc;
 
@@ -35,9 +33,42 @@ class NclDocument {
   GingaConfig get config => gingacc.config;
   final Map<String, UserProfileQuery> _loadedProfiles = {};
   Map<String, UserProfileQuery> get loadedProfiles => _loadedProfiles;
-  late final Map<String, String> envVariables;
-  Map<String, String> get systemVariables => envVariables;
-  Map<String, String> get systemProperties => envVariables;
+  late final Map<String, String> _systemVariables;
+
+  String? getSystemVariable(String name) => _systemVariables[name];
+  String? getSystemVarible(String name) => getSystemVariable(name);
+
+  void setSystemVariable(
+    String name,
+    String value, {
+    Node? originNode,
+  }) {
+    _systemVariables[name] = value;
+    if (name == 'service.currentFocus') {
+      if (_currentFocusNodeId != value) {
+        setFocus(value);
+      }
+    } else if (name == 'service.currentKeyMaster') {
+      if (currentKeyMaster != value) {
+        setKeyMaster(value);
+      }
+    }
+    for (final s in body.descendants.whereType<Settings>()) {
+      if (s != originNode &&
+          s.children.whereType<Property>().any((p) => p.name == name)) {
+        if (originNode != null && getPropertyValue(s, name) == value) {
+          continue;
+        }
+        s.setPropertyValue(name, value);
+        scheduler.stackNclAction(
+          s.getPropertyNclEvent(name),
+          NclActionType.set,
+          value: value,
+        );
+      }
+    }
+    onStateChanged?.call();
+  }
 
   final GingaCC gingacc;
   void Function()? onStateChanged;
@@ -94,14 +125,21 @@ class NclDocument {
     required this.docSrc,
     this.docUri,
     GingaCC? gingacc,
-  }) : gingacc = gingacc ?? GingaCC() {
-    envVariables = this.gingacc.config.envVariables;
-  }
+  })  : gingacc = gingacc ?? GingaCC(),
+        _systemVariables = {
+          ...(gingacc ?? GingaCC()).config.systemVariables,
+        };
 
   void _init({Head? head, required Body body}) {
     _head = head;
     _body = body;
-    _gatherSettings();
+    for (final s in body.descendants.whereType<Settings>()) {
+      for (final p in s.children.whereType<Property>()) {
+        if (p.name != null && p.value != null) {
+          _systemVariables.putIfAbsent(p.name!, () => p.value!);
+        }
+      }
+    }
     _loadUserProfiles();
   }
 
@@ -141,25 +179,15 @@ class NclDocument {
     } catch (_) {}
   }
 
-  void _gatherSettings() {
-    final settingsList = _body.children.whereType<Settings>();
-    if (settingsList.isNotEmpty) {
-      _settings = settingsList.first;
-    } else {
-      _settings = Settings(rawAttributes: const {'id': '__settings__'});
-      _body.children.add(_settings);
-      _settings.parent = _body;
-    }
-  }
+
 
   Head? get head => _head;
   Context get body => _body;
   NclStateType getBodyState() => _body.getMainState();
 
-  Settings getSettings() => _settings;
-
   void doNclEditingCommand(String command) {
-    NclParser(docUri: docUri, document: this).doNclEditingCommand(this, command);
+    NclParser(docUri: docUri, document: this)
+        .doNclEditingCommand(this, command);
   }
 
   Node? getNodeById(String id) {
@@ -498,19 +526,6 @@ class NclDocument {
     return null;
   }
 
-  List<Settings> getAllSettingsNodes() {
-    final list = <Settings>[];
-    void search(Element el) {
-      if (el is Settings) list.add(el);
-      for (var c in el.children) {
-        search(c);
-      }
-    }
-
-    search(_body);
-    return list;
-  }
-
   void setFocus(String mediaId) {
     if (mediaId.isEmpty) return;
     var actualId = mediaId;
@@ -519,35 +534,20 @@ class NclDocument {
       actualId = mediaByIndex.id!;
     }
     _currentFocusNodeId = actualId;
-    envVariables['service.currentFocus'] = actualId;
-    for (var node in getAllSettingsNodes()) {
-      node.setPropertyValue('service.currentFocus', actualId);
-    }
-    onStateChanged?.call();
+    setSystemVariable('service.currentFocus', actualId);
   }
 
   String? get currentKeyMaster {
-    final env = envVariables['service.currentKeyMaster'];
+    final env = _systemVariables['service.currentKeyMaster'];
     if (env != null && env.isNotEmpty) return env;
-    for (final s in getAllSettingsNodes()) {
-      final val = getPropertyValue(s, 'service.currentKeyMaster');
-      if (val != null && val.isNotEmpty) return val;
-    }
     return null;
   }
 
   void setKeyMaster(String? mediaId) {
     if (mediaId == null || mediaId.isEmpty) {
-      envVariables.remove('service.currentKeyMaster');
-      for (final s in getAllSettingsNodes()) {
-        s.children.removeWhere(
-            (p) => p is Property && p.name == 'service.currentKeyMaster');
-      }
+      _systemVariables.remove('service.currentKeyMaster');
     } else {
-      envVariables['service.currentKeyMaster'] = mediaId;
-      for (final s in getAllSettingsNodes()) {
-        s.setPropertyValue('service.currentKeyMaster', mediaId);
-      }
+      _systemVariables['service.currentKeyMaster'] = mediaId;
     }
     onStateChanged?.call();
   }

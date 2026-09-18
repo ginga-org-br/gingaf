@@ -288,7 +288,10 @@ class NCLua extends Media {
   }
 
   NCLuaRuntime get engine => runtime;
-  set engine(NCLuaRuntime val) => runtime = val;
+  set engine(NCLuaRuntime val) {
+    runtime = val;
+    val.media = this;
+  }
 }
 
 class UserBase extends Element {

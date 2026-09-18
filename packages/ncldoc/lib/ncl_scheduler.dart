@@ -9,7 +9,6 @@ final _logger = Logger('ncl_doc');
 
 class NclScheduler {
   final NclDocument document;
-  final Map<String, String> systemVariables = {'system.language': 'por'};
   int virtualClock = 0;
   bool isPlaying = false;
   final List<NclAction> _actionStack = [];
@@ -118,12 +117,12 @@ class NclScheduler {
 
             if (beginMs != null) {
               if (t1 < beginMs && t2 >= beginMs) {
-                _stackNclAction(node.getAreaNclEvent(area.id ?? ''), NclActionType.start);
+                stackNclAction(node.getAreaNclEvent(area.id ?? ''), NclActionType.start);
               }
             }
             if (endMs != null) {
               if (t1 < endMs && t2 >= endMs) {
-                _stackNclAction(node.getAreaNclEvent(area.id ?? ''), NclActionType.stop);
+                stackNclAction(node.getAreaNclEvent(area.id ?? ''), NclActionType.stop);
               }
             }
           }
@@ -186,7 +185,11 @@ class NclScheduler {
             document.setKeyMaster(actionItem.value);
           } else if (propName.startsWith('service.') ||
               propName.startsWith('system.')) {
-            document.envVariables[propName] = actionItem.value;
+            document.setSystemVariable(
+              propName,
+              actionItem.value,
+              originNode: actionItem.event.targetNode,
+            );
           }
           final referId = actionItem.event.targetNode.rawAttributes['refer'];
           if (referId != null) {
@@ -259,7 +262,7 @@ class NclScheduler {
                 area.id ?? '',
               );
               if (areaEvt.state != NclStateType.sleeping) {
-                _stackNclAction(areaEvt, NclActionType.stop);
+                stackNclAction(areaEvt, NclActionType.stop);
               }
             }
             if (actionItem.event.targetNode is Switch) {
@@ -519,7 +522,7 @@ class NclScheduler {
                     for (var child in bindNode.children) {
                       if (child is Node &&
                           child.getMainState() != NclStateType.sleeping) {
-                        _stackNclAction(
+                        stackNclAction(
                           child.getMainNclEvent(),
                           NclActionType.stop,
                           delay: delayMs,
@@ -542,15 +545,15 @@ class NclScheduler {
                   }
                 }
                 if (actionType == NclActionType.set && durationMs > 0) {
-                  _stackNclAction(targetNclEvent, NclActionType.start, delay: delayMs);
-                  _stackNclAction(
+                  stackNclAction(targetNclEvent, NclActionType.start, delay: delayMs);
+                  stackNclAction(
                     targetNclEvent,
                     NclActionType.set,
                     delay: delayMs + durationMs,
                     value: setValue,
                   );
                 } else {
-                  _stackNclAction(
+                  stackNclAction(
                     targetNclEvent,
                     actionType,
                     delay: delayMs,
@@ -758,7 +761,7 @@ class NclScheduler {
                     for (var child in bindNode.children) {
                       if (child is Node &&
                           child.getMainState() != NclStateType.sleeping) {
-                        _stackNclAction(
+                        stackNclAction(
                           child.getMainNclEvent(),
                           NclActionType.stop,
                           delay: delayMs,
@@ -781,15 +784,15 @@ class NclScheduler {
                   }
                 }
                 if (actionType == NclActionType.set && durationMs > 0) {
-                  _stackNclAction(targetNclEvent, NclActionType.start, delay: delayMs);
-                  _stackNclAction(
+                  stackNclAction(targetNclEvent, NclActionType.start, delay: delayMs);
+                  stackNclAction(
                     targetNclEvent,
                     NclActionType.set,
                     delay: delayMs + durationMs,
                     value: setValue,
                   );
                 } else {
-                  _stackNclAction(
+                  stackNclAction(
                     targetNclEvent,
                     actionType,
                     delay: delayMs,
@@ -815,10 +818,10 @@ class NclScheduler {
   }
 
   void _stackMainEvtNclAction(Node node, NclActionType actionType, {int delay = 0}) {
-    _stackNclAction(node.getMainNclEvent(), actionType, delay: delay);
+    stackNclAction(node.getMainNclEvent(), actionType, delay: delay);
   }
 
-  void _stackNclAction(
+  void stackNclAction(
     NclEvent event,
     NclActionType actionType, {
     int delay = 0,

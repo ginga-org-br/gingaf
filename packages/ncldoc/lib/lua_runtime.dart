@@ -95,6 +95,7 @@ class NCLuaRuntime {
   late LuaState _lua;
   final NclDocument document;
   final String? src;
+  Media media;
   final List<int> _registeredCallbackRefs = [];
   final List<LuaTimer> _activeTimers = [];
   int _nextTimerId = 1;
@@ -111,8 +112,9 @@ class NCLuaRuntime {
 
   NCLuaRuntime({
     required this.document,
+    Media? media,
     this.src,
-  }) {
+  }) : media = media ?? NCLua(document: document) {
     _lua = LuaState.newState();
     _lua.openLibs();
     _setupDocumentBindings();
@@ -126,7 +128,7 @@ class NCLuaRuntime {
         final name = evt['name'] as String?;
         final value = evt['value']?.toString() ?? '';
         if (name != null) {
-          document.getSettings().setPropertyValue(name, value);
+          media.setPropertyValue(name, value);
         }
       }
       previousOnPost?.call(evt);
@@ -239,7 +241,7 @@ class NCLuaRuntime {
       final group = ls.toStr(1) ?? "";
       final key = ls.toStr(2) ?? "";
       final fullName = "$group.$key";
-      final val = document.getPropertyValue(document.getSettings(), fullName);
+      final val = document.getSystemVariable(fullName);
       if (val != null) {
         ls.pushString(val);
       } else {
@@ -253,7 +255,7 @@ class NCLuaRuntime {
       final key = ls.toStr(2) ?? "";
       final val = ls.toStr(3) ?? "";
       final fullName = "$group.$key";
-      document.getSettings().setPropertyValue(fullName, val);
+      document.setSystemVariable(fullName, val);
       return 0;
     });
 
@@ -545,10 +547,15 @@ class NCLuaRuntime {
     while (ls.next(absoluteIdx)) {
       final key = ls.toStr(-2);
       if (key != null) {
-        if (ls.isNumber(-1)) {
-          map[key] = ls.toNumber(-1);
-        } else if (ls.isInteger(-1)) {
+        if (ls.isInteger(-1)) {
           map[key] = ls.toInteger(-1);
+        } else if (ls.isNumber(-1)) {
+          final numVal = ls.toNumber(-1);
+          if (numVal == numVal.truncateToDouble()) {
+            map[key] = numVal.toInt();
+          } else {
+            map[key] = numVal;
+          }
         } else if (ls.isBoolean(-1)) {
           map[key] = ls.toBoolean(-1);
         } else if (ls.isTable(-1)) {

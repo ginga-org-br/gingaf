@@ -167,11 +167,11 @@ void main() {
       expect(menuCtx.getMainState(), NclStateType.occurring);
 
       expect(doc.currentFocusNodeId, equals('imgChorinho'));
-      expect(doc.envVariables['service.currentFocus'], equals('imgChorinho'));
+      expect(doc.getSystemVariable('service.currentFocus'), equals('imgChorinho'));
 
       doc.handleKey('RIGHT');
       expect(doc.currentFocusNodeId, equals('imgRock'));
-      expect(doc.envVariables['service.currentFocus'], equals('imgRock'));
+      expect(doc.getSystemVariable('service.currentFocus'), equals('imgRock'));
 
       doc.handleKey('ENTER');
       doc.tick(0);
@@ -181,7 +181,7 @@ void main() {
 
       doc.handleKey('RIGHT');
       expect(doc.currentFocusNodeId, equals('imgTechno'));
-      expect(doc.envVariables['service.currentFocus'], equals('imgTechno'));
+      expect(doc.getSystemVariable('service.currentFocus'), equals('imgTechno'));
 
       doc.handleKey('ENTER');
       doc.tick(0);
@@ -191,7 +191,7 @@ void main() {
 
       doc.handleKey('RIGHT');
       expect(doc.currentFocusNodeId, equals('imgCartoon'));
-      expect(doc.envVariables['service.currentFocus'], equals('imgCartoon'));
+      expect(doc.getSystemVariable('service.currentFocus'), equals('imgCartoon'));
 
       doc.handleKey('ENTER');
       doc.tick(0);
@@ -201,7 +201,7 @@ void main() {
 
       doc.handleKey('RIGHT');
       expect(doc.currentFocusNodeId, equals('imgChorinho'));
-      expect(doc.envVariables['service.currentFocus'], equals('imgChorinho'));
+      expect(doc.getSystemVariable('service.currentFocus'), equals('imgChorinho'));
 
       doc.handleKey('ENTER');
       doc.tick(0);

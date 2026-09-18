@@ -582,6 +582,7 @@ class NclParser {
                   newNode.document = doc;
                   newNode.runtime = NCLuaRuntime(
                     document: doc,
+                    media: newNode,
                     src: newNode.uri.isNotEmpty ? newNode.uri : newNode.src,
                   );
                 }
@@ -687,6 +688,9 @@ class NclParser {
         final targetNode = doc.getNodeById(nodeId);
         if (targetNode != null) {
           targetNode.setPropertyValue(propertyId, value);
+          if (targetNode is Settings) {
+            doc.setSystemVariable(propertyId, value, originNode: targetNode);
+          }
         }
         break;
       case 'addFontBase':

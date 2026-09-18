@@ -64,12 +64,10 @@ void main() {
       expect(doc.getBodyState(), NclStateType.sleeping);
     });
 
-    test('default Settings is created if none is provided', () {
+    test('Settings is not present if none is provided', () {
       final doc = NclDocument.fromContent('<ncl><body id="body"></body></ncl>');
       doc.start();
-      final settings = doc.getSettings();
-      expect(settings, isNotNull);
-      expect(settings.id, '__settings__');
+      expect(doc.body.children.whereType<Settings>(), isEmpty);
     });
 
     test('NclDocument Composition', () {
@@ -78,18 +76,18 @@ void main() {
       );
       doc.start();
 
-      expect(doc.body.getMedias().length, 2);
+      expect(doc.body.getMedias().length, 1);
       expect(doc.body.getPorts().length, 1);
       expect(doc.body.getMedias().first.id, 'm1');
       expect(doc.body.getPorts().first.id, 'p1');
     });
 
-    test('getSettings is returned correctly when provided', () {
+    test('Settings element is present when provided', () {
       final doc = NclDocument.fromContent(
         '<ncl><body id="body"><media id="s1" type="application/x-ncl-settings"/></body></ncl>',
       );
       doc.start();
-      expect(doc.getSettings().id, 's1');
+      expect(doc.body.children.whereType<Settings>().first.id, 's1');
     });
 
     test('NclDocument.fromContent parses NCL XML string correctly', () {
@@ -118,35 +116,36 @@ void main() {
       }
     });
 
-    test('NclDocument loads envVariables from GingaConfig', () async {
+    test('NclDocument loads systemVariables from GingaConfig', () async {
       final config = await GingaConfig.fromJson(
-        '{"envVariables": {"system.language": "fra", "channel.key": "ch1"}}',
+        '{"systemVariables": {"system.language": "fra", "channel.key": "ch1"}}',
       );
       final gingacc = GingaCC(config: config);
       final doc = NclDocument.fromContent(
         '<ncl><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>',
         gingacc: gingacc,
       );
-      expect(doc.envVariables['system.language'], equals('fra'));
-      expect(doc.systemVariables['system.language'], equals('fra'));
-      expect(doc.envVariables['channel.key'], equals('ch1'));
+      expect(doc.getSystemVariable('system.language'), equals('fra'));
+      final s = doc.body.children.whereType<Settings>().firstOrNull;
+      expect(doc.getPropertyValue(s, 'system.language'), equals('fra'));
+      expect(doc.getSystemVariable('channel.key'), equals('ch1'));
       expect(doc.config, equals(config));
     });
 
     test(
-        'NclDocument.fromSrc loads config with envVariables from configSrc raw JSON',
+        'NclDocument.fromSrc loads config with systemVariables from configSrc raw JSON',
         () async {
       final gingacc = GingaCC(
         config: await GingaConfig.fromJson(
-            '{"userDataJson": "users.json", "envVariables": {"system.language": "spa", "user.pref": "dark"}}'),
+            '{"userDataJson": "users.json", "systemVariables": {"system.language": "spa", "user.pref": "dark"}}'),
       );
       final doc = NclDocument.fromContent(
         '<ncl><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>',
         gingacc: gingacc,
       );
       expect(doc.users, isNotNull);
-      expect(doc.envVariables['system.language'], equals('spa'));
-      expect(doc.envVariables['user.pref'], equals('dark'));
+      expect(doc.getSystemVariable('system.language'), equals('spa'));
+      expect(doc.getSystemVariable('user.pref'), equals('dark'));
     });
   });
 }
