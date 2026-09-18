@@ -1,13 +1,13 @@
 # gingaf
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![Documentation](https://img.shields.io/badge/docs-ginga.org.br-blue.svg)](https://ginga.org.br/gingaf/docs/)
+[![Documentation](https://img.shields.io/badge/docs-ginga.org.br-blue.svg)](https://ginga-org-br.github.io/gingaf/docs)
 
-`gingaf` is an MIT-licensed, multi-platform implementation of the interactive TV middleware Ginga standardised by ITU-T and SBTVD. Documentation is available at [ginga.org.br/gingaf/docs](https://ginga.org.br/gingaf/docs/).
+`gingaf` is an MIT-licensed, multi-platform implementation of the interactive TV middleware Ginga standardised by ITU-T and SBTVD.
 
 ## Architecture
 
-The `gingaf` repository is organized as a monorepo: the root directory contains the Flutter host application. See the main components below.
+The `gingaf` documentation is available at [https://ginga-org-br.github.io/gingaf/docs](https://ginga-org-br.github.io/gingaf/docs). The repository is organized as a monorepo: the root directory contains the Flutter host application. See the main components below.
 
 - `packages/gingacc/`: configuration, users, and CCWS
 - `packages/ncldoc/`: NCL headless execution engine
@@ -18,60 +18,38 @@ The `gingaf` repository is organized as a monorepo: the root directory contains 
 
 ## Developing Ginga Applications using `gingaf`
 
-You can use `gingaf` to develop Ginga applications at web by using the playground or acessing [ginga.org.br/gingaf/playground](https://ginga.org.br/gingaf/playground), browse the API documentation at [ginga.org.br/gingaf/docs](https://ginga.org.br/gingaf/docs/), or at desktop by the Visual Studio Code extension [ginga-code](https://github.com/ginga-org-br/ginga-code).
+You can use `gingaf` to develop Ginga applications at web by using the playground or acessing [ginga.org.br/gingaf/playground](https://ginga.org.br/gingaf/playground), or at desktop by the Visual Studio Code extension [ginga-code](https://github.com/ginga-org-br/ginga-code).
 
-## Demonstration Videos
+See demonstration videos below.
 
-### Windows
+**Windows**
 
 https://github.com/user-attachments/assets/07c9fb0f-a9f1-406b-b650-fa4eee331af0
 
-### Android
+**Android**
 
 https://github.com/user-attachments/assets/5bbecb80-04c7-4574-88d5-e979d1c11e22
 
-### Chrome
+**Chrome**
 
 https://github.com/user-attachments/assets/b04eabac-4636-453c-beec-7ec845d841a4
 
-### NCL headless
+**NCL headless**
 
 https://github.com/user-attachments/assets/576cba53-04b7-4b55-b4a5-97d1b78f4a79
 
-### Playground Ginga-NCL (video.ncl)
+**Playground Ginga-NCL (video.ncl)**
 
 https://github.com/user-attachments/assets/c6fd4ce3-66a5-4888-8b49-50dde510c2d8
 
-### Playground  Ginga-HTML5 (current_service.html)
+**Playground  Ginga-HTML5 (current_service.html)**
 
 https://github.com/user-attachments/assets/3f4aa3f4-5950-4b6e-8a32-50021e8b014f
 
-### Playground  Ginga-NCL with Lua (lua.ncl)
+**Playground  Ginga-NCL with Lua (lua.ncl)**
 
 https://github.com/user-attachments/assets/b06bf145-4cc2-4431-9f00-98b218cfedde
 
-### Launch Ginga Application from VSCode
+**Launch Ginga Application from VSCode**
 
 https://github.com/user-attachments/assets/717948df-64ab-42c9-8dd6-3a4a2e3603da
-
-## gingaf (desktop) run applications from local `examples/`
-
-All example NCL and HTML documents are stored in the `examples/` folder. You can configure and run the application via APP environment variable (e.g. `examples/image.ncl` or `examples/image.html`).
-
-```bash
-flutter run -d windows --dart-define="APP=examples/video.ncl"
-flutter run -d windows --dart-define="APP=examples/image.html"
-```
-
-For convenience, you can use `make run-example` for the current platform:
-
-```bash
-make run-example app=video.ncl
-make run-example app=image.html
-```
-
-## gingaf (web, mobile) run applications from URLs
-
-```bash
-flutter run -d chrome --dart-define="APP=https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/video.ncl"
-```

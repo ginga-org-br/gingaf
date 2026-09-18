@@ -1,12 +1,15 @@
 dartdoc:
   header:
     - doc/header.html
+  linkTo:
+    remote: true
+  showUndocumentedCategories: true
   include:
     - ginga
     - gingacc
     - ncldoc
     - nclui
   categories:
-    "Setup":
-      markdown: SETUP.md
-      name: "Setup"
+    "Build":
+      markdown: BUILD.md
+      displayName: "Build"

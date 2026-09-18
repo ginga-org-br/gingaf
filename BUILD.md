@@ -1,4 +1,4 @@
-# Setup
+# Build
 
 `gingaf` is based in Flutter. So first [install Flutter SDK from](https://docs.flutter.dev/install/manual).
 
@@ -7,6 +7,8 @@
 - [At Windows, build for Windows and Chrome](#at-windows-build-for-windows-and-chrome)
 - [At Windows, build for Android](#at-windows-build-for-android)
 - [At Linux, build for Android](#at-linux-build-for-android)
+- [Run applications from local examples/](#gingaf-desktop-run-applications-from-local-examples)
+- [Run applications from URLs](#gingaf-web-mobile-run-applications-from-urls)
 
 ### At windows, build for windows and chrome
 
@@ -112,4 +114,26 @@ You may test by:
 
 ```powershell
 flutter run -d linux --dart-define="APP=examples/video.ncl"
+```
+
+## gingaf (desktop) run applications from local `examples/`
+
+All example NCL and HTML documents are stored in the `examples/` folder. You can configure and run the application via APP environment variable (e.g. `examples/image.ncl` or `examples/image.html`).
+
+```bash
+flutter run -d windows --dart-define="APP=examples/video.ncl"
+flutter run -d windows --dart-define="APP=examples/image.html"
+```
+
+For convenience, you can use `make run-example` for the current platform:
+
+```bash
+make run-example app=video.ncl
+make run-example app=image.html
+```
+
+## gingaf (web, mobile) run applications from URLs
+
+```bash
+flutter run -d chrome --dart-define="APP=https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/video.ncl"
 ```

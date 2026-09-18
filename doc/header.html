@@ -1,15 +1,12 @@
 <style>
-/* Allow markdown descriptions and topics to use full width */
 .markdown.desc {
   max-width: 100% !important;
 }
 
-/* Hide category badges side-by-side with element names */
 .category {
   display: none !important;
 }
 
-/* Constrain architecture diagram SVG size */
 img[src*="architecture"],
 img[alt="architecture"] {
   max-width: 480px !important;
@@ -19,7 +16,6 @@ img[alt="architecture"] {
   margin: 16px 0;
 }
 
-/* Ensure fenced code blocks don't overflow or clip */
 pre {
   overflow-x: auto !important;
   max-width: 100% !important;
@@ -33,27 +29,81 @@ pre code {
 </style>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+  document.querySelectorAll(".breadcrumbs li, .breadcrumbs li a").forEach(function(el) {
+    if (el.childNodes.length === 1 && el.childNodes[0].nodeType === Node.TEXT_NODE) {
+      el.textContent = el.textContent.replace(/\.dart$/, "");
+    }
+  });
+
+  var mainContent = document.getElementById("dartdoc-main-content");
+  if (mainContent) {
+    var classTitle = mainContent.querySelector("h1 span.kind-class");
+    if (classTitle) {
+      var className = classTitle.textContent.trim();
+      var existingDl = mainContent.querySelector("dl.dl-horizontal");
+      if (!existingDl) {
+        var parentClass = null;
+        var parentUrl = null;
+        if (className === "Ginga" || className === "BaseWidget" || className === "SettingsMenu" || className === "UsersMenu") {
+          parentClass = "StatefulWidget";
+          parentUrl = "https://api.flutter.dev/flutter/widgets/StatefulWidget-class.html";
+        } else if (className === "MediaState") {
+          parentClass = "State";
+          parentUrl = "https://api.flutter.dev/flutter/widgets/State-class.html";
+        }
+        if (parentClass) {
+          var targetAnchor = mainContent.querySelector("section.summary") || mainContent.querySelector("#constructors");
+          var sec = document.createElement("section");
+          sec.innerHTML = '<dl class="dl-horizontal">' +
+            '<dt>Inheritance</dt>' +
+            '<dd>' +
+              '<ul class="gt-separated dark clazz-relationships">' +
+                '<li>Object</li>' +
+                '<li><a href="' + parentUrl + '" target="_blank">' + parentClass + '</a></li>' +
+                '<li>' + className + '</li>' +
+              '</ul>' +
+            '</dd>' +
+          '</dl>';
+          if (targetAnchor) {
+            targetAnchor.parentNode.insertBefore(sec, targetAnchor);
+          } else {
+            mainContent.appendChild(sec);
+          }
+        }
+      }
+    }
+  }
+
   var baseHref = document.body.getAttribute("data-base-href") || "";
-  var sidebarNav = document.querySelector("#dartdoc-sidebar-left ol#sidebar-nav") || document.querySelector("#dartdoc-sidebar-left ol");
-  if (sidebarNav) {
+  var leftSidebar = document.getElementById("dartdoc-sidebar-left");
+  if (leftSidebar) {
     var found = false;
-    sidebarNav.querySelectorAll(".section-title").forEach(function(el) {
+    leftSidebar.querySelectorAll("ol:not(#sidebar-nav) .section-title").forEach(function(el) {
       if (el.textContent.trim().toLowerCase() === "topics") {
         el.textContent = "Guides";
         found = true;
       }
     });
     if (!found) {
-      var guidesTitle = document.createElement("li");
-      guidesTitle.className = "section-title";
-      guidesTitle.textContent = "Guides";
-      var guidesItem = document.createElement("li");
-      var a = document.createElement("a");
-      a.href = baseHref + "topics/Setup-topic.html";
-      a.textContent = "Setup";
-      guidesItem.appendChild(a);
-      sidebarNav.insertBefore(guidesItem, sidebarNav.firstChild);
-      sidebarNav.insertBefore(guidesTitle, guidesItem);
+      var visibleOl = leftSidebar.querySelector("ol:not(#sidebar-nav)");
+      if (visibleOl) {
+        var guidesTitle = document.createElement("li");
+        guidesTitle.className = "section-title";
+        guidesTitle.textContent = "Guides";
+        var guidesItem = document.createElement("li");
+        var a = document.createElement("a");
+        a.href = baseHref + "topics/Build-topic.html";
+        a.textContent = "Build";
+        guidesItem.appendChild(a);
+        visibleOl.insertBefore(guidesItem, visibleOl.firstChild);
+        visibleOl.insertBefore(guidesTitle, guidesItem);
+      } else {
+        var newOl = document.createElement("ol");
+        newOl.innerHTML = '<li class="section-title">Guides</li>' +
+          '<li><a href="' + baseHref + 'topics/Build-topic.html">Build</a></li>';
+        var ref = leftSidebar.querySelector("h5") || leftSidebar.firstChild;
+        leftSidebar.insertBefore(newOl, ref);
+      }
     }
   }
 });

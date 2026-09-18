@@ -23,7 +23,7 @@ import 'web_utils_stub.dart' if (dart.library.js_interop) 'web_utils_web.dart';
 
 final _logger = Logger('ginga');
 
-/// {@category Setup}
+/// {@category Build}
 class Ginga extends StatefulWidget {
   final GingaCC? gingacc;
 

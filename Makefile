@@ -58,11 +58,12 @@ deps:
 test:
 	flutter test test packages/gingacc/test packages/ncldoc/test packages/nclui/test --no-pub
 
-doc:
+doc: architecture-svg
 	dart doc
 	touch doc/api/.nojekyll
 	mkdir -p doc/api/doc
 	cp doc/architecture.svg doc/api/doc/architecture.svg
+	npx serve doc/api
 
 architecture-svg:
 	npx -y @mermaid-js/mermaid-cli -i doc/architecture.mmd -o doc/architecture.svg -b transparent
