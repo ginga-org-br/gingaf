@@ -103,17 +103,31 @@ const examples = {
     files: {},
     fileUrls: {}
   },
-  multiuser1: {
+  multiuser_profile: {
     mainFile: 'main.ncl',
     category: 'multiuser',
-    description: 'Multi-user personalization example',
-    relDir: 'multiuser1',
+    description: 'Multi-user profile personalization example',
+    relDir: 'multiuser_profile',
     files: {},
     fileUrls: {},
     extraFiles: [
+      'user_info.lua',
       'ginga_config.json',
       'users_data_with_adult_male.json',
       'users_data_no_adult_male.json'
+    ]
+  },
+  multiuser_current: {
+    mainFile: 'main.ncl',
+    category: 'multiuser',
+    description: 'Multi-user current user personalization example',
+    relDir: 'multiuser_current',
+    files: {},
+    fileUrls: {},
+    extraFiles: [
+      'user_info.lua',
+      'ginga_config.json',
+      'users_data.json'
     ]
   },
   pj_00syncProp: { mainFile: '00syncProp.ncl', category: 'primeiro-joao', description: 'Primeiro João: Property sync example', relDir: 'primeiro-joao', files: {}, fileUrls: {} },

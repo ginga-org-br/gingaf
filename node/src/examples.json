@@ -83,21 +83,35 @@
     },
     "rawMainUrl": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/emb_html.ncl"
   },
-  "multiuser1": {
+  "multiuser_profile": {
     "mainFile": "main.ncl",
     "category": "multiuser",
-    "description": "Multi-user personalization example",
+    "description": "Multi-user profile personalization example",
     "files": {},
     "fileUrls": {
-      "main.ncl": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser1/main.ncl",
-      "adult_query.json": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser1/adult_query.json",
-      "ad_male.png": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser1/ad_male.png",
-      "ad_general.png": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser1/ad_general.png",
-      "ginga_config.json": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser1/ginga_config.json",
-      "users_data_with_adult_male.json": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser1/users_data_with_adult_male.json",
-      "users_data_no_adult_male.json": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser1/users_data_no_adult_male.json"
+      "main.ncl": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_profile/main.ncl",
+      "adult_query.json": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_profile/adult_query.json",
+      "user_info.lua": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_profile/user_info.lua",
+      "ad_male.png": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_profile/ad_male.png",
+      "ad_general.png": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_profile/ad_general.png",
+      "ginga_config.json": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_profile/ginga_config.json",
+      "users_data_with_adult_male.json": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_profile/users_data_with_adult_male.json",
+      "users_data_no_adult_male.json": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_profile/users_data_no_adult_male.json"
     },
-    "rawMainUrl": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser1/main.ncl"
+    "rawMainUrl": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_profile/main.ncl"
+  },
+  "multiuser_current": {
+    "mainFile": "main.ncl",
+    "category": "multiuser",
+    "description": "Multi-user current user personalization example",
+    "files": {},
+    "fileUrls": {
+      "main.ncl": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_current/main.ncl",
+      "user_info.lua": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_current/user_info.lua",
+      "ginga_config.json": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_current/ginga_config.json",
+      "users_data.json": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_current/users_data.json"
+    },
+    "rawMainUrl": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_current/main.ncl"
   },
   "pj_00syncProp": {
     "mainFile": "00syncProp.ncl",
