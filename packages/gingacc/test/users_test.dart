@@ -305,5 +305,35 @@ void main() {
       expect(pNeq.matches(u2), isFalse);
       expect(users.getMatchingUsersForProfile(pNeq).length, equals(1));
     });
+
+    test('diffNewCurrentUser computes property differences accurately', () {
+      final u1 = UserData(
+        id: 'u1',
+        name: 'Alice',
+        initialProperties: {'age': 30, 'gender': 'female', 'lang': 'pt'},
+      );
+      final u2 = UserData(
+        id: 'u2',
+        name: 'Bob',
+        initialProperties: {'age': 30, 'gender': 'male', 'country': 'BR'},
+      );
+
+      final users = Users();
+      users.registerUsers([u1, u2]);
+
+      final diff = users.diffNewCurrentUser('u2');
+      expect(diff['currentUser'], equals('u2'));
+      expect(diff['system.user'], equals('u2'));
+      expect(diff['id'], equals('u2'));
+      expect(diff['name'], equals('Bob'));
+      expect(diff['gender'], equals('male'));
+      expect(diff['lang'], equals(''));
+      expect(diff['country'], equals('BR'));
+      expect(diff.containsKey('age'), isFalse);
+
+      users.setCurrentUser('u2');
+      final sameDiff = users.diffNewCurrentUser('u2');
+      expect(sameDiff, isEmpty);
+    });
   });
 }

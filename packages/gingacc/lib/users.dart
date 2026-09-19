@@ -129,6 +129,54 @@ class Users {
     return _users[_currentUserId];
   }
 
+  Map<String, String> diffNewCurrentUser(dynamic newUserOrId) {
+    final UserData? newUser = newUserOrId is UserData
+        ? newUserOrId
+        : (newUserOrId is String ? getUser(newUserOrId) : null);
+    final oldUser = currentUser;
+    final changes = <String, String>{};
+
+    final oldId = oldUser?.id;
+    final newId = newUser?.id;
+    if (oldId != newId && newId != null) {
+      changes['currentUser'] = newId;
+      changes['system.user'] = newId;
+    }
+
+    final oldProps = <String, String>{};
+    if (oldUser != null) {
+      oldProps['id'] = oldUser.id;
+      oldProps['name'] = oldUser.name;
+      for (final e in oldUser.properties.entries) {
+        if (e.value != null) oldProps[e.key] = e.value.toString();
+      }
+    }
+
+    final newProps = <String, String>{};
+    if (newUser != null) {
+      newProps['id'] = newUser.id;
+      newProps['name'] = newUser.name;
+      for (final e in newUser.properties.entries) {
+        if (e.value != null) newProps[e.key] = e.value.toString();
+      }
+    }
+
+    final allKeys = {...oldProps.keys, ...newProps.keys};
+    for (final key in allKeys) {
+      if (key == 'id') continue;
+      final oldVal = oldProps[key];
+      final newVal = newProps[key] ?? '';
+      if (oldVal != newVal) {
+        changes[key] = newVal;
+      }
+    }
+    if (oldProps['id'] != newProps['id'] && newProps['id'] != null) {
+      changes['id'] = newProps['id']!;
+    }
+
+    return changes;
+  }
+
   void setCurrentUser(String id) {
     if (_users.containsKey(id)) {
       _currentUserId = id;

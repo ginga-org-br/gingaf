@@ -1507,11 +1507,128 @@ end)
             await NclDocument.fromSrc('current_user.ncl', gingacc: gingacc);
         doc.start();
 
-        final mUserLua = doc.getElementById('mUserLua') as Media;
-        expect(doc.getPropertyValue(mUserLua, 'userId'), equals('u1'));
-        expect(doc.getPropertyValue(mUserLua, 'userName'), equals('Bob'));
-        expect(doc.getPropertyValue(mUserLua, 'userGender'), equals('male'));
-        expect(doc.getPropertyValue(mUserLua, 'userAge'), equals('30'));
+        final uSettings = doc.getElementById('uSettings') as Media;
+        expect(doc.getPropertyValue(uSettings, 'id'), equals('u1'));
+        expect(doc.getPropertyValue(uSettings, 'name'), equals('Bob'));
+        expect(doc.getPropertyValue(uSettings, 'gender'), equals('male'));
+        expect(doc.getPropertyValue(uSettings, 'age'), equals('30'));
+
+        final changes = doc.users.diffNewCurrentUser('u3');
+        doc.users.setCurrentUser('u3');
+        for (final entry in changes.entries) {
+          doc.dispatchSettingsUpdate(entry.key, entry.value,
+              userId: 'currentUser');
+        }
+        expect(doc.users.currentUser?.id, equals('u3'));
+        expect(doc.getPropertyValue(uSettings, 'id'), equals('u3'));
+        expect(doc.getPropertyValue(uSettings, 'name'), equals('Kid'));
+        expect(doc.getPropertyValue(uSettings, 'gender'), equals('female'));
+        expect(doc.getPropertyValue(uSettings, 'age'), equals('10'));
+      },
+    );
+
+    test(
+      'multiuser_profile triggers ad start and stop when uSettings id changes',
+      () async {
+        final xml = '''
+<ncl id="multiUserDoc">
+  <head>
+    <regionBase>
+      <region id="rgAd" left="75%" top="75%" width="20%" height="20%"/>
+    </regionBase>
+    <descriptorBase>
+      <descriptor id="dAd" region="rgAd"/>
+    </descriptorBase>
+    <connectorBase>
+      <causalConnector id="onEndAttributionTestVarStart">
+        <connectorParam name="var"/>
+        <connectorParam name="value"/>
+        <compoundCondition operator="and">
+          <simpleCondition role="onEndAttribution"/>
+          <assessmentStatement comparator="eq">
+            <attributeAssessment role="var" attributeType="nodeProperty" eventType="attribution"/>
+            <valueAssessment value="\$value"/>
+          </assessmentStatement>
+        </compoundCondition>
+        <compoundAction operator="seq">
+          <simpleAction role="stop" max="unbounded" qualifier="par"/>
+          <simpleAction role="start" max="unbounded" qualifier="par"/>
+        </compoundAction>
+      </causalConnector>
+    </connectorBase>
+  </head>
+  <body id="body">
+    <media id="uSettings" type="application/x-ncl-user-settings" user="currentUser">
+      <property name="id"/>
+      <property name="name"/>
+      <property name="gender"/>
+      <property name="age"/>
+    </media>
+    <port id="pMain" component="mVideo"/>
+    <media id="mVideo" src="video.mp4"/>
+    <media id="mMaleAd" src="ad_male.png" descriptor="dAd"/>
+    <media id="mGeneralAd" src="ad_general.png" descriptor="dAd"/>
+    <link xconnector="onEndAttributionTestVarStart">
+      <bind role="onEndAttribution" component="uSettings" interface="id"/>
+      <bind role="var" component="uSettings" interface="gender"/>
+      <bindParam name="value" value="male"/>
+      <bind role="stop" component="mGeneralAd"/>
+      <bind role="start" component="mMaleAd"/>
+    </link>
+    <link xconnector="onEndAttributionTestVarStart">
+      <bind role="onEndAttribution" component="uSettings" interface="id"/>
+      <bind role="var" component="uSettings" interface="gender"/>
+      <bindParam name="value" value="female"/>
+      <bind role="stop" component="mMaleAd"/>
+      <bind role="start" component="mGeneralAd"/>
+    </link>
+  </body>
+</ncl>
+''';
+        const usersDataJson = '''[
+          {"id": "u1", "name": "Bob", "gender": "male", "age": 30},
+          {"id": "u3", "name": "Kid", "gender": "female", "age": 10}
+        ]''';
+
+        final gingacc = GingaCC(
+          config: GingaConfig(
+            users: Users(usersDataJson),
+          ),
+        );
+
+        final doc = NclDocument.fromContent(xml, gingacc: gingacc);
+        doc.start();
+        doc.tick(0);
+
+        final mMaleAd = doc.getMediaById('mMaleAd')!;
+        final mGeneralAd = doc.getMediaById('mGeneralAd')!;
+
+        expect(mMaleAd.getMainState(), equals(NclStateType.sleeping));
+        expect(mGeneralAd.getMainState(), equals(NclStateType.sleeping));
+
+        // Switch to Kid (female)
+        final changesToKid = doc.users.diffNewCurrentUser('u3');
+        doc.users.setCurrentUser('u3');
+        for (final entry in changesToKid.entries) {
+          doc.dispatchSettingsUpdate(entry.key, entry.value,
+              userId: 'currentUser');
+        }
+        doc.tick(0);
+
+        expect(mMaleAd.getMainState(), equals(NclStateType.sleeping));
+        expect(mGeneralAd.getMainState(), equals(NclStateType.occurring));
+
+        // Switch to Bob (male)
+        final changesToBob = doc.users.diffNewCurrentUser('u1');
+        doc.users.setCurrentUser('u1');
+        for (final entry in changesToBob.entries) {
+          doc.dispatchSettingsUpdate(entry.key, entry.value,
+              userId: 'currentUser');
+        }
+        doc.tick(0);
+
+        expect(mMaleAd.getMainState(), equals(NclStateType.occurring));
+        expect(mGeneralAd.getMainState(), equals(NclStateType.sleeping));
       },
     );
   });
