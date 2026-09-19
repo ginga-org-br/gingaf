@@ -16,7 +16,7 @@ local function draw()
     canvas:drawRoundRect('frame', 0, 0, w, h, 12, 12)
     canvas:attrColor(255, 255, 255, 255)
     canvas:attrFont('default', 22, 'normal', 'bold')
-    local text = string.format('User Settings: "id": %s    "name": %s    "gender": %s    "age": %s',
+    local text = string.format('currentUser: "id": %s    "name": %s    "gender": %s    "age": %s',
         tostring(userId), tostring(userName), tostring(userGender), tostring(userAge))
     canvas:drawTextRect(text, 20, 0, w - 40, h, 'center', 'center')
     canvas:flush()
