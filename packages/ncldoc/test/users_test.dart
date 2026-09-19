@@ -1387,9 +1387,12 @@ void main() {
         <simpleCondition role="onEnd"/>
         <simpleAction role="stop"/>
       </causalConnector>
-      <causalConnector id="onBeginSet">
+      <causalConnector id="onBeginOrAttributionSet">
         <connectorParam name="var"/>
-        <simpleCondition role="onBegin"/>
+        <compoundCondition operator="or">
+          <simpleCondition role="onBegin"/>
+          <simpleCondition role="onEndAttribution"/>
+        </compoundCondition>
         <simpleAction role="set" value="\$var" max="unbounded" qualifier="par"/>
       </causalConnector>
     </connectorBase>
@@ -1410,23 +1413,24 @@ void main() {
       <property name="userAge"/>
     </media>
     <media id="mVideo" src="https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4"/>
-    <link xconnector="onBeginSet">
+    <link xconnector="onBeginOrAttributionSet">
       <bind role="onBegin" component="mVideo"/>
-      <bind role="get" component="uSettings" interface="id"/>
-      <bind role="get" component="uSettings" interface="name"/>
-      <bind role="get" component="uSettings" interface="gender"/>
-      <bind role="get" component="uSettings" interface="age"/>
+      <bind role="onEndAttribution" component="uSettings" interface="id"/>
+      <bind role="get1" component="uSettings" interface="id"/>
+      <bind role="get2" component="uSettings" interface="name"/>
+      <bind role="get3" component="uSettings" interface="gender"/>
+      <bind role="get4" component="uSettings" interface="age"/>
       <bind role="set" component="mUserLua" interface="userId">
-        <bindParam name="var" value="\$get"/>
+        <bindParam name="var" value="\$get1"/>
       </bind>
       <bind role="set" component="mUserLua" interface="userName">
-        <bindParam name="var" value="\$get"/>
+        <bindParam name="var" value="\$get2"/>
       </bind>
       <bind role="set" component="mUserLua" interface="userGender">
-        <bindParam name="var" value="\$get"/>
+        <bindParam name="var" value="\$get3"/>
       </bind>
       <bind role="set" component="mUserLua" interface="userAge">
-        <bindParam name="var" value="\$get"/>
+        <bindParam name="var" value="\$get4"/>
       </bind>
     </link>
   </body>
@@ -1513,49 +1517,81 @@ end)
         expect(doc.getPropertyValue(uSettings, 'gender'), equals('male'));
         expect(doc.getPropertyValue(uSettings, 'age'), equals('30'));
 
+        final mUserLua = doc.getElementById('mUserLua') as Media;
+        expect(doc.getPropertyValue(mUserLua, 'userId'), equals('u1'));
+        expect(doc.getPropertyValue(mUserLua, 'userName'), equals('Bob'));
+        expect(doc.getPropertyValue(mUserLua, 'userGender'), equals('male'));
+        expect(doc.getPropertyValue(mUserLua, 'userAge'), equals('30'));
+
         final changes = doc.users.diffNewCurrentUser('u3');
         doc.users.setCurrentUser('u3');
         for (final entry in changes.entries) {
           doc.dispatchSettingsUpdate(entry.key, entry.value,
               userId: 'currentUser');
         }
+        doc.tick(0);
+
         expect(doc.users.currentUser?.id, equals('u3'));
         expect(doc.getPropertyValue(uSettings, 'id'), equals('u3'));
         expect(doc.getPropertyValue(uSettings, 'name'), equals('Kid'));
         expect(doc.getPropertyValue(uSettings, 'gender'), equals('female'));
         expect(doc.getPropertyValue(uSettings, 'age'), equals('10'));
+
+        expect(doc.getPropertyValue(mUserLua, 'userId'), equals('u3'));
+        expect(doc.getPropertyValue(mUserLua, 'userName'), equals('Kid'));
+        expect(doc.getPropertyValue(mUserLua, 'userGender'), equals('female'));
+        expect(doc.getPropertyValue(mUserLua, 'userAge'), equals('10'));
       },
     );
 
     test(
-      'multiuser_profile triggers ad start and stop when uSettings id changes',
+      'multiuser_profile triggers ad start and stop with userProfile',
       () async {
-        final xml = '''
+        const xml = '''
 <ncl id="multiUserDoc">
   <head>
     <regionBase>
-      <region id="rgAd" left="75%" top="75%" width="20%" height="20%"/>
+      <region id="rgTop" left="5%" top="3%" width="90%" height="12%" zIndex="10"/>
+      <region id="rgAd" left="75%" top="75%" width="20%" height="20%" zIndex="5"/>
     </regionBase>
     <descriptorBase>
+      <descriptor id="dTop" region="rgTop"/>
       <descriptor id="dAd" region="rgAd"/>
     </descriptorBase>
     <connectorBase>
-      <causalConnector id="onEndAttributionTestVarStart">
+      <causalConnector id="onBeginSet">
+        <connectorParam name="var"/>
+        <simpleCondition role="onBegin"/>
+        <simpleAction role="set" value="\$var" max="unbounded" qualifier="par"/>
+      </causalConnector>
+      <causalConnector id="onEndAttributionSet">
+        <connectorParam name="var"/>
+        <simpleCondition role="onEndAttribution"/>
+        <simpleAction role="set" value="\$var" max="unbounded" qualifier="par"/>
+      </causalConnector>
+      <causalConnector id="onEndAttributionStop">
+        <simpleCondition role="onEndAttribution"/>
+        <simpleAction role="stop" max="unbounded" qualifier="par"/>
+      </causalConnector>
+      <causalConnector id="onBeginOrAttributionTestVarStart">
         <connectorParam name="var"/>
         <connectorParam name="value"/>
         <compoundCondition operator="and">
-          <simpleCondition role="onEndAttribution"/>
+          <compoundCondition operator="or">
+            <simpleCondition role="onBegin"/>
+            <simpleCondition role="onEndAttribution"/>
+          </compoundCondition>
           <assessmentStatement comparator="eq">
             <attributeAssessment role="var" attributeType="nodeProperty" eventType="attribution"/>
             <valueAssessment value="\$value"/>
           </assessmentStatement>
         </compoundCondition>
-        <compoundAction operator="seq">
-          <simpleAction role="stop" max="unbounded" qualifier="par"/>
-          <simpleAction role="start" max="unbounded" qualifier="par"/>
-        </compoundAction>
+        <simpleAction role="start"/>
       </causalConnector>
     </connectorBase>
+    <userBase>
+      <userProfile id="pAdult" src="adult_query.json" max="1"/>
+    </userBase>
   </head>
   <body id="body">
     <media id="uSettings" type="application/x-ncl-user-settings" user="currentUser">
@@ -1564,49 +1600,128 @@ end)
       <property name="gender"/>
       <property name="age"/>
     </media>
+    <media id="uAdult" type="application/x-ncl-user-settings" user="pAdult">
+      <property name="gender"/>
+    </media>
     <port id="pMain" component="mVideo"/>
+    <port id="pTop" component="mUserLua"/>
+    <media id="mUserLua" src="user_info.lua" descriptor="dTop">
+      <property name="userId"/>
+      <property name="userName"/>
+      <property name="userGender"/>
+      <property name="userAge"/>
+    </media>
     <media id="mVideo" src="video.mp4"/>
     <media id="mMaleAd" src="ad_male.png" descriptor="dAd"/>
-    <media id="mGeneralAd" src="ad_general.png" descriptor="dAd"/>
-    <link xconnector="onEndAttributionTestVarStart">
+    <media id="mFemaleAd" src="ad_general.png" descriptor="dAd"/>
+    <link xconnector="onBeginSet">
+      <bind role="onBegin" component="mVideo"/>
+      <bind role="get1" component="uSettings" interface="id"/>
+      <bind role="get2" component="uSettings" interface="name"/>
+      <bind role="get3" component="uSettings" interface="gender"/>
+      <bind role="get4" component="uSettings" interface="age"/>
+      <bind role="set" component="mUserLua" interface="userId">
+        <bindParam name="var" value="\$get1"/>
+      </bind>
+      <bind role="set" component="mUserLua" interface="userName">
+        <bindParam name="var" value="\$get2"/>
+      </bind>
+      <bind role="set" component="mUserLua" interface="userGender">
+        <bindParam name="var" value="\$get3"/>
+      </bind>
+      <bind role="set" component="mUserLua" interface="userAge">
+        <bindParam name="var" value="\$get4"/>
+      </bind>
+    </link>
+    <link xconnector="onEndAttributionSet">
       <bind role="onEndAttribution" component="uSettings" interface="id"/>
-      <bind role="var" component="uSettings" interface="gender"/>
+      <bind role="get" component="uSettings" interface="id"/>
+      <bind role="get" component="uSettings" interface="name"/>
+      <bind role="get" component="uSettings" interface="gender"/>
+      <bind role="get" component="uSettings" interface="age"/>
+      <bind role="set" component="mUserLua" interface="userGender">
+        <bindParam name="var" value="\$get"/>
+      </bind>
+      <bind role="set" component="mUserLua" interface="userName">
+        <bindParam name="var" value="\$get"/>
+      </bind>
+      <bind role="set" component="mUserLua" interface="userAge">
+        <bindParam name="var" value="\$get"/>
+      </bind>
+      <bind role="set" component="mUserLua" interface="userId">
+        <bindParam name="var" value="\$get"/>
+      </bind>
+    </link>
+    <link xconnector="onEndAttributionStop">
+      <bind role="onEndAttribution" component="uSettings" interface="id"/>
+      <bind role="stop" component="mMaleAd"/>
+      <bind role="stop" component="mFemaleAd"/>
+    </link>
+    <link xconnector="onBeginOrAttributionTestVarStart">
+      <bind role="onBegin" component="mVideo"/>
+      <bind role="onEndAttribution" component="uSettings" interface="id"/>
+      <bind role="var" component="uAdult" interface="gender"/>
       <bindParam name="value" value="male"/>
-      <bind role="stop" component="mGeneralAd"/>
       <bind role="start" component="mMaleAd"/>
     </link>
-    <link xconnector="onEndAttributionTestVarStart">
+    <link xconnector="onBeginOrAttributionTestVarStart">
+      <bind role="onBegin" component="mVideo"/>
       <bind role="onEndAttribution" component="uSettings" interface="id"/>
-      <bind role="var" component="uSettings" interface="gender"/>
+      <bind role="var" component="uAdult" interface="gender"/>
       <bindParam name="value" value="female"/>
-      <bind role="stop" component="mMaleAd"/>
-      <bind role="start" component="mGeneralAd"/>
+      <bind role="start" component="mFemaleAd"/>
     </link>
   </body>
 </ncl>
 ''';
         const usersDataJson = '''[
           {"id": "u1", "name": "Bob", "gender": "male", "age": 30},
+          {"id": "u2", "name": "Alice", "gender": "female", "age": 30},
           {"id": "u3", "name": "Kid", "gender": "female", "age": 10}
         ]''';
+        const adultQueryJson =
+            '{"attribute": "age", "comparator": "gte", "value": "18"}';
 
         final gingacc = GingaCC(
+          virtualFiles: {
+            'adult_query.json': adultQueryJson,
+          },
           config: GingaConfig(
             users: Users(usersDataJson),
           ),
         );
 
         final doc = NclDocument.fromContent(xml, gingacc: gingacc);
+        await doc.loadUserProfiles();
         doc.start();
         doc.tick(0);
 
         final mMaleAd = doc.getMediaById('mMaleAd')!;
-        final mGeneralAd = doc.getMediaById('mGeneralAd')!;
+        final mFemaleAd = doc.getMediaById('mFemaleAd')!;
+        final mUserLua = doc.getMediaById('mUserLua')!;
+
+        expect(mMaleAd.getMainState(), equals(NclStateType.occurring));
+        expect(mFemaleAd.getMainState(), equals(NclStateType.sleeping));
+        expect(doc.getPropertyValue(mUserLua, 'userId'), equals('u1'));
+        expect(doc.getPropertyValue(mUserLua, 'userName'), equals('Bob'));
+        expect(doc.getPropertyValue(mUserLua, 'userGender'), equals('male'));
+        expect(doc.getPropertyValue(mUserLua, 'userAge'), equals('30'));
+
+        final changesToAlice = doc.users.diffNewCurrentUser('u2');
+        doc.users.setCurrentUser('u2');
+        for (final entry in changesToAlice.entries) {
+          doc.dispatchSettingsUpdate(entry.key, entry.value,
+              userId: 'currentUser');
+        }
+        doc.tick(0);
 
         expect(mMaleAd.getMainState(), equals(NclStateType.sleeping));
-        expect(mGeneralAd.getMainState(), equals(NclStateType.sleeping));
+        expect(mFemaleAd.getMainState(), equals(NclStateType.occurring));
+        expect(doc.getPropertyValue(mUserLua, 'userId'), equals('u2'));
+        expect(doc.getPropertyValue(mUserLua, 'userName'), equals('Alice'));
+        expect(doc.getPropertyValue(mUserLua, 'userGender'), equals('female'));
+        expect(doc.getPropertyValue(mUserLua, 'userAge'), equals('30'));
 
-        // Switch to Kid (female)
         final changesToKid = doc.users.diffNewCurrentUser('u3');
         doc.users.setCurrentUser('u3');
         for (final entry in changesToKid.entries) {
@@ -1616,9 +1731,12 @@ end)
         doc.tick(0);
 
         expect(mMaleAd.getMainState(), equals(NclStateType.sleeping));
-        expect(mGeneralAd.getMainState(), equals(NclStateType.occurring));
+        expect(mFemaleAd.getMainState(), equals(NclStateType.sleeping));
+        expect(doc.getPropertyValue(mUserLua, 'userId'), equals('u3'));
+        expect(doc.getPropertyValue(mUserLua, 'userName'), equals('Kid'));
+        expect(doc.getPropertyValue(mUserLua, 'userGender'), equals('female'));
+        expect(doc.getPropertyValue(mUserLua, 'userAge'), equals('10'));
 
-        // Switch to Bob (male)
         final changesToBob = doc.users.diffNewCurrentUser('u1');
         doc.users.setCurrentUser('u1');
         for (final entry in changesToBob.entries) {
@@ -1628,9 +1746,103 @@ end)
         doc.tick(0);
 
         expect(mMaleAd.getMainState(), equals(NclStateType.occurring));
-        expect(mGeneralAd.getMainState(), equals(NclStateType.sleeping));
+        expect(mFemaleAd.getMainState(), equals(NclStateType.sleeping));
+        expect(doc.getPropertyValue(mUserLua, 'userId'), equals('u1'));
+        expect(doc.getPropertyValue(mUserLua, 'userName'), equals('Bob'));
+        expect(doc.getPropertyValue(mUserLua, 'userGender'), equals('male'));
+        expect(doc.getPropertyValue(mUserLua, 'userAge'), equals('30'));
+      },
+    );
+
+    test(
+      'dispatchSettingsUpdate with userId=currentUser updates UserSettings with matching userProfile',
+      () async {
+        const xml = '''
+<ncl id="multiUserDoc">
+  <head>
+    <connectorBase>
+      <causalConnector id="onEndAttributionSet">
+        <connectorParam name="var"/>
+        <simpleCondition role="onEndAttribution"/>
+        <simpleAction role="set" value="\$var" max="unbounded" qualifier="par"/>
+      </causalConnector>
+    </connectorBase>
+    <userBase>
+      <userProfile id="pAdult" src="adult_query.json" max="1"/>
+    </userBase>
+  </head>
+  <body>
+    <media id="uSettings" type="application/x-ncl-user-settings" user="pAdult">
+      <property name="id"/>
+      <property name="gender"/>
+      <property name="age"/>
+    </media>
+  </body>
+</ncl>
+''';
+        const usersDataJson = '''[
+          {"id": "u1", "name": "Bob", "gender": "male", "age": 30},
+          {"id": "u2", "name": "Alice", "gender": "female", "age": 30},
+          {"id": "u3", "name": "Kid", "gender": "female", "age": 10}
+        ]''';
+        const adultQueryJson =
+            '{"attribute": "age", "comparator": "gte", "value": "18"}';
+
+        final gingacc = GingaCC(
+          virtualFiles: {
+            'adult_query.json': adultQueryJson,
+          },
+          config: GingaConfig(
+            users: Users(usersDataJson),
+          ),
+        );
+
+        final doc = NclDocument.fromContent(xml, gingacc: gingacc);
+        await doc.loadUserProfiles();
+        doc.start();
+        doc.tick(0);
+
+        final uSettings = doc.getElementById('uSettings') as UserSettings;
+        expect(doc.getPropertyValue(uSettings, 'id'), equals('u1'));
+        expect(doc.getPropertyValue(uSettings, 'gender'), equals('male'));
+
+        // Switch to Alice (adult) -> profile matches -> uSettings is updated
+        final changesAlice = doc.users.diffNewCurrentUser('u2');
+        doc.users.setCurrentUser('u2');
+        for (final entry in changesAlice.entries) {
+          doc.dispatchSettingsUpdate(entry.key, entry.value,
+              userId: 'currentUser');
+        }
+        doc.tick(0);
+
+        expect(doc.getPropertyValue(uSettings, 'id'), equals('u2'));
+        expect(doc.getPropertyValue(uSettings, 'gender'), equals('female'));
+
+        // Switch to Kid (age 10 < 18) -> profile does NOT match -> uSettings is NOT updated
+        final changesKid = doc.users.diffNewCurrentUser('u3');
+        doc.users.setCurrentUser('u3');
+        for (final entry in changesKid.entries) {
+          doc.dispatchSettingsUpdate(entry.key, entry.value,
+              userId: 'currentUser');
+        }
+        doc.tick(0);
+
+        // Properties evaluate to null because Kid is not an adult
+        expect(doc.getPropertyValue(uSettings, 'id'), isNull);
+        expect(doc.getPropertyValue(uSettings, 'gender'), isNull);
+
+        // Switch back to Bob (adult) -> profile matches -> uSettings is updated
+        final changesBob = doc.users.diffNewCurrentUser('u1');
+        doc.users.setCurrentUser('u1');
+        for (final entry in changesBob.entries) {
+          doc.dispatchSettingsUpdate(entry.key, entry.value,
+              userId: 'currentUser');
+        }
+        doc.tick(0);
+
+        expect(doc.getPropertyValue(uSettings, 'id'), equals('u1'));
+        expect(doc.getPropertyValue(uSettings, 'gender'), equals('male'));
       },
     );
   });
 }
-

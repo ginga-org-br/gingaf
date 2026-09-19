@@ -80,7 +80,22 @@ class NclDocument {
         .whereType<Media>()
         .where((node) => node is Settings || node is UserSettings)) {
       if (userId != null) {
-        if (s is UserSettings && s.user == userId) {
+        bool matchesUser = false;
+        if (s is UserSettings) {
+          if (s.user == userId) {
+            matchesUser = true;
+          } else if (userId == 'currentUser') {
+            final currentUser = users.currentUser;
+            if (currentUser != null && _isUserProfile(s.user)) {
+              final profile = _loadedProfiles[s.user];
+              if (profile != null &&
+                  users.evaluateProfileForUser(profile, currentUser.id)) {
+                matchesUser = true;
+              }
+            }
+          }
+        }
+        if (matchesUser) {
           final prop = s.children
               .whereType<Property>()
               .where((p) => p.name == name)
@@ -104,20 +119,6 @@ class NclDocument {
           dispatchPropertyUpdate(s, name, value);
         }
       }
-    }
-    for (final luaNode in _body.descendants
-        .whereType<NCLua>()
-        .where((m) => m.getMainState() != NclStateType.sleeping)) {
-      if (luaNode.children.whereType<Property>().any((p) => p.name == name)) {
-        luaNode.setPropertyValue(name, value);
-      }
-      luaNode.runtime.postNclEvent({
-        'class': 'ncl',
-        'type': 'attribution',
-        'action': 'start',
-        'name': name,
-        'value': value,
-      });
     }
     onStateChanged?.call();
   }
@@ -144,6 +145,7 @@ class NclDocument {
       docSrc: docSrc,
       gingacc: gingacc,
     );
+    await doc.loadUserProfiles();
     return doc;
   }
 
@@ -192,10 +194,10 @@ class NclDocument {
         }
       }
     }
-    _loadUserProfiles();
+    loadUserProfiles();
   }
 
-  Future<void> _loadUserProfiles() async {
+  Future<void> loadUserProfiles() async {
     if (_head != null) {
       for (var el in headChildren) {
         if (el.xmlTagName == 'userBase') {
@@ -361,34 +363,48 @@ class NclDocument {
       final varName = ruleEl.rawAttributes['var'] ?? '';
       final value = ruleEl.rawAttributes['value'] ?? '';
       final comparator = ruleEl.rawAttributes['comparator'] ?? 'eq';
-      var systemVal = _systemVariables[varName];
+      final userAttr = ruleEl.rawAttributes['user'];
+      var systemVal = userAttr != null && userAttr.isNotEmpty
+          ? null
+          : _systemVariables[varName];
 
       // NOT COMPLIANT: <rule> with user
-      final userAttr = ruleEl.rawAttributes['user'];
       if (systemVal == null && userAttr != null && userAttr.isNotEmpty) {
-        for (final s in body.children.whereType<UserSettings>()) {
-          final profileId = s.user;
-          if (profileId != userAttr &&
-              profileId != 'currentUser' &&
-              userAttr != 'currentUser') {
-            continue;
+        if (_isUserProfile(userAttr)) {
+          final profile = _loadedProfiles[userAttr];
+          final currentUser = users.currentUser;
+          if (currentUser != null &&
+              profile != null &&
+              !users.evaluateProfileForUser(profile, currentUser.id)) {
+            return false;
           }
-          var propName = varName;
-          if (s.id != null && varName.startsWith('${s.id}.')) {
-            propName = varName.substring(s.id!.length + 1);
-          }
-          final val = getPropertyValue(s, propName);
-          if (val != null) {
-            systemVal = val;
-            break;
-          }
+          systemVal = currentUser?.getProperty(varName)?.toString();
         }
         if (systemVal == null) {
-          final currentUser = users.currentUser;
-          if (currentUser != null) {
-            final userVal = currentUser.getProperty(varName);
-            if (userVal != null) {
-              systemVal = userVal.toString();
+          for (final s in body.children.whereType<UserSettings>()) {
+            final profileId = s.user;
+            if (profileId != userAttr &&
+                profileId != 'currentUser' &&
+                userAttr != 'currentUser') {
+              continue;
+            }
+            var propName = varName;
+            if (s.id != null && varName.startsWith('${s.id}.')) {
+              propName = varName.substring(s.id!.length + 1);
+            }
+            final val = getPropertyValue(s, propName);
+            if (val != null) {
+              systemVal = val;
+              break;
+            }
+          }
+          if (systemVal == null) {
+            final currentUser = users.currentUser;
+            if (currentUser != null) {
+              final userVal = currentUser.getProperty(varName);
+              if (userVal != null) {
+                systemVal = userVal.toString();
+              }
             }
           }
         }
@@ -521,9 +537,25 @@ class NclDocument {
         if (userAttr != 'currentUser') {
           if (_isUserProfile(userAttr)) {
             final profile = _loadedProfiles[userAttr];
-            targetUser = profile != null
-                ? users.getMatchingUsersForProfile(profile).firstOrNull
-                : (users.getUser(userAttr) ?? users.currentUser);
+            final currentUser = users.currentUser;
+            if (currentUser != null &&
+                profile != null &&
+                users.evaluateProfileForUser(profile, currentUser.id)) {
+              targetUser = currentUser;
+            } else if (currentUser != null && profile != null) {
+              return null;
+            } else {
+              final prop = node.children
+                  .whereType<Property>()
+                  .where((p) => p.name == propertyName)
+                  .firstOrNull;
+              if (prop != null && prop.value != null) {
+                return prop.value;
+              }
+              targetUser = profile != null
+                  ? users.getMatchingUsersForProfile(profile).firstOrNull
+                  : (users.getUser(userAttr) ?? users.currentUser);
+            }
           } else {
             targetUser = users.getUser(userAttr);
           }
