@@ -36,12 +36,35 @@ class NclDocument {
   late final Map<String, String> _systemVariables;
 
   String? getSystemVariable(String name) => _systemVariables[name];
-  String? getSystemVarible(String name) => getSystemVariable(name);
 
-  void setSystemVariable(
+  void dispatchPropertyUpdate(
+    Node targetNode,
+    String propertyName,
+    String value,
+  ) {
+    targetNode.setPropertyValue(propertyName, value);
+    if (targetNode is Media) {
+      scheduler.stackNclAction(
+        targetNode.getPropertyNclEvent(propertyName),
+        NclActionType.set,
+        value: value,
+      );
+    }
+    if (targetNode is NCLua) {
+      targetNode.runtime.postNclEvent({
+        'class': 'ncl',
+        'type': 'attribution',
+        'action': 'start',
+        'name': propertyName,
+        'value': value,
+      });
+    }
+  }
+
+  void dispatchSettingsUpdate(
     String name,
     String value, {
-    Node? originNode,
+    String? userId,
   }) {
     _systemVariables[name] = value;
     if (name == 'service.currentFocus') {
@@ -53,19 +76,48 @@ class NclDocument {
         setKeyMaster(value);
       }
     }
-    for (final s in body.descendants.whereType<Settings>()) {
-      if (s != originNode &&
-          s.children.whereType<Property>().any((p) => p.name == name)) {
-        if (originNode != null && getPropertyValue(s, name) == value) {
-          continue;
+    for (final s in body.descendants
+        .whereType<Media>()
+        .where((node) => node is Settings || node is UserSettings)) {
+      if (userId != null) {
+        if (s is UserSettings && s.user == userId) {
+          final prop = s.children
+              .whereType<Property>()
+              .where((p) => p.name == name)
+              .firstOrNull;
+          if (prop != null) {
+            if (prop.value == value) {
+              continue;
+            }
+            dispatchPropertyUpdate(s, name, value);
+          }
         }
-        s.setPropertyValue(name, value);
-        scheduler.stackNclAction(
-          s.getPropertyNclEvent(name),
-          NclActionType.set,
-          value: value,
-        );
+      } else {
+        final prop = s.children
+            .whereType<Property>()
+            .where((p) => p.name == name)
+            .firstOrNull;
+        if (prop != null) {
+          if (prop.value == value) {
+            continue;
+          }
+          dispatchPropertyUpdate(s, name, value);
+        }
       }
+    }
+    for (final luaNode in _body.descendants
+        .whereType<NCLua>()
+        .where((m) => m.getMainState() != NclStateType.sleeping)) {
+      if (luaNode.children.whereType<Property>().any((p) => p.name == name)) {
+        luaNode.setPropertyValue(name, value);
+      }
+      luaNode.runtime.postNclEvent({
+        'class': 'ncl',
+        'type': 'attribution',
+        'action': 'start',
+        'name': name,
+        'value': value,
+      });
     }
     onStateChanged?.call();
   }
@@ -557,7 +609,7 @@ class NclDocument {
       actualId = mediaByIndex.id!;
     }
     _currentFocusNodeId = actualId;
-    setSystemVariable('service.currentFocus', actualId);
+    dispatchSettingsUpdate('service.currentFocus', actualId);
   }
 
   String? get currentKeyMaster {

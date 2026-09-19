@@ -255,7 +255,7 @@ class NCLuaRuntime {
       final key = ls.toStr(2) ?? "";
       final val = ls.toStr(3) ?? "";
       final fullName = "$group.$key";
-      document.setSystemVariable(fullName, val);
+      document.dispatchSettingsUpdate(fullName, val);
       return 0;
     });
 

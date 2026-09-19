@@ -112,8 +112,8 @@ void main() {
     });
 
     test('Lua settings table read-only and group access', () {
-      doc.setSystemVariable('system.language', 'por');
-      doc.setSystemVariable('user.age', '25');
+      doc.dispatchSettingsUpdate('system.language', 'por');
+      doc.dispatchSettingsUpdate('user.age', '25');
       final script = '''
         _G.lang = settings.system.language
         _G.age = settings.user.age
@@ -450,7 +450,7 @@ void main() {
       expect(runtime.luaState.toStr(-1), equals('100'));
       runtime.luaState.pop(1);
 
-      doc.setSystemVariable('user.score', '250');
+      doc.dispatchSettingsUpdate('user.score', '250');
 
       runtime.execute('_G.score2 = settings.user.score');
       runtime.luaState.getGlobal('score2');

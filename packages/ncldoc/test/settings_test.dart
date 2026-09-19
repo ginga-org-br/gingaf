@@ -26,7 +26,7 @@ void main() {
       final s1 = doc.body.children.whereType<Settings>().first;
       expect(doc.getPropertyValue(s1, 'system.language'), equals('por'));
 
-      doc.setSystemVariable('system.language', 'eng');
+      doc.dispatchSettingsUpdate('system.language', 'eng');
       expect(doc.getPropertyValue(s1, 'system.language'), equals('eng'));
     });
 

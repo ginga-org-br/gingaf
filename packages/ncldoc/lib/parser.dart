@@ -690,9 +690,10 @@ class NclParser {
         final value = parsed.args[2];
         final targetNode = doc.getNodeById(nodeId);
         if (targetNode != null) {
-          targetNode.setPropertyValue(propertyId, value);
-          if (targetNode is Settings) {
-            doc.setSystemVariable(propertyId, value, originNode: targetNode);
+          doc.dispatchPropertyUpdate(targetNode, propertyId, value);
+          if (targetNode is Settings || targetNode is UserSettings) {
+            final user = targetNode is UserSettings ? targetNode.user : null;
+            doc.dispatchSettingsUpdate(propertyId, value, userId: user);
           }
         }
         break;

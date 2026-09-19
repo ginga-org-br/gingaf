@@ -185,10 +185,9 @@ class NclScheduler {
             document.setKeyMaster(actionItem.value);
           } else if (propName.startsWith('service.') ||
               propName.startsWith('system.')) {
-            document.setSystemVariable(
+            document.dispatchSettingsUpdate(
               propName,
               actionItem.value,
-              originNode: actionItem.event.targetNode,
             );
           }
           final referId = actionItem.event.targetNode.rawAttributes['refer'];
@@ -203,15 +202,17 @@ class NclScheduler {
             }
           }
         }
-        final prevState = actionItem.event.state;
         actionItem.event.state = NclStateType.sleeping;
-        if (prevState != NclStateType.sleeping) {
-          _triggerLinks(
-            actionItem.event.targetNode.id,
-            NclStateType.sleeping,
-            actionItem.event.propertyName,
-          );
-        }
+        _triggerLinks(
+          actionItem.event.targetNode.id,
+          NclStateType.occurring,
+          actionItem.event.propertyName,
+        );
+        _triggerLinks(
+          actionItem.event.targetNode.id,
+          NclStateType.sleeping,
+          actionItem.event.propertyName,
+        );
         changedNodes.add(actionItem.event.targetNode);
         continue;
       }
