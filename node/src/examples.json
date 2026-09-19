@@ -94,9 +94,7 @@
       "user_info.lua": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_profile/user_info.lua",
       "ad_male.png": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_profile/ad_male.png",
       "ad_general.png": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_profile/ad_general.png",
-      "ginga_config.json": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_profile/ginga_config.json",
-      "users_data_with_adult_male.json": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_profile/users_data_with_adult_male.json",
-      "users_data_no_adult_male.json": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_profile/users_data_no_adult_male.json"
+      "ginga_config.json": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_profile/ginga_config.json"
     },
     "rawMainUrl": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_profile/main.ncl"
   },
@@ -108,8 +106,7 @@
     "fileUrls": {
       "main.ncl": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_current/main.ncl",
       "user_info.lua": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_current/user_info.lua",
-      "ginga_config.json": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_current/ginga_config.json",
-      "users_data.json": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_current/users_data.json"
+      "ginga_config.json": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_current/ginga_config.json"
     },
     "rawMainUrl": "https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/multiuser_current/main.ncl"
   },

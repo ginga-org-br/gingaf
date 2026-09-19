@@ -1,4 +1,22 @@
 {
-    // "usersDataJson": "users_data_no_adult_male.json"
-    "usersDataJson": "users_data_with_adult_male.json"
+    "usersDataJson": [
+        {
+            "id": "u1",
+            "name": "Bob",
+            "gender": "male",
+            "age": 30
+        },
+        {
+            "id": "u2",
+            "name": "Alice",
+            "gender": "female",
+            "age": 30
+        },
+        {
+            "id": "u3",
+            "name": "Kid",
+            "gender": "female",
+            "age": 10
+        }
+    ]
 }

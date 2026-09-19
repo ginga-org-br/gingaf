@@ -112,9 +112,7 @@ const examples = {
     fileUrls: {},
     extraFiles: [
       'user_info.lua',
-      'ginga_config.json',
-      'users_data_with_adult_male.json',
-      'users_data_no_adult_male.json'
+      'ginga_config.json'
     ]
   },
   multiuser_current: {
@@ -126,8 +124,7 @@ const examples = {
     fileUrls: {},
     extraFiles: [
       'user_info.lua',
-      'ginga_config.json',
-      'users_data.json'
+      'ginga_config.json'
     ]
   },
   pj_00syncProp: { mainFile: '00syncProp.ncl', category: 'primeiro-joao', description: 'Primeiro João: Property sync example', relDir: 'primeiro-joao', files: {}, fileUrls: {} },
