@@ -401,10 +401,31 @@ class NclScheduler {
       ).toLowerCase();
     }
 
-    if (comparator == 'eq') {
-      return currentValue.toLowerCase() == targetValue.toLowerCase();
-    } else if (comparator == 'ne') {
-      return currentValue.toLowerCase() != targetValue.toLowerCase();
+    switch (comparator) {
+      case 'eq':
+        return currentValue.toLowerCase() == targetValue.toLowerCase();
+      case 'ne':
+        return currentValue.toLowerCase() != targetValue.toLowerCase();
+      case 'gt':
+        final n1 = double.tryParse(currentValue);
+        final n2 = double.tryParse(targetValue);
+        if (n1 != null && n2 != null) return n1 > n2;
+        return currentValue.compareTo(targetValue) > 0;
+      case 'lt':
+        final n1 = double.tryParse(currentValue);
+        final n2 = double.tryParse(targetValue);
+        if (n1 != null && n2 != null) return n1 < n2;
+        return currentValue.compareTo(targetValue) < 0;
+      case 'gte':
+        final n1 = double.tryParse(currentValue);
+        final n2 = double.tryParse(targetValue);
+        if (n1 != null && n2 != null) return n1 >= n2;
+        return currentValue.compareTo(targetValue) >= 0;
+      case 'lte':
+        final n1 = double.tryParse(currentValue);
+        final n2 = double.tryParse(targetValue);
+        if (n1 != null && n2 != null) return n1 <= n2;
+        return currentValue.compareTo(targetValue) <= 0;
     }
     return false;
   }
@@ -427,14 +448,14 @@ class NclScheduler {
       if (newState == NclStateType.occurring) {
         triggered = link.children.whereType<Bind>().any(
               (b) =>
-                  b.role == 'onBegin' &&
+                  (b.role == 'onBegin' || b.role == 'onBeginAttribution') &&
                   b.component == targetId &&
                   b.interface == interfaceId,
             );
       } else if (newState == NclStateType.sleeping) {
         triggered = link.children.whereType<Bind>().any(
               (b) =>
-                  b.role == 'onEnd' &&
+                  (b.role == 'onEnd' || b.role == 'onEndAttribution') &&
                   b.component == targetId &&
                   b.interface == interfaceId,
             );
