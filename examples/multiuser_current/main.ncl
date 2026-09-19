@@ -29,7 +29,7 @@
       <property name="userGender"/>
       <property name="userAge"/>
     </media>
-    <media id="mVideo" src="https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4"/>
+    <media id="mVideo" src="sbtvd://"/>
     <link xconnector="onBeginSet">
       <bind role="onBegin" component="mVideo"/>
       <bind role="get" component="uSettings" interface="id"/>

@@ -44,9 +44,7 @@
       <property name="userGender"/>
       <property name="userAge"/>
     </media>
-    <media id="mVideo" src="https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4">
-      <area id="aSec4" begin="4s"/>
-    </media>
+    <media id="mVideo" src="sbtvd://"/>
     <media id="mMaleAd" src="ad_male.png" descriptor="dAd"/>
     <media id="mGeneralAd" src="ad_general.png" descriptor="dAd"/>
     <link xconnector="onBeginSet">
