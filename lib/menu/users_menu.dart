@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:gingacc/users.dart';
 
 class UsersMenu extends StatefulWidget {
   final Users users;
   final VoidCallback onClose;
   final ValueChanged<UserData>? onUserSelected;
+  final void Function(String name, String value)? dispatchCurrentUserUpdate;
 
   const UsersMenu({
     super.key,
     required this.users,
     required this.onClose,
     this.onUserSelected,
+    this.dispatchCurrentUserUpdate,
   });
 
   @override
@@ -38,9 +41,15 @@ class _UsersMenuState extends State<UsersMenu> {
 
   void _selectUser(UserData user) {
     if (_isManaging) return;
+    final changes = widget.users.diffNewCurrentUser(user.id);
     widget.users.setCurrentUser(user.id);
+    if (widget.dispatchCurrentUserUpdate != null) {
+      for (final entry in changes.entries) {
+        widget.dispatchCurrentUserUpdate!(entry.key, entry.value);
+      }
+    }
     widget.onUserSelected?.call(user);
-    widget.onClose();
+    setState(() {});
   }
 
   void _showAddUserDialog() {
@@ -82,6 +91,7 @@ class _UsersMenuState extends State<UsersMenu> {
                   key: const Key('add_user_age_input'),
                   controller: ageController,
                   keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   style: const TextStyle(color: Colors.white),
                   decoration: const InputDecoration(
                     labelText: 'Age',
@@ -168,96 +178,141 @@ class _UsersMenuState extends State<UsersMenu> {
 
     return Material(
       key: const Key('user_selection_overlay'),
-      color: const Color(0xFF141414),
+      color: Colors.transparent,
       child: Stack(
         children: [
-          Positioned(
-            top: 24,
-            right: 24,
-            child: IconButton(
-              key: const Key('user_selection_close_button'),
-              icon: const Icon(Icons.close, color: Colors.white, size: 28),
-              tooltip: 'Close',
-              onPressed: widget.onClose,
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: widget.onClose,
             ),
           ),
-          Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    "Who's watching?",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 36,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 48),
-                  if (allUsers.isEmpty) ...[
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 32),
-                      child: Text(
-                        'No users found',
-                        style: TextStyle(color: Colors.white70, fontSize: 18),
-                      ),
-                    ),
-                    if (_isManaging) _buildAddUserItem(),
-                  ] else
-                    Wrap(
-                      spacing: 28,
-                      runSpacing: 28,
-                      alignment: WrapAlignment.center,
-                      children: [
-                        ...List.generate(allUsers.length, (index) {
-                          final user = allUsers[index];
-                          final avatarColor =
-                              _avatarColors[index % _avatarColors.length];
-                          final isActive = user.id == activeId;
-                          return _buildUserItem(
-                            user: user,
-                            color: avatarColor,
-                            isActive: isActive,
-                            index: index,
-                          );
-                        }),
-                        if (_isManaging) _buildAddUserItem(),
-                      ],
-                    ),
-                  const SizedBox(height: 60),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      OutlinedButton(
-                        key: const Key('user_selection_manage_users_button'),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.grey, width: 1.2),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 28, vertical: 14),
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.zero,
-                          ),
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _isManaging = !_isManaging;
-                          });
-                        },
-                        child: Text(
-                          _isManaging ? 'Done' : 'Manage Users',
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 16,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                      ),
-                    ],
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 24, left: 24, right: 24),
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width - 48,
+                maxHeight: 420,
+              ),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E1E),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black54,
+                    blurRadius: 20,
+                    offset: Offset(0, 10),
                   ),
                 ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Stack(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 32, vertical: 32),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              'Who is the current user?',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 26,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 28),
+                            if (allUsers.isEmpty) ...[
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 24),
+                                child: Text(
+                                  'No users found',
+                                  style: TextStyle(
+                                      color: Colors.white70, fontSize: 16),
+                                ),
+                              ),
+                              if (_isManaging) _buildAddUserItem(),
+                            ] else
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    for (int index = 0;
+                                        index < allUsers.length;
+                                        index++) ...[
+                                      if (index > 0) const SizedBox(width: 20),
+                                      _buildUserItem(
+                                        user: allUsers[index],
+                                        color: _avatarColors[
+                                            index % _avatarColors.length],
+                                        isActive:
+                                            allUsers[index].id == activeId,
+                                        index: index,
+                                      ),
+                                    ],
+                                    if (_isManaging) ...[
+                                      if (allUsers.isNotEmpty)
+                                        const SizedBox(width: 20),
+                                      _buildAddUserItem(),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            const SizedBox(height: 32),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                OutlinedButton(
+                                  key: const Key(
+                                      'user_selection_manage_users_button'),
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(
+                                        color: Colors.grey, width: 1.2),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 24, vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _isManaging = !_isManaging;
+                                    });
+                                  },
+                                  child: Text(
+                                    _isManaging ? 'Done' : 'Manage Users',
+                                    style: const TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 15,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: IconButton(
+                        key: const Key('user_selection_close_button'),
+                        icon: const Icon(Icons.close, color: Colors.white, size: 24),
+                        tooltip: 'Close',
+                        onPressed: widget.onClose,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -300,6 +355,23 @@ class _UsersMenuState extends State<UsersMenu> {
                     painter: _UserSelectionSmilePainter(styleIndex: index),
                   ),
                 ),
+                if (isActive)
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      padding: const EdgeInsets.all(2),
+                      child: const Icon(
+                        Icons.check,
+                        size: 16,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
                 if (_isManaging)
                   Positioned.fill(
                     child: Container(

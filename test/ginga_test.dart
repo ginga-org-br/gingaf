@@ -203,7 +203,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.byKey(const Key('user_selection_overlay')), findsOneWidget);
-      expect(find.text("Who's watching?"), findsOneWidget);
+      expect(find.text('Who is the current user?'), findsOneWidget);
       expect(find.text('Alice'), findsOneWidget);
       expect(find.text('Bob'), findsOneWidget);
       expect(find.byKey(const Key('delete_badge_u1')), findsNothing);
@@ -273,7 +273,7 @@ void main() {
       ));
       await tester.pump();
 
-      expect(find.text("Who's watching?"), findsOneWidget);
+      expect(find.text('Who is the current user?'), findsOneWidget);
       expect(find.text('Dad'), findsOneWidget);
       expect(find.text('Quinn'), findsOneWidget);
 
@@ -297,6 +297,10 @@ void main() {
       await tester.tap(find.text('Quinn'));
       await tester.pump();
       expect(selected?.id, equals('u2'));
+      expect(closed, isFalse);
+
+      await tester.tap(find.byKey(const Key('user_selection_close_button')));
+      await tester.pump();
       expect(closed, isTrue);
 
       users.clear();
@@ -310,6 +314,92 @@ void main() {
       ));
       await tester.pump();
       expect(find.text('No users found'), findsOneWidget);
+    });
+
+    testWidgets('UsersMenu invokes dispatchCurrentUserUpdate on user selection',
+        (tester) async {
+      final users = Users(
+          '[{"id": "u1", "name": "Bob", "gender": "male", "age": 25}, {"id": "u2", "name": "Alice", "gender": "female", "age": 30}]');
+      final systemVars = <String, String>{};
+
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: UsersMenu(
+            users: users,
+            onClose: () {},
+            dispatchCurrentUserUpdate: (name, value) {
+              systemVars[name] = value;
+            },
+          ),
+        ),
+      ));
+      await tester.pump();
+
+      await tester.tap(find.text('Alice'));
+      await tester.pump();
+
+      expect(users.currentUser?.id, equals('u2'));
+      expect(systemVars['id'], equals('u2'));
+      expect(systemVars['name'], equals('Alice'));
+      expect(systemVars['gender'], equals('female'));
+      expect(systemVars['age'], equals('30'));
+    });
+
+    testWidgets(
+        'UsersMenu renders multiple users in the same row without wrapping',
+        (tester) async {
+      final users = Users(
+          '[{"id": "u1", "name": "User 1"}, {"id": "u2", "name": "User 2"}, {"id": "u3", "name": "User 3"}, {"id": "u4", "name": "User 4"}]');
+
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: UsersMenu(
+            users: users,
+            onClose: () {},
+          ),
+        ),
+      ));
+      await tester.pump();
+
+      final y1 = tester.getTopLeft(find.byKey(const Key('user_card_u1'))).dy;
+      final y2 = tester.getTopLeft(find.byKey(const Key('user_card_u2'))).dy;
+      final y3 = tester.getTopLeft(find.byKey(const Key('user_card_u3'))).dy;
+      final y4 = tester.getTopLeft(find.byKey(const Key('user_card_u4'))).dy;
+
+      expect(y1, equals(y2));
+      expect(y2, equals(y3));
+      expect(y3, equals(y4));
+    });
+
+    testWidgets('UsersMenu Add User age field only accepts digits',
+        (tester) async {
+      final users = Users();
+
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: UsersMenu(
+            users: users,
+            onClose: () {},
+          ),
+        ),
+      ));
+      await tester.pump();
+
+      await tester.tap(
+          find.byKey(const Key('user_selection_manage_users_button')));
+      await tester.pump();
+
+      await tester.tap(find.byKey(const Key('add_user_card')));
+      await tester.pumpAndSettle();
+
+      final ageFinder = find.byKey(const Key('add_user_age_input'));
+      expect(ageFinder, findsOneWidget);
+
+      await tester.enterText(ageFinder, 'abc25xyz');
+      await tester.pump();
+
+      final TextField ageField = tester.widget(ageFinder);
+      expect(ageField.controller?.text, equals('25'));
     });
   });
 }

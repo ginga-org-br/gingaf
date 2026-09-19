@@ -156,9 +156,20 @@ class _GingaState extends State<Ginga> {
   bool _handleKeyPress(KeyEvent event) {
     if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.escape) {
+        if (_showUsersOverlay) {
+          _closeUsersOverlay();
+          return true;
+        }
         _logger.info('Captured ESC in Window, stopping app and mainAV.');
         _cleanup();
         return true;
+      }
+      if (_showUsersOverlay) {
+        return false;
+      }
+      final currentFocus = FocusManager.instance.primaryFocus;
+      if (currentFocus?.context?.widget is EditableText) {
+        return false;
       }
       String? nclKey;
       final lk = event.logicalKey;
@@ -286,6 +297,12 @@ class _GingaState extends State<Ginga> {
                       UsersMenu(
                         users: _gingacc.config.users,
                         onClose: _closeUsersOverlay,
+                        dispatchCurrentUserUpdate: (name, value) {
+                          _gingacc.config.systemVariables[name] = value;
+                          _nclAppKey.currentState?.nclDocument
+                              ?.dispatchSettingsUpdate(name, value,
+                                  userId: 'currentUser');
+                        },
                       ),
                   ],
                 ),
