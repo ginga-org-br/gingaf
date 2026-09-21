@@ -1,6 +1,6 @@
 MAKEFLAGS += -s --no-print-directory
 
-.PHONY: help deps test doc release release-publish clean run-example check-app architecture-svg
+.PHONY: help deps test doc release release-publish clean run-example check-app architecture-svg integration_test
 
 BASE_HREF ?= /
 
@@ -50,13 +50,17 @@ help:
 		"  release              Zip current platform release build" \
 		"  release-publish      Publish release to GitHub Releases via gh" \
 		"  clean                Clean build artifacts" \
-		"  run-example          Run NCL example application (e.g. make run-example app=video.ncl)"
+		"  run-example          Run one application at examples/ (e.g. make run-example app=video.ncl)" \
+		"  integration_test     Run integration tests"
 
 deps:
 	flutter pub get
 
 test:
 	flutter test test packages/gingacc/test packages/ncldoc/test packages/nclui/test --no-pub
+
+integration_test:
+	flutter test integration_test -d $(RUN_OS)
 
 doc: architecture-svg
 	dart doc
