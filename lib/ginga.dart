@@ -71,7 +71,9 @@ class _GingaState extends State<Ginga> {
       );
     }
 
-    _gingacc.start();
+    if (_gingacc.config.startWithCCWS) {
+      _gingacc.ccws.start();
+    }
     HardwareKeyboard.instance.addHandler(_handleKeyPress);
   }
 
@@ -117,7 +119,9 @@ class _GingaState extends State<Ginga> {
       mainAVWidget = null;
     });
     _stopServices();
-    _gingacc.start();
+    if (_gingacc.config.startWithCCWS) {
+      _gingacc.ccws.start();
+    }
     _nclAppKey = GlobalKey<ncl.NclWidgetState>();
     _mainAvKey = GlobalKey<MainAVWidgetState>();
     if (_gingacc.config.startWithMainAv) {
@@ -235,7 +239,7 @@ class _GingaState extends State<Ginga> {
   }
 
   void _stopServices() {
-    _gingacc.stop();
+    _gingacc.ccws.stop();
   }
 
   Future<void> _cleanup() async {

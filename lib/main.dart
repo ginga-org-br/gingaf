@@ -139,11 +139,16 @@ void main(List<String> args) async {
 
   _logger.info(config.toString());
 
+  final mainGingacc = GingaCC(
+    config: config,
+    virtualFiles: virtualFiles,
+  );
+  if (config.startWithCCWS) {
+    await mainGingacc.ccws.start();
+  }
+
   runApp(Ginga(
-    gingacc: GingaCC(
-      config: config,
-      virtualFiles: virtualFiles,
-    ),
+    gingacc: mainGingacc,
   ));
 }
 

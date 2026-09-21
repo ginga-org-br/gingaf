@@ -10,27 +10,57 @@ const _testCcwsHtml = '''
 <!DOCTYPE html>
 <html>
 <body>
-    <div id="status">Connecting...</div>
+    <div id="search">Searching CCWS starting at port 44642...</div>
+    <div id="status"></div>
+    <div id="request">request GET to /dtv/current-service/</div>
     <script>
+        async function probePort(port) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 300);
+            try {
+                const response = await fetch(`http://127.0.0.1:\${port}/dtv/current-service/`, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (response.ok) {
+                    const data = await response.json();
+                    return { port, data };
+                }
+            } catch (_) {}
+            return null;
+        }
+
         async function fetchService() {
             const startPort = 44642; // default port of Ginga CC WebServices from NBR15606-11
-            const maxRetry = 20;
-            for (let port = startPort; port < startPort + maxRetry; port++) {
-                try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 500);
+            const maxPort = 65535;
+            const batchSize = 64;
+            const statusDiv = document.getElementById('status');
 
-                    const response = await fetch(`http://localhost:\${port}/dtv/current-service`, { signal: controller.signal });
-                    clearTimeout(timeoutId);
+            const firstTry = await probePort(startPort);
+            if (firstTry) {
+                statusDiv.textContent = `Found CCWS on port \${startPort}.`;
+                statusDiv.style.color = "green";
+                if (window.HTMLAppChannel) {
+                    window.HTMLAppChannel.postMessage("SUCCESS: " + JSON.stringify(firstTry.data));
+                }
+                return;
+            }
 
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (window.HTMLAppChannel) {
-                            window.HTMLAppChannel.postMessage("SUCCESS: " + JSON.stringify(data));
-                        }
-                        return;
+            for (let current = startPort + 1; current <= maxPort; current += batchSize) {
+                const limit = Math.min(current + batchSize, maxPort + 1);
+                const batch = [];
+                for (let p = current; p < limit; p++) {
+                    batch.push(probePort(p));
+                }
+
+                const results = await Promise.all(batch);
+                const found = results.find(r => r !== null);
+                if (found) {
+                    statusDiv.textContent = `Found CCWS on port \${found.port}.`;
+                    statusDiv.style.color = "green";
+                    if (window.HTMLAppChannel) {
+                        window.HTMLAppChannel.postMessage("SUCCESS: " + JSON.stringify(found.data));
                     }
-                } catch (error) { }
+                    return;
+                }
             }
         }
         fetchService();
@@ -50,11 +80,11 @@ void main() {
         config: GingaConfig(startWithCCWS: true),
         virtualFiles: {'test_ccws.html': _testCcwsHtml},
       );
-      await gingacc.start();
+      await gingacc.ccws.start();
     });
 
     tearDown(() async {
-      await gingacc.stop();
+      await gingacc.ccws.stop();
     });
 
     testWidgets(

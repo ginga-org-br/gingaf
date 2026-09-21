@@ -16,15 +16,19 @@ class CCWSRouter {
     final router = Router();
     final service = currentService ?? defaultCurrentService;
 
-    router.get('/dtv/current-service', (Request request) {
+    Response serviceHandler(Request request) {
       return Response.ok(
         jsonEncode(service),
         headers: {
           'content-type': 'application/json',
           'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Private-Network': 'true',
         },
       );
-    });
+    }
+
+    router.get('/dtv/current-service', serviceHandler);
+    router.get('/dtv/current-service/', serviceHandler);
 
     return router.call;
   }

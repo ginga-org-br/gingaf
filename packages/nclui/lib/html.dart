@@ -88,9 +88,9 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
   Future<void> _loadHTML() async {
     if (_controller == null) return;
     try {
-      final gingacc = widget.gingacc ??
-          widget.document?.gingacc ??
-          GingaCC();
+      final gingacc = widget.gingacc ?? widget.document?.gingacc ?? GingaCC();
+      await gingacc.ccws.start();
+      assert(gingacc.ccws.isRunning);
       final uri = gingacc.resolveUri(widget.src);
       if (!kIsWeb && (uri.isScheme('file') || !uri.hasScheme)) {
         final filePath = uri.isScheme('file')
@@ -100,19 +100,13 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
         if (file.existsSync()) {
           await _controller!.loadFile(file.path);
         } else {
-          String content = await gingacc.loadContent(widget.src) ?? '';
-          if (gingacc.ccws.isRunning) {
-            content = gingacc.ccws.injectCcwsFetch(content);
-          }
+          final content = await gingacc.loadContent(widget.src) ?? '';
           await _controller!.loadHtmlString(content);
         }
       } else if (uri.isScheme('http') || uri.isScheme('https')) {
         await _controller!.loadRequest(uri);
       } else {
-        String content = await gingacc.loadContent(widget.src) ?? '';
-        if (gingacc.ccws.isRunning) {
-          content = gingacc.ccws.injectCcwsFetch(content);
-        }
+        final content = await gingacc.loadContent(widget.src) ?? '';
         await _controller!.loadHtmlString(content);
       }
       if (mounted) {

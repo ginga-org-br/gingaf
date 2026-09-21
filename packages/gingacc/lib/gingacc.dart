@@ -46,10 +46,9 @@ class GingaCC {
     if (virtualUri != null) return virtualUri;
 
     final srcUri = _parseUri(rawSrc);
-    final effectiveBaseDir =
-        (baseDirSrc != null && !isXmlString(baseDirSrc))
-            ? baseDirSrc.trim()
-            : null;
+    final effectiveBaseDir = (baseDirSrc != null && !isXmlString(baseDirSrc))
+        ? baseDirSrc.trim()
+        : null;
     if (effectiveBaseDir == null || effectiveBaseDir.isEmpty) {
       if (!_isWeb && !srcUri.hasScheme) {
         final decoded = Uri.decodeComponent(srcUri.path);
@@ -189,7 +188,6 @@ class GingaCC {
     return null;
   }
 
-
   Uri _parseUri(String raw) {
     if (raw.startsWith('data:')) {
       return Uri.tryParse(raw) ?? Uri.dataFromString(raw);
@@ -301,17 +299,5 @@ class GingaCC {
     }
 
     return null;
-  }
-
-  Future<void> start() async {
-    if (config.startWithCCWS) {
-      await ccws.start();
-    }
-  }
-
-  Future<void> stop() async {
-    if (ccws.isRunning) {
-      await ccws.stop();
-    }
   }
 }
