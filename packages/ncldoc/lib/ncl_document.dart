@@ -593,9 +593,37 @@ class NclDocument {
   set isPlaying(bool val) => scheduler.isPlaying = val;
   List<NclAction> get uiQueue => scheduler.uiQueue;
 
-  void start() => scheduler.start();
+  void start() {
+    scheduler.start();
+    _initInitialFocus();
+  }
+
   void stop() => scheduler.stop();
-  Set<Media> tick([int incrementMs = 0]) => scheduler.tick(incrementMs);
+
+  Set<Media> tick([int incrementMs = 0]) {
+    final res = scheduler.tick(incrementMs);
+    _initInitialFocus();
+    return res;
+  }
+
+  void _initInitialFocus() {
+    final active = getActiveMedia();
+    final currentActiveFocus = _currentFocusNodeId != null
+        ? active.where((m) => m.id == _currentFocusNodeId).firstOrNull
+        : null;
+    if (currentActiveFocus == null) {
+      final focusable =
+          active.where((m) => getFocusIndexForMedia(m) != null).toList();
+      if (focusable.isNotEmpty) {
+        focusable.sort((a, b) {
+          final fa = int.tryParse(getFocusIndexForMedia(a) ?? '') ?? 999;
+          final fb = int.tryParse(getFocusIndexForMedia(b) ?? '') ?? 999;
+          return fa.compareTo(fb);
+        });
+        setFocus(focusable.first.id!);
+      }
+    }
+  }
   void tickIndefinitely({int ticksPerSecond = 10, void Function()? onStop}) =>
       scheduler.tickIndefinitely(
         ticksPerSecond: ticksPerSecond,

@@ -157,8 +157,16 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
     final visibleStr = m.rawAttributes['visible'] ?? 'true';
     visible = visibleStr.toLowerCase() == 'true';
     background = _parseColor(backgroundVal);
-    focusBorderColor = _parseColor(m.rawAttributes['focusBorderColor']);
-    selBorderColor = _parseColor(m.rawAttributes['selBorderColor']);
+    final desc = document?.getDescriptorForMedia(m);
+    final fColorStr =
+        m.rawAttributes['focusBorderColor'] ?? desc?.focusBorderColor;
+    focusBorderColor = _parseColor(fColorStr);
+    final fWidthStr =
+        m.rawAttributes['focusBorderWidth'] ?? desc?.focusBorderWidth;
+    focusBorderWidth = int.tryParse(fWidthStr ?? '') ?? 0;
+    final sColorStr =
+        m.rawAttributes['selBorderColor'] ?? desc?.rawAttributes['selBorderColor'];
+    selBorderColor = _parseColor(sColorStr);
   }
 
   void syncProperties() {
@@ -234,6 +242,8 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
             ? focusBorderColor
             : Colors.yellowAccent)
         : Colors.transparent;
+    final effectiveBorderWidth =
+        isFocused && focusBorderWidth > 0 ? focusBorderWidth.toDouble() : 4.0;
 
     Widget content = Visibility(
       visible: visible,
@@ -243,9 +253,10 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
           decoration: BoxDecoration(
             color: background,
             border: selBorderColor != Colors.transparent
-                ? Border.all(color: selBorderColor, width: 3.0)
+                ? Border.all(color: selBorderColor, width: 4.0)
                 : (activeBorderColor != Colors.transparent
-                    ? Border.all(color: activeBorderColor, width: 2.0)
+                    ? Border.all(
+                        color: activeBorderColor, width: effectiveBorderWidth)
                     : null),
           ),
           child: buildWidgetContent(context),

@@ -871,6 +871,27 @@ class NclParser {
                 el.rawAttributes['resolvedZIndex'] = zindex.toString();
               }
             }
+
+            if (desc.rawAttributes.containsKey('focusBorderColor') &&
+                !el.rawAttributes.containsKey('focusBorderColor')) {
+              el.rawAttributes['focusBorderColor'] =
+                  desc.rawAttributes['focusBorderColor']!;
+            }
+            if (desc.rawAttributes.containsKey('focusBorderWidth') &&
+                !el.rawAttributes.containsKey('focusBorderWidth')) {
+              el.rawAttributes['focusBorderWidth'] =
+                  desc.rawAttributes['focusBorderWidth']!;
+            }
+            if (desc.rawAttributes.containsKey('focusBorderTransparency') &&
+                !el.rawAttributes.containsKey('focusBorderTransparency')) {
+              el.rawAttributes['focusBorderTransparency'] =
+                  desc.rawAttributes['focusBorderTransparency']!;
+            }
+            if (desc.rawAttributes.containsKey('selBorderColor') &&
+                !el.rawAttributes.containsKey('selBorderColor')) {
+              el.rawAttributes['selBorderColor'] =
+                  desc.rawAttributes['selBorderColor']!;
+            }
           }
         }
       }
