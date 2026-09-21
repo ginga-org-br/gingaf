@@ -44,6 +44,22 @@ const examples = {
     files: {},
     fileUrls: {}
   },
+  video_grid: {
+    mainFile: 'video_grid.ncl',
+    category: 'media',
+    description: 'Multi-video synchronized grid presentation',
+    relDir: '',
+    files: {},
+    fileUrls: {}
+  },
+  focus_nav: {
+    mainFile: 'focus_nav.ncl',
+    category: 'interactive',
+    description: 'Focus navigation and button selection example',
+    relDir: '',
+    files: {},
+    fileUrls: {}
+  },
   sbtvd: {
     mainFile: 'main.ncl',
     category: 'general',
@@ -158,6 +174,14 @@ for (const key of Object.keys(examples)) {
   for (const refFile of referencedFiles) {
     const rawRefUrl = relDir ? `${RAW_GITHUB_BASE}${relDir}/${refFile}` : `${RAW_GITHUB_BASE}${refFile}`;
     item.fileUrls[refFile] = rawRefUrl;
+
+    const fullRefPath = path.join(examplesDir, relDir, refFile);
+    if (fs.existsSync(fullRefPath) && !fs.statSync(fullRefPath).isDirectory()) {
+      const ext = path.extname(refFile).toLowerCase();
+      if (['.ncl', '.xml', '.lua', '.html', '.htm', '.json', '.js', '.css', '.txt'].includes(ext)) {
+        item.files[refFile] = fs.readFileSync(fullRefPath, 'utf8');
+      }
+    }
   }
 
   delete item.extraFiles;

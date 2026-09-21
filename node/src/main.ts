@@ -166,6 +166,8 @@ export async function resolveTargetExample(appParam: string | null): Promise<Exa
     }
     if (cleanParam === 'sbtvd/main.ncl' || cleanParam === 'sbtvd') return examples['sbtvd'];
     if (cleanParam === 'sbtvd_video' || cleanParam === 'sbtvd_video.ncl') return examples['sbtvd'];
+    if (cleanParam === 'multiuser_profile/main.ncl' || cleanParam === 'multiuser_profile') return examples['multiuser_profile'];
+    if (cleanParam === 'multiuser_current/main.ncl' || cleanParam === 'multiuser_current') return examples['multiuser_current'];
     if (examples[extractedFileName]) return examples[extractedFileName];
     if (examples[extractedKey]) return examples[extractedKey];
 
@@ -200,6 +202,31 @@ export async function resolveTargetExample(appParam: string | null): Promise<Exa
             console.warn('[ginga-node] Could not fetch remote app URL:', e);
         }
     }
+
+    const relativePath = cleanParam.startsWith('examples/') ? cleanParam.slice(9) : cleanParam;
+    const candidateRawUrl = `${RAW_GITHUB_BASE}${relativePath}`;
+    try {
+        const resolved = resolveFileUrl(candidateRawUrl);
+        let res = await fetch(resolved);
+        if (!res.ok && resolved !== candidateRawUrl) {
+            res = await fetch(candidateRawUrl);
+        }
+        if (res.ok) {
+            const text = await res.text();
+            const fileName = extractedFileName || 'app.ncl';
+            const dynamicExample: Example = {
+                mainFile: fileName,
+                rawMainUrl: candidateRawUrl,
+                category: 'general',
+                description: fileName,
+                files: { [fileName]: text },
+                fileUrls: { [fileName]: candidateRawUrl }
+            };
+            examples[cleanParam] = dynamicExample;
+            examples[extractedKey] = dynamicExample;
+            return dynamicExample;
+        }
+    } catch (_) {}
 
     return examples['video'] || Object.values(examples)[0];
 }
