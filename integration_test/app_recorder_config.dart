@@ -7,14 +7,18 @@ class AppRecoderConfig {
   final String? outputDir;
   final Duration duration;
   final Duration stepDuration;
+  final int? fps;
   final Map<int, String> keyEvents;
+  final Map<int, String> userEvents;
 
   const AppRecoderConfig({
     required this.appSrc,
     this.outputDir,
     this.duration = const Duration(seconds: 5),
     this.stepDuration = const Duration(milliseconds: 200),
+    this.fps,
     this.keyEvents = const {},
+    this.userEvents = const {},
   });
 
   Map<String, dynamic> toJson() => {
@@ -22,12 +26,18 @@ class AppRecoderConfig {
         if (outputDir != null) 'outputDir': outputDir,
         'durationMs': duration.inMilliseconds,
         'stepDurationMs': stepDuration.inMilliseconds,
+        if (fps != null) 'fps': fps,
         'keyEvents': keyEvents.map((k, v) => MapEntry(k.toString(), v)),
+        'userEvents': userEvents.map((k, v) => MapEntry(k.toString(), v)),
       };
 
   factory AppRecoderConfig.fromJson(Map<String, dynamic> json) {
     final rawKeyEvents = json['keyEvents'] as Map<String, dynamic>? ?? {};
     final keyEvents = rawKeyEvents.map(
+      (k, v) => MapEntry(int.parse(k), v.toString()),
+    );
+    final rawUserEvents = json['userEvents'] as Map<String, dynamic>? ?? {};
+    final userEvents = rawUserEvents.map(
       (k, v) => MapEntry(int.parse(k), v.toString()),
     );
 
@@ -37,7 +47,9 @@ class AppRecoderConfig {
       duration: Duration(milliseconds: json['durationMs'] as int? ?? 5000),
       stepDuration:
           Duration(milliseconds: json['stepDurationMs'] as int? ?? 200),
+      fps: json['fps'] as int?,
       keyEvents: keyEvents,
+      userEvents: userEvents,
     );
   }
 
@@ -46,14 +58,18 @@ class AppRecoderConfig {
     String? outputDir,
     Duration? duration,
     Duration? stepDuration,
+    int? fps,
     Map<int, String>? keyEvents,
+    Map<int, String>? userEvents,
   }) {
     return AppRecoderConfig(
       appSrc: appSrc ?? this.appSrc,
       outputDir: outputDir ?? this.outputDir,
       duration: duration ?? this.duration,
       stepDuration: stepDuration ?? this.stepDuration,
+      fps: fps ?? this.fps,
       keyEvents: keyEvents ?? this.keyEvents,
+      userEvents: userEvents ?? this.userEvents,
     );
   }
 

@@ -33,10 +33,10 @@ class Ginga extends StatefulWidget {
   });
 
   @override
-  State<Ginga> createState() => _GingaState();
+  State<Ginga> createState() => GingaState();
 }
 
-class _GingaState extends State<Ginga> {
+class GingaState extends State<Ginga> {
   late final GingaCC _gingacc;
   Widget? mainAVWidget;
   Widget? htmlApp;
@@ -145,23 +145,39 @@ class _GingaState extends State<Ginga> {
     }
   }
 
-  void _openUsersOverlay() {
+  void openUsersOverlay() {
     setState(() {
       _showUsersOverlay = true;
     });
   }
 
-  void _closeUsersOverlay() {
+  void closeUsersOverlay() {
     setState(() {
       _showUsersOverlay = false;
     });
+  }
+
+  void selectUser(String userId) {
+    final user = _gingacc.config.users.getUser(userId);
+    if (user != null) {
+      final changes = _gingacc.config.users.diffNewCurrentUser(user.id);
+      _gingacc.config.users.setCurrentUser(user.id);
+      for (final entry in changes.entries) {
+        _gingacc.config.systemVariables[entry.key] = entry.value;
+        _nclAppKey.currentState?.nclDocument
+            ?.dispatchSettingsUpdate(entry.key, entry.value,
+                userId: 'currentUser');
+      }
+      _showUsersOverlay = false;
+      setState(() {});
+    }
   }
 
   bool _handleKeyPress(KeyEvent event) {
     if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.escape) {
         if (_showUsersOverlay) {
-          _closeUsersOverlay();
+          closeUsersOverlay();
           return true;
         }
         _logger.info('Captured ESC in Window, stopping app and mainAV.');
@@ -295,12 +311,13 @@ class _GingaState extends State<Ginga> {
                         isPaused: _isPaused,
                         onReload: _restart,
                         onTogglePause: _togglePause,
-                        onOpenUsers: _openUsersOverlay,
+                        onOpenUsers: openUsersOverlay,
                       ),
                     if (_showUsersOverlay)
                       UsersMenu(
                         users: _gingacc.config.users,
-                        onClose: _closeUsersOverlay,
+                        onClose: closeUsersOverlay,
+                        onUserSelected: (_) => closeUsersOverlay(),
                         dispatchCurrentUserUpdate: (name, value) {
                           _gingacc.config.systemVariables[name] = value;
                           _nclAppKey.currentState?.nclDocument

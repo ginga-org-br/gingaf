@@ -40,7 +40,36 @@ void main(List<String> args) async {
           'CONFIG must be provided via --dart-define=CONFIG=... or CLI argument');
     }
 
-    runApp(RecorderApp(config: config));
+    final initialGingacc = GingaCC();
+    GingaConfig configObj;
+    try {
+      final configUri =
+          initialGingacc.resolveUri('ginga_config.json', config.appSrc);
+      final hasConfig = await initialGingacc.loadContent(configUri) != null;
+      if (hasConfig) {
+        configObj = await GingaConfig.fromJson(
+          'ginga_config.json',
+          config.appSrc,
+          initialGingacc,
+        );
+      } else {
+        configObj = GingaConfig(
+          appSrc: config.appSrc,
+          startWithCCWS: true,
+        );
+      }
+    } catch (_) {
+      configObj = GingaConfig(
+        appSrc: config.appSrc,
+        startWithCCWS: true,
+      );
+    }
+    configObj.appSrc = config.appSrc;
+    final gingacc = GingaCC(
+      config: configObj,
+    );
+
+    runApp(RecorderApp(config: config, gingacc: gingacc));
   } catch (e, st) {
     stderr.writeln('[recorder] Error initializing: $e\n$st');
     exit(1);
@@ -49,10 +78,12 @@ void main(List<String> args) async {
 
 class RecorderApp extends StatefulWidget {
   final AppRecoderConfig config;
+  final GingaCC gingacc;
 
   const RecorderApp({
     super.key,
     required this.config,
+    required this.gingacc,
   });
 
   @override
@@ -61,10 +92,10 @@ class RecorderApp extends StatefulWidget {
 
 class _RecorderAppState extends State<RecorderApp> {
   final GlobalKey _boundaryKey = GlobalKey();
+  final GlobalKey<GingaState> _gingaKey = GlobalKey<GingaState>();
   Timer? _timer;
   int _frameIndex = 0;
   late Directory _capturesDir;
-  late GingaCC _gingacc;
 
   @override
   void initState() {
@@ -75,13 +106,6 @@ class _RecorderAppState extends State<RecorderApp> {
       _capturesDir.deleteSync(recursive: true);
     }
     _capturesDir.createSync(recursive: true);
-
-    _gingacc = GingaCC(
-      config: GingaConfig(
-        appSrc: widget.config.appSrc,
-        startWithCCWS: true,
-      ),
-    );
 
     Future.delayed(const Duration(milliseconds: 600), () {
       final totalSteps = (widget.config.duration.inMilliseconds /
@@ -106,6 +130,17 @@ class _RecorderAppState extends State<RecorderApp> {
           );
         }
 
+        if (widget.config.userEvents.containsKey(currentStep)) {
+          final action = widget.config.userEvents[currentStep]!;
+          if (action == 'open_users') {
+            _gingaKey.currentState?.openUsersOverlay();
+          } else if (action == 'close_users') {
+            _gingaKey.currentState?.closeUsersOverlay();
+          } else {
+            _gingaKey.currentState?.selectUser(action);
+          }
+        }
+
         final boundary = _boundaryKey.currentContext?.findRenderObject()
             as RenderRepaintBoundary?;
         if (boundary != null) {
@@ -124,7 +159,7 @@ class _RecorderAppState extends State<RecorderApp> {
 
         if (timer.tick >= totalSteps) {
           timer.cancel();
-          await _gingacc.ccws.stop();
+          await widget.gingacc.ccws.stop();
           final doneMarker = File('${_capturesDir.path}/.done');
           doneMarker.writeAsStringSync('done');
           stdout.writeln('[recorder] done');
@@ -147,7 +182,10 @@ class _RecorderAppState extends State<RecorderApp> {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         home: Scaffold(
-          body: Ginga(gingacc: _gingacc),
+          body: Ginga(
+            key: _gingaKey,
+            gingacc: widget.gingacc,
+          ),
         ),
       ),
     );

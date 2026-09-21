@@ -62,6 +62,34 @@ const Map<String, AppRecoderConfig> scenarios = {
       20: NclKeys.enter,
     },
   ),
+  'multiuser_profile/main.ncl': AppRecoderConfig(
+    appSrc: 'examples/multiuser_profile/main.ncl',
+    duration: Duration(seconds: 18),
+    stepDuration: Duration(milliseconds: 300),
+    fps: 3,
+    userEvents: {
+      9: 'open_users',
+      15: 'u2',
+      25: 'open_users',
+      31: 'u3',
+      41: 'open_users',
+      47: 'u1',
+    },
+  ),
+  'multiuser_current/main.ncl': AppRecoderConfig(
+    appSrc: 'examples/multiuser_current/main.ncl',
+    duration: Duration(seconds: 18),
+    stepDuration: Duration(milliseconds: 300),
+    fps: 3,
+    userEvents: {
+      9: 'open_users',
+      15: 'u2',
+      25: 'open_users',
+      31: 'u3',
+      41: 'open_users',
+      47: 'u1',
+    },
+  ),
 };
 
 const defaultTargets = [
@@ -72,6 +100,8 @@ const defaultTargets = [
   'emb_html.ncl',
   'lua_canvas.ncl',
   'focus_nav.ncl',
+  'multiuser_profile/main.ncl',
+  'multiuser_current/main.ncl',
 ];
 
 String getPlatformDevice() {
@@ -242,18 +272,19 @@ Future<void> main(List<String> args) async {
           .toList();
 
       if (frames.isNotEmpty) {
-        final outGif = '${appFile.parent.path}/$targetFile.gif';
+        final outGif = '${appFile.path}.gif';
         stdout.writeln('Encoding $outGif from ${frames.length} frames...');
 
+        final targetFps = scenario.fps ?? fps;
         final filter =
-            'fps=$fps,scale=$width:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse';
+            'fps=$targetFps,scale=$width:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse';
 
         final ffmpegResult = await Process.run(
           'ffmpeg',
           [
             '-y',
             '-framerate',
-            '$fps',
+            '$targetFps',
             '-i',
             '${capturesDir.path}/frame_%04d.png',
             '-vf',
@@ -268,6 +299,16 @@ Future<void> main(List<String> args) async {
           final sizeKb = (file.lengthSync() / 1024).toStringAsFixed(2);
           stdout.writeln('Successfully generated $outGif ($sizeKb KB)');
           generatedGifs.add(file);
+
+          final subDir =
+              appFile.parent.uri.pathSegments.where((s) => s.isNotEmpty).last;
+          if (subDir != 'examples') {
+            final rootGif = File('${projectRoot.path}/examples/$subDir.gif');
+            try {
+              file.copySync(rootGif.path);
+              stdout.writeln('Also copied to ${rootGif.path}');
+            } catch (_) {}
+          }
         } else {
           stderr.writeln('Error encoding GIF for $t: ${ffmpegResult.stderr}');
         }
