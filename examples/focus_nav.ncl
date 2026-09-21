@@ -10,10 +10,10 @@
     </regionBase>
     <descriptorBase>
       <descriptor id="backgroundDesc" region="backgroundReg"/>
-      <descriptor id="btn1Desc" region="btn1Reg" focusIndex="1" moveRight="2" moveLeft="4" focusBorderColor="yellow" focusBorderWidth="3"/>
-      <descriptor id="btn2Desc" region="btn2Reg" focusIndex="2" moveRight="3" moveLeft="1" focusBorderColor="yellow" focusBorderWidth="3"/>
-      <descriptor id="btn3Desc" region="btn3Reg" focusIndex="3" moveRight="4" moveLeft="2" focusBorderColor="yellow" focusBorderWidth="3"/>
-      <descriptor id="btn4Desc" region="btn4Reg" focusIndex="4" moveRight="1" moveLeft="3" focusBorderColor="yellow" focusBorderWidth="3"/>
+      <descriptor id="btn1Desc" region="btn1Reg" focusIndex="1" moveRight="2" moveLeft="4" focusBorderColor="yellow" focusBorderWidth="6"/>
+      <descriptor id="btn2Desc" region="btn2Reg" focusIndex="2" moveRight="3" moveLeft="1" focusBorderColor="yellow" focusBorderWidth="6"/>
+      <descriptor id="btn3Desc" region="btn3Reg" focusIndex="3" moveRight="4" moveLeft="2" focusBorderColor="yellow" focusBorderWidth="6"/>
+      <descriptor id="btn4Desc" region="btn4Reg" focusIndex="4" moveRight="1" moveLeft="3" focusBorderColor="yellow" focusBorderWidth="6"/>
     </descriptorBase>
     <connectorBase>
       <causalConnector id="onSelectionSet">
