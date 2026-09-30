@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 class SettingsMenu extends StatefulWidget {
   final VoidCallback? onReload;
   final VoidCallback? onRestart;
   final VoidCallback onTogglePause;
+  final VoidCallback? onForward2s;
   final VoidCallback onOpenUsers;
   final bool isPaused;
 
@@ -12,6 +15,7 @@ class SettingsMenu extends StatefulWidget {
     this.onReload,
     this.onRestart,
     required this.onTogglePause,
+    this.onForward2s,
     required this.onOpenUsers,
     this.isPaused = false,
   }) : assert(onReload != null || onRestart != null);
@@ -19,12 +23,49 @@ class SettingsMenu extends StatefulWidget {
   VoidCallback get restartCallback => onRestart ?? onReload!;
 
   @override
-  State<SettingsMenu> createState() => _SettingsMenuState();
+  State<SettingsMenu> createState() => SettingsMenuState();
 }
 
-class _SettingsMenuState extends State<SettingsMenu>
+class SettingsMenuState extends State<SettingsMenu>
     with SingleTickerProviderStateMixin {
   bool _isOpen = false;
+  bool get isOpen => _isOpen;
+
+  void toggle() => _toggle();
+  void open() {
+    if (!_isOpen) _toggle();
+  }
+  void close() {
+    if (_isOpen) _toggle();
+  }
+
+  Key? _activeButtonKey;
+  Timer? _pressTimer;
+
+  void triggerPress(Key key) {
+    if (!mounted) return;
+    _pressTimer?.cancel();
+    setState(() {
+      _activeButtonKey = key;
+    });
+    _pressTimer = Timer(const Duration(milliseconds: 250), () {
+      if (mounted) {
+        setState(() {
+          _activeButtonKey = null;
+        });
+      }
+    });
+  }
+
+  void clickForward2s() {
+    triggerPress(const Key('floating_forward_2s_button'));
+    widget.onForward2s?.call();
+  }
+
+  void clickTogglePause() {
+    triggerPress(const Key('floating_pause_button'));
+    widget.onTogglePause();
+  }
   late final AnimationController _controller;
   late final Animation<double> _expandAnimation;
 
@@ -46,6 +87,7 @@ class _SettingsMenuState extends State<SettingsMenu>
 
   @override
   void dispose() {
+    _pressTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -64,7 +106,7 @@ class _SettingsMenuState extends State<SettingsMenu>
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      key: widget.key ?? const Key('floating_control_menu'),
+      key: const Key('floating_control_menu'),
       bottom: 24,
       right: 24,
       child: Column(
@@ -91,6 +133,16 @@ class _SettingsMenuState extends State<SettingsMenu>
                         widget.onOpenUsers();
                       },
                     ),
+                    if (widget.onForward2s != null) ...[
+                      const SizedBox(height: 12),
+                      _buildActionButton(
+                        key: const Key('floating_forward_2s_button'),
+                        icon: Icons.fast_forward,
+                        label: 'Forward 2s',
+                        color: _buttonColor,
+                        onTap: widget.onForward2s!,
+                      ),
+                    ],
                     const SizedBox(height: 12),
                     _buildActionButton(
                       key: const Key('floating_pause_button'),
@@ -143,11 +195,13 @@ class _SettingsMenuState extends State<SettingsMenu>
     required Color color,
     required VoidCallback onTap,
   }) {
+    final isPressed = _activeButtonKey == key;
+    final effectiveColor = isPressed ? const Color(0xFF1E88E5) : color;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Material(
-          color: Colors.black87,
+          color: isPressed ? const Color(0xFF1E88E5) : Colors.black87,
           borderRadius: BorderRadius.circular(4),
           elevation: 2,
           child: Padding(
@@ -159,20 +213,26 @@ class _SettingsMenuState extends State<SettingsMenu>
           ),
         ),
         const SizedBox(width: 8),
-        SizedBox(
-          width: 48,
-          height: 48,
-          child: FloatingActionButton(
-            key: key,
-            heroTag: null,
-            backgroundColor: color,
-            foregroundColor: Colors.white,
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+        Transform.scale(
+          scale: isPressed ? 0.92 : 1.0,
+          child: SizedBox(
+            width: 48,
+            height: 48,
+            child: FloatingActionButton(
+              key: key,
+              heroTag: null,
+              backgroundColor: effectiveColor,
+              foregroundColor: Colors.white,
+              elevation: isPressed ? 1 : 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              onPressed: () {
+                triggerPress(key);
+                onTap();
+              },
+              child: Icon(icon, size: 24),
             ),
-            onPressed: onTap,
-            child: Icon(icon, size: 24),
           ),
         ),
       ],

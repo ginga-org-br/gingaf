@@ -101,5 +101,63 @@ void main() {
           );
       expect(zIndexProp.value, '3');
     });
+
+    test('NclDocument tick triggers links and duration limit across time advances', () {
+      final doc = NclDocument.fromContent(
+        '''<ncl id="mySyncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+  <head>
+    <connectorBase>
+      <causalConnector id="onBeginStart">
+        <simpleCondition role="onBegin"/>
+        <simpleAction role="start" max="unbounded" qualifier="par"/>
+      </causalConnector>
+    </connectorBase>
+  </head>
+  <body>
+    <port id="entry" component="animation"/>
+    <media id="animation" src="video.mp4">
+      <area id="seg1" begin="10s"/>
+      <area id="seg2" begin="20s"/>
+    </media>
+    <media id="photo1" src="photo1.png">
+      <property name="explicitDur" value="4s"/>
+    </media>
+    <media id="photo2" src="photo2.png">
+      <property name="explicitDur" value="5s"/>
+    </media>
+    <link id="link1" xconnector="onBeginStart">
+      <bind role="onBegin" component="animation" interface="seg1"/>
+      <bind role="start" component="photo1"/>
+    </link>
+    <link id="link2" xconnector="onBeginStart">
+      <bind role="onBegin" component="animation" interface="seg2"/>
+      <bind role="start" component="photo2"/>
+    </link>
+  </body>
+</ncl>''',
+      );
+      doc.start();
+      final animation = doc.getMediaById('animation')!;
+      final photo1 = doc.getMediaById('photo1')!;
+      final photo2 = doc.getMediaById('photo2')!;
+
+      expect(animation.getMainState(), NclStateType.occurring);
+      expect(photo1.getMainState(), NclStateType.sleeping);
+      expect(photo2.getMainState(), NclStateType.sleeping);
+
+      doc.tick(12000);
+      expect(photo1.getMainState(), NclStateType.occurring);
+      expect(photo2.getMainState(), NclStateType.sleeping);
+
+      doc.tick(3000);
+      expect(photo1.getMainState(), NclStateType.sleeping);
+      expect(photo2.getMainState(), NclStateType.sleeping);
+
+      doc.tick(6000);
+      expect(photo2.getMainState(), NclStateType.occurring);
+
+      doc.tick(6000);
+      expect(photo2.getMainState(), NclStateType.sleeping);
+    });
   });
 }

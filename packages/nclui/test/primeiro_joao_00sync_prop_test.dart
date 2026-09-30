@@ -242,4 +242,39 @@ void main() {
     expect(p3.width, moreOrLessEquals(240.0));
     expect(p3.height, moreOrLessEquals(240.0));
   });
+
+  testWidgets('NclWidget forward triggers links and stops media after duration',
+      (WidgetTester tester) async {
+    final gingacc = GingaCC(
+      virtualFiles: {'joao00syncProp.ncl': _joao00syncPropNcl},
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: NclWidget(
+            src: 'joao00syncProp.ncl',
+            gingacc: gingacc,
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
+
+    nclState.forward(const Duration(seconds: 42));
+    await tester.pump();
+
+    expect(nclState.nclDocument!.getMediaById('img2')!.getMainState(),
+        NclStateType.occurring);
+
+    nclState.forward(const Duration(seconds: 6));
+    await tester.pump();
+
+    expect(nclState.nclDocument!.getMediaById('img2')!.getMainState(),
+        NclStateType.sleeping);
+  });
 }

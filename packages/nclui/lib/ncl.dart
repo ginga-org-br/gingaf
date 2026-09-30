@@ -185,6 +185,41 @@ class NclWidgetState extends MediaState<NclWidget> {
     }
   }
 
+  @override
+  void forward([Duration duration = const Duration(seconds: 2)]) {
+    if (!_isPaused) {
+      pause();
+    }
+
+    final visited = <MediaState>{};
+    final mainAvState = widget.mainAvKey?.currentState;
+    if (mainAvState != null) {
+      mainAvState.forward(duration);
+      visited.add(mainAvState);
+    }
+    for (final key in _mediaStateKeys.values) {
+      final state = key.currentState;
+      if (state != null && !visited.contains(state)) {
+        visited.add(state);
+        state.forward(duration);
+        if (_isPaused) {
+          state.pause();
+        }
+      }
+    }
+
+    tick(duration.inMilliseconds);
+
+    if (nclDocument != null && !nclDocument!.isPlaying) {
+      _ticker?.cancel();
+      _ticker = null;
+      nclDocument = null;
+      if (mounted) {
+        NclWidgetExitNotification().dispatch(context);
+      }
+    }
+  }
+
   Rectangle<double> get bounds {
     if (widget.bounds != null) return widget.bounds!;
     if (rect != Rect.zero) {
@@ -372,7 +407,11 @@ class NclWidgetState extends MediaState<NclWidget> {
       }
 
       final activeChanged = _syncActiveMedia(nclDocument!.getActiveMedia());
-      if (mounted && (activeChanged || focusChanged || ms == 0)) {
+      if (mounted &&
+          (activeChanged ||
+              focusChanged ||
+              changedMedia.isNotEmpty ||
+              ms == 0)) {
         setState(() {});
       }
     }

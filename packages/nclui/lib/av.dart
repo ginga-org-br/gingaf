@@ -50,6 +50,33 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
   }
 
   @override
+  void forward(Duration duration) {
+    final c = _controller;
+    if (c != null && c.value.isInitialized) {
+      final newPos = c.value.position + duration;
+      c.seekTo(newPos);
+      if (notifyCompletion &&
+          !_isCompleted &&
+          c.value.duration.inMilliseconds > 0 &&
+          newPos >= c.value.duration) {
+        _isCompleted = true;
+        final media = widget.media;
+        if (media != null && mounted) {
+          final appState = context.findAncestorStateOfType<NclWidgetState>();
+          if (appState != null && appState.nclDocument != null) {
+            appState.nclDocument!.uiQueue.add(
+              NclAction(
+                event: media.getMainNclEvent(),
+                action: NclActionType.stop,
+              ),
+            );
+          }
+        }
+      }
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
     parseProperties(widget.media);
@@ -63,7 +90,6 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
   }
 
   void _onVideoPositionChanged() {
-    if (_isPaused) return;
     final c = _controller;
     if (c != null &&
         !_isCompleted &&
@@ -139,6 +165,9 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
   }
 
   Widget buildLoadingWidget(BuildContext context) {
+    if (widget.media != null) {
+      return const SizedBox.shrink();
+    }
     return const Center(child: CircularProgressIndicator());
   }
 

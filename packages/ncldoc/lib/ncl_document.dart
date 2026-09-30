@@ -600,8 +600,8 @@ class NclDocument {
 
   void stop() => scheduler.stop();
 
-  Set<Media> tick([int incrementMs = 0]) {
-    final res = scheduler.tick(incrementMs);
+  Set<Media> tick([int incrementMs = 0, int stepMs = 100]) {
+    final res = scheduler.tick(incrementMs, stepMs);
     _initInitialFocus();
     return res;
   }

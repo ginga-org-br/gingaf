@@ -176,6 +176,7 @@ void main() {
 
       expect(find.byKey(const Key('floating_restart_button')), findsOneWidget);
       expect(find.byKey(const Key('floating_pause_button')), findsOneWidget);
+      expect(find.byKey(const Key('floating_forward_2s_button')), findsOneWidget);
       expect(find.byKey(const Key('floating_users_button')), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('floating_pause_button')));
@@ -400,6 +401,87 @@ void main() {
 
       final TextField ageField = tester.widget(ageFinder);
       expect(ageField.controller?.text, equals('25'));
+    });
+
+    testWidgets(
+        'FloatingControlMenu Forward 2s pauses presentation, ticks 2s per click, and resumes on play',
+        (WidgetTester tester) async {
+      final config = GingaConfig(
+        appSrc: 'test_forward.ncl',
+        startWithMainAv: false,
+      );
+      final gingacc = GingaCC(
+        config: config,
+        virtualFiles: {
+          'test_forward.ncl': '''
+<ncl id="test_forward" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+  <head>
+    <regionBase>
+      <region id="rg1" width="100%" height="100%"/>
+    </regionBase>
+    <descriptorBase>
+      <descriptor id="d1" region="rg1"/>
+    </descriptorBase>
+  </head>
+  <body>
+    <port id="p1" component="m1"/>
+    <media id="m1" src="m1.mp4" descriptor="d1"/>
+  </body>
+</ncl>
+''',
+        },
+      );
+      await tester.pumpWidget(Ginga(
+        gingacc: gingacc,
+      ));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
+      expect(nclState.isPaused, isFalse);
+
+      await tester.tap(find.byKey(const Key('floating_menu_toggle_button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final forwardButtonFinder =
+          find.byKey(const Key('floating_forward_2s_button'));
+      final pauseButtonFinder =
+          find.byKey(const Key('floating_pause_button'));
+
+      expect(forwardButtonFinder, findsOneWidget);
+      expect(pauseButtonFinder, findsOneWidget);
+
+      final forwardOffset = tester.getTopLeft(forwardButtonFinder);
+      final pauseOffset = tester.getTopLeft(pauseButtonFinder);
+      expect(forwardOffset.dy, lessThan(pauseOffset.dy));
+      expect(forwardOffset.dx, equals(pauseOffset.dx));
+
+      final initialClock = nclState.nclDocument!.scheduler.virtualClock;
+
+      await tester.tap(forwardButtonFinder);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(nclState.isPaused, isTrue);
+      expect(nclState.nclDocument!.scheduler.virtualClock,
+          equals(initialClock + 2000));
+      expect(find.text('Resume'), findsOneWidget);
+
+      await tester.tap(forwardButtonFinder);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(nclState.isPaused, isTrue);
+      expect(nclState.nclDocument!.scheduler.virtualClock,
+          equals(initialClock + 4000));
+      expect(find.text('Resume'), findsOneWidget);
+
+      await tester.tap(pauseButtonFinder);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(nclState.isPaused, isFalse);
+      expect(find.text('Pause'), findsOneWidget);
     });
   });
 }

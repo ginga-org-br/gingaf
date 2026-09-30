@@ -48,6 +48,8 @@ class GingaState extends State<Ginga> {
 
   GlobalKey<ncl.NclWidgetState> _nclAppKey = GlobalKey<ncl.NclWidgetState>();
   GlobalKey<MainAVWidgetState> _mainAvKey = GlobalKey<MainAVWidgetState>();
+  final GlobalKey<SettingsMenuState> _settingsMenuKey =
+      GlobalKey<SettingsMenuState>();
 
   void _ensureMainAvMounted() {
     if (mainAVWidget == null) {
@@ -132,7 +134,7 @@ class GingaState extends State<Ginga> {
     });
   }
 
-  void _togglePause() {
+  void togglePause() {
     setState(() {
       _isPaused = !_isPaused;
     });
@@ -142,6 +144,20 @@ class GingaState extends State<Ginga> {
     } else {
       _nclAppKey.currentState?.resume();
       _mainAvKey.currentState?.controller?.play();
+    }
+  }
+
+  void forward2s() {
+    setState(() {
+      _isPaused = true;
+    });
+    _mainAvKey.currentState?.controller?.pause();
+    _nclAppKey.currentState?.forward(const Duration(seconds: 2));
+    if (_nclAppKey.currentState == null) {
+      final c = _mainAvKey.currentState?.controller;
+      if (c != null && c.value.isInitialized) {
+        c.seekTo(c.value.position + const Duration(seconds: 2));
+      }
     }
   }
 
@@ -155,6 +171,32 @@ class GingaState extends State<Ginga> {
     setState(() {
       _showUsersOverlay = false;
     });
+  }
+
+  void openSettingsMenu() {
+    _settingsMenuKey.currentState?.open();
+  }
+
+  void closeSettingsMenu() {
+    _settingsMenuKey.currentState?.close();
+  }
+
+  void toggleSettingsMenu() {
+    _settingsMenuKey.currentState?.toggle();
+  }
+
+  void clickForward2s() {
+    _settingsMenuKey.currentState?.clickForward2s();
+    if (_settingsMenuKey.currentState == null) {
+      forward2s();
+    }
+  }
+
+  void clickTogglePause() {
+    _settingsMenuKey.currentState?.clickTogglePause();
+    if (_settingsMenuKey.currentState == null) {
+      togglePause();
+    }
   }
 
   void selectUser(String userId) {
@@ -308,9 +350,11 @@ class GingaState extends State<Ginga> {
                     if (nclApp != null) nclApp!,
                     if (!_showUsersOverlay)
                       SettingsMenu(
+                        key: _settingsMenuKey,
                         isPaused: _isPaused,
                         onReload: _restart,
-                        onTogglePause: _togglePause,
+                        onTogglePause: togglePause,
+                        onForward2s: forward2s,
                         onOpenUsers: openUsersOverlay,
                       ),
                     if (_showUsersOverlay)

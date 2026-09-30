@@ -80,7 +80,23 @@ class NclScheduler {
     }
   }
 
-  Set<Media> tick([int incrementMs = 0]) {
+  Set<Media> tick([int incrementMs = 0, int stepMs = 100]) {
+    if (stepMs > 0 && incrementMs > stepMs) {
+      final changedMedia = <Media>{};
+      int remaining = incrementMs;
+      while (remaining > 0) {
+        final inc = remaining > stepMs ? stepMs : remaining;
+        final res = _singleTick(inc);
+        changedMedia.addAll(res);
+        remaining -= inc;
+        if (!isPlaying) break;
+      }
+      return changedMedia;
+    }
+    return _singleTick(incrementMs);
+  }
+
+  Set<Media> _singleTick([int incrementMs = 0]) {
     if (uiQueue.isNotEmpty) {
       _actionStack.addAll(uiQueue);
       uiQueue.clear();
