@@ -90,6 +90,36 @@ const Map<String, AppRecoderConfig> scenarios = {
       47: 'u1',
     },
   ),
+  'primeiro-joao/00syncProp.ncl': AppRecoderConfig(
+    appSrc: 'examples/primeiro-joao/00syncProp.ncl',
+    duration: Duration(seconds: 18),
+    stepDuration: Duration(milliseconds: 300),
+    fps: 3,
+    userEvents: {
+      8: 'open_menu',
+      12: 'forward_2s',
+      18: 'forward_2s',
+      24: 'forward_2s',
+      30: 'forward_2s',
+      36: 'forward_2s',
+      42: 'play',
+    },
+  ),
+  '00syncProp.ncl': AppRecoderConfig(
+    appSrc: 'examples/primeiro-joao/00syncProp.ncl',
+    duration: Duration(seconds: 18),
+    stepDuration: Duration(milliseconds: 300),
+    fps: 3,
+    userEvents: {
+      8: 'open_menu',
+      12: 'forward_2s',
+      18: 'forward_2s',
+      24: 'forward_2s',
+      30: 'forward_2s',
+      36: 'forward_2s',
+      42: 'play',
+    },
+  ),
 };
 
 const defaultTargets = [
@@ -102,6 +132,7 @@ const defaultTargets = [
   'focus_nav.ncl',
   'multiuser_profile/main.ncl',
   'multiuser_current/main.ncl',
+  'primeiro-joao/00syncProp.ncl',
 ];
 
 String getPlatformDevice() {
@@ -123,8 +154,12 @@ Directory findProjectRoot() {
   return dir;
 }
 
-String resolveAppSrc(String target) {
+String resolveAppSrc(String target, Directory projectRoot) {
   final clean = target.replaceFirst(RegExp(r'^examples[/\\]'), '');
+  if (!File('${projectRoot.path}/examples/$clean').existsSync() &&
+      File('${projectRoot.path}/examples/primeiro-joao/$clean').existsSync()) {
+    return 'examples/primeiro-joao/$clean';
+  }
   return 'examples/$clean';
 }
 
@@ -150,7 +185,7 @@ Future<void> main(List<String> args) async {
 
   for (var i = 0; i < targets.length; i++) {
     final t = targets[i];
-    final appSrc = resolveAppSrc(t);
+    final appSrc = resolveAppSrc(t, projectRoot);
     final appFile = File('${projectRoot.path}/$appSrc');
     final targetFile = appFile.uri.pathSegments.last;
 

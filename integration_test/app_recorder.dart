@@ -96,6 +96,38 @@ class _RecorderAppState extends State<RecorderApp> {
   Timer? _timer;
   int _frameIndex = 0;
   late Directory _capturesDir;
+  Offset? _pointerPos;
+  bool _pointerClicking = false;
+  int _pointerHideTick = 0;
+
+  Offset? _findCenterOfWidgetKey(Key key) {
+    Element? findElement(Element element) {
+      if (element.widget.key == key) return element;
+      Element? result;
+      element.visitChildren((child) {
+        result ??= findElement(child);
+      });
+      return result;
+    }
+
+    final element = findElement(context as Element);
+    final renderBox = element?.renderObject as RenderBox?;
+    if (renderBox != null && renderBox.hasSize) {
+      return renderBox.localToGlobal(renderBox.size.center(Offset.zero));
+    }
+    return null;
+  }
+
+  void _updatePointer(Key key, {required bool clicking}) {
+    final pos = _findCenterOfWidgetKey(key);
+    if (pos != null) {
+      setState(() {
+        _pointerPos = pos;
+        _pointerClicking = clicking;
+        _pointerHideTick = (_timer?.tick ?? 0) + 4;
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -116,6 +148,18 @@ class _RecorderAppState extends State<RecorderApp> {
         if (!mounted) return;
 
         final currentStep = timer.tick;
+
+        if (_pointerPos != null && currentStep > _pointerHideTick) {
+          setState(() {
+            _pointerPos = null;
+            _pointerClicking = false;
+          });
+        } else if (_pointerClicking && currentStep > _pointerHideTick - 2) {
+          setState(() {
+            _pointerClicking = false;
+          });
+        }
+
         if (widget.config.keyEvents.containsKey(currentStep)) {
           final keyName = widget.config.keyEvents[currentStep]!;
           final logicalKey = NclKeysFlutter.resolveKey(keyName);
@@ -131,13 +175,56 @@ class _RecorderAppState extends State<RecorderApp> {
         }
 
         if (widget.config.userEvents.containsKey(currentStep)) {
-          final action = widget.config.userEvents[currentStep]!;
-          if (action == 'open_users') {
-            _gingaKey.currentState?.openUsersOverlay();
-          } else if (action == 'close_users') {
-            _gingaKey.currentState?.closeUsersOverlay();
-          } else {
-            _gingaKey.currentState?.selectUser(action);
+          final rawAction = widget.config.userEvents[currentStep]!;
+          final actions =
+              rawAction.contains(';') ? rawAction.split(';') : [rawAction];
+          for (final a in actions) {
+            final action = a.trim();
+            if (action == 'open_menu' || action == 'toggle_menu') {
+              _gingaKey.currentState?.openSettingsMenu();
+              _updatePointer(const Key('floating_menu_toggle_button'),
+                  clicking: true);
+            } else if (action == 'close_menu') {
+              _gingaKey.currentState?.closeSettingsMenu();
+              _updatePointer(const Key('floating_menu_toggle_button'),
+                  clicking: true);
+            } else if (action == 'open_users') {
+              _gingaKey.currentState?.openUsersOverlay();
+              _updatePointer(const Key('floating_users_button'), clicking: true);
+            } else if (action == 'close_users') {
+              _gingaKey.currentState?.closeUsersOverlay();
+            } else if (action == 'forward_2s' ||
+                action == 'forward2s' ||
+                action == 'skip_2s' ||
+                action == 'skip') {
+              _gingaKey.currentState?.clickForward2s();
+              _updatePointer(const Key('floating_forward_2s_button'),
+                  clicking: true);
+            } else if (action == 'toggle_pause' ||
+                action == 'pause' ||
+                action == 'resume' ||
+                action == 'play') {
+              _gingaKey.currentState?.clickTogglePause();
+              _updatePointer(const Key('floating_pause_button'), clicking: true);
+            } else if ((action.startsWith('forward_') ||
+                    action.startsWith('skip_')) &&
+                action.endsWith('s')) {
+              final prefix =
+                  action.startsWith('forward_') ? 'forward_' : 'skip_';
+              final secondsStr =
+                  action.substring(prefix.length, action.length - 1);
+              final seconds = int.tryParse(secondsStr);
+              if (seconds != null) {
+                final steps = seconds ~/ 2;
+                for (var s = 0; s < steps; s++) {
+                  _gingaKey.currentState?.clickForward2s();
+                }
+                _updatePointer(const Key('floating_forward_2s_button'),
+                    clicking: true);
+              }
+            } else {
+              _gingaKey.currentState?.selectUser(action);
+            }
           }
         }
 
@@ -182,9 +269,51 @@ class _RecorderAppState extends State<RecorderApp> {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         home: Scaffold(
-          body: Ginga(
-            key: _gingaKey,
-            gingacc: widget.gingacc,
+          body: Stack(
+            children: [
+              Ginga(
+                key: _gingaKey,
+                gingacc: widget.gingacc,
+              ),
+              if (_pointerPos != null)
+                Positioned(
+                  left: _pointerPos!.dx - 12,
+                  top: _pointerPos!.dy - 12,
+                  child: IgnorePointer(
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        if (_pointerClicking)
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.35),
+                              border: Border.all(
+                                color: Colors.blueAccent,
+                                width: 3,
+                              ),
+                            ),
+                          ),
+                        Icon(
+                          Icons.touch_app,
+                          size: 32,
+                          color:
+                              _pointerClicking ? Colors.blueAccent : Colors.white,
+                          shadows: const [
+                            Shadow(
+                              blurRadius: 6,
+                              color: Colors.black87,
+                              offset: Offset(2, 2),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
