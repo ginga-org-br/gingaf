@@ -66,10 +66,10 @@ void main() {
 <ncl id="sysSettingsDoc">
   <head>
     <regionBase>
-      <region id="rgAd" left="75%" top="75%" width="20%" height="20%"/>
+      <region id="rAd" left="75%" top="75%" width="20%" height="20%"/>
     </regionBase>
     <descriptorBase>
-      <descriptor id="dAd" region="rgAd"/>
+      <descriptor id="dAd" region="rAd"/>
     </descriptorBase>
     <connectorBase>
       <causalConnector id="onBeginTestVarStart">
@@ -94,13 +94,13 @@ void main() {
     </media>
     <media id="mMaleAd" src="ad_male.png" descriptor="dAd"/>
     <media id="mGeneralAd" src="ad_general.png" descriptor="dAd"/>
-    <link xconnector="onBeginTestVarStart">
+    <link id="l1" xconnector="onBeginTestVarStart">
       <bind role="onBegin" component="mVideo" interface="aSec2"/>
       <bind role="var" component="mSttgs" interface="gender"/>
       <bindParam name="value" value="male"/>
       <bind role="start" component="mMaleAd"/>
     </link>
-    <link xconnector="onBeginTestVarStart">
+    <link id="l2" xconnector="onBeginTestVarStart">
       <bind role="onBegin" component="mVideo" interface="aSec2"/>
       <bind role="var" component="mSttgs" interface="gender"/>
       <bindParam name="value" value="female"/>
@@ -135,10 +135,10 @@ void main() {
 <ncl id="sysSettingsDoc">
   <head>
     <regionBase>
-      <region id="rgAd" left="75%" top="75%" width="20%" height="20%"/>
+      <region id="rAd" left="75%" top="75%" width="20%" height="20%"/>
     </regionBase>
     <descriptorBase>
-      <descriptor id="dAd" region="rgAd"/>
+      <descriptor id="dAd" region="rAd"/>
     </descriptorBase>
     <connectorBase>
       <causalConnector id="onBeginTestVarStart">
@@ -163,13 +163,13 @@ void main() {
     </media>
     <media id="mMaleAd" src="ad_male.png" descriptor="dAd"/>
     <media id="mGeneralAd" src="ad_general.png" descriptor="dAd"/>
-    <link xconnector="onBeginTestVarStart">
+    <link id="l1" xconnector="onBeginTestVarStart">
       <bind role="onBegin" component="mVideo" interface="aSec2"/>
       <bind role="var" component="mSttgs" interface="gender"/>
       <bindParam name="value" value="male"/>
       <bind role="start" component="mMaleAd"/>
     </link>
-    <link xconnector="onBeginTestVarStart">
+    <link id="l2" xconnector="onBeginTestVarStart">
       <bind role="onBegin" component="mVideo" interface="aSec2"/>
       <bind role="var" component="mSttgs" interface="gender"/>
       <bindParam name="value" value="female"/>

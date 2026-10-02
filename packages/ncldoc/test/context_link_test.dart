@@ -7,16 +7,16 @@ void main() {
       const xml = '''
 <ncl>
   <body>
-    <port id="p1" component="ctx1"/>
-    <context id="ctx1">
+    <port id="p1" component="c1"/>
+    <context id="c1">
       <media id="m1" src="v1.mp4" type="video/mp4"/>
     </context>
-    <context id="ctx2">
+    <context id="c2">
       <media id="m2" src="v2.mp4" type="video/mp4"/>
     </context>
     <link id="l1">
-      <bind role="onEnd" component="ctx1"/>
-      <bind role="start" component="ctx2"/>
+      <bind role="onEnd" component="c1"/>
+      <bind role="start" component="c2"/>
     </link>
   </body>
 </ncl>
@@ -25,14 +25,14 @@ void main() {
       doc.start();
       expect(doc.getBodyState(), NclStateType.occurring);
       expect(doc.virtualClock, 0);
-      expect(doc.getNodeById('ctx1')?.getMainState(), NclStateType.occurring);
-      expect(doc.getNodeById('ctx2')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('c1')?.getMainState(), NclStateType.occurring);
+      expect(doc.getNodeById('c2')?.getMainState(), NclStateType.sleeping);
       final changed = doc.tick(1);
       expect(changed, isEmpty);
       expect(doc.virtualClock, 1);
       doc.stop();
-      expect(doc.getNodeById('ctx1')?.getMainState(), NclStateType.sleeping);
-      expect(doc.getNodeById('ctx2')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('c1')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('c2')?.getMainState(), NclStateType.sleeping);
       expect(doc.getBodyState(), NclStateType.sleeping);
     });
 
@@ -77,15 +77,15 @@ void main() {
       const xml = '''
 <ncl>
   <body>
-    <context id="ctx1">
+    <context id="c1">
       <media id="m1" src="v1.mp4" type="video/mp4"/>
     </context>
-    <context id="ctx2">
+    <context id="c2">
       <media id="m2" src="v2.mp4" type="video/mp4"/>
     </context>
     <link id="l1">
-      <bind role="onEnd" component="ctx1"/>
-      <bind role="start" component="ctx2"/>
+      <bind role="onEnd" component="c1"/>
+      <bind role="start" component="c2"/>
     </link>
   </body>
 </ncl>
@@ -93,8 +93,8 @@ void main() {
       final doc = NclDocument.fromContent(xml);
       doc.start();
       expect(doc.getBodyState(), NclStateType.occurring);
-      expect(doc.getNodeById('ctx1')?.getMainState(), NclStateType.sleeping);
-      expect(doc.getNodeById('ctx2')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('c1')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('c2')?.getMainState(), NclStateType.sleeping);
     });
 
     test('2x ctx internal links no ports', () {
@@ -135,12 +135,12 @@ void main() {
       const xml = '''
 <ncl>
   <body>
-    <port id="p1" component="ctx1"/>
-    <context id="ctx1">
-      <port id="p2" component="ctx2"/>
-      <context id="ctx2">
-        <port id="p3" component="ctx3"/>
-        <context id="ctx3">
+    <port id="p1" component="c1"/>
+    <context id="c1">
+      <port id="p2" component="c2"/>
+      <context id="c2">
+        <port id="p3" component="c3"/>
+        <context id="c3">
           <port id="p4" component="m1"/>
           <media id="m1" src="v1.mp4"/>
           <media id="m2" src="v2.mp4"/>
@@ -157,9 +157,9 @@ void main() {
       final doc = NclDocument.fromContent(xml);
       doc.start();
       expect(doc.getBodyState(), NclStateType.occurring);
-      expect(doc.getNodeById('ctx1')?.getMainState(), NclStateType.occurring);
-      expect(doc.getNodeById('ctx2')?.getMainState(), NclStateType.occurring);
-      expect(doc.getNodeById('ctx3')?.getMainState(), NclStateType.occurring);
+      expect(doc.getNodeById('c1')?.getMainState(), NclStateType.occurring);
+      expect(doc.getNodeById('c2')?.getMainState(), NclStateType.occurring);
+      expect(doc.getNodeById('c3')?.getMainState(), NclStateType.occurring);
       expect(doc.getNodeById('m1')?.getMainState(), NclStateType.occurring);
       expect(doc.getNodeById('m2')?.getMainState(), NclStateType.occurring);
     });
@@ -168,14 +168,14 @@ void main() {
       const xml = '''
 <ncl>
   <body>
-    <port id="p1" component="ctx1"/>
-    <context id="ctx1">
-      <port id="p2" component="ctx2"/>
-      <context id="ctx2">
-        <port id="p3" component="ctx3"/>
-        <context id="ctx3">
-          <port id="p4" component="ctx4"/>
-          <context id="ctx4">
+    <port id="p1" component="c1"/>
+    <context id="c1">
+      <port id="p2" component="c2"/>
+      <context id="c2">
+        <port id="p3" component="c3"/>
+        <context id="c3">
+          <port id="p4" component="c4"/>
+          <context id="c4">
             <port id="p5" component="m1"/>
             <media id="m1" src="v1.mp4"/>
             <media id="m2" src="v2.mp4"/>
@@ -193,10 +193,10 @@ void main() {
       final doc = NclDocument.fromContent(xml);
       doc.start();
       expect(doc.getBodyState(), NclStateType.occurring);
-      expect(doc.getNodeById('ctx1')?.getMainState(), NclStateType.occurring);
-      expect(doc.getNodeById('ctx2')?.getMainState(), NclStateType.occurring);
-      expect(doc.getNodeById('ctx3')?.getMainState(), NclStateType.occurring);
-      expect(doc.getNodeById('ctx4')?.getMainState(), NclStateType.occurring);
+      expect(doc.getNodeById('c1')?.getMainState(), NclStateType.occurring);
+      expect(doc.getNodeById('c2')?.getMainState(), NclStateType.occurring);
+      expect(doc.getNodeById('c3')?.getMainState(), NclStateType.occurring);
+      expect(doc.getNodeById('c4')?.getMainState(), NclStateType.occurring);
       expect(doc.getNodeById('m1')?.getMainState(), NclStateType.occurring);
       expect(doc.getNodeById('m2')?.getMainState(), NclStateType.occurring);
     });
@@ -205,9 +205,9 @@ void main() {
       const xml = '''
 <ncl>
   <body>
-    <context id="ctx1">
-      <context id="ctx2">
-        <context id="ctx3">
+    <context id="c1">
+      <context id="c2">
+        <context id="c3">
           <media id="m1" src="v1.mp4"/>
           <media id="m2" src="v2.mp4"/>
           <link id="l1">
@@ -223,9 +223,9 @@ void main() {
       final doc = NclDocument.fromContent(xml);
       doc.start();
       expect(doc.getBodyState(), NclStateType.occurring);
-      expect(doc.getNodeById('ctx1')?.getMainState(), NclStateType.sleeping);
-      expect(doc.getNodeById('ctx2')?.getMainState(), NclStateType.sleeping);
-      expect(doc.getNodeById('ctx3')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('c1')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('c2')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('c3')?.getMainState(), NclStateType.sleeping);
       expect(doc.getNodeById('m1')?.getMainState(), NclStateType.sleeping);
       expect(doc.getNodeById('m2')?.getMainState(), NclStateType.sleeping);
     });
@@ -234,10 +234,10 @@ void main() {
       const xml = '''
 <ncl>
   <body>
-    <context id="ctx1">
-      <context id="ctx2">
-        <context id="ctx3">
-          <context id="ctx4">
+    <context id="c1">
+      <context id="c2">
+        <context id="c3">
+          <context id="c4">
             <media id="m1" src="v1.mp4"/>
             <media id="m2" src="v2.mp4"/>
             <link id="l1">
@@ -254,10 +254,10 @@ void main() {
       final doc = NclDocument.fromContent(xml);
       doc.start();
       expect(doc.getBodyState(), NclStateType.occurring);
-      expect(doc.getNodeById('ctx1')?.getMainState(), NclStateType.sleeping);
-      expect(doc.getNodeById('ctx2')?.getMainState(), NclStateType.sleeping);
-      expect(doc.getNodeById('ctx3')?.getMainState(), NclStateType.sleeping);
-      expect(doc.getNodeById('ctx4')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('c1')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('c2')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('c3')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getNodeById('c4')?.getMainState(), NclStateType.sleeping);
       expect(doc.getNodeById('m1')?.getMainState(), NclStateType.sleeping);
       expect(doc.getNodeById('m2')?.getMainState(), NclStateType.sleeping);
     });

@@ -25,7 +25,7 @@ void main() {
     });
 
     test('Context Node can return its properties and areas', () {
-      final context = Context(rawAttributes: const {'id': 'ctx1'});
+      final context = Context(rawAttributes: const {'id': 'c1'});
       final prop = Property(
         rawAttributes: const {
           'id': 'p1',

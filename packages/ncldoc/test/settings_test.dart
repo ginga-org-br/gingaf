@@ -16,8 +16,8 @@ void main() {
         '''
 <ncl>
   <body>
-    <media id="s1" type="application/x-ncl-settings" />
-    <media id="s2" type="application/x-ginga-settings" />
+    <media id="mSttgs1" type="application/x-ncl-settings" />
+    <media id="mSttgs2" type="application/x-ginga-settings" />
   </body>
 </ncl>
 ''',

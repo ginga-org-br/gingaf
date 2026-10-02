@@ -7,7 +7,7 @@ void main() {
       const xmlString = '''
       <ncl>
         <body>
-          <port id="init" component="m1"/>
+          <port id="p1" component="m1"/>
           <media id="m1" src="video.mp4">
             <property name="explicitDur" value="2s"/>
           </media>
