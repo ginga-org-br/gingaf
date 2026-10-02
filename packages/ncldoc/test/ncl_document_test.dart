@@ -84,10 +84,10 @@ void main() {
 
     test('Settings element is present when provided', () {
       final doc = NclDocument.fromContent(
-        '<ncl><body id="body"><media id="s1" type="application/x-ncl-settings"/></body></ncl>',
+        '<ncl><body id="body"><media id="mSttgs" type="application/x-ncl-settings"/></body></ncl>',
       );
       doc.start();
-      expect(doc.body.children.whereType<Settings>().first.id, 's1');
+      expect(doc.body.children.whereType<Settings>().first.id, 'mSttgs');
     });
 
     test('NclDocument.fromContent parses NCL XML string correctly', () {

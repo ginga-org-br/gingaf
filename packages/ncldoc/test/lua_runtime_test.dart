@@ -398,7 +398,7 @@ void main() {
 <ncl id="testDoc">
   <head></head>
   <body>
-    <media type="application/x-ginga-settings" id="programSettings">
+    <media type="application/x-ginga-settings" id="mSttgs">
       <property name="user.theme" value="dark"/>
       <property name="service.currentFocus" value="0"/>
       <property name="user.age" value="25"/>
@@ -434,7 +434,7 @@ void main() {
       const xml = '''
 <ncl id="testDoc">
   <body>
-    <media type="application/x-ginga-settings" id="programSettings">
+    <media type="application/x-ginga-settings" id="mSttgs">
       <property name="user.score" value="100"/>
     </media>
   </body>
@@ -462,7 +462,7 @@ void main() {
       const xml = '''
 <ncl id="testDoc">
   <body>
-    <media type="application/x-ginga-settings" id="programSettings">
+    <media type="application/x-ginga-settings" id="mSttgs">
       <property name="user.difficulty" value="easy"/>
     </media>
   </body>
@@ -493,7 +493,7 @@ void main() {
       const xml = '''
 <ncl id="testDoc">
   <body>
-    <media type="application/x-ginga-settings" id="programSettings"/>
+    <media type="application/x-ginga-settings" id="mSttgs"/>
   </body>
 </ncl>
 ''';
@@ -508,7 +508,7 @@ void main() {
       engine.luaState.pop(1);
 
       doc.doNclEditingCommand(
-          'setPropertyValue("programSettings", "user.level", "5")');
+          'setPropertyValue("mSttgs", "user.level", "5")');
 
       engine.execute('_G.val2 = settings.user.level');
       engine.luaState.getGlobal('val2');

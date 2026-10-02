@@ -85,7 +85,7 @@ void main() {
     </connectorBase>
   </head>
   <body>
-    <media id="sysSettings" type="application/x-ncl-settings">
+    <media id="mSttgs" type="application/x-ncl-settings">
       <property name="gender" value="male"/>
     </media>
     <port id="pMain" component="mVideo"/>
@@ -96,13 +96,13 @@ void main() {
     <media id="mGeneralAd" src="ad_general.png" descriptor="dAd"/>
     <link xconnector="onBeginTestVarStart">
       <bind role="onBegin" component="mVideo" interface="aSec2"/>
-      <bind role="var" component="sysSettings" interface="gender"/>
+      <bind role="var" component="mSttgs" interface="gender"/>
       <bindParam name="value" value="male"/>
       <bind role="start" component="mMaleAd"/>
     </link>
     <link xconnector="onBeginTestVarStart">
       <bind role="onBegin" component="mVideo" interface="aSec2"/>
-      <bind role="var" component="sysSettings" interface="gender"/>
+      <bind role="var" component="mSttgs" interface="gender"/>
       <bindParam name="value" value="female"/>
       <bind role="start" component="mGeneralAd"/>
     </link>
@@ -154,7 +154,7 @@ void main() {
     </connectorBase>
   </head>
   <body>
-    <media id="sysSettings" type="application/x-ncl-settings">
+    <media id="mSttgs" type="application/x-ncl-settings">
       <property name="gender" value="female"/>
     </media>
     <port id="pMain" component="mVideo"/>
@@ -165,13 +165,13 @@ void main() {
     <media id="mGeneralAd" src="ad_general.png" descriptor="dAd"/>
     <link xconnector="onBeginTestVarStart">
       <bind role="onBegin" component="mVideo" interface="aSec2"/>
-      <bind role="var" component="sysSettings" interface="gender"/>
+      <bind role="var" component="mSttgs" interface="gender"/>
       <bindParam name="value" value="male"/>
       <bind role="start" component="mMaleAd"/>
     </link>
     <link xconnector="onBeginTestVarStart">
       <bind role="onBegin" component="mVideo" interface="aSec2"/>
-      <bind role="var" component="sysSettings" interface="gender"/>
+      <bind role="var" component="mSttgs" interface="gender"/>
       <bindParam name="value" value="female"/>
       <bind role="start" component="mGeneralAd"/>
     </link>

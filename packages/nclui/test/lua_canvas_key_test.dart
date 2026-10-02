@@ -88,7 +88,7 @@ end)
   </head>
   <body>
     <port id="p1" component="luaMedia"/>
-    <media type="application/x-ginga-settings" id="settings">
+    <media type="application/x-ginga-settings" id="mSttgs">
       <property name="service.currentKeyMaster" value="luaMedia"/>
     </media>
     <media id="luaMedia" src="script.lua" descriptor="d1" type="application/x-ginga-NCLua"/>
@@ -188,7 +188,7 @@ end)
   </head>
   <body>
     <port id="init" component="lua"/>
-    <media type="application/x-ginga-settings" id="settings">
+    <media type="application/x-ginga-settings" id="mSttgs">
       <property name="service.currentKeyMaster" value="lua"/>
     </media>
     <media id="lua" src="lua_canvas.lua" descriptor="dCanvas">
@@ -334,7 +334,7 @@ end)
   </head>
   <body>
     <port id="init" component="lua"/>
-    <media type="application/x-ginga-settings" id="settings">
+    <media type="application/x-ginga-settings" id="mSttgs">
       <property name="service.currentKeyMaster" value="other"/>
     </media>
     <media id="lua" src="lua_canvas.lua" descriptor="dCanvas">

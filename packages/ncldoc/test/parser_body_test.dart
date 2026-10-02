@@ -153,7 +153,7 @@ void main() {
   <body>
     <media id="content" src="video.mp4" />
     <media id="time" />
-    <media id="settings" type="application/x-ginga-settings" />
+    <media id="mSttgs" type="application/x-ginga-settings" />
   </body>
 </ncl>
 ''';
@@ -172,7 +172,7 @@ void main() {
       expect(timeNode.uri, isEmpty);
       expect(timeNode.mimeType, 'application/x-ginga-time');
 
-      final settingsNode = mediaList.firstWhere((e) => e.id == 'settings');
+      final settingsNode = mediaList.firstWhere((e) => e.id == 'mSttgs');
       expect(settingsNode, isA<Settings>());
     });
 
