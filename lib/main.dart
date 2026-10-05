@@ -35,84 +35,9 @@ void main(List<String> args) async {
     } catch (_) {}
   }
 
-  String? appEnv;
-  String? configEnv;
-
-  if (const String.fromEnvironment('APP').isNotEmpty) {
-    appEnv = const String.fromEnvironment('APP');
-  }
-  if ((appEnv == null || appEnv.isEmpty) && !kIsWeb) {
-    appEnv = Platform.environment['APP'];
-  }
-  if ((appEnv == null || appEnv.isEmpty) && kIsWeb) {
-    try {
-      final mainFile = getGingaAppPath();
-      if (mainFile != null && mainFile.isNotEmpty) {
-        appEnv = mainFile;
-      }
-    } catch (e) {
-      _logger.warning('Failed to read app path on web: $e');
-    }
-  }
-
-  if (const String.fromEnvironment('CONFIG').isNotEmpty) {
-    configEnv = const String.fromEnvironment('CONFIG');
-  }
-  if ((configEnv == null || configEnv.isEmpty) && !kIsWeb) {
-    configEnv = Platform.environment['CONFIG'];
-  }
-  if ((configEnv == null || configEnv.isEmpty) && kIsWeb) {
-    try {
-      configEnv = Uri.base.queryParameters['CONFIG'] ??
-          Uri.base.queryParameters['config'];
-    } catch (e) {
-      _logger.warning('Failed to read config path on web: $e');
-    }
-  }
-
-  String? appArg;
-  String? configArg;
-
-  for (var i = 0; i < args.length; i++) {
-    final arg = args[i];
-    if (arg == '--config' || arg == '-c') {
-      if (i + 1 < args.length) {
-        configArg = args[++i];
-      }
-    } else if (arg.startsWith('--config=')) {
-      configArg = arg.substring('--config='.length);
-    } else if (arg.startsWith('-c=')) {
-      configArg = arg.substring('-c='.length);
-    } else if (arg == '--app' || arg == '-a') {
-      if (i + 1 < args.length) {
-        appArg = args[++i];
-      }
-    } else if (arg.startsWith('--app=')) {
-      appArg = arg.substring('--app='.length);
-    } else if (arg.startsWith('-a=')) {
-      appArg = arg.substring('-a='.length);
-    } else if (!arg.startsWith('-')) {
-      if (appArg == null) {
-        appArg = arg;
-      } else {
-        configArg ??= arg;
-      }
-    }
-  }
-
-  if (appArg != null && appArg.toLowerCase().endsWith('.json')) {
-    configArg ??= appArg;
-    appArg = null;
-  }
-
-  final appSrc = (appArg != null && appArg.trim().isNotEmpty)
-      ? appArg.trim()
-      : ((appEnv != null && appEnv.trim().isNotEmpty) ? appEnv.trim() : null);
-  final configSrc = (configArg != null && configArg.trim().isNotEmpty)
-      ? configArg.trim()
-      : ((configEnv != null && configEnv.trim().isNotEmpty)
-          ? configEnv.trim()
-          : null);
+  final parsedArgs = parseArgsCliAndEnv(args);
+  final appSrc = parsedArgs.app;
+  final configSrc = parsedArgs.config;
 
   if (!kIsWeb && appSrc == null && configSrc == null) {
     _logger.severe('both APP and CONFIG are empty, exiting');
@@ -151,6 +76,100 @@ void main(List<String> args) async {
     gingacc: mainGingacc,
   ));
 }
+
+({String? app, String? config}) parseArgsCliAndEnv(
+  List<String> args, [
+  Map<String, String>? environment,
+]) {
+  String? appArg;
+  String? configArg;
+
+  for (var i = 0; i < args.length; i++) {
+    final arg = args[i];
+    if (arg == '--config' || arg == '-c') {
+      if (i + 1 < args.length) {
+        configArg = args[++i];
+      }
+    } else if (arg.startsWith('--config=')) {
+      configArg = arg.substring('--config='.length);
+    } else if (arg.startsWith('-c=')) {
+      configArg = arg.substring('-c='.length);
+    } else if (arg == '--app' || arg == '-a') {
+      if (i + 1 < args.length) {
+        appArg = args[++i];
+      }
+    } else if (arg.startsWith('--app=')) {
+      appArg = arg.substring('--app='.length);
+    } else if (arg.startsWith('-a=')) {
+      appArg = arg.substring('-a='.length);
+    } else if (!arg.startsWith('-')) {
+      if (appArg == null) {
+        appArg = arg;
+      } else {
+        configArg ??= arg;
+      }
+    }
+  }
+
+  if (appArg != null && appArg.toLowerCase().endsWith('.json')) {
+    configArg ??= appArg;
+    appArg = null;
+  }
+
+  String? appEnv;
+  String? configEnv;
+
+  if (environment != null) {
+    appEnv = environment['APP'] ?? environment['app'];
+    configEnv = environment['CONFIG'] ?? environment['config'];
+  } else {
+    if (const String.fromEnvironment('APP').isNotEmpty) {
+      appEnv = const String.fromEnvironment('APP');
+    }
+    if ((appEnv == null || appEnv.isEmpty) && !kIsWeb) {
+      appEnv = Platform.environment['APP'];
+    }
+    if ((appEnv == null || appEnv.isEmpty) && kIsWeb) {
+      try {
+        final mainFile = getGingaAppPath();
+        if (mainFile != null && mainFile.isNotEmpty) {
+          appEnv = mainFile;
+        }
+      } catch (e) {
+        _logger.warning('Failed to read app path on web: $e');
+      }
+    }
+
+    if (const String.fromEnvironment('CONFIG').isNotEmpty) {
+      configEnv = const String.fromEnvironment('CONFIG');
+    }
+    if ((configEnv == null || configEnv.isEmpty) && !kIsWeb) {
+      configEnv = Platform.environment['CONFIG'];
+    }
+    if ((configEnv == null || configEnv.isEmpty) && kIsWeb) {
+      try {
+        configEnv = Uri.base.queryParameters['CONFIG'] ??
+            Uri.base.queryParameters['config'];
+      } catch (e) {
+        _logger.warning('Failed to read config path on web: $e');
+      }
+    }
+  }
+
+  final appSrc = (appArg != null && appArg.trim().isNotEmpty)
+      ? appArg.trim()
+      : ((appEnv != null && appEnv.trim().isNotEmpty) ? appEnv.trim() : null);
+  final configSrc = (configArg != null && configArg.trim().isNotEmpty)
+      ? configArg.trim()
+      : ((configEnv != null && configEnv.trim().isNotEmpty)
+          ? configEnv.trim()
+          : null);
+
+  return (app: appSrc, config: configSrc);
+}
+
+({String? app, String? config}) parseCommandLineArgs(List<String> args) =>
+    parseArgsCliAndEnv(args, const {});
 
 Future<GingaConfig> resolveGingaConfig({
   String? appSrc,
