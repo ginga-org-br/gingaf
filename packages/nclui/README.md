@@ -6,6 +6,12 @@ Flutter widgets and UI presentation layer for Nested Context Language (NCL) medi
 
 ## Usage
 
+Refer to `make help` at `Makefile` to discover all available targets:
+
+```bash
+make help
+```
+
 Run tests and install dependencies via the provided `Makefile`:
 
 ```bash

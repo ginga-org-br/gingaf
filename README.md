@@ -16,6 +16,14 @@ The `gingaf` documentation is available at [https://ginga-org-br.github.io/ginga
 
 <img src="doc/architecture.svg" alt="architecture" width="480">
 
+## Usage
+
+Refer to `make help` at `Makefile` to discover available targets:
+
+```bash
+make help
+```
+
 ## Developing Ginga Applications using `gingaf`
 
 You can use `gingaf` to develop Ginga applications at web by using the playground or acessing [ginga.org.br/gingaf/playground](https://ginga.org.br/gingaf/playground), or at desktop by the Visual Studio Code extension [ginga-code](https://github.com/ginga-org-br/ginga-code).

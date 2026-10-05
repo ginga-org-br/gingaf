@@ -4,6 +4,14 @@
 
 Logic package handling the NCL document logic.
 
+## Usage
+
+Refer to `make help` at `Makefile` to discover available targets:
+
+```bash
+make help
+```
+
 ## Run Headless (no-UI) Ginga-NCL applications
 
 All example NCL documents are stored in the `examples/` folder.
@@ -14,7 +22,7 @@ To run headless NCL simulation:
 dart packages/ncldoc/lib/main.dart examples/video.ncl
 ```
 
-For easy, you can use `make run`. See below.
+You can also run headless examples via `make run-example`:
 
 ```bash
 cd packages/ncldoc

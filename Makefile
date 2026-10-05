@@ -1,6 +1,7 @@
 MAKEFLAGS += -s --no-print-directory
+.DEFAULT_GOAL := help
 
-.PHONY: help deps test doc release release-publish clean run-example check-app architecture-svg integration_test
+.PHONY: help deps test doc release release-publish clean run-example check-app architecture-svg serve
 
 BASE_HREF ?= /
 
@@ -49,6 +50,7 @@ help:
 		"  architecture-svg     Generate doc/architecture.svg from doc/architecture.mmd" \
 		"  release              Zip current platform release build" \
 		"  release-publish      Publish release to GitHub Releases via gh" \
+		"  serve                Serve web playground application" \
 		"  clean                Clean build artifacts" \
 		"  run-example          Run one application at examples/ (e.g. make run-example app=video.ncl)" \
 		"  integration_test     Run integration tests"

@@ -26,8 +26,7 @@ void main(List<String> args) async {
         '[${record.loggerName}] ${record.level.name}: ${record.message}');
   });
 
-  if (!kIsWeb &&
-      (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
+  if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
     try {
       ProcessSignal.sigint.watch().listen((_) {
         exit(0);
@@ -166,6 +165,45 @@ void main(List<String> args) async {
           : null);
 
   return (app: appSrc, config: configSrc);
+}
+
+({String? app, String? config}) parseCommandLineArgs(List<String> args) {
+  String? appArg;
+  String? configArg;
+
+  for (var i = 0; i < args.length; i++) {
+    final arg = args[i];
+    if (arg == '--config' || arg == '-c') {
+      if (i + 1 < args.length) {
+        configArg = args[++i];
+      }
+    } else if (arg.startsWith('--config=')) {
+      configArg = arg.substring('--config='.length);
+    } else if (arg.startsWith('-c=')) {
+      configArg = arg.substring('-c='.length);
+    } else if (arg == '--app' || arg == '-a') {
+      if (i + 1 < args.length) {
+        appArg = args[++i];
+      }
+    } else if (arg.startsWith('--app=')) {
+      appArg = arg.substring('--app='.length);
+    } else if (arg.startsWith('-a=')) {
+      appArg = arg.substring('-a='.length);
+    } else if (!arg.startsWith('-')) {
+      if (appArg == null) {
+        appArg = arg;
+      } else {
+        configArg ??= arg;
+      }
+    }
+  }
+
+  if (appArg != null && appArg.toLowerCase().endsWith('.json')) {
+    configArg ??= appArg;
+    appArg = null;
+  }
+
+  return (app: appArg, config: configArg);
 }
 
 ({String? app, String? config}) parseCommandLineArgs(List<String> args) =>

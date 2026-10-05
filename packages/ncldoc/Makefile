@@ -1,4 +1,5 @@
 MAKEFLAGS += -s --no-print-directory
+.DEFAULT_GOAL := help
 
 .PHONY: help test deps doc clean run-example check-app
 

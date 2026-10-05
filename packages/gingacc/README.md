@@ -6,6 +6,12 @@ Ginga-CommonCore (gingaCC) is a to support Ginga runtime with configuration, use
 
 ## Usage
 
+Refer to `make help` at `Makefile` to discover available targets:
+
+```bash
+make help
+```
+
 Run tests and install dependencies via the provided `Makefile`:
 
 ```bash
