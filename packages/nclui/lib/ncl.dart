@@ -27,7 +27,7 @@ class NclWidgetExitNotification extends Notification {}
 class NclWidget extends BaseWidget {
   final GlobalKey<MainAVWidgetState>? mainAvKey;
   final VoidCallback? onRequestMainAv;
-  final Rectangle<double>? bounds;
+  final Bounds? bounds;
 
   const NclWidget({
     super.key,
@@ -220,18 +220,18 @@ class NclWidgetState extends MediaState<NclWidget> {
     }
   }
 
-  Rectangle<double> get bounds {
+  Bounds get bounds {
     if (widget.bounds != null) return widget.bounds!;
     if (rect != Rect.zero) {
-      return Rectangle<double>(0.0, 0.0, rect.width, rect.height);
+      return (left: 0.0, top: 0.0, width: rect.width, height: rect.height);
     }
     final size = MediaQuery.maybeOf(context)?.size;
     if (size != null && size != Size.zero) {
-      return Rectangle<double>(0.0, 0.0, size.width, size.height);
+      return (left: 0.0, top: 0.0, width: size.width, height: size.height);
     }
-    return widget.gingacc?.config.graphsPlaneBounds ??
-        nclDocument?.config.graphsPlaneBounds ??
-        const Rectangle<double>(0.0, 0.0, 720.0, 480.0);
+    return widget.gingacc?.config.graphicPlaneBounds ??
+        nclDocument?.config.graphicPlaneBounds ??
+        const (left: 0.0, top: 0.0, width: 720.0, height: 480.0);
   }
 
   bool get hasSbtvdMedia {
@@ -524,7 +524,7 @@ class NclWidgetState extends MediaState<NclWidget> {
 
 class _NclInheritedWidget extends InheritedWidget {
   final NclWidgetState state;
-  final Rectangle<double> bounds;
+  final Bounds bounds;
 
   const _NclInheritedWidget({
     required this.state,

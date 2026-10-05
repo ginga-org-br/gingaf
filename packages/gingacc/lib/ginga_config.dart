@@ -4,7 +4,7 @@ import 'package:json5/json5.dart';
 
 import 'gingacc.dart';
 
-export 'dart:math' show Rectangle;
+typedef Bounds = ({double left, double top, double width, double height});
 
 /// Ginga environment configuration.
 ///
@@ -58,7 +58,7 @@ class GingaConfig {
   final String mainAvSrc;
   final bool startWithCCWS;
   final bool startWithMainAv;
-  final Rectangle<double> graphsPlaneBounds;
+  final Bounds graphicPlaneBounds;
   final Map<String, String> systemVariables;
   final Users users;
 
@@ -67,7 +67,12 @@ class GingaConfig {
     this.startWithCCWS = false,
     this.startWithMainAv = false,
     this.mainAvSrc = defaultMainAvSrc,
-    this.graphsPlaneBounds = const Rectangle<double>(0.0, 0.0, 720.0, 480.0),
+    this.graphicPlaneBounds = const (
+      left: 0.0,
+      top: 0.0,
+      width: 720.0,
+      height: 480.0,
+    ),
     Map<String, String>? systemVariables,
     Users? users,
   })  : systemVariables = {
@@ -194,9 +199,9 @@ class GingaConfig {
       'mainAvSrc',
       'startWithCCWS',
       'startWithMainAv',
-      'graphsPlaneBounds',
-      'graphsPlaneWidth',
-      'graphsPlaneHeight',
+      'graphicPlaneBounds',
+      'graphicPlaneWidth',
+      'graphicPlaneHeight',
       'systemVariables',
       'envVariables',
       'usersDataJson',
@@ -215,34 +220,34 @@ class GingaConfig {
       }
     }
 
-    Rectangle<double> planeBounds =
-        const Rectangle<double>(0.0, 0.0, 720.0, 480.0);
-    final rawBounds = decoded['graphsPlaneBounds'];
+    Bounds planeBounds =
+        const (left: 0.0, top: 0.0, width: 720.0, height: 480.0);
+    final rawBounds = decoded['graphicPlaneBounds'];
     if (rawBounds is Map) {
-      planeBounds = Rectangle<double>(
-        (rawBounds['left'] as num?)?.toDouble() ?? 0.0,
-        (rawBounds['top'] as num?)?.toDouble() ?? 0.0,
-        (rawBounds['width'] as num?)?.toDouble() ?? 720.0,
-        (rawBounds['height'] as num?)?.toDouble() ?? 480.0,
+      planeBounds = (
+        left: (rawBounds['left'] as num?)?.toDouble() ?? 0.0,
+        top: (rawBounds['top'] as num?)?.toDouble() ?? 0.0,
+        width: (rawBounds['width'] as num?)?.toDouble() ?? 720.0,
+        height: (rawBounds['height'] as num?)?.toDouble() ?? 480.0,
       );
     } else if (rawBounds is List && rawBounds.length >= 4) {
-      planeBounds = Rectangle<double>(
-        (rawBounds[0] as num).toDouble(),
-        (rawBounds[1] as num).toDouble(),
-        (rawBounds[2] as num).toDouble(),
-        (rawBounds[3] as num).toDouble(),
+      planeBounds = (
+        left: (rawBounds[0] as num).toDouble(),
+        top: (rawBounds[1] as num).toDouble(),
+        width: (rawBounds[2] as num).toDouble(),
+        height: (rawBounds[3] as num).toDouble(),
       );
-    } else if (decoded.containsKey('graphsPlaneWidth') ||
-        decoded.containsKey('graphsPlaneHeight')) {
-      final rawW = decoded['graphsPlaneWidth'];
+    } else if (decoded.containsKey('graphicPlaneWidth') ||
+        decoded.containsKey('graphicPlaneHeight')) {
+      final rawW = decoded['graphicPlaneWidth'];
       final w = rawW is num
           ? rawW.toDouble()
           : (rawW != null ? double.tryParse(rawW.toString()) ?? 720.0 : 720.0);
-      final rawH = decoded['graphsPlaneHeight'];
+      final rawH = decoded['graphicPlaneHeight'];
       final h = rawH is num
           ? rawH.toDouble()
           : (rawH != null ? double.tryParse(rawH.toString()) ?? 480.0 : 480.0);
-      planeBounds = Rectangle<double>(0.0, 0.0, w, h);
+      planeBounds = (left: 0.0, top: 0.0, width: w, height: h);
     }
 
     return GingaConfig(
@@ -250,7 +255,7 @@ class GingaConfig {
       mainAvSrc: decoded['mainAvSrc'] as String? ?? defaultMainAvSrc,
       startWithCCWS: decoded['startWithCCWS'] as bool? ?? false,
       startWithMainAv: decoded['startWithMainAv'] as bool? ?? false,
-      graphsPlaneBounds: planeBounds,
+      graphicPlaneBounds: planeBounds,
       systemVariables: envVars,
       users: users,
     );

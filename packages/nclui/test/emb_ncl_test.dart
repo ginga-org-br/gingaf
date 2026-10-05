@@ -88,7 +88,7 @@ void main() {
             body: NclWidget(
               src: 'main.ncl',
               gingacc: gingacc,
-              bounds: const Rectangle<double>(0.0, 0.0, 720.0, 480.0),
+              bounds: const (left: 0.0, top: 0.0, width: 720.0, height: 480.0),
             ),
           ),
         ),
@@ -141,7 +141,7 @@ void main() {
             body: NclWidget(
               src: 'main.ncl',
               gingacc: gingacc,
-              bounds: const Rectangle<double>(0.0, 0.0, 720.0, 480.0),
+              bounds: const (left: 0.0, top: 0.0, width: 720.0, height: 480.0),
             ),
           ),
         ),

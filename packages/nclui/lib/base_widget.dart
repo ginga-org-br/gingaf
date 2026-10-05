@@ -225,10 +225,10 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
     final size = MediaQuery.maybeOf(context)?.size;
     final planeWidth = parentBounds?.width ??
         size?.width ??
-        (document?.config.graphsPlaneBounds.width ?? 720.0);
+        (document?.config.graphicPlaneBounds.width ?? 720.0);
     final planeHeight = parentBounds?.height ??
         size?.height ??
-        (document?.config.graphsPlaneBounds.height ?? 480.0);
+        (document?.config.graphicPlaneBounds.height ?? 480.0);
 
     double left, top, width, height;
     left = resolveDim(leftStr, planeWidth);

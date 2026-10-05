@@ -642,7 +642,7 @@ class LuaWidgetState extends MediaState<LuaWidget> {
     super.initState();
     parseProperties(widget.media);
 
-    final parentBounds = widget.document?.config.graphsPlaneBounds;
+    final parentBounds = widget.document?.config.graphicPlaneBounds;
     final planeW = parentBounds?.width ?? 1920.0;
     final planeH = parentBounds?.height ?? 1080.0;
     final resolvedW = resolveDim(widthStr, planeW);
