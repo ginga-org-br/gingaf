@@ -84,7 +84,7 @@ release-publish: release
 	gh release upload v$(VERSION) $(ZIP_NAME) --clobber || gh release create v$(VERSION) $(ZIP_NAME) --generate-notes
 
 
-serve:
+serve: 
 	make -C node build
 	make -C node serve
 

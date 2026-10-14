@@ -14,10 +14,8 @@ help:
 deps:
 ifeq ($(OS),Windows_NT)
 	where ffmpeg >nul 2>nul || (echo "ffmpeg not found" && exit 1)
-	where flutter >nul 2>nul || (echo "flutter not found" && exit 1)
 else
 	which ffmpeg >/dev/null 2>&1 || (echo "ffmpeg not found" && exit 1)
-	which flutter >/dev/null 2>&1 || (echo "flutter not found" && exit 1)
 endif
 
 gifs: deps
