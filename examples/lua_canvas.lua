@@ -33,7 +33,13 @@ local function draw()
     canvas:attrColor(255, 255, 255, 255)
     canvas:attrFont('default', 14, 'normal', 'bold')
     canvas:drawTextRect('draw from nclua', x, y, w, h, 'center', 'center')
-    canvas:compose(x + w + 40, y, logo)
+    if logo then
+        canvas:compose(x + w + 40, y, logo)
+    else
+        canvas:attrColor('red')
+        canvas:attrFont('default', 14, 'normal', 'bold')
+        canvas:drawText('Logo not found', x + w + 40, y + 20)
+    end
     canvas:flush()
 end
 

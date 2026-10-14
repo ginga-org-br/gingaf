@@ -12,8 +12,6 @@
     <media type="application/x-ginga-settings" id="mSttgs">
       <property name="service.currentKeyMaster" value="lua"/>
     </media>
-    <media id="lua" src="lua_canvas.lua" descriptor="dCanvas">
-      <property name="background" value="black"/>
-    </media>
+    <media id="lua" src="lua_canvas.lua" descriptor="dCanvas"/>
   </body>
 </ncl>
