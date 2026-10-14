@@ -1,7 +1,7 @@
 MAKEFLAGS += -s --no-print-directory
 .DEFAULT_GOAL := help
 
-.PHONY: help deps test doc release release-publish clean run-example check-app architecture-svg serve
+.PHONY: help deps test tests doc release release-publish clean run-example check-app architecture-svg serve
 
 BASE_HREF ?= /
 
@@ -61,8 +61,10 @@ deps:
 test:
 	flutter test test packages/gingacc/test packages/ncldoc/test packages/nclui/test --no-pub
 
+tests: test
+
 integration_test:
-	flutter test integration_test -d $(RUN_OS)
+	flutter test --no-pub integration_test -d $(RUN_OS)
 
 doc: architecture-svg
 	dart doc
@@ -81,12 +83,14 @@ release:
 release-publish: release
 	gh release upload v$(VERSION) $(ZIP_NAME) --clobber || gh release create v$(VERSION) $(ZIP_NAME) --generate-notes
 
+
 serve:
+	make -C node build
 	make -C node serve
 
 clean:
 	flutter clean
-	rm -rf doc/api packages/*/doc/api
+	make -C node clean
 
 check-app:
 	$(if $(app),,$(error Please specify app (e.g. app=video.ncl)))

@@ -4,6 +4,11 @@ const path = require('path');
 const src = path.resolve(__dirname, '..', '..', 'build', 'web');
 const dest = path.resolve(__dirname, '..', 'public', 'gingaf-web');
 
+if (!fs.existsSync(src)) {
+  console.error(`Error: Flutter web build not found at ${src}. Run "flutter build web --release" or "make build-web" first.`);
+  process.exit(1);
+}
+
 if (fs.existsSync(dest)) {
   fs.rmSync(dest, { recursive: true, force: true });
 }

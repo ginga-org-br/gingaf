@@ -1,7 +1,7 @@
 {
     "name": "ginga-node",
     "version": "0.3.0",
-    "description": "Node.js middleware and static asset distribution package for GingaF Flutter Web",
+    "description": "NodeJS distribution for gingaf player",
     "main": "playground/index.js",
     "types": "playground/index.d.ts",
     "files": [
@@ -9,7 +9,7 @@
         "assets"
     ],
     "scripts": {
-        "flutter:build": "flutter build web --release",
+        "flutter:build": "cd .. && flutter build web --no-pub --release",
         "copy:assets": "node scripts/copy-assets.js",
         "bundle:examples": "node scripts/bundle-examples.js",
         "clean": "node scripts/clean.js",
