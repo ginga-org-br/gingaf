@@ -258,4 +258,28 @@ void main() {
       );
     });
   });
+
+  group('GingaCC loadConfig tests', () {
+    test('loadConfig with GingaConfig instance', () {
+      final gingacc = GingaCC();
+      final newConfig = GingaConfig(startWithCCWS: true);
+      final result = gingacc.loadConfig(newConfig);
+      expect(result, equals(newConfig));
+      expect(gingacc.config, equals(newConfig));
+      expect(gingacc.config.startWithCCWS, isTrue);
+    });
+
+    test('loadConfig with JSON string', () async {
+      final gingacc = GingaCC();
+      final result = await gingacc.loadConfig('{"startWithCCWS": true}');
+      expect(result.startWithCCWS, isTrue);
+      expect(gingacc.config.startWithCCWS, isTrue);
+    });
+
+    test('loadConfig with null resets to default GingaConfig', () {
+      final gingacc = GingaCC(config: GingaConfig(startWithCCWS: true));
+      gingacc.loadConfig(null);
+      expect(gingacc.config.startWithCCWS, isFalse);
+    });
+  });
 }

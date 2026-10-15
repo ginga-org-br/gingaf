@@ -44,6 +44,24 @@ class GingaCC {
     _virtualFiles = files != null ? Map<String, String>.from(files) : null;
   }
 
+  FutureOr<GingaConfig> loadConfig([dynamic configOrSrc, String? baseDirSrc]) {
+    if (configOrSrc is GingaConfig) {
+      config = configOrSrc;
+      return config;
+    }
+    if (configOrSrc is String) {
+      return GingaConfig.fromJson(configOrSrc, baseDirSrc, this).then((cfg) {
+        config = cfg;
+        return cfg;
+      });
+    }
+    if (configOrSrc == null) {
+      config = GingaConfig();
+      return config;
+    }
+    throw ArgumentError('Expected GingaConfig or String: $configOrSrc');
+  }
+
   Uri resolveUri(String src, [String? baseDirSrc]) {
     final rawSrc = src.trim();
     final virtualUri = _lookupVirtualUri(rawSrc);
@@ -121,7 +139,11 @@ class GingaCC {
 
     if (virtualFiles != null) {
       final matched = _lookupVirtualFile(rawInput) ??
-          (uri.isScheme('file') ? _lookupVirtualFile(uri.toFilePath()) : null);
+          (uri.isScheme('file') ? _lookupVirtualFile(uri.toFilePath()) : null) ??
+          _lookupVirtualFile(uri.path) ??
+          (uri.pathSegments.isNotEmpty
+              ? _lookupVirtualFile(uri.pathSegments.last)
+              : null);
       if (matched != null) {
         final parsedMatched = Uri.tryParse(matched);
         if (parsedMatched != null && isHttpUri(parsedMatched)) {
@@ -171,7 +193,11 @@ class GingaCC {
 
     if (virtualFiles != null) {
       final matched = _lookupVirtualFile(rawInput) ??
-          (uri.isScheme('file') ? _lookupVirtualFile(uri.toFilePath()) : null);
+          (uri.isScheme('file') ? _lookupVirtualFile(uri.toFilePath()) : null) ??
+          _lookupVirtualFile(uri.path) ??
+          (uri.pathSegments.isNotEmpty
+              ? _lookupVirtualFile(uri.pathSegments.last)
+              : null);
       if (matched != null) {
         return matched;
       }
