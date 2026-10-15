@@ -27,9 +27,8 @@ void main() {
 
   testWidgets('Verify HtmlWidget run on real platform',
       (WidgetTester tester) async {
-    final gingacc = GingaCC(
-      virtualFiles: {'test_status.html': _testStatusHtml},
-    );
+    final gingacc = GingaCC()
+      ..setVirtualFiles({'test_status.html': _testStatusHtml});
     final completer = Completer<String>();
 
     await tester.pumpWidget(

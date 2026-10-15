@@ -361,12 +361,11 @@ void main() {
     });
 
     test('loads ginga_config.json from virtualFiles in the same folder of the application', () async {
-      final gingacc = GingaCC(
-        virtualFiles: {
+      final gingacc = GingaCC()
+        ..setVirtualFiles({
           'app/main.ncl': '<ncl/>',
           'app/ginga_config.json': '{"mainAvSrc": "https://example.com/virtual_custom.mp4", "startWithMainAv": true}',
-        },
-      );
+        });
 
       final config = await GingaConfig.fromJson('ginga_config.json', 'app/main.ncl', gingacc);
       expect(config.mainAvSrc, equals('https://example.com/virtual_custom.mp4'));

@@ -275,9 +275,8 @@ void main() {
   testWidgets(
       'NclWidget updates widget sizes and positions in response to SET action from key selection',
       (WidgetTester tester) async {
-    final gingacc = GingaCC(
-      virtualFiles: {'joao02syncInt.ncl': _joao02syncIntNcl},
-    );
+    final gingacc = GingaCC()
+      ..setVirtualFiles({'joao02syncInt.ncl': _joao02syncIntNcl});
 
     await tester.pumpWidget(
       MaterialApp(

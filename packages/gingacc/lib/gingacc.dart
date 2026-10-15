@@ -30,15 +30,19 @@ bool isXmlString(String? src) {
 }
 
 class GingaCC {
-  final GingaConfig config;
-  final CCWS ccws;
-  final Map<String, String>? virtualFiles;
+  GingaConfig config;
+  late final CCWS ccws = CCWS();
+  Map<String, String>? _virtualFiles;
 
   GingaCC({
     GingaConfig? config,
-    this.virtualFiles,
-  })  : config = config ?? GingaConfig(),
-        ccws = CCWS();
+  }) : config = config ?? GingaConfig();
+
+  Map<String, String>? get virtualFiles => _virtualFiles;
+
+  void setVirtualFiles(Map<String, String>? files) {
+    _virtualFiles = files != null ? Map<String, String>.from(files) : null;
+  }
 
   Uri resolveUri(String src, [String? baseDirSrc]) {
     final rawSrc = src.trim();

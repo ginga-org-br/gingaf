@@ -164,9 +164,8 @@ void main() {
   testWidgets(
       'NclWidget layouts children based on descriptors and region hierarchy',
       (WidgetTester tester) async {
-    final gingacc = GingaCC(
-      virtualFiles: {'joao01sync.ncl': _joao01syncNcl},
-    );
+    final gingacc = GingaCC()
+      ..setVirtualFiles({'joao01sync.ncl': _joao01syncNcl});
 
     await tester.pumpWidget(
       MaterialApp(

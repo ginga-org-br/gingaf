@@ -25,7 +25,7 @@ c:drawRect("fill", 110, 110, 20, 20)
 
   testWidgets('NCL Integration Mounting Verification',
       (WidgetTester tester) async {
-    final gingacc = GingaCC(virtualFiles: sharedAssets);
+    final gingacc = GingaCC()..setVirtualFiles(sharedAssets);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -44,7 +44,7 @@ c:drawRect("fill", 110, 110, 20, 20)
   group('LuaWidget Standalone Unit Tests', () {
     testWidgets('LuaWidget should process multiple drawing commands',
         (WidgetTester tester) async {
-      final gingacc = GingaCC(virtualFiles: sharedAssets);
+      final gingacc = GingaCC()..setVirtualFiles(sharedAssets);
 
       await tester.pumpWidget(
         MaterialApp(

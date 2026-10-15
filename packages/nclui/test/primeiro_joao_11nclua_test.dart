@@ -196,13 +196,12 @@ void main() {
   testWidgets(
       'NclWidget runs lua script configuration and triggers property modifications successfully',
       (WidgetTester tester) async {
-    final gingacc = GingaCC(
-      virtualFiles: {
+    final gingacc = GingaCC()
+      ..setVirtualFiles({
         'joao11nclua.ncl': _joao11ncluaNcl,
         'script/counter.lua': _counterLua,
         'counter.lua': _counterLua,
-      },
-    );
+      });
 
     await tester.pumpWidget(
       MaterialApp(

@@ -31,9 +31,8 @@ void main() {
 
     testWidgets('NclWidget pauses and resumes AVWidget media',
         (WidgetTester tester) async {
-      final gingacc = GingaCC(
-        virtualFiles: testVirtualFiles,
-      );
+      final gingacc = GingaCC()
+        ..setVirtualFiles(testVirtualFiles);
       await tester.pumpWidget(MaterialApp(
         home: NclWidget(
           src: 'test.ncl',
@@ -65,8 +64,7 @@ void main() {
       );
       final gingacc = GingaCC(
         config: config,
-        virtualFiles: testVirtualFiles,
-      );
+      )..setVirtualFiles(testVirtualFiles);
       await tester.pumpWidget(MaterialApp(
         home: NclWidget(
           src: 'test.ncl',
@@ -93,8 +91,7 @@ void main() {
       );
       final gingacc = GingaCC(
         config: config,
-        virtualFiles: testVirtualFiles,
-      );
+      )..setVirtualFiles(testVirtualFiles);
       await tester.pumpWidget(MaterialApp(
         home: NclWidget(
           src: 'test.ncl',
@@ -135,8 +132,7 @@ void main() {
       );
       final gingacc = GingaCC(
         config: config,
-        virtualFiles: testVirtualFiles,
-      );
+      )..setVirtualFiles(testVirtualFiles);
       await tester.pumpWidget(Ginga(
         gingacc: gingacc,
       ));
@@ -159,8 +155,7 @@ void main() {
       );
       final gingacc = GingaCC(
         config: config,
-        virtualFiles: testVirtualFiles,
-      );
+      )..setVirtualFiles(testVirtualFiles);
       await tester.pumpWidget(Ginga(
         gingacc: gingacc,
       ));
@@ -412,7 +407,7 @@ void main() {
       );
       final gingacc = GingaCC(
         config: config,
-        virtualFiles: {
+      )..setVirtualFiles({
           'test_forward.ncl': '''
 <ncl id="test_forward" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>

@@ -75,8 +75,7 @@ void main() {
     testWidgets(
         'full screen embedded ncl advances time and checks pixel dimensions',
         (WidgetTester tester) async {
-      final gingacc = GingaCC(
-        virtualFiles: {
+      final gingacc = GingaCC()..setVirtualFiles({
           'main.ncl': embNclFullScreen,
           'video.ncl': videoNcl,
         },
@@ -128,8 +127,7 @@ void main() {
     testWidgets(
         'non-full screen embedded ncl advances time and checks pixel dimensions',
         (WidgetTester tester) async {
-      final gingacc = GingaCC(
-        virtualFiles: {
+      final gingacc = GingaCC()..setVirtualFiles({
           'main.ncl': embNclNotFullScreen,
           'video.ncl': videoNcl,
         },

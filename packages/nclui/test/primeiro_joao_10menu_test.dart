@@ -153,8 +153,7 @@ void main() {
       config: GingaConfig(
         systemVariables: {'system.language': 'por'},
       ),
-      virtualFiles: {'joao10menu.ncl': _joao10menuNcl},
-    );
+    )..setVirtualFiles({'joao10menu.ncl': _joao10menuNcl});
 
     await tester.pumpWidget(
       MaterialApp(
@@ -197,8 +196,7 @@ void main() {
       config: GingaConfig(
         systemVariables: {'system.language': 'por'},
       ),
-      virtualFiles: {'joao10menu.ncl': _joao10menuNcl},
-    );
+    )..setVirtualFiles({'joao10menu.ncl': _joao10menuNcl});
 
     await tester.pumpWidget(
       MaterialApp(
@@ -279,8 +277,7 @@ void main() {
       config: GingaConfig(
         systemVariables: {'system.language': 'por'},
       ),
-      virtualFiles: {'joao10menu.ncl': _joao10menuNcl},
-    );
+    )..setVirtualFiles({'joao10menu.ncl': _joao10menuNcl});
 
     await tester.pumpWidget(
       MaterialApp(

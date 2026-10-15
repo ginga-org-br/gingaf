@@ -49,8 +49,7 @@ void main() {
     testWidgets(
         'full screen embedded html advances time and checks pixel dimensions',
         (WidgetTester tester) async {
-      final gingacc = GingaCC(
-        virtualFiles: {
+      final gingacc = GingaCC()..setVirtualFiles({
           'main.ncl': embHtmlFullScreen,
           'current_service.html': htmlContent,
         },
@@ -91,8 +90,7 @@ void main() {
     testWidgets(
         'non-full screen embedded html advances time and checks pixel dimensions',
         (WidgetTester tester) async {
-      final gingacc = GingaCC(
-        virtualFiles: {
+      final gingacc = GingaCC()..setVirtualFiles({
           'main.ncl': embHtmlNotFullScreen,
           'current_service.html': htmlContent,
         },

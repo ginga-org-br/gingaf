@@ -119,7 +119,7 @@ event.register(function(evt)
 end)
 ''';
 
-      final gingacc = GingaCC(virtualFiles: {
+      final gingacc = GingaCC()..setVirtualFiles({
         'main.ncl': nclContent,
         'script.lua': luaContent,
       });
@@ -198,7 +198,7 @@ end)
 </ncl>
 ''';
 
-      final gingacc = GingaCC(virtualFiles: {
+      final gingacc = GingaCC()..setVirtualFiles({
         'main.ncl': nclContent,
         'lua_canvas.lua': luaCanvasContent,
       });
@@ -344,7 +344,7 @@ end)
 </ncl>
 ''';
 
-      final gingacc = GingaCC(virtualFiles: {
+      final gingacc = GingaCC()..setVirtualFiles({
         'main.ncl': nclContent,
         'lua_canvas.lua': luaCanvasContent,
       });
@@ -430,7 +430,7 @@ end)
 </ncl>
 ''';
 
-      final gingacc = GingaCC(virtualFiles: {
+      final gingacc = GingaCC()..setVirtualFiles({
         'main.ncl': nclContent,
         'lua_canvas.lua': luaCanvasContent,
       });

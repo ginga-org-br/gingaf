@@ -20,7 +20,7 @@ void main() {
       final tempFile = File('${tempDir.path}/sample.ncl');
       tempFile.writeAsStringSync('<ncl>test</ncl>');
 
-      final gingacc = GingaCC(virtualFiles: {
+      final gingacc = GingaCC()..setVirtualFiles({
         'app.ncl': '<ncl>virtual</ncl>',
       });
       final fileUri = gingacc.resolveUri(tempFile.absolute.uri.toString());
@@ -131,7 +131,7 @@ void main() {
     });
 
     test('preserves virtual files', () {
-      final gingacc = GingaCC(virtualFiles: {
+      final gingacc = GingaCC()..setVirtualFiles({
         'my_virtual.png': 'https://example.com/virtual.png',
       });
       final uri = gingacc.resolveUri('my_virtual.png');
@@ -139,7 +139,7 @@ void main() {
     });
 
     test('resolves virtual files with spaces and percent encoding', () {
-      final gingacc = GingaCC(virtualFiles: {
+      final gingacc = GingaCC()..setVirtualFiles({
         'my image.png': 'blob:http://localhost:5173/blob-123',
         'folder with spaces/pic.png': 'https://example.com/pic.png',
       });
@@ -199,7 +199,7 @@ void main() {
     });
 
     test('loads virtual file content synchronously', () {
-      final gingacc = GingaCC(virtualFiles: {
+      final gingacc = GingaCC()..setVirtualFiles({
         'levels/1.txt': 'WWWWW\nW P W\nWWWWW',
         'config.lua': 'return { speed = 10 }',
       });

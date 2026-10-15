@@ -178,9 +178,8 @@ void main() {
   testWidgets(
       'NclWidget layouts children based on parsed properties and sorts by zIndex',
       (WidgetTester tester) async {
-    final gingacc = GingaCC(
-      virtualFiles: {'joao00syncProp.ncl': _joao00syncPropNcl},
-    );
+    final gingacc = GingaCC()
+      ..setVirtualFiles({'joao00syncProp.ncl': _joao00syncPropNcl});
 
     await tester.pumpWidget(
       MaterialApp(
@@ -245,9 +244,8 @@ void main() {
 
   testWidgets('NclWidget forward triggers links and stops media after duration',
       (WidgetTester tester) async {
-    final gingacc = GingaCC(
-      virtualFiles: {'joao00syncProp.ncl': _joao00syncPropNcl},
-    );
+    final gingacc = GingaCC()
+      ..setVirtualFiles({'joao00syncProp.ncl': _joao00syncPropNcl});
 
     await tester.pumpWidget(
       MaterialApp(

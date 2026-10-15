@@ -478,8 +478,7 @@ void main() {
       config: GingaConfig(
         systemVariables: {'system.language': 'eng'},
       ),
-      virtualFiles: {'joao06switch.ncl': _joao06switchNcl},
-    );
+    )..setVirtualFiles({'joao06switch.ncl': _joao06switchNcl});
 
     await tester.pumpWidget(
       MaterialApp(

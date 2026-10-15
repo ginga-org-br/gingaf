@@ -203,9 +203,8 @@ void main() {
   testWidgets(
       'NclWidget evaluates settings conditional triggers correctly when true',
       (WidgetTester tester) async {
-    final gingacc = GingaCC(
-      virtualFiles: {'joao09settings.ncl': _joao09settingsNcl},
-    );
+    final gingacc = GingaCC()
+      ..setVirtualFiles({'joao09settings.ncl': _joao09settingsNcl});
 
     await tester.pumpWidget(
       MaterialApp(
@@ -246,9 +245,8 @@ void main() {
   testWidgets(
       'NclWidget evaluates settings conditional triggers correctly when false',
       (WidgetTester tester) async {
-    final gingacc = GingaCC(
-      virtualFiles: {'joao09settings.ncl': _joao09settingsNcl},
-    );
+    final gingacc = GingaCC()
+      ..setVirtualFiles({'joao09settings.ncl': _joao09settingsNcl});
 
     await tester.pumpWidget(
       MaterialApp(

@@ -223,9 +223,8 @@ void main() {
 
   testWidgets('NclWidget runs animation example structure successfully',
       (WidgetTester tester) async {
-    final gingacc = GingaCC(
-      virtualFiles: {'joao08animation.ncl': _joao08animationNcl},
-    );
+    final gingacc = GingaCC()
+      ..setVirtualFiles({'joao08animation.ncl': _joao08animationNcl});
 
     await tester.pumpWidget(
       MaterialApp(

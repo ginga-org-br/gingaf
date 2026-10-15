@@ -289,9 +289,8 @@ void main() {
 
   testWidgets('NclWidget updates layout in response to form ending',
       (WidgetTester tester) async {
-    final gingacc = GingaCC(
-      virtualFiles: {'joao05return.ncl': _joao05returnNcl},
-    );
+    final gingacc = GingaCC()
+      ..setVirtualFiles({'joao05return.ncl': _joao05returnNcl});
 
     await tester.pumpWidget(
       MaterialApp(

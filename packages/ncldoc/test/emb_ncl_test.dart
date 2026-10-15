@@ -66,11 +66,10 @@ void main() {
 
     test('full screen embedded ncl advances time and checks pixel dimensions',
         () {
-      final gingacc = GingaCC(
-        virtualFiles: {
+      final gingacc = GingaCC()
+        ..setVirtualFiles({
           'video.ncl': videoNcl,
-        },
-      );
+        });
       final doc = NclDocument.fromContent(embNclFullScreen, gingacc: gingacc);
       final embMedia = doc.getNodeById('embNcl') as Media;
       final videoDoc = NclDocument.fromContent(
@@ -131,11 +130,10 @@ void main() {
     test(
         'non-full screen embedded ncl advances time and checks pixel dimensions',
         () {
-      final gingacc = GingaCC(
-        virtualFiles: {
+      final gingacc = GingaCC()
+        ..setVirtualFiles({
           'video.ncl': videoNcl,
-        },
-      );
+        });
       final doc =
           NclDocument.fromContent(embNclNotFullScreen, gingacc: gingacc);
       final embMedia = doc.getNodeById('embNcl') as Media;

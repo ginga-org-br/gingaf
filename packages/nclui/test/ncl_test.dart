@@ -15,9 +15,8 @@ const _testImageNcl = '''
 void main() {
   testWidgets('Verify NclWidget launches with branding logo',
       (WidgetTester tester) async {
-    final gingacc = GingaCC(
-      virtualFiles: {'test_image.ncl': _testImageNcl},
-    );
+    final gingacc = GingaCC()
+      ..setVirtualFiles({'test_image.ncl': _testImageNcl});
 
     await tester.pumpWidget(
       MaterialApp(
@@ -41,8 +40,7 @@ void main() {
     );
     final gingacc = GingaCC(
       config: config,
-      virtualFiles: {'test_image.ncl': _testImageNcl},
-    );
+    )..setVirtualFiles({'test_image.ncl': _testImageNcl});
 
     await tester.pumpWidget(
       MaterialApp(

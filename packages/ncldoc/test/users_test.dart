@@ -1496,16 +1496,15 @@ end)
 ]''';
 
         final gingacc = GingaCC(
-          virtualFiles: {
-            'current_user.ncl': currentUserNcl,
-            'user_info.lua': userInfoLua,
-            'users_data_with_adult_male.json': usersDataJson,
-          },
           config: GingaConfig(
             appSrc: 'current_user.ncl',
             users: Users(usersDataJson),
           ),
-        );
+        )..setVirtualFiles({
+            'current_user.ncl': currentUserNcl,
+            'user_info.lua': userInfoLua,
+            'users_data_with_adult_male.json': usersDataJson,
+          });
 
         final doc =
             await NclDocument.fromSrc('current_user.ncl', gingacc: gingacc);
@@ -1683,13 +1682,12 @@ end)
             '{"attribute": "age", "comparator": "gte", "value": "18"}';
 
         final gingacc = GingaCC(
-          virtualFiles: {
-            'adult_query.json': adultQueryJson,
-          },
           config: GingaConfig(
             users: Users(usersDataJson),
           ),
-        );
+        )..setVirtualFiles({
+            'adult_query.json': adultQueryJson,
+          });
 
         final doc = NclDocument.fromContent(xml, gingacc: gingacc);
         await doc.loadUserProfiles();
@@ -1789,13 +1787,12 @@ end)
             '{"attribute": "age", "comparator": "gte", "value": "18"}';
 
         final gingacc = GingaCC(
-          virtualFiles: {
-            'adult_query.json': adultQueryJson,
-          },
           config: GingaConfig(
             users: Users(usersDataJson),
           ),
-        );
+        )..setVirtualFiles({
+            'adult_query.json': adultQueryJson,
+          });
 
         final doc = NclDocument.fromContent(xml, gingacc: gingacc);
         await doc.loadUserProfiles();

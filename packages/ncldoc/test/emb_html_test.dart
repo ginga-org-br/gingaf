@@ -46,11 +46,10 @@ void main() {
 
     test('full screen embedded html advances time and checks pixel dimensions',
         () {
-      final gingacc = GingaCC(
-        virtualFiles: {
+      final gingacc = GingaCC()
+        ..setVirtualFiles({
           'current_service.html': htmlContent,
-        },
-      );
+        });
       final doc = NclDocument.fromContent(embHtmlFullScreen, gingacc: gingacc);
       final htmlMedia = doc.getNodeById('htmlForm') as Media;
 
@@ -75,11 +74,10 @@ void main() {
     test(
         'non-full screen embedded html advances time and checks pixel dimensions',
         () {
-      final gingacc = GingaCC(
-        virtualFiles: {
+      final gingacc = GingaCC()
+        ..setVirtualFiles({
           'current_service.html': htmlContent,
-        },
-      );
+        });
       final doc =
           NclDocument.fromContent(embHtmlNotFullScreen, gingacc: gingacc);
       final htmlMedia = doc.getNodeById('htmlForm') as Media;
