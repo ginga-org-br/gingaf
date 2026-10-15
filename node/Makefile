@@ -1,7 +1,8 @@
 MAKEFLAGS += -s --no-print-directory
 .DEFAULT_GOAL := help
+$(if $(filter Windows_NT,$(OS)),$(if $(shell where printf 2>nul),,$(error coreutils is not installed. Please run: winget install coreutils)))
 
-.PHONY: help deps build clean serve serve-examples
+.PHONY: help deps build clean serve serve-examples deploy-folder
 
 help:
 	@printf "%s\n" \
@@ -12,7 +13,8 @@ help:
 		"  build                         Build Flutter web, copy assets, and compile TypeScript with esbuild" \
 		"  clean                         Remove built artifacts" \
 		"  serve                         Serve Playground application" \
-		"  serve-examples                Serve all 3 examples (Playground app, Player app, Node Express app)"
+		"  serve-examples                Serve all 3 examples (Playground app, Player app, Node Express app)" \
+		"  deploy-folder                 Deploy playground to \$$GINGA_DEPLOY/gingaf/playground"
 
 deps:
 	npm install --no-audit --no-fund
@@ -28,5 +30,10 @@ serve: build
 
 serve-examples: build
 	node scripts/serve.js --express examples/playground-app-example.html examples/player-app-example.html
+
+deploy-folder: build
+	$(if $(strip $(GINGA_DEPLOY)),,$(error GINGA_DEPLOY environment variable is not set))
+	mkdir -p $(GINGA_DEPLOY)/gingaf/playground
+	rsync -av --delete playground/ $(GINGA_DEPLOY)/gingaf/playground/
 
 

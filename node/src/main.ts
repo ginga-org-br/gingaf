@@ -69,9 +69,6 @@ export async function fetchCatalog(): Promise<Catalog> {
             candidateUrls.push(`${window.location.origin}/examples/catalog.json`);
         }
         candidateUrls.push('/examples/catalog.json');
-        if (window.location.pathname.includes('/examples/')) {
-            candidateUrls.push('../catalog.json');
-        }
     }
     candidateUrls.push(FALLBACK_CATALOG_URL);
 
@@ -83,11 +80,18 @@ export async function fetchCatalog(): Promise<Catalog> {
                 if (data && data.examples) {
                     let rootUrl = data.rootUrl;
                     if (!rootUrl) {
-                        if (url.includes('/examples/catalog.json') && typeof window !== 'undefined' && window.location.origin) {
-                            rootUrl = `${window.location.origin}/examples/`;
-                        } else if (url.includes('/examples/catalog.json')) {
-                            rootUrl = '/examples/';
-                        } else if (url.startsWith('http://') || url.startsWith('https://')) {
+                        if (url.startsWith('http://') || url.startsWith('https://')) {
+                            try {
+                                const parsed = new URL(url);
+                                if (typeof window !== 'undefined' && window.location.origin && parsed.origin === window.location.origin) {
+                                    rootUrl = parsed.pathname.substring(0, parsed.pathname.lastIndexOf('/') + 1);
+                                } else {
+                                    rootUrl = url.substring(0, url.lastIndexOf('/') + 1);
+                                }
+                            } catch (_) {
+                                rootUrl = url.substring(0, url.lastIndexOf('/') + 1);
+                            }
+                        } else if (url.startsWith('/')) {
                             rootUrl = url.substring(0, url.lastIndexOf('/') + 1);
                         } else {
                             rootUrl = DEFAULT_ROOT_URL;
@@ -103,7 +107,7 @@ export async function fetchCatalog(): Promise<Catalog> {
                     };
                 }
             }
-        } catch (_) {}
+        } catch (_) { }
     }
 
     const defaultRoot = (typeof window !== 'undefined' && window.location.origin && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port))
@@ -180,8 +184,15 @@ export function getExampleUrl(example: Example): string {
         return example.rawMainUrl;
     }
     const mainFile = example.mainFile;
-    if (typeof window !== 'undefined' && window.location.origin && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port)) {
-        return `${window.location.origin}/examples/${mainFile}`;
+    if (typeof window !== 'undefined' && window.location.origin) {
+        if (example.rawMainUrl) {
+            try {
+                return new URL(example.rawMainUrl, window.location.href).href;
+            } catch (_) { }
+        }
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port) {
+            return `${window.location.origin}/examples/${mainFile}`;
+        }
     }
     return `${DEFAULT_ROOT_URL}${mainFile}`;
 }
@@ -196,15 +207,23 @@ export async function loadExampleFiles(example: Example): Promise<void> {
                 localCandidates.push(`${window.location.origin}/examples/${fileName}`);
             }
             localCandidates.push(`/examples/${fileName}`);
-            const fetchList = [resolved, url, ...localCandidates];
+            const remoteFallback = `${DEFAULT_ROOT_URL}${fileName}`;
+            const fetchList = [resolved, url, ...localCandidates, remoteFallback];
             for (const candidate of fetchList) {
+                if (!candidate) continue;
                 try {
                     const res = await fetch(candidate);
                     if (res.ok) {
-                        example.files[fileName] = await res.text();
+                        const text = await res.text();
+                        if (fileName.endsWith('.ncl') || fileName.endsWith('.lua') || fileName.endsWith('.json')) {
+                            if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html') || text.trim().startsWith('<HTML')) {
+                                continue;
+                            }
+                        }
+                        example.files[fileName] = text;
                         break;
                     }
-                } catch (_) {}
+                } catch (_) { }
             }
         }
     }
@@ -352,7 +371,7 @@ export async function resolveTargetExample(appParam: string | null): Promise<Exa
             examples[extractedKey] = dynamicExample;
             return dynamicExample;
         }
-    } catch (_) {}
+    } catch (_) { }
 
     return examples['video'] || Object.values(examples)[0];
 }
@@ -718,7 +737,7 @@ ${buildExampleOptions()}
                     (window as any).GingaApp.appPath = null;
                     (window as any).GingaApp.currentApp = null;
                 }
-            } catch (_) {}
+            } catch (_) { }
             isRunning = false;
         } else {
             currentExample.files[currentFileName] = editor.getValue();
