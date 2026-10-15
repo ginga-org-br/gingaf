@@ -1,5 +1,18 @@
 import * as monaco from 'monaco-editor';
-import bundledExamples from './examples.json';
+
+export interface CatalogItem {
+    mainFile: string;
+    category?: string;
+    description?: string;
+    otherEditbleFiles?: string[];
+    otherEditableFiles?: string[];
+    extraFiles?: string[];
+}
+
+export interface Catalog {
+    rootUrl?: string;
+    examples: Record<string, CatalogItem>;
+}
 
 export interface Example {
     mainFile: string;
@@ -10,38 +23,125 @@ export interface Example {
     fileUrls?: Record<string, string>;
 }
 
-const RAW_GITHUB_BASE = 'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/';
-const RAW_PJ_BASE = `${RAW_GITHUB_BASE}primeiro-joao/`;
+const DEFAULT_ROOT_URL = 'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/';
+const FALLBACK_CATALOG_URL = `${DEFAULT_ROOT_URL}catalog.json`;
+let catalogRootUrl = DEFAULT_ROOT_URL;
 
-const pjMediaFiles: Record<string, string> = {
-    'media/animGar.mp4': `${RAW_PJ_BASE}media/animGar.mp4`,
-    'media/background.png': `${RAW_PJ_BASE}media/background.png`,
-    'media/backgroundPassive.png': `${RAW_PJ_BASE}media/backgroundPassive.png`,
-    'media/cartoes.png': `${RAW_PJ_BASE}media/cartoes.png`,
-    'media/cartoon.mp4': `${RAW_PJ_BASE}media/cartoon.mp4`,
-    'media/cartoon.png': `${RAW_PJ_BASE}media/cartoon.png`,
-    'media/chorinho.png': `${RAW_PJ_BASE}media/chorinho.png`,
-    'media/choro.mp4': `${RAW_PJ_BASE}media/choro.mp4`,
-    'media/chut.png': `${RAW_PJ_BASE}media/chut.png`,
-    'media/chuteira_mod.png': `${RAW_PJ_BASE}media/chuteira_mod.png`,
-    'media/drible.mp4': `${RAW_PJ_BASE}media/drible.mp4`,
-    'media/enComprou.htm': `${RAW_PJ_BASE}media/enComprou.htm`,
-    'media/enForm.htm': `${RAW_PJ_BASE}media/enForm.htm`,
-    'media/icon.png': `${RAW_PJ_BASE}media/icon.png`,
-    'media/iconPassive.png': `${RAW_PJ_BASE}media/iconPassive.png`,
-    'media/intOff.png': `${RAW_PJ_BASE}media/intOff.png`,
-    'media/intOn.png': `${RAW_PJ_BASE}media/intOn.png`,
-    'media/photo.png': `${RAW_PJ_BASE}media/photo.png`,
-    'media/ptComprou.htm': `${RAW_PJ_BASE}media/ptComprou.htm`,
-    'media/ptForm.htm': `${RAW_PJ_BASE}media/ptForm.htm`,
-    'media/rock.mp4': `${RAW_PJ_BASE}media/rock.mp4`,
-    'media/rock.png': `${RAW_PJ_BASE}media/rock.png`,
-    'media/shoes.mp4': `${RAW_PJ_BASE}media/shoes.mp4`,
-    'media/techno.mp4': `${RAW_PJ_BASE}media/techno.mp4`,
-    'media/techno.png': `${RAW_PJ_BASE}media/techno.png`,
-};
+const examples: Record<string, Example> = {};
+let catalogLoaded = false;
+let catalogLoadPromise: Promise<void> | null = null;
 
-const examples: Record<string, Example> = bundledExamples as Record<string, Example>;
+function createExampleFromCatalogItem(key: string, item: CatalogItem, rootUrl: string): Example {
+    const mainFile = item.mainFile;
+    const relDir = mainFile.includes('/') ? mainFile.substring(0, mainFile.lastIndexOf('/')) : '';
+    const rawMainUrl = `${rootUrl}${mainFile}`;
+    const files: Record<string, string> = {
+        [mainFile]: ''
+    };
+    const fileUrls: Record<string, string> = {
+        [mainFile]: rawMainUrl
+    };
+
+    const extraFilesList = item.otherEditbleFiles || item.otherEditableFiles || item.extraFiles;
+    if (extraFilesList && Array.isArray(extraFilesList)) {
+        for (const extra of extraFilesList) {
+            const fullRel = (!relDir || extra.startsWith(relDir + '/')) ? extra : `${relDir}/${extra}`;
+            const extraUrl = `${rootUrl}${fullRel}`;
+            files[fullRel] = '';
+            fileUrls[fullRel] = extraUrl;
+        }
+    }
+
+    return {
+        mainFile,
+        rawMainUrl,
+        category: item.category,
+        description: item.description,
+        files,
+        fileUrls
+    };
+}
+
+export async function fetchCatalog(): Promise<Catalog> {
+    const candidateUrls: string[] = [];
+    if (typeof window !== 'undefined') {
+        if (window.location.origin) {
+            candidateUrls.push(`${window.location.origin}/examples/catalog.json`);
+        }
+        candidateUrls.push('/examples/catalog.json');
+        if (window.location.pathname.includes('/examples/')) {
+            candidateUrls.push('../catalog.json');
+        }
+    }
+    candidateUrls.push(FALLBACK_CATALOG_URL);
+
+    for (const url of candidateUrls) {
+        try {
+            const res = await fetch(url);
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.examples) {
+                    let rootUrl = data.rootUrl;
+                    if (!rootUrl) {
+                        if (url.includes('/examples/catalog.json') && typeof window !== 'undefined' && window.location.origin) {
+                            rootUrl = `${window.location.origin}/examples/`;
+                        } else if (url.includes('/examples/catalog.json')) {
+                            rootUrl = '/examples/';
+                        } else if (url.startsWith('http://') || url.startsWith('https://')) {
+                            rootUrl = url.substring(0, url.lastIndexOf('/') + 1);
+                        } else {
+                            rootUrl = DEFAULT_ROOT_URL;
+                        }
+                    }
+                    if (rootUrl.startsWith('/') && typeof window !== 'undefined' && window.location.origin) {
+                        rootUrl = `${window.location.origin}${rootUrl}`;
+                    }
+                    catalogRootUrl = rootUrl;
+                    return {
+                        rootUrl,
+                        examples: data.examples
+                    };
+                }
+            }
+        } catch (_) {}
+    }
+
+    const defaultRoot = (typeof window !== 'undefined' && window.location.origin && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port))
+        ? `${window.location.origin}/examples/`
+        : DEFAULT_ROOT_URL;
+    catalogRootUrl = defaultRoot;
+
+    return {
+        rootUrl: defaultRoot,
+        examples: {}
+    };
+}
+
+export async function ensureCatalogLoaded(): Promise<void> {
+    if (catalogLoaded) return;
+    if (catalogLoadPromise) return catalogLoadPromise;
+
+    catalogLoadPromise = (async () => {
+        const catalog = await fetchCatalog();
+        catalogRootUrl = catalog.rootUrl || DEFAULT_ROOT_URL;
+        for (const [key, item] of Object.entries(catalog.examples || {})) {
+            examples[key] = createExampleFromCatalogItem(key, item, catalogRootUrl);
+        }
+        if (Object.keys(examples).length === 0) {
+            examples['video'] = {
+                mainFile: 'video.ncl',
+                rawMainUrl: `${DEFAULT_ROOT_URL}video.ncl`,
+                category: 'media',
+                description: 'Video media presentation example',
+                files: { 'video.ncl': '' },
+                fileUrls: { 'video.ncl': `${DEFAULT_ROOT_URL}video.ncl` }
+            };
+        }
+        catalogLoaded = true;
+    })();
+
+    return catalogLoadPromise;
+}
 
 (self as any).MonacoEnvironment = {
     getWorkerUrl(_workerId: string, _label: string) {
@@ -72,58 +172,68 @@ export function getEditorLanguage(fileName: string): string {
 }
 
 export function resolveFileUrl(url: string): string {
-    if (typeof window !== 'undefined' && !window.location.hostname.includes('github.io')) {
-        if (url.startsWith(RAW_GITHUB_BASE)) {
-            return url.replace(RAW_GITHUB_BASE, `${window.location.origin}/examples/`);
-        }
-    }
     return url;
 }
 
+export function getExampleUrl(example: Example): string {
+    if (example.rawMainUrl && (example.rawMainUrl.startsWith('http://') || example.rawMainUrl.startsWith('https://'))) {
+        return example.rawMainUrl;
+    }
+    const mainFile = example.mainFile;
+    if (typeof window !== 'undefined' && window.location.origin && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port)) {
+        return `${window.location.origin}/examples/${mainFile}`;
+    }
+    return `${DEFAULT_ROOT_URL}${mainFile}`;
+}
+
 export async function loadExampleFiles(example: Example): Promise<void> {
-    if (example.fileUrls) {
-        for (const [fileName, url] of Object.entries(example.fileUrls)) {
-            if (isEditableFile(fileName) && (!example.files[fileName] || example.files[fileName] === '')) {
-                const resolved = resolveFileUrl(url);
+    for (const fileName of Object.keys(example.files)) {
+        if (isEditableFile(fileName) && (!example.files[fileName] || example.files[fileName] === '')) {
+            const url = example.fileUrls?.[fileName] || `${catalogRootUrl}${fileName}`;
+            const resolved = resolveFileUrl(url);
+            const localCandidates: string[] = [];
+            if (typeof window !== 'undefined' && window.location.origin) {
+                localCandidates.push(`${window.location.origin}/examples/${fileName}`);
+            }
+            localCandidates.push(`/examples/${fileName}`);
+            const fetchList = [resolved, url, ...localCandidates];
+            for (const candidate of fetchList) {
                 try {
-                    let res = await fetch(resolved);
-                    if (!res.ok && resolved !== url) {
-                        res = await fetch(url);
-                    }
+                    const res = await fetch(candidate);
                     if (res.ok) {
                         example.files[fileName] = await res.text();
+                        break;
                     }
-                } catch (_) {
-                    try {
-                        const res = await fetch(url);
-                        if (res.ok) {
-                            example.files[fileName] = await res.text();
-                        }
-                    } catch (e) {}
-                }
+                } catch (_) {}
             }
         }
     }
 }
 
 export function getAllFiles(example: Example): Record<string, string> {
-    const resolvedUrls: Record<string, string> = {};
+    const result: Record<string, string> = {};
     if (example.fileUrls) {
         for (const [k, v] of Object.entries(example.fileUrls)) {
-            resolvedUrls[k] = resolveFileUrl(v);
+            result[k] = resolveFileUrl(v);
         }
     }
-    const resolvedPjMedia: Record<string, string> = {};
-    if (example.category === 'primeiro-joao') {
-        for (const [k, v] of Object.entries(pjMediaFiles)) {
-            resolvedPjMedia[k] = resolveFileUrl(v);
+    const relDir = example.mainFile.includes('/') ? example.mainFile.substring(0, example.mainFile.lastIndexOf('/')) : '';
+    for (const [k, v] of Object.entries(example.files)) {
+        result[k] = v;
+        if (k.includes('/')) {
+            const base = k.split('/').pop()!;
+            result[base] = v;
+        } else if (relDir) {
+            result[`${relDir}/${k}`] = v;
         }
     }
-    return {
-        ...resolvedUrls,
-        ...resolvedPjMedia,
-        ...example.files,
-    };
+    if (example.mainFile && example.files[example.mainFile] !== undefined) {
+        result[example.mainFile] = example.files[example.mainFile];
+        if (example.rawMainUrl) {
+            result[example.rawMainUrl] = example.files[example.mainFile];
+        }
+    }
+    return result;
 }
 
 export function getEffectiveSearch(): string {
@@ -150,6 +260,8 @@ export function resolvePlayerBaseUrl(playerParam: string | null): string {
 }
 
 export async function resolveTargetExample(appParam: string | null): Promise<Example> {
+    await ensureCatalogLoaded();
+
     if (!appParam) {
         return examples['video'] || Object.values(examples)[0];
     }
@@ -160,27 +272,6 @@ export async function resolveTargetExample(appParam: string | null): Promise<Exa
 
     if (examples[appParam]) return examples[appParam];
     if (examples[cleanParam]) return examples[cleanParam];
-    if (cleanParam.startsWith('examples/')) {
-        const sub = cleanParam.replace(/^examples\//, '');
-        if (examples[sub]) return examples[sub];
-    }
-    if (cleanParam === 'sbtvd/main.ncl' || cleanParam === 'sbtvd') return examples['sbtvd'];
-    if (cleanParam === 'sbtvd_video' || cleanParam === 'sbtvd_video.ncl') return examples['sbtvd'];
-    if (cleanParam === 'multiuser_profile/main.ncl' || cleanParam === 'multiuser_profile') return examples['multiuser_profile'];
-    if (cleanParam === 'multiuser_current/main.ncl' || cleanParam === 'multiuser_current') return examples['multiuser_current'];
-    if (examples[extractedFileName]) return examples[extractedFileName];
-    if (examples[extractedKey]) return examples[extractedKey];
-
-    for (const key of Object.keys(examples)) {
-        if (
-            key === cleanParam ||
-            (examples[key].rawMainUrl && examples[key].rawMainUrl.endsWith(cleanParam)) ||
-            examples[key].mainFile === extractedFileName ||
-            examples[key].mainFile === appParam
-        ) {
-            return examples[key];
-        }
-    }
 
     if (appParam.startsWith('http://') || appParam.startsWith('https://')) {
         try {
@@ -193,7 +284,8 @@ export async function resolveTargetExample(appParam: string | null): Promise<Exa
                     rawMainUrl: appParam,
                     category: 'remote',
                     description: 'Remote App',
-                    files: { [fileName]: text }
+                    files: { [fileName]: text },
+                    fileUrls: { [fileName]: appParam }
                 };
                 examples[appParam] = remoteExample;
                 return remoteExample;
@@ -201,10 +293,44 @@ export async function resolveTargetExample(appParam: string | null): Promise<Exa
         } catch (e) {
             console.warn('[ginga-node] Could not fetch remote app URL:', e);
         }
+
+        const fileName = extractedFileName || 'app.ncl';
+        const remoteExample: Example = {
+            mainFile: fileName,
+            rawMainUrl: appParam,
+            category: 'remote',
+            description: 'Remote App',
+            files: {},
+            fileUrls: { [fileName]: appParam }
+        };
+        examples[appParam] = remoteExample;
+        return remoteExample;
+    }
+
+    if (cleanParam.startsWith('examples/')) {
+        const sub = cleanParam.replace(/^examples\//, '');
+        if (examples[sub]) return examples[sub];
+    }
+    if (cleanParam === 'sbtvd/main.ncl' || cleanParam === 'sbtvd') return examples['sbtvd'];
+    if (cleanParam === 'multiuser_profile/main.ncl' || cleanParam === 'multiuser_profile') return examples['multiuser_profile'];
+    if (cleanParam === 'multiuser_current/main.ncl' || cleanParam === 'multiuser_current') return examples['multiuser_current'];
+    if (examples[extractedFileName]) return examples[extractedFileName];
+    if (examples[extractedKey]) return examples[extractedKey];
+
+    for (const key of Object.keys(examples)) {
+        if (
+            key === cleanParam ||
+            (examples[key].rawMainUrl && examples[key].rawMainUrl.endsWith(cleanParam)) ||
+            examples[key].mainFile === cleanParam ||
+            examples[key].mainFile === extractedFileName ||
+            examples[key].mainFile === appParam
+        ) {
+            return examples[key];
+        }
     }
 
     const relativePath = cleanParam.startsWith('examples/') ? cleanParam.slice(9) : cleanParam;
-    const candidateRawUrl = `${RAW_GITHUB_BASE}${relativePath}`;
+    const candidateRawUrl = `${catalogRootUrl}${relativePath}`;
     try {
         const resolved = resolveFileUrl(candidateRawUrl);
         let res = await fetch(resolved);
@@ -231,13 +357,28 @@ export async function resolveTargetExample(appParam: string | null): Promise<Exa
     return examples['video'] || Object.values(examples)[0];
 }
 
-function syncIframeStorage(win: any, example: Example, allFiles: Record<string, string>) {
+function syncIframeStorage(win: any, example: Example) {
     try {
+        const allFiles = getAllFiles(example);
+        const filesJson = JSON.stringify(allFiles);
+        const appUrl = getExampleUrl(example);
         if (win && win.sessionStorage) {
-            win.sessionStorage.setItem('GINGA_PLAYGROUND_FILES', JSON.stringify(allFiles));
+            win.sessionStorage.setItem('GINGA_APP', appUrl);
             win.sessionStorage.setItem('GINGA_PLAYGROUND_MAIN', example.mainFile);
+            win.sessionStorage.setItem('GINGA_PLAYGROUND_FILES', filesJson);
             win.GingaApp = {
-                appPath: example.mainFile,
+                appPath: appUrl,
+                currentApp: appUrl,
+                files: allFiles
+            };
+        }
+        if (typeof window !== 'undefined') {
+            window.sessionStorage.setItem('GINGA_APP', appUrl);
+            window.sessionStorage.setItem('GINGA_PLAYGROUND_MAIN', example.mainFile);
+            window.sessionStorage.setItem('GINGA_PLAYGROUND_FILES', filesJson);
+            (window as any).GingaApp = {
+                appPath: appUrl,
+                currentApp: appUrl,
                 files: allFiles
             };
         }
@@ -267,6 +408,7 @@ export function getEffectiveMode(): 'player' | 'playground' | 'playgroundSingle'
 
 export async function initPlayer(): Promise<void> {
     console.log('[ginga-node] INFO: initPlayer() starting...');
+    await ensureCatalogLoaded();
     document.body.classList.add('mode-player');
     const appEl = document.getElementById('app');
     if (!appEl) {
@@ -285,26 +427,20 @@ export async function initPlayer(): Promise<void> {
 
     const allFiles = getAllFiles(targetExample);
 
-    try {
-        window.sessionStorage.setItem('GINGA_PLAYGROUND_FILES', JSON.stringify(allFiles));
-        window.sessionStorage.setItem('GINGA_PLAYGROUND_MAIN', targetExample.mainFile);
-        (window as any).GingaApp = {
-            appPath: targetExample.mainFile,
-            files: allFiles
-        };
-    } catch (e) {
-        console.warn('[ginga-node] Could not set window.sessionStorage:', e);
-    }
+    const appUrl = (appParam && (appParam.startsWith('http://') || appParam.startsWith('https://')))
+        ? appParam
+        : getExampleUrl(targetExample);
+    syncIframeStorage(window, targetExample);
 
     const iframe = document.createElement('iframe');
     iframe.id = 'preview-frame';
     iframe.style.cssText = 'width:100%; height:100%; border:none; margin:0; padding:0; display:block;';
 
     iframe.onload = () => {
-        syncIframeStorage(iframe.contentWindow, targetExample, allFiles);
+        syncIframeStorage(iframe.contentWindow, targetExample);
     };
 
-    const srcUrl = `${playerBaseUrl}?app=${encodeURIComponent(targetExample.mainFile)}`;
+    const srcUrl = `${playerBaseUrl}?app=${encodeURIComponent(appUrl)}`;
     console.log('[ginga-node] INFO: Mounting inner player iframe src:', srcUrl);
 
     iframe.src = srcUrl;
@@ -314,24 +450,45 @@ export async function initPlayer(): Promise<void> {
 function buildExampleOptions(): string {
     const groups: Record<string, { key: string; label: string }[]> = {
         'General': [],
+        'General HTML': [],
         'Embedded': [],
         'Primeiro João': [],
-        'Multiuser': []
+        'Multiuser': [],
+        'Lua': [],
+        'HTML': []
     };
 
     for (const [key, ex] of Object.entries(examples)) {
         if (key === 'uploaded') continue;
-        const cat = ex.category || '';
+        const cat = (ex.category || '').toLowerCase();
+        let groupName = 'General';
+        let label = ex.mainFile;
+
         if (cat === 'primeiro-joao') {
-            groups['Primeiro João'].push({ key, label: ex.mainFile });
+            groupName = 'Primeiro João';
+            label = ex.mainFile.includes('/') ? ex.mainFile.split('/').pop()! : ex.mainFile;
         } else if (cat === 'embedded') {
-            groups['Embedded'].push({ key, label: ex.mainFile });
+            groupName = 'Embedded';
         } else if (cat === 'multiuser') {
-            groups['Multiuser'].push({ key, label: `${key}/${ex.mainFile}` });
-        } else {
-            const label = key === 'sbtvd' ? `${key}/${ex.mainFile}` : ex.mainFile;
-            groups['General'].push({ key, label });
+            groupName = 'Multiuser';
+            label = `${key}/${ex.mainFile.split('/').pop()}`;
+        } else if (cat === 'lua') {
+            groupName = 'Lua';
+        } else if (cat === 'general_html' || cat === 'general-html' || cat === 'general_thml') {
+            groupName = 'General HTML';
+        } else if (cat === 'html') {
+            groupName = 'HTML';
+        } else if (cat === 'general') {
+            groupName = 'General';
+            label = key === 'sbtvd' ? `${key}/${ex.mainFile.split('/').pop()}` : (ex.mainFile.includes('/') ? ex.mainFile.split('/').pop()! : ex.mainFile);
+        } else if (cat) {
+            groupName = cat.split(/[-_]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
         }
+
+        if (!groups[groupName]) {
+            groups[groupName] = [];
+        }
+        groups[groupName].push({ key, label });
     }
 
     return Object.entries(groups)
@@ -345,6 +502,7 @@ function buildExampleOptions(): string {
 
 export async function initPlayground(mode: string): Promise<void> {
     console.log('[ginga-node] INFO: initPlayground() starting in mode:', mode);
+    await ensureCatalogLoaded();
 
     let appEl = document.getElementById('app');
     if (!appEl) {
@@ -449,11 +607,15 @@ ${buildExampleOptions()}
 
     const renderTabs = () => {
         editorTabs.innerHTML = '';
+        const renderedNames = new Set<string>();
         for (const fileName of Object.keys(currentExample.files)) {
             if (!isEditableFile(fileName)) continue;
+            const tabName = fileName.includes('/') ? fileName.split('/').pop()! : fileName;
+            if (renderedNames.has(tabName)) continue;
+            renderedNames.add(tabName);
             const tab = document.createElement('div');
             tab.className = 'tab' + (fileName === currentFileName ? ' active' : '');
-            tab.textContent = fileName;
+            tab.textContent = tabName;
             tab.addEventListener('click', () => {
                 if (!isRunning) {
                     currentExample.files[currentFileName] = editor.getValue();
@@ -548,22 +710,29 @@ ${buildExampleOptions()}
             document.getElementById('editor-overlay')?.classList.add('hidden');
             runBtn.textContent = 'Run';
             iframe.src = 'about:blank';
+            try {
+                sessionStorage.removeItem('GINGA_APP');
+                sessionStorage.removeItem('GINGA_PLAYGROUND_MAIN');
+                sessionStorage.removeItem('GINGA_PLAYGROUND_FILES');
+                if ((window as any).GingaApp) {
+                    (window as any).GingaApp.appPath = null;
+                    (window as any).GingaApp.currentApp = null;
+                }
+            } catch (_) {}
             isRunning = false;
         } else {
             currentExample.files[currentFileName] = editor.getValue();
-            const allFiles = getAllFiles(currentExample);
-
-            sessionStorage.setItem('GINGA_PLAYGROUND_FILES', JSON.stringify(allFiles));
-            sessionStorage.setItem('GINGA_PLAYGROUND_MAIN', currentExample.mainFile);
+            const appUrl = getExampleUrl(currentExample);
+            syncIframeStorage(window, currentExample);
 
             editor.updateOptions({ readOnly: true });
             document.getElementById('editor-overlay')?.classList.remove('hidden');
             runBtn.textContent = 'Stop';
 
-            const srcUrl = `${playerBaseUrl}?app=${encodeURIComponent(currentExample.mainFile)}`;
+            const srcUrl = `${playerBaseUrl}?app=${encodeURIComponent(appUrl)}`;
             iframe.src = srcUrl;
             iframe.onload = () => {
-                syncIframeStorage(iframe.contentWindow, currentExample, allFiles);
+                syncIframeStorage(iframe.contentWindow, currentExample);
             };
             isRunning = true;
         }

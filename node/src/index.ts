@@ -15,7 +15,7 @@ export function getAssetsPath(): string {
   const publicPath = path.resolve(__dirname, '..', 'public', 'gingaf-web');
   if (fs.existsSync(publicPath)) return publicPath;
 
-  return path.resolve(__dirname, '..', 'assets');
+  return publicPath;
 }
 
 export function gingafMiddleware(): Handler {
@@ -78,7 +78,20 @@ export function embedGingaF(options: EmbedOptions): HTMLIFrameElement {
   const iframe = document.createElement('iframe');
   const url = new URL(playerUrl, window.location.origin);
   if (src) {
-    url.searchParams.set('app', src);
+    url.searchParams.set('ginga_app', src);
+    try {
+      window.sessionStorage.setItem('GINGA_APP', src);
+    } catch (_) {}
+    iframe.onload = () => {
+      try {
+        iframe.contentWindow?.sessionStorage?.setItem('GINGA_APP', src);
+        if (iframe.contentWindow) {
+          const gingaObj = { app: src };
+          (iframe.contentWindow as any).Ginga = gingaObj;
+          (iframe.contentWindow as any).GingaApp = gingaObj;
+        }
+      } catch (_) {}
+    };
   }
 
   iframe.src = url.toString();

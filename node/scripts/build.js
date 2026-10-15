@@ -4,6 +4,8 @@ const esbuild = require('esbuild');
 
 const playgroundDir = path.resolve(__dirname, '..', 'playground');
 const srcDir = path.resolve(__dirname, '..', 'src');
+const flutterWebSrc = path.resolve(__dirname, '..', '..', 'build', 'web');
+const flutterWebDest = path.join(playgroundDir, 'gingaf-web');
 
 if (!fs.existsSync(playgroundDir)) {
   fs.mkdirSync(playgroundDir, { recursive: true });
@@ -11,6 +13,27 @@ if (!fs.existsSync(playgroundDir)) {
 
 (async () => {
   try {
+    if (!fs.existsSync(flutterWebSrc)) {
+      if (!fs.existsSync(flutterWebDest)) {
+        console.error(`Error: Flutter web build not found at ${flutterWebSrc}. Run "flutter build web --release" or "make release-web" first.`);
+        process.exit(1);
+      }
+    } else {
+      if (fs.existsSync(flutterWebDest)) {
+        fs.rmSync(flutterWebDest, { recursive: true, force: true });
+      }
+      fs.mkdirSync(flutterWebDest, { recursive: true });
+      fs.cpSync(flutterWebSrc, flutterWebDest, { recursive: true });
+
+      const idx = path.join(flutterWebDest, 'index.html');
+      if (fs.existsSync(idx)) {
+        let content = fs.readFileSync(idx, 'utf8');
+        const dynamicBaseScript = `<script>let p=window.location.pathname;if(!p.endsWith('/')){p=(p.endsWith('.html')||p.endsWith('.htm'))?p.substring(0,p.lastIndexOf('/')+1):p+'/';}const b=document.createElement('base');b.href=p;document.head.prepend(b);</script>`;
+        content = content.replace(/<base href="[^"]*">/, dynamicBaseScript);
+        fs.writeFileSync(idx, content, 'utf8');
+      }
+    }
+
     await esbuild.build({
       entryPoints: [path.join(srcDir, 'main.ts')],
       outfile: path.join(playgroundDir, 'bundle.js'),
@@ -54,50 +77,6 @@ if (!fs.existsSync(playgroundDir)) {
       content = content.replace(/src="\/src\/main\.ts(\?mode=[^"]*)?"/g, 'src="./bundle.js"');
       content = content.replace(/src="\.\/main\.js"/g, 'src="./bundle.js"');
       fs.writeFileSync(path.join(playgroundDir, 'index.html'), content, 'utf8');
-    }
-
-    const examplesSrcDir = path.resolve(__dirname, '..', 'examples');
-    const playgroundExamplesDir = path.join(playgroundDir, 'examples');
-    if (!fs.existsSync(playgroundExamplesDir)) {
-      fs.mkdirSync(playgroundExamplesDir, { recursive: true });
-    }
-
-    const exampleFiles = [
-      'playground-app-example.html',
-      'player-app-example.html'
-    ];
-
-    for (const file of exampleFiles) {
-      const srcFile = path.join(examplesSrcDir, file);
-      if (fs.existsSync(srcFile)) {
-        let content = fs.readFileSync(srcFile, 'utf8');
-
-        let examplesContent = content;
-        examplesContent = examplesContent.replace(/href="\/style\.css"/g, 'href="../style.css"');
-        examplesContent = examplesContent.replace(/src="\/src\/main\.ts(\?[^"]*)?"/g, (match, query) => `src="../bundle.js${query || ''}"`);
-        examplesContent = examplesContent.replace(/src="\.\/main\.js(\?[^"]*)?"/g, (match, query) => `src="../bundle.js${query || ''}"`);
-        fs.writeFileSync(path.join(playgroundExamplesDir, file), examplesContent, 'utf8');
-
-        let rootContent = content;
-        rootContent = rootContent.replace(/href="\/style\.css"/g, 'href="./style.css"');
-        rootContent = rootContent.replace(/src="\/src\/main\.ts(\?[^"]*)?"/g, (match, query) => `src="./bundle.js${query || ''}"`);
-        rootContent = rootContent.replace(/src="\.\/main\.js(\?[^"]*)?"/g, (match, query) => `src="./bundle.js${query || ''}"`);
-        fs.writeFileSync(path.join(playgroundDir, file), rootContent, 'utf8');
-      }
-    }
-
-    const examplesSrc = path.join(srcDir, 'examples.json');
-    if (fs.existsSync(examplesSrc)) {
-      fs.copyFileSync(examplesSrc, path.join(playgroundDir, 'examples.json'));
-    }
-
-    const publicGingafWeb = path.resolve(__dirname, '..', 'public', 'gingaf-web');
-    const destGingafWeb = path.join(playgroundDir, 'gingaf-web');
-    if (fs.existsSync(publicGingafWeb)) {
-      if (fs.existsSync(destGingafWeb)) {
-        fs.rmSync(destGingafWeb, { recursive: true, force: true });
-      }
-      fs.cpSync(publicGingafWeb, destGingafWeb, { recursive: true });
     }
 
   } catch (err) {

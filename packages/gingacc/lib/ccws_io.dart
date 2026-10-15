@@ -81,6 +81,8 @@ class CCWS {
     }
   }
 
+  String injectCcwsFetch(String content) => content;
+
   Future<void> stop() async {
     if (!_running) return;
     try {

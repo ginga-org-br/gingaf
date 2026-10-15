@@ -5,48 +5,77 @@
   let scriptUrl = '';
   if (document.currentScript && document.currentScript.src) {
     scriptUrl = document.currentScript.src.substring(0, document.currentScript.src.lastIndexOf('/') + 1);
+  } else {
+    const scripts = document.getElementsByTagName('script');
+    for (let i = 0; i < scripts.length; i++) {
+      const src = scripts[i].src;
+      if (src && (src.includes('flutter_bootstrap.js') || src.includes('flutter.js'))) {
+        scriptUrl = src.substring(0, src.lastIndexOf('/') + 1);
+        break;
+      }
+    }
   }
 
-  const targetElement = document.getElementById('ginga-container') || document.body;
+  const targetElement = document.getElementById('ginga-container');
 
-  window.GingaApp = window.GingaApp || {};
-  window.GingaApp.mountTarget = window.GingaApp.mountTarget || targetElement;
-  window.GingaApp.appPath = window.GingaApp.appPath || null;
-  window.GingaApp.files = window.GingaApp.files || {};
+  window.Ginga = window.Ginga || {};
+  window.Ginga.mountTarget = window.Ginga.mountTarget || targetElement;
+  window.Ginga.app = window.Ginga.app || null;
 
-  window.GingaApp.mount = function (element) {
-    window.GingaApp.mountTarget = typeof element === 'string' ? document.querySelector(element) : element;
+  window.Ginga.mount = function (element) {
+    window.Ginga.mountTarget = typeof element === 'string' ? document.querySelector(element) : element;
   };
 
-  window.GingaApp.play = function (appPath, files) {
-    if (appPath) window.GingaApp.appPath = appPath;
-    if (files) window.GingaApp.files = files;
+  window.Ginga.play = function (app) {
+    if (app) {
+      window.Ginga.app = app;
+      try {
+        sessionStorage.setItem('GINGA_APP', app);
+      } catch (_) {}
+    }
   };
 
-  window.GingaApp.stop = function () {
-    window.GingaApp.appPath = null;
-    window.GingaApp.files = {};
+  window.Ginga.stop = function () {
+    window.Ginga.app = null;
+    try {
+      sessionStorage.removeItem('GINGA_APP');
+    } catch (_) {}
   };
+
+  window.GingaApp = window.Ginga;
 
   function getTargetElement() {
-    return window.GingaApp.mountTarget || document.getElementById('ginga-container') || document.body;
+    let target = window.Ginga && window.Ginga.mountTarget;
+    if (typeof target === 'string') {
+      target = document.querySelector(target);
+    }
+    if (!target) {
+      target = document.getElementById('ginga-container');
+    }
+    if (target && target instanceof HTMLElement && target !== document.body) {
+      return target;
+    }
+    return null;
   }
 
   _flutter.loader.load({
-    config: {
-      assetBase: scriptUrl,
-    },
-    serviceWorkerSettings: {
-      serviceWorkerVersion: {{flutter_service_worker_version}},
-    },
+    config: scriptUrl ? { assetBase: scriptUrl } : {},
     onEntrypointLoaded: async function (engineInitializer) {
-      const target = getTargetElement();
-      const appRunner = await engineInitializer.initializeEngine({
-        hostElement: target,
-        assetBase: scriptUrl,
-      });
+      try {
+        const target = getTargetElement();
+        const engineConfig = {};
+        if (target) {
+          engineConfig.hostElement = target;
+        }
+        if (scriptUrl) {
+          engineConfig.assetBase = scriptUrl;
+        }
 
-      await appRunner.runApp();
+        const appRunner = await engineInitializer.initializeEngine(engineConfig);
+        await appRunner.runApp();
+      } catch (err) {
+        console.error('[gingaf-web] Failed to initialize Flutter engine or run app:', err);
+      }
     }
   });
 })();

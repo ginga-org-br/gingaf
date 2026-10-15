@@ -14,8 +14,19 @@ const defaultPage = targetPages[0];
 const port = parseInt(process.env.PORT || '5173', 10);
 const playgroundDir = path.resolve(__dirname, '..', 'playground');
 const examplesDir = path.resolve(__dirname, '..', '..', 'examples');
+const nodeExamplesDir = path.resolve(__dirname, '..', 'examples');
 
 const app = express();
+
+function serveExampleHtml(res, filePath, basePath) {
+  let content = fs.readFileSync(filePath, 'utf8');
+  content = content.replace(/href="\/style\.css"/g, `href="${basePath}style.css"`);
+  content = content.replace(/src="\/src\/main\.ts(\?[^"]*)?"/g, (match, query) => `src="${basePath}bundle.js${query || ''}"`);
+  content = content.replace(/src="\.\/main\.js(\?[^"]*)?"/g, (match, query) => `src="${basePath}bundle.js${query || ''}"`);
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.send(content);
+}
 
 app.use((req, res, next) => {
   const [rawPath] = (req.url || '').split('?');
@@ -29,33 +40,76 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/examples', (req, res, next) => {
-  const filePath = path.resolve(examplesDir, req.path.replace(/^\//, ''));
-  if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-    const ext = path.extname(filePath).toLowerCase();
-    if (ext === '.lua') res.setHeader('Content-Type', 'text/plain');
-    else if (ext === '.ncl') res.setHeader('Content-Type', 'application/xml');
-    else if (ext === '.html' || ext === '.htm') res.setHeader('Content-Type', 'text/html');
-    else if (ext === '.mp4') res.setHeader('Content-Type', 'video/mp4');
-    else if (ext === '.webm') res.setHeader('Content-Type', 'video/webm');
-    else if (ext === '.ogv') res.setHeader('Content-Type', 'video/ogg');
-    else if (ext === '.mp3') res.setHeader('Content-Type', 'audio/mpeg');
-    else if (ext === '.wav') res.setHeader('Content-Type', 'audio/wav');
-    else if (ext === '.png') res.setHeader('Content-Type', 'image/png');
-    else if (ext === '.jpg' || ext === '.jpeg') res.setHeader('Content-Type', 'image/jpeg');
-    else if (ext === '.json') res.setHeader('Content-Type', 'application/json');
-
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    fs.createReadStream(filePath).pipe(res);
-    return;
-  }
-  next();
-});
-
 express.static.mime.define({
   'application/wasm': ['wasm'],
   'application/xml': ['ncl'],
   'text/plain': ['lua']
+});
+
+app.get('/style.css', (req, res) => {
+  res.sendFile(path.join(playgroundDir, 'style.css'));
+});
+
+app.get('/bundle.js', (req, res) => {
+  res.sendFile(path.join(playgroundDir, 'bundle.js'));
+});
+
+app.get('/src/main.ts', (req, res) => {
+  res.setHeader('Content-Type', 'application/javascript');
+  res.sendFile(path.join(playgroundDir, 'bundle.js'));
+});
+
+app.get('/gingaf/playground/catalog.json', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.sendFile(path.join(examplesDir, 'catalog.json'));
+});
+
+app.use('/gingaf/playground/examples', (req, res, next) => {
+  const file = req.path.replace(/^\/+/, '');
+  const candidate = path.join(nodeExamplesDir, file);
+  if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+    return serveExampleHtml(res, candidate, '../');
+  }
+  next();
+});
+
+app.use('/examples', (req, res, next) => {
+  const file = req.path.replace(/^\/+/, '');
+  const candidate = path.join(nodeExamplesDir, file);
+  if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+    return serveExampleHtml(res, candidate, '/gingaf/playground/');
+  }
+  next();
+});
+
+app.use('/examples', express.static(examplesDir, {
+  setHeaders: (res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+}));
+
+app.use('/gingaf/examples', (req, res, next) => {
+  const file = req.path.replace(/^\/+/, '');
+  const candidate = path.join(nodeExamplesDir, file);
+  if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+    return serveExampleHtml(res, candidate, '/gingaf/playground/');
+  }
+  next();
+});
+
+app.use('/gingaf/examples', express.static(examplesDir, {
+  setHeaders: (res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+}));
+
+app.use('/gingaf/playground', (req, res, next) => {
+  const file = req.path.replace(/^\/+/, '');
+  const candidate = path.join(nodeExamplesDir, file);
+  if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+    return serveExampleHtml(res, candidate, './');
+  }
+  next();
 });
 
 app.use('/gingaf/playground', express.static(playgroundDir, {

@@ -10,13 +10,11 @@
     ],
     "scripts": {
         "flutter:build": "cd .. && flutter build web --no-pub --release",
-        "copy:assets": "node scripts/copy-assets.js",
-        "bundle:examples": "node scripts/bundle-examples.js",
         "clean": "node scripts/clean.js",
-        "dev": "node scripts/bundle-examples.js && node scripts/build.js && node scripts/serve.js index.html",
+        "dev": "node scripts/build.js && node scripts/serve.js index.html",
         "serve": "node scripts/serve.js index.html",
         "serve-examples": "node scripts/serve.js --express examples/playground-app-example.html examples/player-app-example.html",
-        "build": "npm run flutter:build && npm run copy:assets && npm run bundle:examples && node scripts/build.js && npx tsc"
+        "build": "npm run flutter:build && node scripts/build.js && npx tsc"
     },
     "peerDependencies": {
         "express": "^4.0.0"

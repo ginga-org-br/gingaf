@@ -66,12 +66,35 @@
 <body data-mode="playgroundSingle">
   <header>
     <h1>gingaf (web): Playground alone example</h1>
+    <div id="player-url" style="font-size: 0.85rem; color: #94a3b8; font-family: monospace; background: #0f172a; padding: 0.25rem 0.75rem; border-radius: 9999px; border: 1px solid #334155; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></div>
   </header>
   <main>
     <div id="app"></div>
   </main>
   <script type="module"
-    src="/src/main.ts?mode=playgroundSingle&app=https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/gingaf/examples/video.ncl"></script>
+    src="/src/main.ts?mode=playgroundSingle&app=https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/video.ncl"></script>
+  <script>
+    (function () {
+      const urlParams = new URLSearchParams(window.location.search);
+      let app = urlParams.get('app');
+      if (!app) {
+        const scriptEl = document.querySelector('script[src*="main.ts"], script[src*="bundle.js"]');
+        if (scriptEl) {
+          const src = scriptEl.getAttribute('src') || scriptEl.src;
+          const qIdx = src.indexOf('?');
+          if (qIdx !== -1) {
+            const scriptParams = new URLSearchParams(src.slice(qIdx));
+            app = scriptParams.get('app');
+          }
+        }
+      }
+      const el = document.getElementById('player-url');
+      if (el && app) {
+        el.textContent = app;
+        el.title = app;
+      }
+    })();
+  </script>
 </body>
 
 </html>

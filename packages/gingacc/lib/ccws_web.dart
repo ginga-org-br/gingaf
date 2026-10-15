@@ -30,7 +30,7 @@ class CCWS {
       })).addHandler(CCWSRouter.getHandler());
 
   String injectCcwsFetch(String content) {
-    final fetchMock = '''
+    final fetchMock = r'''
 <script>
 (function() {
   const originalFetch = window.fetch;
@@ -51,7 +51,7 @@ class CCWS {
   });
 
   window.fetch = async function(resource, config) {
-    if (typeof resource === 'string' && resource.match(/localhost:[0-9]+\\/dtv\\/current-service/)) {
+    if (typeof resource === 'string' && resource.match(/(?:localhost|127\.0\.0\.1):[0-9]+\/dtv\/current-service/)) {
       console.log('Intercepted CCWS fetch: ' + resource);
       return new Promise((resolve, reject) => {
         const id = ++ccwsId;
