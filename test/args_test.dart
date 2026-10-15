@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingacc/gingacc.dart';
-import 'package:gingaf/args.dart';
+import 'package:gingaf/main.dart';
 import 'package:path/path.dart' as path;
 
 void main() {
@@ -14,11 +14,10 @@ void main() {
     });
 
     test('resolves configuration with custom GingaCC', () async {
-      final gingacc = GingaCC(
-        virtualFiles: {
+      final gingacc = GingaCC()
+        ..setVirtualFiles({
           'config.json': '{"appSrc": "main.ncl", "startWithCCWS": false}',
-        },
-      );
+        });
       final config = await resolveGingaConfig(
         appSrc: 'main.ncl',
         configSrc: 'config.json',
@@ -83,13 +82,29 @@ void main() {
     test(
         'loads ginga_config.json from virtualFiles in the same folder of application',
         () async {
-      final gingacc = GingaCC(
-        virtualFiles: {
+      final gingacc = GingaCC()
+        ..setVirtualFiles({
           'demo/main.ncl': '<ncl/>',
           'demo/ginga_config.json':
               '{"mainAvSrc": "https://example.com/virtual.mp4", "startWithMainAv": true}',
-        },
+        });
+      final config = await resolveGingaConfig(
+        appSrc: 'demo/main.ncl',
+        gingacc: gingacc,
       );
+      expect(config.mainAvSrc, equals('https://example.com/virtual.mp4'));
+      expect(config.startWithMainAv, isTrue);
+    });
+
+    test(
+        'loads ginga_config.json from virtualFiles configured on GingaCC',
+        () async {
+      final gingacc = GingaCC()
+        ..setVirtualFiles({
+          'demo/main.ncl': '<ncl/>',
+          'demo/ginga_config.json':
+              '{"mainAvSrc": "https://example.com/virtual.mp4", "startWithMainAv": true}',
+        });
       final config = await resolveGingaConfig(
         appSrc: 'demo/main.ncl',
         gingacc: gingacc,

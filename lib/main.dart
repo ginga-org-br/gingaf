@@ -6,7 +6,6 @@ import 'package:gingacc/gingacc.dart';
 import 'package:logging/logging.dart';
 import 'package:video_player_media_kit/video_player_media_kit.dart';
 
-import 'args.dart';
 import 'ginga.dart';
 
 export 'args.dart';
@@ -45,35 +44,12 @@ void main(List<String> args) async {
     exit(1);
   }
 
-  Map<String, String>? virtualFiles;
-  if (kIsWeb) {
-    try {
-      final webFiles = getGingaAppFiles();
-      if (webFiles != null) {
-        virtualFiles = webFiles.map((k, v) => MapEntry(k, v.toString()));
-      }
-    } catch (e) {
-      _logger.warning('Failed to load web virtual files: $e');
-    }
-  }
+  final gingacc = GingaCC();
+  await gingacc.loadConfig(configSrc, appSrc);
 
-  final config = await resolveGingaConfig(
-    appSrc: appSrc,
-    configSrc: configSrc,
-    gingacc: GingaCC(virtualFiles: virtualFiles),
-  );
-
-  _logger.info(config.toString());
-
-  final mainGingacc = GingaCC(
-    config: config,
-    virtualFiles: virtualFiles,
-  );
-  if (config.startWithCCWS) {
-    await mainGingacc.ccws.start();
-  }
+  _logger.info(gingacc.config.toString());
 
   runApp(Ginga(
-    gingacc: mainGingacc,
+    gingacc: gingacc,
   ));
 }

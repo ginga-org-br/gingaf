@@ -3,13 +3,13 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:gingacc/gingacc.dart';
 import 'package:logging/logging.dart';
-import 'package:path/path.dart' as path;
 
 import 'web_utils_stub.dart'
     if (dart.library.js_interop) 'web_utils_web.dart';
 
 final _logger = Logger('ginga.args');
 
+/// Resolves configuration arguments by first checking CLI, then ENV, then getGingaApp.
 ({String? app, String? config}) parseArgsCliAndEnv(
   List<String> args, [
   Map<String, String>? environment,
@@ -53,20 +53,26 @@ final _logger = Logger('ginga.args');
   String? configEnv;
 
   if (environment != null) {
-    appEnv = environment['APP'] ?? environment['app'];
+    appEnv = environment['GINGA_APP'] ??
+        environment['ginga_app'] ??
+        environment['APP'] ??
+        environment['app'];
     configEnv = environment['CONFIG'] ?? environment['config'];
   } else {
-    if (const String.fromEnvironment('APP').isNotEmpty) {
+    if (const String.fromEnvironment('GINGA_APP').isNotEmpty) {
+      appEnv = const String.fromEnvironment('GINGA_APP');
+    } else if (const String.fromEnvironment('APP').isNotEmpty) {
       appEnv = const String.fromEnvironment('APP');
     }
     if ((appEnv == null || appEnv.isEmpty) && !kIsWeb) {
-      appEnv = Platform.environment['APP'];
+      appEnv =
+          Platform.environment['GINGA_APP'] ?? Platform.environment['APP'];
     }
     if ((appEnv == null || appEnv.isEmpty) && kIsWeb) {
       try {
-        final mainFile = getGingaAppPath();
-        if (mainFile != null && mainFile.isNotEmpty) {
-          appEnv = mainFile;
+        final webApp = getGingaApp();
+        if (webApp != null && webApp.isNotEmpty) {
+          appEnv = webApp;
         }
       } catch (e) {
         _logger.warning('Failed to read app path on web: $e');
@@ -106,90 +112,6 @@ Future<GingaConfig> resolveGingaConfig({
   String? configSrc,
   GingaCC? gingacc,
 }) async {
-  String? effectiveAppSrc = appSrc;
-  String? effectiveConfigSrc = configSrc;
-
-  if (!kIsWeb) {
-    final appFile =
-        (appSrc != null && !isHttpUri(appSrc)) ? File(appSrc).absolute : null;
-    final configFile = (configSrc != null && !isHttpUri(configSrc))
-        ? File(configSrc).absolute
-        : null;
-
-    if (appFile != null && appFile.existsSync()) {
-      Directory.current = appFile.parent.path;
-      effectiveAppSrc = path.basename(appFile.path);
-      if (configFile != null && configFile.existsSync()) {
-        effectiveConfigSrc = configFile.path;
-      }
-    } else if (configFile != null && configFile.existsSync()) {
-      Directory.current = configFile.parent.path;
-      effectiveConfigSrc = path.basename(configFile.path);
-    }
-  }
-
-  final initialGingacc = gingacc ?? GingaCC();
-
-  GingaConfig config;
-  if (effectiveConfigSrc != null) {
-    try {
-      config = await GingaConfig.fromJson(
-        effectiveConfigSrc,
-        effectiveAppSrc,
-        initialGingacc,
-      );
-    } catch (e) {
-      _logger.severe('Failed to load config: $e');
-      if (!kIsWeb) {
-        exit(1);
-      }
-      config = GingaConfig(startWithCCWS: true);
-    }
-  } else if (effectiveAppSrc != null) {
-    try {
-      final configUri =
-          initialGingacc.resolveUri('ginga_config.json', effectiveAppSrc);
-      final hasConfig = await initialGingacc.loadContent(configUri) != null;
-      if (hasConfig) {
-        config = await GingaConfig.fromJson(
-          'ginga_config.json',
-          effectiveAppSrc,
-          initialGingacc,
-        );
-      } else if (!kIsWeb && File('ginga_config.json').existsSync()) {
-        config = await GingaConfig.fromJson(
-          'ginga_config.json',
-          effectiveAppSrc,
-          initialGingacc,
-        );
-      } else {
-        config = GingaConfig(startWithCCWS: true);
-      }
-    } catch (e) {
-      _logger.warning('Failed to load config: $e');
-      config = GingaConfig(startWithCCWS: true);
-    }
-  } else {
-    config = GingaConfig(startWithCCWS: true);
-  }
-
-  final initialAppSrc = effectiveAppSrc ?? config.appSrc;
-  String? resolvedAppSrc = initialAppSrc;
-  if (!kIsWeb && initialAppSrc != null && !isHttpUri(initialAppSrc)) {
-    try {
-      final file = File(initialAppSrc).absolute;
-      if (file.existsSync()) {
-        Directory.current = file.parent.path;
-        resolvedAppSrc = path.basename(file.path);
-      }
-    } catch (e) {
-      _logger.severe('Failed to set working directory: $e');
-    }
-  }
-
-  if (resolvedAppSrc != null) {
-    config.appSrc = resolvedAppSrc;
-  }
-
-  return config;
+  final target = gingacc ?? GingaCC();
+  return await target.loadConfig(configSrc, appSrc);
 }

@@ -281,5 +281,32 @@ void main() {
       gingacc.loadConfig(null);
       expect(gingacc.config.startWithCCWS, isFalse);
     });
+
+    test('loadConfig with GingaConfig and appSrc sets appSrc', () {
+      final gingacc = GingaCC();
+      final newConfig = GingaConfig(startWithCCWS: true);
+      final result = gingacc.loadConfig(newConfig, 'main.ncl');
+      expect((result as GingaConfig).appSrc, equals('main.ncl'));
+      expect(gingacc.config.appSrc, equals('main.ncl'));
+    });
+
+    test('loadConfig with appSrc only resolves config and sets appSrc', () async {
+      final gingacc = GingaCC();
+      final result = await gingacc.loadConfig(null, 'main.ncl');
+      expect(result.startWithCCWS, isTrue);
+      expect(result.appSrc, equals('main.ncl'));
+      expect(gingacc.config.appSrc, equals('main.ncl'));
+    });
+
+    test('loadConfig with configSrc and appSrc resolves both', () async {
+      final gingacc = GingaCC()
+        ..setVirtualFiles({
+          'config.json': '{"appSrc": "main.ncl", "startWithCCWS": false}',
+        });
+      final result = await gingacc.loadConfig('config.json', 'main.ncl');
+      expect(result.startWithCCWS, isFalse);
+      expect(result.appSrc, equals('main.ncl'));
+      expect(gingacc.config.appSrc, equals('main.ncl'));
+    });
   });
 }
