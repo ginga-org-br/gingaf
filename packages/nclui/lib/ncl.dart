@@ -76,6 +76,17 @@ class NclWidget extends BaseWidget {
         gingacc: document?.gingacc,
       );
     }
+    if (src.endsWith('.html') ||
+        src.endsWith('.htm') ||
+        mimeType == 'text/html') {
+      return HtmlWidget(
+        key: key,
+        src: src,
+        media: media,
+        document: document,
+        gingacc: document?.gingacc,
+      );
+    }
     if (mimeType.startsWith('video/') ||
         mimeType.startsWith('audio/') ||
         mimeType.contains('video') ||
@@ -117,6 +128,7 @@ class NclWidget extends BaseWidget {
           src: src,
           media: media,
           document: document,
+          gingacc: document?.gingacc,
         );
       case 'image/png':
       case 'image/jpeg':
@@ -321,9 +333,13 @@ class NclWidgetState extends MediaState<NclWidget> {
         return;
       }
       final gingacc = widget.gingacc ?? GingaCC();
+      final base = (widget.media?.uri.isNotEmpty == true)
+          ? widget.media!.uri
+          : (widget.document?.docUri?.toString() ?? widget.document?.docSrc);
       final doc = await NclDocument.fromSrc(
         widget.src,
         gingacc: gingacc,
+        baseDirSrc: base,
       );
       if (!mounted) return;
 

@@ -129,6 +129,7 @@ class NclDocument {
   static Future<NclDocument> fromSrc(
     String docSrc, {
     GingaCC? gingacc,
+    String? baseDirSrc,
   }) async {
     _logger.info('Loading NCL document from src: $docSrc');
     gingacc ??= GingaCC();
@@ -136,8 +137,9 @@ class NclDocument {
     if (isXmlString(docSrc)) {
       xml = docSrc;
     } else {
-      final docUri = gingacc.resolveUri(docSrc);
-      xml = await gingacc.loadContent(docUri);
+      final docUri = gingacc.resolveUri(docSrc, baseDirSrc);
+      xml = (await gingacc.loadContent(docUri, baseDirSrc)) ??
+          (await gingacc.loadContent(docSrc, baseDirSrc));
     }
 
     final doc = NclDocument.fromContent(

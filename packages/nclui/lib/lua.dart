@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:ncldoc/ncl_document.dart';
 
@@ -86,6 +87,28 @@ List<double> _readDoubleTable(LuaState ls, int idx) {
   return list;
 }
 
+bool _isImagePath(String path) {
+  if (path.isEmpty) return false;
+  final clean = path.split('?')[0].split('#')[0];
+  if (clean.contains('.')) {
+    final ext = clean.split('.').last.toLowerCase();
+    const imageExtensions = {
+      'png',
+      'jpg',
+      'jpeg',
+      'gif',
+      'bmp',
+      'webp',
+      'svg',
+      'ico',
+      'tif',
+      'tiff'
+    };
+    if (imageExtensions.contains(ext)) return true;
+  }
+  return false;
+}
+
 void initCanvasBindings(
   NCLuaRuntime engine,
   NclCanvasDelegate delegate, {
@@ -98,18 +121,25 @@ void initCanvasBindings(
 
   ls.register("_canvas_new_image", (LuaState ls) {
     final path = ls.toStr(-1) ?? "";
-    double w = 0;
-    double h = 0;
+    if (!_isImagePath(path)) {
+      ls.pushNil();
+      ls.pushNil();
+      ls.pushBoolean(false);
+      return 3;
+    }
     if (imageSizeProvider != null) {
       final sz = imageSizeProvider(path);
-      if (sz != null) {
-        w = sz.$1;
-        h = sz.$2;
+      if (sz != null && sz.$1 > 0 && sz.$2 > 0) {
+        ls.pushNumber(sz.$1);
+        ls.pushNumber(sz.$2);
+        ls.pushBoolean(true);
+        return 3;
       }
     }
-    ls.pushNumber(w);
-    ls.pushNumber(h);
-    return 2;
+    ls.pushNil();
+    ls.pushNil();
+    ls.pushBoolean(true);
+    return 3;
   });
 
   ls.register("_canvas_get_root_size", (LuaState ls) {
@@ -380,10 +410,15 @@ function canvas.new(first, second, third)
     end
 
     if type(arg1) == "string" then
-        local w, h = _canvas_new_image(arg1)
-        obj._image_path = arg1
-        if w and w > 0 then obj._width = w end
-        if h and h > 0 then obj._height = h end
+        local w, h, is_img = _canvas_new_image(arg1)
+        if is_img then
+            obj._image_path = arg1
+            obj._width = (w and w > 0) and w or 100
+            obj._height = (h and h > 0) and h or 100
+        else
+            _canvas_new_buff(tostring(arg1))
+            obj._buff = tostring(arg1)
+        end
     elseif type(arg1) == "number" and type(arg2) == "number" then
         _canvas_new_size(arg1, arg2)
         obj._width = arg1
@@ -697,8 +732,10 @@ class LuaWidgetState extends MediaState<LuaWidget> {
     final resolvedPath =
         uri.isScheme('file') ? uri.toFilePath() : uri.toString();
     if (gingacc.virtualFiles != null) {
-      final vf =
-          gingacc.virtualFiles![resolvedPath] ?? gingacc.virtualFiles![path];
+      final vf = gingacc.virtualFiles![resolvedPath] ??
+          gingacc.virtualFiles![path] ??
+          gingacc.virtualFiles![path.replaceAll('../', '')] ??
+          gingacc.virtualFiles!['../$path'];
       if (vf != null) {
         if (vf.startsWith('data:')) {
           final comma = vf.indexOf(',');
@@ -706,14 +743,40 @@ class LuaWidgetState extends MediaState<LuaWidget> {
             return MemoryImage(base64.decode(vf.substring(comma + 1)));
           }
         }
+        if (vf.startsWith('http://') ||
+            vf.startsWith('https://') ||
+            vf.startsWith('blob:')) {
+          return NetworkImage(vf);
+        }
         return MemoryImage(Uint8List.fromList(utf8.encode(vf)));
       }
     }
-    final file = File(resolvedPath);
-    if (file.existsSync()) {
-      return FileImage(file);
+    if (uri.isScheme('http') ||
+        uri.isScheme('https') ||
+        uri.isScheme('blob') ||
+        uri.isScheme('data')) {
+      return NetworkImage(uri.toString());
     }
-    return FileImage(File(path));
+    if (!kIsWeb) {
+      final candidates = [
+        resolvedPath,
+        path,
+        if (path.startsWith('../')) path.substring(3),
+        if (path.startsWith('../../')) path.substring(6),
+        'examples/$path',
+        '${Directory.current.path}/examples/$path',
+      ];
+      for (final candidate in candidates) {
+        try {
+          final file = File(candidate);
+          if (file.existsSync()) {
+            return FileImage(file);
+          }
+        } catch (_) {}
+      }
+      return FileImage(File(path));
+    }
+    return NetworkImage(resolvedPath);
   }
 
   void _loadImage(String path) {
@@ -722,55 +785,76 @@ class LuaWidgetState extends MediaState<LuaWidget> {
       return;
     }
     _loadingImages.add(path);
-    final provider = _resolveImageProvider(path);
-    final stream = provider.resolve(ImageConfiguration.empty);
-    late ImageStreamListener listener;
-    listener = ImageStreamListener(
-      (ImageInfo info, bool synchronousCall) {
-        _loadingImages.remove(path);
-        canvasState.imageCache[path] = info.image;
-        if (!synchronousCall && mounted) {
-          setState(() {});
-        }
-      },
-      onError: (dynamic error, StackTrace? stackTrace) {
-        _loadingImages.remove(path);
-      },
-    );
-    stream.addListener(listener);
+    try {
+      final provider = _resolveImageProvider(path);
+      final stream = provider.resolve(ImageConfiguration.empty);
+      late ImageStreamListener listener;
+      listener = ImageStreamListener(
+        (ImageInfo info, bool synchronousCall) {
+          _loadingImages.remove(path);
+          canvasState.imageCache[path] = info.image;
+          if (!synchronousCall && mounted) {
+            setState(() {});
+          }
+        },
+        onError: (dynamic error, StackTrace? stackTrace) {
+          _loadingImages.remove(path);
+        },
+      );
+      stream.addListener(listener);
+    } catch (_) {
+      _loadingImages.remove(path);
+    }
   }
 
   (double, double)? _getImageSize(String path) {
-    _loadImage(path);
-    final cached = canvasState.imageCache[path];
-    if (cached != null) {
-      return (cached.width.toDouble(), cached.height.toDouble());
-    }
-    final gingacc = widget.gingacc ?? widget.document?.gingacc ?? GingaCC();
-    final base = (widget.media?.uri.isNotEmpty == true)
-        ? widget.media!.uri
-        : (widget.document?.docUri?.toString() ?? widget.src);
-    final uri = gingacc.resolveUri(path, base);
-    final resolvedPath =
-        uri.isScheme('file') ? uri.toFilePath() : uri.toString();
-    if (gingacc.virtualFiles != null) {
-      final vf =
-          gingacc.virtualFiles![resolvedPath] ?? gingacc.virtualFiles![path];
-      if (vf != null) {
-        final bytes = vf.startsWith('data:') && vf.contains(',')
-            ? base64.decode(vf.substring(vf.indexOf(',') + 1))
-            : Uint8List.fromList(utf8.encode(vf));
-        final dims = parseImageDimensions(bytes);
-        if (dims != null) return dims;
+    try {
+      _loadImage(path);
+      final cached = canvasState.imageCache[path];
+      if (cached != null) {
+        return (cached.width.toDouble(), cached.height.toDouble());
       }
-    }
-    final file = File(resolvedPath);
-    if (file.existsSync()) {
-      try {
-        final bytes = file.readAsBytesSync();
-        return parseImageDimensions(bytes);
-      } catch (_) {}
-    }
+      final gingacc = widget.gingacc ?? widget.document?.gingacc ?? GingaCC();
+      final base = (widget.media?.uri.isNotEmpty == true)
+          ? widget.media!.uri
+          : (widget.document?.docUri?.toString() ?? widget.src);
+      final uri = gingacc.resolveUri(path, base);
+      final resolvedPath =
+          uri.isScheme('file') ? uri.toFilePath() : uri.toString();
+      if (gingacc.virtualFiles != null) {
+        final vf = gingacc.virtualFiles![resolvedPath] ??
+            gingacc.virtualFiles![path] ??
+            gingacc.virtualFiles![path.replaceAll('../', '')] ??
+            gingacc.virtualFiles!['../$path'];
+        if (vf != null) {
+          final bytes = vf.startsWith('data:') && vf.contains(',')
+              ? base64.decode(vf.substring(vf.indexOf(',') + 1))
+              : Uint8List.fromList(utf8.encode(vf));
+          final dims = parseImageDimensions(bytes);
+          if (dims != null) return dims;
+        }
+      }
+      if (!kIsWeb) {
+        final candidates = [
+          resolvedPath,
+          path,
+          if (path.startsWith('../')) path.substring(3),
+          if (path.startsWith('../../')) path.substring(6),
+          'examples/$path',
+          '${Directory.current.path}/examples/$path',
+        ];
+        for (final candidate in candidates) {
+          try {
+            final file = File(candidate);
+            if (file.existsSync()) {
+              final bytes = file.readAsBytesSync();
+              final dims = parseImageDimensions(bytes);
+              if (dims != null) return dims;
+            }
+          } catch (_) {}
+        }
+      }
+    } catch (_) {}
     return null;
   }
 
