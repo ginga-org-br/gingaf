@@ -1,6 +1,6 @@
 local event = event or require('event')
 
-local logo = canvas.new('../assets/ginga-logo.png')
+local logo = canvas.new('logo.png')
 
 local x = 150
 local y = 150
