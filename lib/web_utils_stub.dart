@@ -1,7 +1,5 @@
-String? getSessionStorageItem(String key) => null;
+String? getGingaApp() => null;
 
-String? getGingaAppPath() => null;
-
-Map<String, dynamic>? getGingaAppFiles() => null;
+Map<String, String>? getGingaAppFiles() => null;
 
 void notifyParentAppExited() {}

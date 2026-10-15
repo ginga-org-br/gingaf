@@ -68,7 +68,7 @@ release-publish:
 	gh release upload v$(VERSION) gingaf-v$(VERSION)-*.zip --clobber || gh release create v$(VERSION) gingaf-v$(VERSION)-*.zip --generate-notes
 
 
-serve: deps
+serve: release-web
 	make -C node serve
 
 clean:
@@ -84,4 +84,4 @@ run-example: check-app
 	$(info ======================================================================)
 	$(info Running Example: $(APP_EXAMPLE))
 	$(info ======================================================================)
-	flutter run --no-pub $(if $(d),-d $(d)) --dart-define="APP=examples/$(APP_EXAMPLE)" || true
+	flutter run --no-pub $(if $(d),-d $(d)) --dart-define="GINGA_APP=examples/$(APP_EXAMPLE)" || true

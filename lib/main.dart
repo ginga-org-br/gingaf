@@ -45,6 +45,16 @@ void main(List<String> args) async {
   }
 
   final gingacc = GingaCC();
+  if (kIsWeb) {
+    try {
+      final webFiles = getGingaAppFiles();
+      if (webFiles != null && webFiles.isNotEmpty) {
+        gingacc.setVirtualFiles(webFiles);
+      }
+    } catch (e) {
+      _logger.warning('Failed to load web virtual files: $e');
+    }
+  }
   await gingacc.loadConfig(configSrc, appSrc);
 
   _logger.info(gingacc.config.toString());

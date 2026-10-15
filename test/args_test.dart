@@ -197,12 +197,12 @@ void main() {
 
     test('resolves app and config from environment variables', () {
       final result = parseArgsCliAndEnv(
-          [], {'APP': 'env_app.ncl', 'CONFIG': 'env_config.json'});
+          [], {'GINGA_APP': 'env_app.ncl', 'GINGA_CONFIG': 'env_config.json'});
       expect(result.app, equals('env_app.ncl'));
       expect(result.config, equals('env_config.json'));
 
       final resultLower = parseArgsCliAndEnv(
-          [], {'app': 'lower_app.ncl', 'config': 'lower_config.json'});
+          [], {'ginga_app': 'lower_app.ncl', 'ginga_config': 'lower_config.json'});
       expect(resultLower.app, equals('lower_app.ncl'));
       expect(resultLower.config, equals('lower_config.json'));
     });
@@ -210,7 +210,7 @@ void main() {
     test('CLI arguments take precedence over environment variables', () {
       final result = parseArgsCliAndEnv(
         ['--app', 'cli.ncl', '--config', 'cli.json'],
-        {'APP': 'env.ncl', 'CONFIG': 'env.json'},
+        {'GINGA_APP': 'env.ncl', 'GINGA_CONFIG': 'env.json'},
       );
       expect(result.app, equals('cli.ncl'));
       expect(result.config, equals('cli.json'));
@@ -219,14 +219,14 @@ void main() {
     test('falls back to environment variable when CLI argument is missing', () {
       final resultAppFromCli = parseArgsCliAndEnv(
         ['--app', 'cli.ncl'],
-        {'APP': 'env.ncl', 'CONFIG': 'env.json'},
+        {'GINGA_APP': 'env.ncl', 'GINGA_CONFIG': 'env.json'},
       );
       expect(resultAppFromCli.app, equals('cli.ncl'));
       expect(resultAppFromCli.config, equals('env.json'));
 
       final resultConfigFromCli = parseArgsCliAndEnv(
         ['--config', 'cli.json'],
-        {'APP': 'env.ncl', 'CONFIG': 'env.json'},
+        {'GINGA_APP': 'env.ncl', 'GINGA_CONFIG': 'env.json'},
       );
       expect(resultConfigFromCli.app, equals('env.ncl'));
       expect(resultConfigFromCli.config, equals('cli.json'));

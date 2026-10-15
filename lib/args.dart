@@ -53,20 +53,15 @@ final _logger = Logger('ginga.args');
   String? configEnv;
 
   if (environment != null) {
-    appEnv = environment['GINGA_APP'] ??
-        environment['ginga_app'] ??
-        environment['APP'] ??
-        environment['app'];
-    configEnv = environment['CONFIG'] ?? environment['config'];
+    appEnv = environment['GINGA_APP'] ?? environment['ginga_app'];
+    configEnv = environment['GINGA_CONFIG'] ?? environment['ginga_config'];
   } else {
     if (const String.fromEnvironment('GINGA_APP').isNotEmpty) {
       appEnv = const String.fromEnvironment('GINGA_APP');
-    } else if (const String.fromEnvironment('APP').isNotEmpty) {
-      appEnv = const String.fromEnvironment('APP');
     }
     if ((appEnv == null || appEnv.isEmpty) && !kIsWeb) {
-      appEnv =
-          Platform.environment['GINGA_APP'] ?? Platform.environment['APP'];
+      appEnv = Platform.environment['GINGA_APP'] ??
+          Platform.environment['ginga_app'];
     }
     if ((appEnv == null || appEnv.isEmpty) && kIsWeb) {
       try {
@@ -79,16 +74,17 @@ final _logger = Logger('ginga.args');
       }
     }
 
-    if (const String.fromEnvironment('CONFIG').isNotEmpty) {
-      configEnv = const String.fromEnvironment('CONFIG');
+    if (const String.fromEnvironment('GINGA_CONFIG').isNotEmpty) {
+      configEnv = const String.fromEnvironment('GINGA_CONFIG');
     }
     if ((configEnv == null || configEnv.isEmpty) && !kIsWeb) {
-      configEnv = Platform.environment['CONFIG'];
+      configEnv = Platform.environment['GINGA_CONFIG'] ??
+          Platform.environment['ginga_config'];
     }
     if ((configEnv == null || configEnv.isEmpty) && kIsWeb) {
       try {
-        configEnv = Uri.base.queryParameters['CONFIG'] ??
-            Uri.base.queryParameters['config'];
+        configEnv = Uri.base.queryParameters['GINGA_CONFIG'] ??
+            Uri.base.queryParameters['ginga_config'];
       } catch (e) {
         _logger.warning('Failed to read config path on web: $e');
       }

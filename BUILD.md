@@ -138,7 +138,7 @@ make run-example app=video.ncl d=chrome
 Direct Flutter command:
 
 ```bash
-flutter run --no-pub -d <device> --dart-define="APP=examples/video.ncl"
+flutter run --no-pub -d <device> --dart-define="GINGA_APP=examples/video.ncl"
 ```
 
 ### Running from URLs
@@ -146,13 +146,13 @@ flutter run --no-pub -d <device> --dart-define="APP=examples/video.ncl"
 Run applications directly from remote URLs:
 
 ```bash
-flutter run --no-pub -d chrome --dart-define="APP=https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/video.ncl"
+flutter run --no-pub -d chrome --dart-define="GINGA_APP=https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/video.ncl"
 ```
 
 For Android emulator:
 
 ```bash
-flutter run --no-pub -d emulator-5554 --dart-define="APP=https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/video.ncl"
+flutter run --no-pub -d emulator-5554 --dart-define="GINGA_APP=https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/video.ncl"
 ```
 
 ### Web Playground Server
