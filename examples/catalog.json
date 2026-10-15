@@ -1,0 +1,211 @@
+{
+    "examples": {
+        "video": {
+            "mainFile": "video.ncl",
+            "category": "general",
+            "description": "Video media presentation example"
+        },
+        "video_grid": {
+            "mainFile": "video_grid.ncl",
+            "category": "general",
+            "description": "Multi-video synchronized grid presentation"
+        },
+        "focus_nav": {
+            "mainFile": "focus_nav.ncl",
+            "category": "general",
+            "description": "Focus navigation and button selection example"
+        },
+        "sbtvd": {
+            "mainFile": "sbtvd/main.ncl",
+            "category": "general",
+            "description": "SBTVD broadcast video example",
+            "otherEditbleFiles": [
+                "ginga_config.json"
+            ]
+        },
+        "lua_canvas": {
+            "mainFile": "lua_canvas.ncl",
+            "category": "general",
+            "description": "Lua canvas graphics example",
+            "otherEditbleFiles": [
+                "lua_canvas.lua"
+            ]
+        },
+        "image": {
+            "mainFile": "image.ncl",
+            "category": "general",
+            "description": "Image presentation example"
+        },
+        "image_dur": {
+            "mainFile": "image_with_dur.ncl",
+            "category": "general",
+            "description": "Image with explicit duration example"
+        },
+        "video_dur": {
+            "mainFile": "video_with_dur.ncl",
+            "category": "general",
+            "description": "Video with explicit duration example"
+        },
+        "image_html": {
+            "mainFile": "image.html",
+            "category": "general_html",
+            "description": "HTML layout image example"
+        },
+        "current_service": {
+            "mainFile": "current_service.html",
+            "category": "general_html",
+            "description": "Current service HTML integration example"
+        },
+        "emb_ncl": {
+            "mainFile": "emb_ncl.ncl",
+            "category": "embedded",
+            "description": "Embedded NCL application example",
+            "otherEditbleFiles": [
+                "video.ncl"
+            ]
+        },
+        "emb_html": {
+            "mainFile": "emb_html.ncl",
+            "category": "embedded",
+            "description": "Embedded HTML application example",
+            "otherEditbleFiles": [
+                "current_service.html"
+            ]
+        },
+        "multiuser_profile": {
+            "mainFile": "multiuser_profile/main.ncl",
+            "category": "multiuser",
+            "description": "Multi-user profile personalization example",
+            "otherEditbleFiles": [
+                "user_info.lua",
+                "ginga_config.json",
+                "adult_query.json"
+            ]
+        },
+        "multiuser_profile_switch": {
+            "mainFile": "multiuser_profile/main_switch.ncl",
+            "category": "multiuser",
+            "description": "Multi-user profile personalization with rule switch",
+            "otherEditbleFiles": [
+                "user_info.lua",
+                "ginga_config.json",
+                "adult_query.json"
+            ]
+        },
+        "multiuser_current": {
+            "mainFile": "multiuser_current/main.ncl",
+            "category": "multiuser",
+            "description": "Multi-user current user personalization example",
+            "otherEditbleFiles": [
+                "user_info.lua",
+                "ginga_config.json"
+            ]
+        },
+        "pj_00syncProp": {
+            "mainFile": "primeiro-joao/00syncProp.ncl",
+            "category": "primeiro-joao",
+            "description": "Primeiro João: Property sync example",
+            "otherEditbleFiles": [
+                "causalConnBase.ncl"
+            ]
+        },
+        "pj_01sync": {
+            "mainFile": "primeiro-joao/01sync.ncl",
+            "category": "primeiro-joao",
+            "description": "Primeiro João: Sync example",
+            "otherEditbleFiles": [
+                "causalConnBase.ncl"
+            ]
+        },
+        "pj_02syncInt": {
+            "mainFile": "primeiro-joao/02syncInt.ncl",
+            "category": "primeiro-joao",
+            "description": "Primeiro João: Interactive sync example",
+            "otherEditbleFiles": [
+                "causalConnBase.ncl"
+            ]
+        },
+        "pj_03context": {
+            "mainFile": "primeiro-joao/03context.ncl",
+            "category": "primeiro-joao",
+            "description": "Primeiro João: Context mapping example",
+            "otherEditbleFiles": [
+                "causalConnBase.ncl"
+            ]
+        },
+        "pj_04reuse": {
+            "mainFile": "primeiro-joao/04reuse.ncl",
+            "category": "primeiro-joao",
+            "description": "Primeiro João: Media reuse example",
+            "otherEditbleFiles": [
+                "causalConnBase.ncl"
+            ]
+        },
+        "pj_05return": {
+            "mainFile": "primeiro-joao/05return.ncl",
+            "category": "primeiro-joao",
+            "description": "Primeiro João: Form return example",
+            "otherEditbleFiles": [
+                "causalConnBase.ncl"
+            ]
+        },
+        "pj_06switch": {
+            "mainFile": "primeiro-joao/06switch.ncl",
+            "category": "primeiro-joao",
+            "description": "Primeiro João: Rule switch example",
+            "otherEditbleFiles": [
+                "causalConnBase.ncl"
+            ]
+        },
+        "pj_07transition": {
+            "mainFile": "primeiro-joao/07transition.ncl",
+            "category": "primeiro-joao",
+            "description": "Primeiro João: Transition example",
+            "otherEditbleFiles": [
+                "causalConnBase.ncl"
+            ]
+        },
+        "pj_08animation": {
+            "mainFile": "primeiro-joao/08animation.ncl",
+            "category": "primeiro-joao",
+            "description": "Primeiro João: Animation example",
+            "otherEditbleFiles": [
+                "causalConnBase.ncl"
+            ]
+        },
+        "pj_09settings": {
+            "mainFile": "primeiro-joao/09settings.ncl",
+            "category": "primeiro-joao",
+            "description": "Primeiro João: Settings example",
+            "otherEditbleFiles": [
+                "causalConnBase.ncl"
+            ]
+        },
+        "pj_10menu": {
+            "mainFile": "primeiro-joao/10menu.ncl",
+            "category": "primeiro-joao",
+            "description": "Primeiro João: Menu example",
+            "otherEditbleFiles": [
+                "causalConnBase.ncl"
+            ]
+        },
+        "pj_11nclua": {
+            "mainFile": "primeiro-joao/11nclua.ncl",
+            "category": "primeiro-joao",
+            "description": "Primeiro João: NCLua example",
+            "otherEditbleFiles": [
+                "causalConnBase.ncl",
+                "script/menu.lua"
+            ]
+        },
+        "pj_12embNCL": {
+            "mainFile": "primeiro-joao/12embNCL.ncl",
+            "category": "primeiro-joao",
+            "description": "Primeiro João: Embedded NCL example",
+            "otherEditbleFiles": [
+                "causalConnBase.ncl",
+                "advert.ncl"
+            ]
+        }
+    }
+}
