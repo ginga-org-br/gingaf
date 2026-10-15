@@ -1,91 +1,74 @@
 MAKEFLAGS += -s --no-print-directory
 .DEFAULT_GOAL := help
+$(if $(filter Windows_NT,$(OS)),$(if $(shell where printf 2>nul),,$(error coreutils is not installed. Please run: winget install coreutils)))
 
-.PHONY: help deps test tests doc release release-publish clean run-example check-app architecture-svg serve
+.PHONY: help deps release-web release-windows release-android release-linux release-macos test tests doc release-publish clean run-example check-app serve integration_test
 
 BASE_HREF ?= /
 
-ifeq ($(OS),Windows_NT)
-    VERSION ?= $(shell powershell -Command "(Get-Content pubspec.yaml | Select-String '^version:').Line.Split(':')[1].Trim().Split('+')[0]")
-    PLATFORM := windows-x64
-    RUN_OS := windows
-    RELEASE_BUILD := flutter build windows --release
-    RELEASE_DIR := build/windows/x64/runner/Release
-    RELEASE_ZIP = powershell -Command "if (Test-Path '$(ZIP_NAME)') { Remove-Item '$(ZIP_NAME)' }; Compress-Archive -Path '$(RELEASE_DIR)/*' -DestinationPath '$(ZIP_NAME)'"
-else
-    VERSION ?= $(shell grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1 | tr -d '\r')
-    UNAME_S := $(shell uname -s)
-    UNAME_M := $(shell uname -m)
-    ifeq ($(UNAME_S),Darwin)
-        PLATFORM := macos-$(UNAME_M)
-        RUN_OS := macos
-        RELEASE_BUILD := flutter build macos --release
-        RELEASE_DIR := build/macos/Build/Products/Release
-    else
-        ifeq ($(UNAME_M),x86_64)
-            ARCH := x64
-        else ifeq ($(UNAME_M),aarch64)
-            ARCH := arm64
-        else
-            ARCH := $(UNAME_M)
-        endif
-        PLATFORM := linux-$(ARCH)
-        RUN_OS := linux
-        RELEASE_BUILD := flutter build linux --release
-        RELEASE_DIR := build/linux/$(ARCH)/release/bundle
-    endif
-    RELEASE_ZIP = rm -f $(ZIP_NAME) && (cd $(RELEASE_DIR) && zip -r $(CURDIR)/$(ZIP_NAME) .)
-endif
-
-ZIP_NAME := gingaf-v$(VERSION)-$(PLATFORM).zip
+VERSION ?= $(shell grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1 | tr -d '\r')
 
 help:
 	@printf "%s\n" \
 		"Usage: make [target]" \
 		"" \
 		"Targets:" \
-		"  deps                 Install dependencies for Flutter workspace" \
-		"  test                 Run tests for Flutter workspace" \
-		"  doc                  Generate Dart documentation" \
-		"  architecture-svg     Generate doc/architecture.svg from doc/architecture.mmd" \
-		"  release              Zip current platform release build" \
-		"  release-publish      Publish release to GitHub Releases via gh" \
-		"  serve                Serve web playground application" \
-		"  clean                Clean build artifacts" \
-		"  run-example          Run one application at examples/ (e.g. make run-example app=video.ncl)" \
-		"  integration_test     Run integration tests"
+		"  deps                                         Install dependencies for Flutter workspace" \
+		"  release-{web,windows,android,linux,macos}    Build release application for target platform" \
+		"  serve                                        Serve web playground application" \
+		"  test                                         Run tests for Flutter workspace" \
+		"  doc                                          Generate Dart documentation" \
+		"  release-publish                              Publish release to GitHub Releases via gh" \
+		"  clean                                        Clean build artifacts" \
+		"  run-example                                  Run one application at examples/ (e.g. make run-example app=video.ncl)" \
+		"  integration_test                             Run integration tests"
 
-deps:
+.dart_tool/package_config.json: pubspec.yaml $(wildcard packages/*/pubspec.yaml)
 	flutter pub get
+	@touch -c .dart_tool/package_config.json
+
+deps: .dart_tool/package_config.json
+
+release-web: deps
+	flutter build web --no-pub --release
+
+
+release-windows: deps
+	flutter build windows --no-pub --release
+	rm -f gingaf-v$(VERSION)-windows-x64.zip && (cd build/windows/x64/runner/Release && zip -r $(CURDIR)/gingaf-v$(VERSION)-windows-x64.zip .)
+
+release-android: deps
+	flutter build apk --no-pub --release
+	rm -f gingaf-v$(VERSION)-android.zip && (cd build/app/outputs/flutter-apk && zip -r $(CURDIR)/gingaf-v$(VERSION)-android.zip app-release.apk)
+
+release-linux: deps
+	flutter build linux --no-pub --release
+	rm -f gingaf-v$(VERSION)-linux-x64.zip && (cd build/linux/x64/release/bundle && zip -r $(CURDIR)/gingaf-v$(VERSION)-linux-x64.zip .)
+
+release-macos: deps
+	flutter build macos --no-pub --release
+	rm -f gingaf-v$(VERSION)-macos.zip && (cd build/macos/Build/Products/Release && zip -r $(CURDIR)/gingaf-v$(VERSION)-macos.zip .)
 
 test:
 	flutter test test packages/gingacc/test packages/ncldoc/test packages/nclui/test --no-pub
 
-tests: test
-
 integration_test:
-	flutter test --no-pub integration_test -d $(RUN_OS)
+	flutter test --no-pub integration_test $(if $(d),-d $(d))
 
-doc: architecture-svg
+doc:
+	npx -y @mermaid-js/mermaid-cli -i doc/architecture.mmd -o doc/architecture.svg -b transparent
 	dart doc
 	touch doc/api/.nojekyll
 	mkdir -p doc/api/doc
 	cp doc/architecture.svg doc/api/doc/architecture.svg
 	npx serve doc/api
 
-architecture-svg:
-	npx -y @mermaid-js/mermaid-cli -i doc/architecture.mmd -o doc/architecture.svg -b transparent
 
-release:
-	$(RELEASE_BUILD)
-	$(RELEASE_ZIP)
-
-release-publish: release
-	gh release upload v$(VERSION) $(ZIP_NAME) --clobber || gh release create v$(VERSION) $(ZIP_NAME) --generate-notes
+release-publish:
+	gh release upload v$(VERSION) gingaf-v$(VERSION)-*.zip --clobber || gh release create v$(VERSION) gingaf-v$(VERSION)-*.zip --generate-notes
 
 
-serve: 
-	make -C node build
+serve: deps
 	make -C node serve
 
 clean:
@@ -101,4 +84,4 @@ run-example: check-app
 	$(info ======================================================================)
 	$(info Running Example: $(APP_EXAMPLE))
 	$(info ======================================================================)
-	flutter run --no-pub -d $(RUN_OS) --dart-define="APP=examples/$(APP_EXAMPLE)" || true
+	flutter run --no-pub $(if $(d),-d $(d)) --dart-define="APP=examples/$(APP_EXAMPLE)" || true
