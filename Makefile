@@ -2,7 +2,7 @@ MAKEFLAGS += -s --no-print-directory
 .DEFAULT_GOAL := help
 $(if $(filter Windows_NT,$(OS)),$(if $(shell where printf 2>nul),,$(error coreutils is not installed. Please run: winget install coreutils)))
 
-.PHONY: help deps release-web release-windows release-android release-linux release-macos test tests doc release-publish clean run-example check-app serve integration_test
+.PHONY: help deps release-web release-windows release-android release-linux release-macos test tests doc release-publish clean run-example check-app serve serve-examples integration_test
 
 BASE_HREF ?= /
 
@@ -70,6 +70,9 @@ release-publish:
 
 serve: release-web
 	make -C node serve
+
+serve-examples: release-web
+	make -C node serve-examples
 
 clean:
 	flutter clean
