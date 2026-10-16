@@ -268,14 +268,21 @@ export function getEffectiveSearch(): string {
 }
 
 export function resolvePlayerBaseUrl(playerParam: string | null): string {
-    const isInExamples = typeof window !== 'undefined' && window.location.pathname.includes('/examples/');
-    let playerBaseUrl = isInExamples ? '../gingaf-web/index.html' : 'gingaf-web/index.html';
     const isHostedEnv = typeof process !== 'undefined' && (process as any).env ? (process as any).env.VITE_USE_HOSTED_PLAYER === 'true' : false;
     const useHosted = playerParam === 'hosted' || (playerParam !== 'local' && isHostedEnv);
     if (useHosted) {
-        playerBaseUrl = 'https://ginga-org-br.github.io/gingaf/playground/gingaf-web/index.html';
+        return 'https://ginga-org-br.github.io/gingaf/playground/gingaf-web/index.html';
     }
-    return playerBaseUrl;
+    if (typeof window !== 'undefined' && window.location.pathname) {
+        const path = window.location.pathname;
+        if (path.includes('/gingaf/playground/')) {
+            return path.includes('/examples/') ? '../gingaf-web/index.html' : 'gingaf-web/index.html';
+        }
+        if (path.includes('/examples/')) {
+            return '/gingaf/playground/gingaf-web/index.html';
+        }
+    }
+    return 'gingaf-web/index.html';
 }
 
 export async function resolveTargetExample(appParam: string | null): Promise<Example> {
@@ -312,6 +319,10 @@ export async function resolveTargetExample(appParam: string | null): Promise<Exa
         } catch (e) {
             console.warn('[ginga-node] Could not fetch remote app URL:', e);
         }
+
+        if (examples[cleanParam]) return examples[cleanParam];
+        if (examples[extractedKey]) return examples[extractedKey];
+        if (examples[extractedFileName]) return examples[extractedFileName];
 
         const fileName = extractedFileName || 'app.ncl';
         const remoteExample: Example = {
@@ -454,6 +465,8 @@ export async function initPlayer(): Promise<void> {
     const iframe = document.createElement('iframe');
     iframe.id = 'preview-frame';
     iframe.style.cssText = 'width:100%; height:100%; border:none; margin:0; padding:0; display:block;';
+    iframe.setAttribute('allow', 'autoplay; fullscreen');
+    iframe.setAttribute('allowfullscreen', 'true');
 
     iframe.onload = () => {
         syncIframeStorage(iframe.contentWindow, targetExample);
@@ -568,7 +581,7 @@ ${buildExampleOptions()}
         </div>
       </div>
       <div id="preview-container">
-        <iframe id="preview-frame" src="about:blank" frameborder="0"></iframe>
+        <iframe id="preview-frame" src="about:blank" frameborder="0" allow="autoplay; fullscreen" allowfullscreen="true"></iframe>
       </div>
     </main>`;
     }

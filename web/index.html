@@ -33,7 +33,8 @@
   <title>ginga</title>
   <link rel="manifest" href="manifest.json">
   <style>
-    html, body {
+    html,
+    body {
       margin: 0;
       padding: 0;
       width: 100%;
@@ -41,12 +42,17 @@
       overflow: hidden;
       background-color: #000000;
     }
+
     #ginga-container {
       width: 100%;
       height: 100%;
       position: absolute;
       top: 0;
       left: 0;
+    }
+
+    video {
+      object-fit: fill !important;
     }
   </style>
 </head>
@@ -55,6 +61,16 @@
   <div id="ginga-container"></div>
   <script>
     var serviceWorkerVersion = null;
+    // Web browsers require user interaction before unmuting media playback.
+    // Unmute videos upon user gesture.
+    // See: https://developer.mozilla.org/en-US/docs/Web/Media/Autoplay_guide
+    window.addEventListener('click', function () {
+      document.querySelectorAll('video').forEach(function (video) {
+        if (video.muted) {
+          video.muted = false;
+        }
+      });
+    }, { once: false });
   </script>
 
   <script src="flutter_bootstrap.js" async></script>

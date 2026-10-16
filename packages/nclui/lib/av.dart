@@ -25,6 +25,10 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
   bool _initialized = false;
   bool _isCompleted = false;
   bool _isPaused = false;
+  // Web browsers block programmatic autoplay for media with audio tracks unless muted.
+  // Setting volume to 0.0 applies the muted attribute to HTMLVideoElement, allowing autoplay.
+  // See: https://developer.mozilla.org/en-US/docs/Web/Media/Autoplay_guide
+  bool _isMutedForAutoplay = false;
 
   VideoPlayerController? get controller => _controller;
   bool get initialized => _initialized;
@@ -32,6 +36,13 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
   bool get isLooping => false;
   bool get notifyCompletion => true;
   bool get isPaused => _isPaused;
+
+  void unmute() {
+    if (kIsWeb && _controller != null && soundLevel > 0) {
+      _isMutedForAutoplay = false;
+      _controller!.setVolume(soundLevel);
+    }
+  }
 
   @override
   void pause() {
@@ -86,7 +97,9 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
   @override
   void parseProperties([Media? targetMedia]) {
     super.parseProperties(targetMedia);
-    _controller?.setVolume(soundLevel);
+    if (!kIsWeb || !_isMutedForAutoplay) {
+      _controller?.setVolume(soundLevel);
+    }
   }
 
   void _onVideoPositionChanged() {
@@ -138,8 +151,12 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
       if (isLooping) {
         await controller.setLooping(true);
       }
-      await controller.setVolume(soundLevel);
-
+      if (kIsWeb) {
+        _isMutedForAutoplay = true;
+        await controller.setVolume(0.0);
+      } else {
+        await controller.setVolume(soundLevel);
+      }
       if (mounted) {
         setState(() {
           _initialized = true;
@@ -180,13 +197,10 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
     return Container(
       color: Colors.black,
       child: SizedBox.expand(
-        child: FittedBox(
-          fit: BoxFit.fill,
-          child: SizedBox(
-            width: controller.value.size.width,
-            height: controller.value.size.height,
-            child: VideoPlayer(controller),
-          ),
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: unmute,
+          child: VideoPlayer(controller),
         ),
       ),
     );
