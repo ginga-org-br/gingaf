@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:gingacc/gingacc.dart';
 import 'package:logging/logging.dart';
 
 import 'web_utils_stub.dart'
@@ -101,13 +100,4 @@ final _logger = Logger('ginga.args');
           : null);
 
   return (app: appSrc, config: configSrc);
-}
-
-Future<GingaConfig> resolveGingaConfig({
-  String? appSrc,
-  String? configSrc,
-  GingaCC? gingacc,
-}) async {
-  final target = gingacc ?? GingaCC();
-  return await target.loadConfig(configSrc, appSrc);
 }
