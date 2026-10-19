@@ -1,15 +1,16 @@
 # Build
 
-`gingaf` is based on Flutter. First [install Flutter SDK](https://docs.flutter.dev/install/manual).
+`gingaf` is based on Flutter. Set up the development environment using the platform specification files below.
 
 ## Table of Contents
 
+- [Build-Edit-Test Workflow](#build-edit-test-workflow)
 - [Prerequisites by Platform](#prerequisites-by-platform)
   - [Windows](#windows)
   - [Linux](#linux)
   - [macOS](#macos)
   - [Android](#android)
-- [Installing Dependencies](#installing-dependencies)
+- [Development Environment Setup](#development-environment-setup)
 - [Running Applications](#running-applications)
   - [Running Local Examples](#running-local-examples)
   - [Running from URLs](#running-from-urls)
@@ -18,99 +19,80 @@
 - [Documentation](#documentation)
 - [Cleaning Build Artifacts](#cleaning-build-artifacts)
 - [Releases](#releases)
+- [Plugins](#plugins)
+
+## Build-Edit-Test Workflow
+
+1. Fork or branch from `main`.
+2. Configure platform prerequisites (see [Prerequisites by Platform](#prerequisites-by-platform)).
+3. Install development dependencies and generate plugins: `make deps`.
+4. Implement changes or bug fixes.
+5. Run unit tests to verify functionality: `make test`.
+6. Run local examples to verify end-to-end behavior: `make run-example app=video.ncl`.
 
 ## Prerequisites by Platform
 
 ### Windows
 
-Install core utilities and native build tools via `winget`:
+Automated setup using the Windows dependency setup script [windows/install-deps-windows.ps1](windows/install-deps-windows.ps1):
 
 ```powershell
-winget install coreutils
-winget install --id Microsoft.WindowsSDK.10.0.22621 --source winget
-winget install --id Microsoft.VisualStudio.2019.BuildTools --override "--passive --wait --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
-winget install --id Microsoft.NuGet
-```
-
-Install native Windows WebView packages:
-
-```powershell
-New-Item -ItemType Directory -Force -Path build/windows/x64/packages
-nuget install Microsoft.Windows.ImplementationLibrary -Version 1.0.220914.1 -ExcludeVersion -OutputDirectory build/windows/x64/packages
-nuget install Microsoft.Web.WebView2 -Version 1.0.1210.39 -ExcludeVersion -OutputDirectory build/windows/x64/packages
-```
-
-Enable Flutter platforms:
-
-```powershell
-flutter config --enable-windows-desktop
-flutter config --enable-web
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+./windows/install-deps-windows.ps1
 ```
 
 ### Linux
 
-Install native build tools, GTK, WebKit, and MPV libraries:
+Automated setup using the dependency installation script [linux/install-deps-ubuntu.sh](linux/install-deps-ubuntu.sh):
 
 ```bash
-sudo apt update
-sudo apt install -y cmake ninja-build clang pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev libmpv-dev mpv
-```
-
-Enable Linux desktop platform:
-
-```bash
-flutter config --enable-linux-desktop
+bash linux/install-deps-ubuntu.sh
 ```
 
 ### macOS
 
-Ensure Xcode and Command Line Tools are installed:
+Ensure Xcode Command Line Tools are installed:
 
 ```bash
 xcode-select --install
-flutter config --enable-macos-desktop
+```
+
+Automated setup using the dependency installation script [macos/install-deps-macos.sh](macos/install-deps-macos.sh):
+
+```bash
+bash macos/install-deps-macos.sh
 ```
 
 ### Android
 
-Install Java JDK and make sure `JAVA_HOME` is set:
+Automated setup using the Android SDK setup script [android/install-deps-android.ps1](android/install-deps-android.ps1) (or [android/install-deps-android.sh](android/install-deps-android.sh)):
 
-```powershell
-winget install EclipseAdoptium.Temurin.25.JDK
-```
+- Windows (PowerShell):
+  ```powershell
+  Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+  ./android/install-deps-android.ps1
+  ```
+- Linux / macOS:
+  ```bash
+  bash android/install-deps-android.sh
+  ```
 
-Ensure Android command-line tools and SDK are configured:
+Accept Android SDK licenses:
 
-```powershell
-New-Item -Path "C:\Android\cmdline-tools\latest" -ItemType Directory -Force
-Invoke-WebRequest -Uri "https://dl.google.com/android/repository/commandlinetools-win-11076708_latest.zip" -OutFile "$env:TEMP\cmdline-tools.zip"
-Expand-Archive -Path "$env:TEMP\cmdline-tools.zip" -DestinationPath "$env:TEMP\cmdline-tools" -Force
-Move-Item -Path "$env:TEMP\cmdline-tools\cmdline-tools\*" -Destination "C:\Android\cmdline-tools\latest\" -Force
-Remove-Item "$env:TEMP\cmdline-tools.zip", "$env:TEMP\cmdline-tools" -Recurse -Force
-[System.Environment]::SetEnvironmentVariable("ANDROID_HOME", "C:\Android", [System.EnvironmentVariableTarget]::User)
-$user_path = [System.Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)
-[System.Environment]::SetEnvironmentVariable("Path", "$user_path;C:\Android\cmdline-tools\latest\bin", [System.EnvironmentVariableTarget]::User)
-```
-
-Accept Android SDK licenses and configure Flutter:
-
-```powershell
+```bash
 flutter doctor --android-licenses
-flutter config --enable-android
 ```
 
-To create and launch an Android emulator:
+To launch the Android emulator created by `install-deps-android`:
 
-```powershell
-sdkmanager "system-images;android-34;google_apis;x86_64"
-avdmanager create avd -n flutter_dev -k "system-images;android-34;google_apis;x86_64"
+```bash
 flutter emulators --launch flutter_dev
 flutter devices
 ```
 
-## Installing Dependencies
+## Development Environment Setup
 
-Install Flutter workspace dependencies:
+Install dependencies across all Flutter workspace packages and generate the plugin registry:
 
 ```bash
 make deps
@@ -132,6 +114,7 @@ To specify a target device:
 ```bash
 make run-example app=video.ncl d=linux
 make run-example app=video.ncl d=windows
+make run-example app=video.ncl d=macos
 make run-example app=video.ncl d=chrome
 ```
 
@@ -212,4 +195,5 @@ To upload or create a GitHub Release using `gh` CLI:
 
 ```bash
 make release-publish
+```
 ```
