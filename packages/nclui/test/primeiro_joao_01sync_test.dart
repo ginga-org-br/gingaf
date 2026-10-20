@@ -6,7 +6,7 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 
 import 'mock_video_player.dart';
 
-const _joao01syncNcl = '''<ncl id="syncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+const _joao01syncNcl = '''<ncl id="syncTest" >
   <head>
     <regionBase>
       <region id="baseRegion" width="100%" height="100%" zIndex="2">
@@ -74,8 +74,7 @@ void main() {
   });
 
   test('NclDocument descriptor duration and region resolution', () {
-    final doc = NclDocument.fromContent(
-        '''<ncl id="syncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+    final doc = NclDocument.fromContent('''<ncl id="syncTest" >
   <head>
     <regionBase>
       <region id="baseRegion" width="100%" height="100%" zIndex="2">

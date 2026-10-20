@@ -185,7 +185,8 @@ void main() {
       'Ginga does not mount MainAVWidget when startWithMainAv is false and no sbtvd application runs',
       (WidgetTester tester) async {
     final config = GingaConfig(
-      appSrc: '<ncl><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>',
+      appSrc:
+          '<ncl><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>',
       mainAvSrc: 'examples/primeiro-joao/media/animGar.mp4',
       startWithMainAv: false,
       startWithCCWS: false,

@@ -6,7 +6,7 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 
 import 'mock_video_player.dart';
 
-const _joao08animationNcl = '''<ncl id="nclAnimation" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+const _joao08animationNcl = '''<ncl id="nclAnimation" >
   <head>
     <ruleBase>
       <rule id="en" var="system.language" value="eng" comparator="eq"/>
@@ -160,8 +160,7 @@ void main() {
   test(
       'NclDocument executes duration-based SET action property changes correctly',
       () {
-    final doc = NclDocument.fromContent(
-        '''<ncl id="nclAnimation" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+    final doc = NclDocument.fromContent('''<ncl id="nclAnimation" >
   <head>
     <connectorBase>
       <causalConnector id="onBeginStartSet_var_delay_duration">

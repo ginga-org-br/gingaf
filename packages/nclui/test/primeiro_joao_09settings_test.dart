@@ -6,7 +6,7 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 
 import 'mock_video_player.dart';
 
-const _joao09settingsNcl = '''<ncl id="settingsEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+const _joao09settingsNcl = '''<ncl id="settingsEx" >
   <head>
     <ruleBase>
       <rule id="en" var="system.language" value="en" comparator="eq"/>
@@ -225,8 +225,7 @@ void main() {
 
     final interactivityCtx =
         nclState.nclDocument!.getContextById('interactivity')!;
-    final advertCtx =
-        nclState.nclDocument!.getContextById('advert')!;
+    final advertCtx = nclState.nclDocument!.getContextById('advert')!;
 
     expect(interactivityCtx.getMainState(), NclStateType.occurring);
     expect(advertCtx.getMainState(), NclStateType.sleeping);
@@ -267,8 +266,7 @@ void main() {
 
     final interactivityCtx =
         nclState.nclDocument!.getContextById('interactivity')!;
-    final advertCtx =
-        nclState.nclDocument!.getContextById('advert')!;
+    final advertCtx = nclState.nclDocument!.getContextById('advert')!;
 
     expect(interactivityCtx.getMainState(), NclStateType.occurring);
     expect(advertCtx.getMainState(), NclStateType.sleeping);

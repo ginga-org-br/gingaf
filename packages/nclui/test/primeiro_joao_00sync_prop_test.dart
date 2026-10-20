@@ -6,7 +6,7 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 
 import 'mock_video_player.dart';
 
-const _joao00syncPropNcl = '''<ncl id="mySyncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+const _joao00syncPropNcl = '''<ncl id="mySyncTest" >
   <head>
     <connectorBase>
       <causalConnector id="onBeginStart_delay">
@@ -79,8 +79,7 @@ void main() {
   });
 
   test('NclDocument delay and property parsing', () {
-    final doc = NclDocument.fromContent(
-        '''<ncl id="mySyncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+    final doc = NclDocument.fromContent('''<ncl id="mySyncTest" >
   <head>
     <connectorBase>
       <causalConnector id="onBeginStart_delay">

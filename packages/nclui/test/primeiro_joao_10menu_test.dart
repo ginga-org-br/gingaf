@@ -6,7 +6,7 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 
 import 'mock_video_player.dart';
 
-const _joao10menuNcl = '''<ncl id="menuEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+const _joao10menuNcl = '''<ncl id="menuEx" >
   <head>
     <ruleBase>
       <rule id="en" var="system.language" value="en" comparator="eq"/>
@@ -322,7 +322,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(nclState.nclDocument!.currentFocusNodeId, equals('imgRock'));
-    expect(nclState.nclDocument!.getSystemVariable('service.currentFocus'), equals('imgRock'));
+    expect(nclState.nclDocument!.getSystemVariable('service.currentFocus'),
+        equals('imgRock'));
 
     expect(
       nclState.nclDocument!.getMediaById('rock')?.getMainState(),
@@ -341,7 +342,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(nclState.nclDocument!.currentFocusNodeId, equals('imgTechno'));
-    expect(nclState.nclDocument!.getSystemVariable('service.currentFocus'), equals('imgTechno'));
+    expect(nclState.nclDocument!.getSystemVariable('service.currentFocus'),
+        equals('imgTechno'));
 
     expect(
       nclState.nclDocument!.getMediaById('techno')?.getMainState(),

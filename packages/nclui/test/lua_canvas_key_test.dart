@@ -77,7 +77,7 @@ end)
     testWidgets('Lua script renders canvas commands and handles key events',
         (WidgetTester tester) async {
       const nclContent = '''
-<ncl id="pure_test" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+<ncl id="pure_test" >
   <head>
     <regionBase>
       <region id="rg" width="100%" height="100%"/>
@@ -119,10 +119,11 @@ event.register(function(evt)
 end)
 ''';
 
-      final gingacc = GingaCC()..setVirtualFiles({
-        'main.ncl': nclContent,
-        'script.lua': luaContent,
-      });
+      final gingacc = GingaCC()
+        ..setVirtualFiles({
+          'main.ncl': nclContent,
+          'script.lua': luaContent,
+        });
 
       await tester.pumpWidget(
         MaterialApp(
@@ -198,10 +199,11 @@ end)
 </ncl>
 ''';
 
-      final gingacc = GingaCC()..setVirtualFiles({
-        'main.ncl': nclContent,
-        'lua_canvas.lua': luaCanvasContent,
-      });
+      final gingacc = GingaCC()
+        ..setVirtualFiles({
+          'main.ncl': nclContent,
+          'lua_canvas.lua': luaCanvasContent,
+        });
 
       await tester.pumpWidget(
         MaterialApp(
@@ -344,10 +346,11 @@ end)
 </ncl>
 ''';
 
-      final gingacc = GingaCC()..setVirtualFiles({
-        'main.ncl': nclContent,
-        'lua_canvas.lua': luaCanvasContent,
-      });
+      final gingacc = GingaCC()
+        ..setVirtualFiles({
+          'main.ncl': nclContent,
+          'lua_canvas.lua': luaCanvasContent,
+        });
 
       await tester.pumpWidget(
         MaterialApp(
@@ -430,10 +433,11 @@ end)
 </ncl>
 ''';
 
-      final gingacc = GingaCC()..setVirtualFiles({
-        'main.ncl': nclContent,
-        'lua_canvas.lua': luaCanvasContent,
-      });
+      final gingacc = GingaCC()
+        ..setVirtualFiles({
+          'main.ncl': nclContent,
+          'lua_canvas.lua': luaCanvasContent,
+        });
 
       await tester.pumpWidget(
         MaterialApp(

@@ -6,8 +6,7 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 
 import 'mock_video_player.dart';
 
-const _joao12embNcl =
-    '''<ncl id="_03prepPassiveDevicesEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+const _joao12embNcl = '''<ncl id="_03prepPassiveDevicesEx" >
   <head>
     <regionBase>
       <region id="screenReg" width="100%" height="100%" zIndex="1">
@@ -51,8 +50,7 @@ const _joao12embNcl =
   </body>
 </ncl>''';
 
-const _advertNcl =
-    '''<ncl id="_00prepPassiveDevicesEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+const _advertNcl = '''<ncl id="_00prepPassiveDevicesEx" >
   <head>
     <regionBase>
       <region id="backgroundReg" width="100%" height="100%" zIndex="5">

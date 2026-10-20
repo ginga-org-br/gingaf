@@ -6,7 +6,7 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 
 import 'mock_video_player.dart';
 
-const _joao11ncluaNcl = '''<ncl id="ncluaEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+const _joao11ncluaNcl = '''<ncl id="ncluaEx" >
   <head>
     <ruleBase>
       <rule id="en" var="system.language" value="en" comparator="eq"/>

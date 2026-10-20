@@ -40,7 +40,7 @@ void main() {
 
     const embNclFullScreen = '''<?xml version="1.0" encoding="ISO-8859-1"?>
 <ncl id="embHtml"
-  xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+  >
   <head>
     <regionBase>
       <region id="formReg"/>
@@ -57,7 +57,7 @@ void main() {
 
     const embNclNotFullScreen = '''<?xml version="1.0" encoding="ISO-8859-1"?>
 <ncl id="embHtml"
-  xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+  >
   <head>
     <regionBase>
       <region id="formReg" left="20%" top="10%" width="60%" height="80%" zIndex="0"/>
@@ -75,11 +75,13 @@ void main() {
     testWidgets(
         'full screen embedded ncl advances time and checks pixel dimensions',
         (WidgetTester tester) async {
-      final gingacc = GingaCC()..setVirtualFiles({
-          'main.ncl': embNclFullScreen,
-          'video.ncl': videoNcl,
-        },
-      );
+      final gingacc = GingaCC()
+        ..setVirtualFiles(
+          {
+            'main.ncl': embNclFullScreen,
+            'video.ncl': videoNcl,
+          },
+        );
 
       await tester.pumpWidget(
         MaterialApp(
@@ -127,11 +129,13 @@ void main() {
     testWidgets(
         'non-full screen embedded ncl advances time and checks pixel dimensions',
         (WidgetTester tester) async {
-      final gingacc = GingaCC()..setVirtualFiles({
-          'main.ncl': embNclNotFullScreen,
-          'video.ncl': videoNcl,
-        },
-      );
+      final gingacc = GingaCC()
+        ..setVirtualFiles(
+          {
+            'main.ncl': embNclNotFullScreen,
+            'video.ncl': videoNcl,
+          },
+        );
 
       await tester.pumpWidget(
         MaterialApp(

@@ -57,7 +57,6 @@ class GingaState extends State<Ginga> {
         mainAVWidget = MainAVWidget(
           key: _mainAvKey,
           src: _gingacc.config.mainAvSrc,
-          gingacc: _gingacc,
         );
       });
     }
@@ -71,7 +70,6 @@ class GingaState extends State<Ginga> {
       mainAVWidget = MainAVWidget(
         key: _mainAvKey,
         src: _gingacc.config.mainAvSrc,
-        gingacc: _gingacc,
       );
     }
 

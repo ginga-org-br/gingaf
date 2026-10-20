@@ -6,7 +6,7 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 
 import 'mock_video_player.dart';
 
-const _joao06switchNcl = '''<ncl id="nclSwitch" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+const _joao06switchNcl = '''<ncl id="nclSwitch" >
   <head>
     <ruleBase>
       <rule id="en" var="system.language" value="eng" comparator="eq"/>
@@ -142,7 +142,7 @@ void main() {
 
   test('NclDocument executes Switch default (PT) path correctly', () {
     final doc = NclDocument.fromContent(
-        '''<ncl id="nclSwitch" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+      '''<ncl id="nclSwitch" >
   <head>
     <ruleBase>
       <rule id="en" var="system.language" value="eng" comparator="eq"/>
@@ -308,7 +308,7 @@ void main() {
 
   test('NclDocument executes Switch English (EN) path correctly', () {
     final doc = NclDocument.fromContent(
-        '''<ncl id="nclSwitch" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+      '''<ncl id="nclSwitch" >
   <head>
     <ruleBase>
       <rule id="en" var="system.language" value="eng" comparator="eq"/>

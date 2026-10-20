@@ -6,7 +6,7 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 
 import 'mock_video_player.dart';
 
-const _joao07transitionNcl = '''<ncl id="nclTransition" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+const _joao07transitionNcl = '''<ncl id="nclTransition" >
   <head>
     <ruleBase>
       <rule id="en" var="system.language" value="eng" comparator="eq"/>
@@ -146,8 +146,7 @@ void main() {
 
   test('NclDocument parses transitions and transition descriptors correctly',
       () {
-    final doc = NclDocument.fromContent(
-        '''<ncl id="nclTransition" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+    final doc = NclDocument.fromContent('''<ncl id="nclTransition" >
   <head>
     <transitionBase>
       <transition id="trans1" type="fade" dur="2s"/>

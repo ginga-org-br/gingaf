@@ -6,7 +6,7 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 
 import 'mock_video_player.dart';
 
-const _joao04reuseNcl = '''<ncl id="nclReuse" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+const _joao04reuseNcl = '''<ncl id="nclReuse" >
   <head>
     <regionBase>
       <region id="rBg" width="100%" height="100%" zIndex="1"/>
@@ -125,8 +125,7 @@ void main() {
   });
 
   test('NclDocument executes media reuse and refer set logic correctly', () {
-    final doc = NclDocument.fromContent(
-        '''<ncl id="nclReuse" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+    final doc = NclDocument.fromContent('''<ncl id="nclReuse" >
   <head>
     <regionBase>
       <region id="rBg" width="100%" height="100%" zIndex="1"/>
