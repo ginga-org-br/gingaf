@@ -49,6 +49,18 @@ Automated setup using the dependency installation script [linux/install-deps-ubu
 bash linux/install-deps-ubuntu.sh
 ```
 
+#### WSL2 GUI Setup (Windows Subsystem for Linux)
+
+If developing inside WSL2 on Windows, enable WSLg GUI support in `C:\Users\<username>\.wslconfig` like below, so the Ginga player desktop application and VS Code windows can open properly. Apply changes by restarting WSL in Windows PowerShell `powershell wsl --shutdown`:
+
+```ini
+[wsl2]
+guiApplications=true
+
+[system-distro-env]
+WESTON_RDP_DISABLE_COPY_WARNING_TITLE=true
+```
+
 ### macOS
 
 Ensure Xcode Command Line Tools are installed:
