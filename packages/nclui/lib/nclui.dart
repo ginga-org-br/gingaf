@@ -7,4 +7,5 @@ export 'main_av.dart';
 export 'base_widget.dart';
 export 'ncl.dart';
 export 'ncl_keys_flutter.dart';
+export 'nclui_plugins.dart';
 export 'text.dart';

@@ -1,3 +1,4 @@
+import 'package:get_it/get_it.dart';
 import 'package:xml/xml.dart';
 
 import 'mimetype.dart';
@@ -154,6 +155,22 @@ class NclParser {
         element = Element(rawAttributes: attrs);
         break;
       default:
+        Element? pluginElement;
+        try {
+          for (final plugin in GetIt.instance.getAll<NclParserPlugin>()) {
+            if (plugin.targetTag == node.name.local) {
+              final parsed = plugin.parseTag(node, this);
+              if (parsed != null) {
+                pluginElement = parsed;
+                break;
+              }
+            }
+          }
+        } catch (_) {}
+        if (pluginElement != null) {
+          element = pluginElement;
+          break;
+        }
         return null;
     }
     element.xmlTagName = node.name.local;

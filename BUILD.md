@@ -196,4 +196,3 @@ To upload or create a GitHub Release using `gh` CLI:
 ```bash
 make release-publish
 ```
-```

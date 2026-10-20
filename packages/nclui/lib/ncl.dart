@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:logging/logging.dart';
 import 'package:ncldoc/ncl_document.dart';
 
@@ -10,6 +11,7 @@ import 'html.dart';
 import 'image.dart';
 import 'lua.dart';
 import 'main_av.dart';
+import 'nclui_plugins.dart';
 import 'text.dart';
 
 export 'av.dart';
@@ -18,6 +20,7 @@ export 'html.dart';
 export 'image.dart';
 export 'lua.dart';
 export 'main_av.dart';
+export 'nclui_plugins.dart';
 export 'text.dart';
 
 final _logger = Logger('ginga-ncl');
@@ -65,6 +68,21 @@ class NclWidget extends BaseWidget {
     if (src.startsWith('sbtvd://')) {
       return null;
     }
+
+    try {
+      final plugins = GetIt.instance.getAll<NclMediaPlugin>();
+      for (final plugin in plugins) {
+        if (plugin.canHandle(src, mimeType)) {
+          return plugin.buildWidget(
+            key: key,
+            src: src,
+            media: media,
+            document: document,
+          );
+        }
+      }
+    } catch (_) {}
+
     if (src.endsWith('.ncl') ||
         mimeType == 'application/x-ncl-NCL' ||
         mimeType == 'application/x-ncl-ncl') {
@@ -73,7 +91,6 @@ class NclWidget extends BaseWidget {
         src: src,
         media: media,
         document: document,
-        gingacc: document?.gingacc,
       );
     }
     if (src.endsWith('.html') ||
@@ -84,7 +101,6 @@ class NclWidget extends BaseWidget {
         src: src,
         media: media,
         document: document,
-        gingacc: document?.gingacc,
       );
     }
     if (mimeType.startsWith('video/') ||
@@ -128,7 +144,6 @@ class NclWidget extends BaseWidget {
           src: src,
           media: media,
           document: document,
-          gingacc: document?.gingacc,
         );
       case 'image/png':
       case 'image/jpeg':
@@ -241,9 +256,7 @@ class NclWidgetState extends MediaState<NclWidget> {
     if (size != null && size != Size.zero) {
       return (left: 0.0, top: 0.0, width: size.width, height: size.height);
     }
-    return widget.gingacc?.config.graphicPlaneBounds ??
-        nclDocument?.config.graphicPlaneBounds ??
-        const (left: 0.0, top: 0.0, width: 720.0, height: 480.0);
+    return widget.gingacc.config.graphicPlaneBounds;
   }
 
   bool get hasSbtvdMedia {
@@ -332,12 +345,13 @@ class NclWidgetState extends MediaState<NclWidget> {
       } else {
         return;
       }
-      final gingacc = widget.gingacc ?? GingaCC();
+      final gingacc = widget.gingacc;
       final base = (widget.media?.uri.isNotEmpty == true)
           ? widget.media!.uri
-          : (widget.document?.docUri?.toString() ?? widget.document?.docSrc);
+          : (widget.document?.baseUri?.toString() ?? widget.document?.docSrc);
       final doc = await NclDocument.fromSrc(
         widget.src,
+        applicationId: widget.applicationId,
         gingacc: gingacc,
         baseDirSrc: base,
       );

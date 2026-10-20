@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:get_it/get_it.dart';
 import 'package:logging/logging.dart';
 
 import 'ncl_document.dart';
@@ -105,6 +106,12 @@ class NclScheduler {
     _processDelayedNclActions();
     final changedNodes = _executeNclActionStack();
     _checkIsPlaying();
+
+    try {
+      for (final plugin in GetIt.instance.getAll<NclTickPlugin>()) {
+        plugin.onTick(Duration(milliseconds: incrementMs), document);
+      }
+    } catch (_) {}
 
     if (document.currentFocusNodeId == null ||
         document.getNodeById(document.currentFocusNodeId!)?.getMainState() !=

@@ -168,8 +168,8 @@ class _RecorderAppState extends State<RecorderApp> {
             KeyDownEvent(
               physicalKey: physicalKey,
               logicalKey: logicalKey,
-              timeStamp: Duration(
-                  milliseconds: DateTime.now().millisecondsSinceEpoch),
+              timeStamp:
+                  Duration(milliseconds: DateTime.now().millisecondsSinceEpoch),
             ),
           );
         }
@@ -190,7 +190,8 @@ class _RecorderAppState extends State<RecorderApp> {
                   clicking: true);
             } else if (action == 'open_users') {
               _gingaKey.currentState?.openUsersOverlay();
-              _updatePointer(const Key('floating_users_button'), clicking: true);
+              _updatePointer(const Key('floating_users_button'),
+                  clicking: true);
             } else if (action == 'close_users') {
               _gingaKey.currentState?.closeUsersOverlay();
             } else if (action == 'forward_2s' ||
@@ -205,7 +206,8 @@ class _RecorderAppState extends State<RecorderApp> {
                 action == 'resume' ||
                 action == 'play') {
               _gingaKey.currentState?.clickTogglePause();
-              _updatePointer(const Key('floating_pause_button'), clicking: true);
+              _updatePointer(const Key('floating_pause_button'),
+                  clicking: true);
             } else if ((action.startsWith('forward_') ||
                     action.startsWith('skip_')) &&
                 action.endsWith('s')) {
@@ -299,8 +301,9 @@ class _RecorderAppState extends State<RecorderApp> {
                         Icon(
                           Icons.touch_app,
                           size: 32,
-                          color:
-                              _pointerClicking ? Colors.blueAccent : Colors.white,
+                          color: _pointerClicking
+                              ? Colors.blueAccent
+                              : Colors.white,
                           shadows: const [
                             Shadow(
                               blurRadius: 6,

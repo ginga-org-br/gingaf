@@ -2,11 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:gingacc/gingacc.dart';
 import 'package:logging/logging.dart';
 import 'package:video_player_media_kit/video_player_media_kit.dart';
 
 import 'ginga.dart';
+import 'plugins/plugins_registry.dart';
 
 export 'args.dart';
 
@@ -35,6 +37,10 @@ void main(List<String> args) async {
     } catch (_) {}
   }
 
+  try {
+    registerAllPlugins(GetIt.instance);
+  } catch (_) {}
+
   final parsedArgs = parseArgsCliAndEnv(args);
   final appSrc = parsedArgs.app;
   final configSrc = parsedArgs.config;
@@ -59,7 +65,5 @@ void main(List<String> args) async {
 
   _logger.info(gingacc.config.toString());
 
-  runApp(Ginga(
-    gingacc: gingacc,
-  ));
+  runApp(Ginga(gingacc: gingacc));
 }

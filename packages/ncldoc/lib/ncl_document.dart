@@ -3,6 +3,7 @@ library;
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:get_it/get_it.dart';
 import 'package:gingacc/gingacc.dart';
 import 'package:logging/logging.dart';
 
@@ -11,6 +12,7 @@ import 'event.dart';
 import 'ncl_scheduler.dart';
 import 'ncl_strings.dart';
 import 'parser.dart';
+import 'ncldoc_plugins.dart';
 
 export 'package:gingacc/gingacc.dart';
 
@@ -19,6 +21,7 @@ export 'event.dart';
 export 'lua_runtime.dart';
 export 'ncl_scheduler.dart';
 export 'parser.dart';
+export 'ncldoc_plugins.dart';
 
 final _logger = Logger('ncl_doc');
 
@@ -227,7 +230,10 @@ class NclDocument extends GingaApp {
             if (child.xmlTagName == 'userProfile') {
               final id = child.rawAttributes['id'];
               final src = child.rawAttributes['src'];
-              if (id != null && id.isNotEmpty && src != null && src.isNotEmpty) {
+              if (id != null &&
+                  id.isNotEmpty &&
+                  src != null &&
+                  src.isNotEmpty) {
                 await _loadUserProfile(id, src);
               }
             }
@@ -288,8 +294,6 @@ class NclDocument extends GingaApp {
       }
     } catch (_) {}
   }
-
-
 
   Head? get head => _head;
   Context get body => _body;
@@ -369,7 +373,48 @@ class NclDocument extends GingaApp {
     return _evaluateRuleElement(ruleEl);
   }
 
+  bool isUserProfile(String id) => _isUserProfile(id);
+
+  bool compareValues(String? actual, String expected, String comparator) {
+    final val = actual ?? '';
+    switch (comparator) {
+      case 'eq':
+        return val == expected;
+      case 'ne':
+        return val != expected;
+      case 'gt':
+        final n1 = double.tryParse(val);
+        final n2 = double.tryParse(expected);
+        if (n1 != null && n2 != null) return n1 > n2;
+        return val.compareTo(expected) > 0;
+      case 'lt':
+        final n1 = double.tryParse(val);
+        final n2 = double.tryParse(expected);
+        if (n1 != null && n2 != null) return n1 < n2;
+        return val.compareTo(expected) < 0;
+      case 'gte':
+        final n1 = double.tryParse(val);
+        final n2 = double.tryParse(expected);
+        if (n1 != null && n2 != null) return n1 >= n2;
+        return val.compareTo(expected) >= 0;
+      case 'lte':
+        final n1 = double.tryParse(val);
+        final n2 = double.tryParse(expected);
+        if (n1 != null && n2 != null) return n1 <= n2;
+        return val.compareTo(expected) <= 0;
+    }
+    return false;
+  }
+
   bool _evaluateRuleElement(Element ruleEl) {
+    try {
+      for (final plugin in GetIt.instance.getAll<NclRulePlugin>()) {
+        final result = plugin.evaluate(ruleEl, this);
+        if (result != null) {
+          return result;
+        }
+      }
+    } catch (_) {}
     if (ruleEl.xmlTagName == 'rule') {
       if (ruleEl.rawAttributes['var'] == null &&
           ruleEl.rawAttributes['id'] != null) {
@@ -460,35 +505,7 @@ class NclDocument extends GingaApp {
         }
       }
 
-      systemVal ??= '';
-
-      switch (comparator) {
-        case 'eq':
-          return systemVal == value;
-        case 'ne':
-          return systemVal != value;
-        case 'gt':
-          final n1 = double.tryParse(systemVal);
-          final n2 = double.tryParse(value);
-          if (n1 != null && n2 != null) return n1 > n2;
-          return systemVal.compareTo(value) > 0;
-        case 'lt':
-          final n1 = double.tryParse(systemVal);
-          final n2 = double.tryParse(value);
-          if (n1 != null && n2 != null) return n1 < n2;
-          return systemVal.compareTo(value) < 0;
-        case 'gte':
-          final n1 = double.tryParse(systemVal);
-          final n2 = double.tryParse(value);
-          if (n1 != null && n2 != null) return n1 >= n2;
-          return systemVal.compareTo(value) >= 0;
-        case 'lte':
-          final n1 = double.tryParse(systemVal);
-          final n2 = double.tryParse(value);
-          if (n1 != null && n2 != null) return n1 <= n2;
-          return systemVal.compareTo(value) <= 0;
-      }
-      return false;
+      return compareValues(systemVal, value, comparator);
     } else if (ruleEl.xmlTagName == 'compositeRule') {
       final operator = ruleEl.rawAttributes['operator'] ?? 'and';
       final results = ruleEl.children
@@ -646,6 +663,7 @@ class NclDocument extends GingaApp {
       }
     }
   }
+
   void tickIndefinitely({int ticksPerSecond = 10, void Function()? onStop}) =>
       scheduler.tickIndefinitely(
         ticksPerSecond: ticksPerSecond,
