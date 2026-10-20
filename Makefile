@@ -35,22 +35,22 @@ release-web: deps
 
 release-windows: deps
 	flutter build windows --no-pub --release
-	rm -f gingaf-v$(VERSION)-windows-x64.zip && (cd build/windows/x64/runner/Release && zip -r $(CURDIR)/gingaf-v$(VERSION)-windows-x64.zip .)
+	rm -f gingaf-v$(VERSION)-windows-x64.zip && (cd build/windows/x64/runner/Release && zip -q -r $(CURDIR)/gingaf-v$(VERSION)-windows-x64.zip .)
 
 release-android: deps
 	flutter build apk --no-pub --release
-	rm -f gingaf-v$(VERSION)-android.zip && (cd build/app/outputs/flutter-apk && zip -r $(CURDIR)/gingaf-v$(VERSION)-android.zip app-release.apk)
+	rm -f gingaf-v$(VERSION)-android.zip && (cd build/app/outputs/flutter-apk && zip -q -r $(CURDIR)/gingaf-v$(VERSION)-android.zip app-release.apk)
 
 release-linux: deps
 	flutter build linux --no-pub --release
-	rm -f gingaf-v$(VERSION)-linux-x64.zip && (cd build/linux/x64/release/bundle && zip -r $(CURDIR)/gingaf-v$(VERSION)-linux-x64.zip .)
+	rm -f gingaf-v$(VERSION)-linux-x64.zip && (cd build/linux/x64/release/bundle && zip -q -r $(CURDIR)/gingaf-v$(VERSION)-linux-x64.zip .)
 
 release-macos: deps
 	flutter build macos --no-pub --release
-	rm -f gingaf-v$(VERSION)-macos.zip && (cd build/macos/Build/Products/Release && zip -r $(CURDIR)/gingaf-v$(VERSION)-macos.zip .)
+	rm -f gingaf-v$(VERSION)-macos.zip && (cd build/macos/Build/Products/Release && zip -q -r $(CURDIR)/gingaf-v$(VERSION)-macos.zip .)
 
 test:
-	flutter test test packages/gingacc/test packages/ncldoc/test packages/nclui/test --no-pub
+	flutter test test packages/gingacc/test packages/ncldoc/test packages/nclui/test packages/playground/test --no-pub
 
 integration_test:
 	flutter test --no-pub integration_test $(if $(d),-d $(d))
