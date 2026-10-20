@@ -57,6 +57,7 @@ class GingaState extends State<Ginga> {
         mainAVWidget = MainAVWidget(
           key: _mainAvKey,
           src: _gingacc.config.mainAvSrc,
+          gingacc: _gingacc,
         );
       });
     }
@@ -70,6 +71,7 @@ class GingaState extends State<Ginga> {
       mainAVWidget = MainAVWidget(
         key: _mainAvKey,
         src: _gingacc.config.mainAvSrc,
+        gingacc: _gingacc,
       );
     }
 
@@ -103,8 +105,8 @@ class GingaState extends State<Ginga> {
         nclApp = ncl.NclWidget(
           key: _nclAppKey,
           src: appSrc,
-          mainAvKey: _mainAvKey,
           gingacc: _gingacc,
+          mainAvKey: _mainAvKey,
           onRequestMainAv: _ensureMainAvMounted,
         );
       }

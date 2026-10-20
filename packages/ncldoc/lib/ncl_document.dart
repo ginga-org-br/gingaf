@@ -22,11 +22,13 @@ export 'parser.dart';
 
 final _logger = Logger('ncl_doc');
 
-class NclDocument {
+class NclDocument extends GingaApp {
   late final Head? _head;
   late final Context _body;
   Uri? docUri;
-  final String docSrc;
+  String get docSrc => appSrc;
+
+  Uri? get baseUri => docUri;
 
   late final NclScheduler scheduler = NclScheduler(this);
   Users get users => gingacc.config.users;
@@ -123,29 +125,33 @@ class NclDocument {
     onStateChanged?.call();
   }
 
-  final GingaCC gingacc;
   void Function()? onStateChanged;
 
   static Future<NclDocument> fromSrc(
-    String docSrc, {
+    String appSrc, {
+    String? applicationId,
     GingaCC? gingacc,
     String? baseDirSrc,
   }) async {
-    _logger.info('Loading NCL document from src: $docSrc');
-    gingacc ??= GingaCC();
+    _logger.info('Loading NCL document from src: $appSrc');
+    final effectiveId = applicationId ?? appSrc;
+    final cc = gingacc ?? GingaCC();
+    final pb = cc.getPrivateBase(applicationId: effectiveId);
     final String? xml;
-    if (isXmlString(docSrc)) {
-      xml = docSrc;
+    if (isXmlString(appSrc)) {
+      xml = appSrc;
     } else {
-      final docUri = gingacc.resolveUri(docSrc, baseDirSrc);
-      xml = (await gingacc.loadContent(docUri, baseDirSrc)) ??
-          (await gingacc.loadContent(docSrc, baseDirSrc));
+      final docUri = pb.resolveUri(appSrc, baseDirSrc);
+      xml = (await pb.loadContent(docUri, baseDirSrc)) ??
+          (await pb.loadContent(appSrc, baseDirSrc));
     }
 
     final doc = NclDocument.fromContent(
       xml ?? '',
-      docSrc: docSrc,
-      gingacc: gingacc,
+      applicationId: effectiveId,
+      appSrc: appSrc,
+      gingacc: cc,
+      baseDirSrc: baseDirSrc,
     );
     await doc.loadUserProfiles();
     return doc;
@@ -153,19 +159,28 @@ class NclDocument {
 
   factory NclDocument.fromContent(
     String xml, {
+    String? applicationId,
+    String? appSrc,
     String? docSrc,
     GingaCC? gingacc,
+    String? baseDirSrc,
   }) {
     if (xml.trim().isEmpty) {
       throw ArgumentError('empty src');
     }
-    final resolvedDocSrc = docSrc ?? 'tmp.ncl';
-    _logger.fine('Creating NclDocument from content (src: $resolvedDocSrc)');
+    final resolvedAppSrc = appSrc ?? docSrc ?? 'tmp.ncl';
+    final effectiveId = applicationId ?? resolvedAppSrc;
     final cc = gingacc ?? GingaCC();
-    final Uri? resolvedUri =
-        (docSrc != null && !isXmlString(docSrc)) ? cc.resolveUri(docSrc) : null;
+    final pb = cc.getPrivateBase(applicationId: effectiveId);
+    final Uri? resolvedUri = (!isXmlString(resolvedAppSrc))
+        ? pb.resolveUri(resolvedAppSrc, baseDirSrc)
+        : null;
+    if (resolvedUri != null && pb.baseUri == null) {
+      pb.baseUri = resolvedUri;
+    }
     final doc = NclDocument._(
-      docSrc: resolvedDocSrc,
+      applicationId: effectiveId,
+      appSrc: resolvedAppSrc,
       docUri: resolvedUri,
       gingacc: cc,
     );
@@ -178,13 +193,18 @@ class NclDocument {
   }
 
   NclDocument._({
-    required this.docSrc,
+    String? applicationId,
+    required super.appSrc,
     this.docUri,
-    GingaCC? gingacc,
-  })  : gingacc = gingacc ?? GingaCC(),
-        _systemVariables = {
-          ...(gingacc ?? GingaCC()).config.systemVariables,
-        };
+    super.gingacc,
+  })  : super(
+          applicationId: applicationId ?? appSrc,
+          baseUri: docUri,
+        ) {
+    _systemVariables = {
+      ...gingacc.config.systemVariables,
+    };
+  }
 
   void _init({Head? head, required Body body}) {
     _head = head;
@@ -255,8 +275,8 @@ class NclDocument {
     if (src == null) return;
     try {
       _logger.fine('Loading user profile "$id" from src: $src');
-      final profileUri = gingacc.resolveUri(src, docSrc);
-      final jsonContent = await gingacc.loadContent(profileUri);
+      final profileUri = privateBase.resolveUri(src, docSrc);
+      final jsonContent = await privateBase.loadContent(profileUri);
       if (jsonContent != null && jsonContent.isNotEmpty) {
         final query = json.decode(jsonContent);
         final queryMap = query is Map<String, dynamic>

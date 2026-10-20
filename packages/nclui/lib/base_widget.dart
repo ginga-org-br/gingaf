@@ -9,15 +9,25 @@ abstract class BaseWidget extends StatefulWidget {
   final String src;
   final Media? media;
   final NclDocument? document;
-  final GingaCC? gingacc;
+  final GingaCC? _gingacc;
 
   const BaseWidget({
     super.key,
     required this.src,
     this.media,
     this.document,
-    this.gingacc,
-  });
+    GingaCC? gingacc,
+  }) : _gingacc = gingacc;
+
+  GingaApp? get app => document;
+
+  GingaAppPrivateBase get privateBase =>
+      document?.privateBase ??
+      gingacc.getPrivateBase(applicationId: applicationId ?? src);
+
+  GingaCC get gingacc => _gingacc ?? document?.gingacc ?? GingaCC();
+
+  String? get applicationId => document?.applicationId;
 }
 
 abstract class MediaState<T extends BaseWidget> extends State<T> {
@@ -166,8 +176,8 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
     final fWidthStr =
         m.rawAttributes['focusBorderWidth'] ?? desc?.focusBorderWidth;
     focusBorderWidth = int.tryParse(fWidthStr ?? '') ?? 0;
-    final sColorStr =
-        m.rawAttributes['selBorderColor'] ?? desc?.rawAttributes['selBorderColor'];
+    final sColorStr = m.rawAttributes['selBorderColor'] ??
+        desc?.rawAttributes['selBorderColor'];
     selBorderColor = _parseColor(sColorStr);
   }
 

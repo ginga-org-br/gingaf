@@ -7,6 +7,8 @@ import 'package:webview_all/webview_all.dart';
 
 import 'base_widget.dart';
 
+export 'html_app.dart';
+
 final _logger = Logger('ginga-html');
 
 class HtmlWidget extends BaseWidget {
@@ -88,16 +90,17 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
   Future<void> _loadHTML() async {
     if (_controller == null) return;
     try {
-      final gingacc = widget.gingacc ?? widget.document?.gingacc ?? GingaCC();
+      final pb = widget.privateBase;
+      final gingacc = widget.gingacc;
       await gingacc.ccws.start();
       assert(gingacc.ccws.isRunning);
       final base = (widget.media?.uri.isNotEmpty == true)
           ? widget.media!.uri
-          : (widget.document?.docUri?.toString() ?? widget.document?.docSrc);
-      final uri = gingacc.resolveUri(widget.src, base);
+          : (widget.document?.baseUri?.toString() ?? widget.document?.docSrc);
+      final uri = pb.resolveUri(widget.src, base);
       String? virtualContent;
-      if (gingacc.virtualFiles != null) {
-        virtualContent = await gingacc.loadContent(widget.src, base);
+      if (pb.virtualFiles != null) {
+        virtualContent = await pb.loadContent(widget.src, base);
       }
       if (virtualContent != null && virtualContent.isNotEmpty) {
         final content = gingacc.ccws.injectCcwsFetch(virtualContent);
@@ -110,14 +113,14 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
         if (file.existsSync()) {
           await _controller!.loadFile(file.path);
         } else {
-          var content = await gingacc.loadContent(widget.src, base) ?? '';
+          var content = await pb.loadContent(widget.src, base) ?? '';
           content = gingacc.ccws.injectCcwsFetch(content);
           await _controller!.loadHtmlString(content);
         }
       } else if (uri.isScheme('http') || uri.isScheme('https')) {
         await _controller!.loadRequest(uri);
       } else {
-        var content = await gingacc.loadContent(widget.src, base) ?? '';
+        var content = await pb.loadContent(widget.src, base) ?? '';
         content = gingacc.ccws.injectCcwsFetch(content);
         await _controller!.loadHtmlString(content);
       }

@@ -17,7 +17,6 @@ void main() {
       (WidgetTester tester) async {
     final gingacc = GingaCC()
       ..setVirtualFiles({'test_image.ncl': _testImageNcl});
-
     await tester.pumpWidget(
       MaterialApp(
         home: Material(
@@ -41,7 +40,6 @@ void main() {
     final gingacc = GingaCC(
       config: config,
     )..setVirtualFiles({'test_image.ncl': _testImageNcl});
-
     await tester.pumpWidget(
       MaterialApp(
         home: Material(
@@ -55,7 +53,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.byType(NclWidget), findsOneWidget);
     final appWidget = tester.widget<NclWidget>(find.byType(NclWidget));
-    expect(appWidget.gingacc?.config.users.getUser('uConfig'), isNotNull);
+    expect(appWidget.gingacc.config.users.getUser('uConfig'), isNotNull);
   });
 
   testWidgets(

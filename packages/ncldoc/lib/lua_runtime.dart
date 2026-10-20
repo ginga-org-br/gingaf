@@ -264,7 +264,7 @@ class NCLuaRuntime {
       final effectiveBase = (src != null && src!.isNotEmpty)
           ? src
           : (document.docUri?.toString() ?? document.docSrc);
-      final content = document.gingacc.loadContentSync(path, effectiveBase);
+      final content = document.privateBase.loadContentSync(path, effectiveBase);
       if (content != null) {
         ls.pushString(content);
         return 1;

@@ -31,8 +31,7 @@ void main() {
 
     testWidgets('NclWidget pauses and resumes AVWidget media',
         (WidgetTester tester) async {
-      final gingacc = GingaCC()
-        ..setVirtualFiles(testVirtualFiles);
+      final gingacc = GingaCC()..setVirtualFiles(testVirtualFiles);
       await tester.pumpWidget(MaterialApp(
         home: NclWidget(
           src: 'test.ncl',
@@ -117,7 +116,7 @@ void main() {
         src: 'app.html',
         gingacc: gingacc,
       );
-      expect(htmlWidget.gingacc?.config.startWithCCWS, isTrue);
+      expect(htmlWidget.gingacc.config.startWithCCWS, isTrue);
       expect(htmlWidget.src, equals('app.html'));
     });
 
@@ -133,9 +132,7 @@ void main() {
       final gingacc = GingaCC(
         config: config,
       )..setVirtualFiles(testVirtualFiles);
-      await tester.pumpWidget(Ginga(
-        gingacc: gingacc,
-      ));
+      await tester.pumpWidget(Ginga(gingacc: gingacc));
 
       await tester.pump(const Duration(seconds: 1));
 
@@ -156,9 +153,7 @@ void main() {
       final gingacc = GingaCC(
         config: config,
       )..setVirtualFiles(testVirtualFiles);
-      await tester.pumpWidget(Ginga(
-        gingacc: gingacc,
-      ));
+      await tester.pumpWidget(Ginga(gingacc: gingacc));
       await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.byKey(const Key('floating_control_menu')), findsOneWidget);
@@ -171,7 +166,8 @@ void main() {
 
       expect(find.byKey(const Key('floating_restart_button')), findsOneWidget);
       expect(find.byKey(const Key('floating_pause_button')), findsOneWidget);
-      expect(find.byKey(const Key('floating_forward_2s_button')), findsOneWidget);
+      expect(
+          find.byKey(const Key('floating_forward_2s_button')), findsOneWidget);
       expect(find.byKey(const Key('floating_users_button')), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('floating_pause_button')));
@@ -381,8 +377,8 @@ void main() {
       ));
       await tester.pump();
 
-      await tester.tap(
-          find.byKey(const Key('user_selection_manage_users_button')));
+      await tester
+          .tap(find.byKey(const Key('user_selection_manage_users_button')));
       await tester.pump();
 
       await tester.tap(find.byKey(const Key('add_user_card')));
@@ -407,9 +403,10 @@ void main() {
       );
       final gingacc = GingaCC(
         config: config,
-      )..setVirtualFiles({
-          'test_forward.ncl': '''
-<ncl id="test_forward" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+      )..setVirtualFiles(
+          {
+            'test_forward.ncl': '''
+<ncl id="test_forward" >
   <head>
     <regionBase>
       <region id="rg1" width="100%" height="100%"/>
@@ -424,11 +421,9 @@ void main() {
   </body>
 </ncl>
 ''',
-        },
-      );
-      await tester.pumpWidget(Ginga(
-        gingacc: gingacc,
-      ));
+          },
+        );
+      await tester.pumpWidget(Ginga(gingacc: gingacc));
       await tester.pump(const Duration(milliseconds: 500));
 
       final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
@@ -440,8 +435,7 @@ void main() {
 
       final forwardButtonFinder =
           find.byKey(const Key('floating_forward_2s_button'));
-      final pauseButtonFinder =
-          find.byKey(const Key('floating_pause_button'));
+      final pauseButtonFinder = find.byKey(const Key('floating_pause_button'));
 
       expect(forwardButtonFinder, findsOneWidget);
       expect(pauseButtonFinder, findsOneWidget);

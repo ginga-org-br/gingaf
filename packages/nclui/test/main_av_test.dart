@@ -40,8 +40,8 @@ void main() {
               ),
               NclWidget(
                 src: 'test_bg.ncl',
-                mainAvKey: mainAvKey,
                 gingacc: gingacc,
+                mainAvKey: mainAvKey,
               ),
             ],
           ),
@@ -88,8 +88,8 @@ void main() {
               ),
               NclWidget(
                 src: 'test_bg.ncl',
-                mainAvKey: mainAvKey,
                 gingacc: gingacc,
+                mainAvKey: mainAvKey,
               ),
             ],
           ),
@@ -135,8 +135,8 @@ void main() {
               ),
               NclWidget(
                 src: 'test_bg.ncl',
-                mainAvKey: mainAvKey,
                 gingacc: gingacc,
+                mainAvKey: mainAvKey,
               ),
             ],
           ),

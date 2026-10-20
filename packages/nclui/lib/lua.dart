@@ -692,7 +692,6 @@ class LuaWidgetState extends MediaState<LuaWidget> {
       final doc = widget.document ??
           NclDocument.fromContent(
             '<ncl><head/><body/></ncl>',
-            gingacc: widget.gingacc,
           );
       final luaNode = NCLua(
         document: doc,
@@ -724,18 +723,18 @@ class LuaWidgetState extends MediaState<LuaWidget> {
   }
 
   ImageProvider _resolveImageProvider(String path) {
-    final gingacc = widget.gingacc ?? widget.document?.gingacc ?? GingaCC();
+    final pb = widget.privateBase;
     final base = (widget.media?.uri.isNotEmpty == true)
         ? widget.media!.uri
-        : (widget.document?.docUri?.toString() ?? widget.src);
-    final uri = gingacc.resolveUri(path, base);
+        : (widget.document?.baseUri?.toString() ?? widget.src);
+    final uri = pb.resolveUri(path, base);
     final resolvedPath =
         uri.isScheme('file') ? uri.toFilePath() : uri.toString();
-    if (gingacc.virtualFiles != null) {
-      final vf = gingacc.virtualFiles![resolvedPath] ??
-          gingacc.virtualFiles![path] ??
-          gingacc.virtualFiles![path.replaceAll('../', '')] ??
-          gingacc.virtualFiles!['../$path'];
+    if (pb.virtualFiles != null) {
+      final vf = pb.virtualFiles![resolvedPath] ??
+          pb.virtualFiles![path] ??
+          pb.virtualFiles![path.replaceAll('../', '')] ??
+          pb.virtualFiles!['../$path'];
       if (vf != null) {
         if (vf.startsWith('data:')) {
           final comma = vf.indexOf(',');
@@ -814,18 +813,18 @@ class LuaWidgetState extends MediaState<LuaWidget> {
       if (cached != null) {
         return (cached.width.toDouble(), cached.height.toDouble());
       }
-      final gingacc = widget.gingacc ?? widget.document?.gingacc ?? GingaCC();
+      final pb = widget.privateBase;
       final base = (widget.media?.uri.isNotEmpty == true)
           ? widget.media!.uri
-          : (widget.document?.docUri?.toString() ?? widget.src);
-      final uri = gingacc.resolveUri(path, base);
+          : (widget.document?.baseUri?.toString() ?? widget.src);
+      final uri = pb.resolveUri(path, base);
       final resolvedPath =
           uri.isScheme('file') ? uri.toFilePath() : uri.toString();
-      if (gingacc.virtualFiles != null) {
-        final vf = gingacc.virtualFiles![resolvedPath] ??
-            gingacc.virtualFiles![path] ??
-            gingacc.virtualFiles![path.replaceAll('../', '')] ??
-            gingacc.virtualFiles!['../$path'];
+      if (pb.virtualFiles != null) {
+        final vf = pb.virtualFiles![resolvedPath] ??
+            pb.virtualFiles![path] ??
+            pb.virtualFiles![path.replaceAll('../', '')] ??
+            pb.virtualFiles!['../$path'];
         if (vf != null) {
           final bytes = vf.startsWith('data:') && vf.contains(',')
               ? base64.decode(vf.substring(vf.indexOf(',') + 1))
@@ -870,8 +869,7 @@ class LuaWidgetState extends MediaState<LuaWidget> {
   Future<void> _runScript() async {
     canvasState.reset();
     try {
-      final gingacc = widget.gingacc ?? widget.document?.gingacc ?? GingaCC();
-      final script = await gingacc.loadContent(widget.src);
+      final script = await widget.privateBase.loadContent(widget.src);
       if (script != null) {
         await _engine.execute(script);
         if (widget.media == null ||
@@ -1125,8 +1123,8 @@ class DrawComposeCommand extends DrawCommand {
     if (effectiveImage == null) return;
     final srcRect = (sx != null && sy != null && sw != null && sh != null)
         ? Rect.fromLTWH(sx!, sy!, sw!, sh!)
-        : Rect.fromLTWH(
-            0, 0, effectiveImage.width.toDouble(), effectiveImage.height.toDouble());
+        : Rect.fromLTWH(0, 0, effectiveImage.width.toDouble(),
+            effectiveImage.height.toDouble());
     final dstWidth = sw ?? effectiveImage.width.toDouble();
     final dstHeight = sh ?? effectiveImage.height.toDouble();
     final dstRect = Rect.fromLTWH(dx, dy, dstWidth, dstHeight);

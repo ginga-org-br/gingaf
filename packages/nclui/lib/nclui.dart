@@ -1,5 +1,6 @@
 export 'av.dart';
 export 'html.dart';
+export 'html_app.dart';
 export 'image.dart';
 export 'lua.dart';
 export 'main_av.dart';
