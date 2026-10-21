@@ -2,11 +2,22 @@ MAKEFLAGS += -s --no-print-directory
 .DEFAULT_GOAL := help
 $(if $(filter Windows_NT,$(OS)),$(if $(shell where printf 2>nul),,$(error coreutils is not installed. Please run: winget install coreutils)))
 
-.PHONY: help deps release-web release-windows release-android release-linux release-macos test tests doc release-publish clean run-example check-app serve serve-examples integration_test
+.PHONY: help deps release release-web release-windows release-android release-linux release-macos test tests doc release-publish clean run-example check-app serve serve-examples integration_test
 
 BASE_HREF ?= /
 
 VERSION ?= $(shell grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1 | tr -d '\r')
+
+ifeq ($(OS),Windows_NT)
+CURRENT_OS := windows
+else
+UNAME_S := $(shell uname -s 2>/dev/null)
+ifeq ($(UNAME_S),Darwin)
+CURRENT_OS := macos
+else
+CURRENT_OS := linux
+endif
+endif
 
 help:
 	@printf "%s\n" \
@@ -14,7 +25,10 @@ help:
 		"" \
 		"Targets:" \
 		"  deps                                         Install dependencies for Flutter workspace" \
-		"  release-{web,windows,android,linux,macos}    Build release application for target platform" \
+		"  release                                      Build release application for current host OS" \
+		"  release-web                                  Build release application for web" \
+		"  release-android                              Build release application for Android" \
+		"  release-{windows,linux,macos}                Build release application for target desktop platform" \
 		"  serve                                        Serve web playground application" \
 		"  test                                         Run tests for Flutter workspace" \
 		"  doc                                          Generate Dart documentation" \
@@ -29,28 +43,26 @@ help:
 
 deps: .dart_tool/package_config.json
 
+release: release-$(CURRENT_OS)
+
 release-web: deps
 	flutter build web --no-pub --release
 
 
 release-windows: deps
 	flutter build windows --no-pub --release
-	rm -f gingaf-v$(VERSION)-windows-x64.zip && (cd build/windows/x64/runner/Release && zip -q -r $(CURDIR)/gingaf-v$(VERSION)-windows-x64.zip .)
 
 release-android: deps
 	flutter build apk --no-pub --release
-	rm -f gingaf-v$(VERSION)-android.zip && (cd build/app/outputs/flutter-apk && zip -q -r $(CURDIR)/gingaf-v$(VERSION)-android.zip app-release.apk)
 
 release-linux: deps
 	flutter build linux --no-pub --release
-	rm -f gingaf-v$(VERSION)-linux-x64.zip && (cd build/linux/x64/release/bundle && zip -q -r $(CURDIR)/gingaf-v$(VERSION)-linux-x64.zip .)
 
 release-macos: deps
 	flutter build macos --no-pub --release
-	rm -f gingaf-v$(VERSION)-macos.zip && (cd build/macos/Build/Products/Release && zip -q -r $(CURDIR)/gingaf-v$(VERSION)-macos.zip .)
 
 test:
-	flutter test test packages/gingacc/test packages/ncldoc/test packages/nclui/test packages/playground/test --no-pub
+	flutter test test packages/gingacc/test packages/ncldoc/test packages/nclui/test $(wildcard packages/playground/test) --no-pub
 
 integration_test:
 	flutter test --no-pub integration_test $(if $(d),-d $(d))
@@ -64,7 +76,14 @@ doc:
 	npx serve doc/api
 
 
+define package-zip
+	[ ! -d $(2) ] || (cd $(2) && zip -q -FS -r $(CURDIR)/$(1) .)
+endef
+
 release-publish:
+	$(call package-zip,gingaf-v$(VERSION)-windows-x64.zip,build/windows/x64/runner/Release)
+	$(call package-zip,gingaf-v$(VERSION)-linux-x64.zip,build/linux/x64/release/bundle)
+	$(call package-zip,gingaf-v$(VERSION)-macos.zip,build/macos/Build/Products/Release)
 	gh release upload v$(VERSION) gingaf-v$(VERSION)-*.zip --clobber || gh release create v$(VERSION) gingaf-v$(VERSION)-*.zip --generate-notes
 
 
