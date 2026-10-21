@@ -18,6 +18,7 @@ help:
 
 deps:
 	npm install --no-audit --no-fund
+	npm --prefix example-node-express install --no-audit --no-fund
 
 build: deps
 	npm run build --silent

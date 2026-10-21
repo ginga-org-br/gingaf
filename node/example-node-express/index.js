@@ -1,11 +1,29 @@
 const express = require('express');
 const path = require('path');
-const { gingaMiddleware } = require('ginga-node');
+let gingaNode;
+try {
+  gingaNode = require('../playground/index.js');
+} catch (_) {
+  gingaNode = require('ginga-node');
+}
+const { gingaMiddleware } = gingaNode;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use('/app', express.static(path.join(__dirname, 'app')));
+try {
+  express.static.mime.define({
+    'application/wasm': ['wasm'],
+    'application/xml': ['ncl'],
+    'text/plain': ['lua']
+  });
+} catch (_) {}
+
+app.use('/app', express.static(path.join(__dirname, 'app'), {
+  setHeaders: (res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+}));
 app.use('/gingaf-web', gingaMiddleware());
 
 app.get('/', (req, res) => {
@@ -30,8 +48,29 @@ app.get('/', (req, res) => {
     <h1>gingaf example from nodejs opening express-hosted /app/video.ncl</h1>
   </header>
   <main>
-    <iframe src="/gingaf-web/index.html?app=/app/video.ncl"></iframe>
+    <iframe src="/gingaf-web/index.html?app=/app/video.ncl&ginga_app=/app/video.ncl"></iframe>
   </main>
+  <script>
+    (function() {
+      const appSrc = '/app/video.ncl';
+      try {
+        sessionStorage.setItem('GINGA_APP', appSrc);
+      } catch (_) {}
+      const iframe = document.querySelector('iframe');
+      if (iframe) {
+        iframe.addEventListener('load', function() {
+          try {
+            iframe.contentWindow?.sessionStorage?.setItem('GINGA_APP', appSrc);
+            if (iframe.contentWindow) {
+              const gingaObj = { app: appSrc };
+              iframe.contentWindow.Ginga = gingaObj;
+              iframe.contentWindow.GingaApp = gingaObj;
+            }
+          } catch (_) {}
+        });
+      }
+    })();
+  </script>
 </body>
 </html>`);
 });
@@ -41,6 +80,8 @@ const cp = require('child_process');
 app.listen(PORT, () => {
   const url = `http://localhost:${PORT}`;
   console.log(`\n   Local:   ${url}\n`);
-  const startCmd = process.platform === 'win32' ? 'start' : process.platform === 'darwin' ? 'open' : 'xdg-open';
-  cp.exec(`${startCmd} ${url}`, () => { });
+  if (process.env.NO_OPEN !== 'true') {
+    const startCmd = process.platform === 'win32' ? 'start' : process.platform === 'darwin' ? 'open' : 'xdg-open';
+    cp.exec(`${startCmd} ${url}`, () => { });
+  }
 });

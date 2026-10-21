@@ -28,6 +28,9 @@ Uri resolvePathUri(
       final decoded = Uri.decodeComponent(srcUri.path);
       return File(path.normalize(decoded)).absolute.uri;
     }
+    if (_isWeb && !srcUri.hasScheme) {
+      return Uri.base.resolveUri(srcUri);
+    }
     return srcUri;
   }
 
@@ -36,6 +39,9 @@ Uri resolvePathUri(
     if (!_isWeb && !srcUri.hasScheme) {
       final decoded = Uri.decodeComponent(srcUri.path);
       return File(path.normalize(decoded)).absolute.uri;
+    }
+    if (_isWeb && !srcUri.hasScheme) {
+      return Uri.base.resolveUri(srcUri);
     }
     return srcUri;
   }
@@ -64,6 +70,10 @@ Uri resolvePathUri(
         resolvedBaseUri = File(decodedBase).absolute.uri;
       }
     }
+  } else {
+    if (!resolvedBaseUri.hasScheme) {
+      resolvedBaseUri = Uri.base.resolveUri(resolvedBaseUri);
+    }
   }
 
   final resolved = resolvedBaseUri.resolveUri(srcUri);
@@ -74,6 +84,9 @@ Uri resolvePathUri(
   if (!_isWeb && !resolved.hasScheme) {
     final decoded = Uri.decodeComponent(resolved.path);
     return File(path.normalize(decoded)).absolute.uri;
+  }
+  if (_isWeb && !resolved.hasScheme) {
+    return Uri.base.resolveUri(resolved);
   }
   return resolved;
 }
@@ -126,6 +139,13 @@ Future<String?> loadPathContent(
 
   if (isHttpUri(uri)) {
     return await _fetchHttp(uri);
+  }
+
+  if (_isWeb && !uri.hasScheme) {
+    final webUri = Uri.base.resolveUri(uri);
+    if (isHttpUri(webUri)) {
+      return await _fetchHttp(webUri);
+    }
   }
 
   if (uri.isScheme('file') || (!uri.hasScheme && !_isWeb)) {

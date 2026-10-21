@@ -141,6 +141,7 @@ app.listen(port, () => {
   if (withExpress) {
     const expressAppPath = path.resolve(__dirname, '..', 'example-node-express', 'index.js');
     const expressProcess = cp.spawn(process.execPath, [expressAppPath], {
+      cwd: path.resolve(__dirname, '..', 'example-node-express'),
       stdio: 'inherit'
     });
 

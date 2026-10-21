@@ -20,8 +20,22 @@ export function getAssetsPath(): string {
 
 export function gingafMiddleware(): Handler {
   const express = require('express');
+  try {
+    express.static.mime?.define?.({
+      'application/wasm': ['wasm'],
+      'application/xml': ['ncl'],
+      'text/plain': ['lua']
+    });
+  } catch (_) {}
   const assetsPath = getAssetsPath();
-  return express.static(assetsPath);
+  return express.static(assetsPath, {
+    setHeaders: (res: any, filePath: string) => {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      if (filePath.endsWith('.wasm')) {
+        res.setHeader('Content-Type', 'application/wasm');
+      }
+    }
+  });
 }
 
 export const gingaMiddleware = gingafMiddleware;
