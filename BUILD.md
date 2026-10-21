@@ -5,7 +5,7 @@
 ## Table of Contents
 
 - [Build-Edit-Test Workflow](#build-edit-test-workflow)
-- [Prerequisites by Platform](#prerequisites-by-platform)
+- [Host Dependencies](#host-dependencies)
   - [Windows](#windows)
   - [Linux](#linux)
   - [macOS](#macos)
@@ -19,34 +19,33 @@
 - [Documentation](#documentation)
 - [Cleaning Build Artifacts](#cleaning-build-artifacts)
 - [Releases](#releases)
-- [Plugins](#plugins)
 
 ## Build-Edit-Test Workflow
 
 1. Fork or branch from `main`.
-2. Configure platform prerequisites (see [Prerequisites by Platform](#prerequisites-by-platform)).
+2. Configure host dependencies (see [Host Dependencies](#host-dependencies)).
 3. Install development dependencies and generate plugins: `make deps`.
 4. Implement changes or bug fixes.
 5. Run unit tests to verify functionality: `make test`.
 6. Run local examples to verify end-to-end behavior: `make run-example app=video.ncl`.
 
-## Prerequisites by Platform
+## Host Dependencies
 
 ### Windows
 
-Automated setup using the Windows dependency setup script [windows/install-deps-windows.ps1](windows/install-deps-windows.ps1):
+Automated setup using the Windows dependency setup script [windows/install-host-deps-windows.ps1](windows/install-host-deps-windows.ps1):
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-./windows/install-deps-windows.ps1
+./windows/install-host-deps-windows.ps1
 ```
 
 ### Linux
 
-Automated setup using the dependency installation script [linux/install-deps-ubuntu.sh](linux/install-deps-ubuntu.sh):
+Automated setup using the dependency installation script [linux/install-host-deps-ubuntu.sh](linux/install-host-deps-ubuntu.sh):
 
 ```bash
-bash linux/install-deps-ubuntu.sh
+bash linux/install-host-deps-ubuntu.sh
 ```
 
 #### WSL2 GUI Setup (Windows Subsystem for Linux)
@@ -69,24 +68,24 @@ Ensure Xcode Command Line Tools are installed:
 xcode-select --install
 ```
 
-Automated setup using the dependency installation script [macos/install-deps-macos.sh](macos/install-deps-macos.sh):
+Automated setup using the dependency installation script [macos/install-host-deps-macos.sh](macos/install-host-deps-macos.sh):
 
 ```bash
-bash macos/install-deps-macos.sh
+bash macos/install-host-deps-macos.sh
 ```
 
 ### Android
 
-Automated setup using the Android SDK setup script [android/install-deps-android.ps1](android/install-deps-android.ps1) (or [android/install-deps-android.sh](android/install-deps-android.sh)):
+Automated setup using the Android SDK setup script [android/install-host-deps-android.ps1](android/install-host-deps-android.ps1) (or [android/install-host-deps-android.sh](android/install-host-deps-android.sh)):
 
 - Windows (PowerShell):
   ```powershell
   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-  ./android/install-deps-android.ps1
+  ./android/install-host-deps-android.ps1
   ```
 - Linux / macOS:
   ```bash
-  bash android/install-deps-android.sh
+  bash android/install-host-deps-android.sh
   ```
 
 Accept Android SDK licenses:
@@ -95,7 +94,7 @@ Accept Android SDK licenses:
 flutter doctor --android-licenses
 ```
 
-To launch the Android emulator created by `install-deps-android`:
+To launch the Android emulator created by `install-host-deps-android`:
 
 ```bash
 flutter emulators --launch flutter_dev
