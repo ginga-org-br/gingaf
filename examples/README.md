@@ -23,3 +23,11 @@ From the `examples/` directory, use the following [Makefile](examples/Makefile) 
 ```bash
 make gifs target=video.ncl
 ```
+
+### Download PUC Examples
+
+To download TeleMidia/ginga examples (`hrace`, `luarocks`, `pacman`), run:
+
+```bash
+make download-puc-examples
+```

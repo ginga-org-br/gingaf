@@ -105,21 +105,6 @@ const Map<String, AppRecoderConfig> scenarios = {
       42: 'play',
     },
   ),
-  '00syncProp.ncl': AppRecoderConfig(
-    appSrc: 'examples/primeiro-joao/00syncProp.ncl',
-    duration: Duration(seconds: 18),
-    stepDuration: Duration(milliseconds: 300),
-    fps: 3,
-    userEvents: {
-      8: 'open_menu',
-      12: 'forward_2s',
-      18: 'forward_2s',
-      24: 'forward_2s',
-      30: 'forward_2s',
-      36: 'forward_2s',
-      42: 'play',
-    },
-  ),
 };
 
 const defaultTargets = [

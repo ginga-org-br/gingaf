@@ -26,8 +26,9 @@ def download_dir(api_url, local_dir):
             download_dir(sub_api_url, sub_local_dir)
 
 if __name__ == "__main__":
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     folders = ["hrace", "luarocks", "pacman"]
     for folder in folders:
         api_url = f"https://api.github.com/repos/TeleMidia/ginga/contents/examples/{folder}"
-        local_dir = os.path.join(".", folder)
+        local_dir = os.path.join(base_dir, folder)
         download_dir(api_url, local_dir)
