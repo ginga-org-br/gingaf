@@ -5,59 +5,88 @@
 
 `gingaf` is an MIT-licensed, multi-platform implementation of the interactive TV middleware Ginga standardised by ITU-T and SBTVD.
 
-## Architecture
-
-The `gingaf` documentation is available at [https://ginga-org-br.github.io/gingaf/docs](https://ginga-org-br.github.io/gingaf/docs). The repository is organized as a monorepo: the root directory contains the Flutter host application. See the main components below.
-
-- `packages/gingacc/`: configuration, users, and CCWS
-- `packages/ncldoc/`: NCL headless execution engine
-- `packages/nclui/`: NCL and visual widgets
-- `node/`: npm package which also contains web interactive playground
-
-<img src="doc/architecture.svg" alt="architecture" width="480">
-
-## Usage
-
-Refer to `make help` at `Makefile` to discover available targets:
-
-```bash
-make help
-```
-
-## Developing Ginga Applications using `gingaf`
-
 You can use `gingaf` to develop Ginga applications at web by using the playground or acessing [ginga.org.br/gingaf/playground](https://ginga.org.br/gingaf/playground), or at desktop by the Visual Studio Code extension [ginga-code](https://github.com/ginga-org-br/ginga-code).
 
-See demonstration videos below.
+## Documentation
 
-**Windows**
+The `gingaf` documentation is available at [https://ginga-org-br.github.io/gingaf/docs](https://ginga-org-br.github.io/gingaf/docs). The repository is organized as a monorepo: the root directory contains the Flutter host application. It include the following packages: [`packages/gingacc`](packages/gingacc) (configuration, users, and CCWS), [`packages/ncldoc`](packages/ncldoc) (NCL headless execution engine), [`packages/nclui`](packages/nclui) (NCL and visual widgets), and [`node`](node) (npm package and web interactive playground).
 
-https://github.com/user-attachments/assets/07c9fb0f-a9f1-406b-b650-fa4eee331af0
+<img src="doc/architecture.svg" width="480">
 
-**Android**
+## Selected Applications
 
-https://github.com/user-attachments/assets/5bbecb80-04c7-4574-88d5-e979d1c11e22
+<table>
+  <tbody>
+    <tr>
+      <td align="center" width="50%">
+        <img src="https://alanlivio.github.io/paper-mm26-gingaf/slides/assets/gifs/video.ncl.gif" /><br />
+        NCL with basic links (<a href="https://ginga.org.br/gingaf/playground/?app=video.ncl">video.ncl</a>)
+      </td>
+      <td align="center" width="50%">
+        <img src="https://alanlivio.github.io/paper-mm26-gingaf/slides/assets/gifs/video_grid.ncl.gif" /><br />
+        NCL with videos grid (<a href="https://ginga.org.br/gingaf/playground/?app=video_grid.ncl">video_grid.ncl</a>)
+      </td>
+    </tr>
+    <tr>
+      <td align="center" width="50%">
+        <img src="https://alanlivio.github.io/paper-mm26-gingaf/slides/assets/gifs/emb_ncl.ncl.gif" /><br />
+        NCL embedded with NCL (<a href="https://ginga.org.br/gingaf/playground/?app=emb_ncl.ncl">emb_ncl.ncl</a>)
+      </td>
+      <td align="center" width="50%">
+        <img src="https://alanlivio.github.io/paper-mm26-gingaf/slides/assets/gifs/focus_nav.ncl.gif" /><br />
+        NCL with focus navigation and selection (<a href="https://ginga.org.br/gingaf/playground/?app=focus_nav.ncl">focus_nav.ncl</a>)
+      </td>
+    </tr>
+    <tr>
+      <td align="center" width="50%">
+        <img src="https://alanlivio.github.io/paper-mm26-gingaf/slides/assets/gifs/lua_canvas.ncl.gif" /><br />
+        NCL with lua canvas drawing and keys (<a href="https://ginga.org.br/gingaf/playground/?app=lua_canvas.ncl">lua_canvas.ncl</a>)
+      </td>
+      <td align="center" width="50%">
+        <img src="https://alanlivio.github.io/paper-mm26-gingaf/slides/assets/gifs/current_service.html.gif" /><br />
+        HTML with CCWS /current-service/ (<a href="https://ginga.org.br/gingaf/playground/?app=current_service.html">current_service.html</a>)
+      </td>
+    </tr>
+    <tr>
+      <td align="center" width="50%">
+        <img src="https://alanlivio.github.io/paper-mm26-gingaf/slides/assets/gifs/emb_html.ncl.gif" /><br />
+        NCL with embedded HTML document (<a href="https://ginga.org.br/gingaf/playground/?app=emb_html.ncl">emb_html.ncl</a>)
+      </td>
+      <td align="center" width="50%">
+        <img src="https://alanlivio.github.io/paper-mm26-gingaf/slides/assets/gifs/multiuser_profile.gif" /><br />
+        NCL with multi-user profile switching and targeted advertising (<a href="https://ginga.org.br/gingaf/playground/?app=multiuser_profile/main.ncl">multiuser_profile/main.ncl</a>)
+      </td>
+    </tr>
+  </tbody>
+</table>
 
-**Chrome**
+## Multi-platform Demos
 
-https://github.com/user-attachments/assets/b04eabac-4636-453c-beec-7ec845d841a4
+<table>
+  <tbody>
+    <tr>
+      <td align="center" width="50%">
+        <img src="https://alanlivio.github.io/paper-webmedia26-gingaf/assets/gifs/windows.gif" /><br />
+        Windows
+      </td>
+      <td align="center" width="50%">
+        <img src="https://alanlivio.github.io/paper-webmedia26-gingaf/assets/gifs/android.gif" /><br />
+        Android
+      </td>
+    </tr>
+    <tr>
+      <td align="center" width="50%">
+        <img src="https://alanlivio.github.io/paper-webmedia26-gingaf/assets/gifs/chrome.gif" /><br />
+        Chrome
+      </td>
+      <td align="center" width="50%">
+        <img src="https://alanlivio.github.io/paper-webmedia26-gingaf/assets/gifs/cli.gif" /><br />
+        CLI (headless execution)
+      </td>
+    </tr>
+  </tbody>
+</table>
 
-**NCL headless**
+## Launch application from Visual Studio Code
 
-https://github.com/user-attachments/assets/576cba53-04b7-4b55-b4a5-97d1b78f4a79
-
-**Playground Ginga-NCL (video.ncl)**
-
-https://github.com/user-attachments/assets/c6fd4ce3-66a5-4888-8b49-50dde510c2d8
-
-**Playground  Ginga-HTML5 (current_service.html)**
-
-https://github.com/user-attachments/assets/3f4aa3f4-5950-4b6e-8a32-50021e8b014f
-
-**Playground  Ginga-NCL with Lua (lua.ncl)**
-
-https://github.com/user-attachments/assets/b06bf145-4cc2-4431-9f00-98b218cfedde
-
-**Launch Ginga Application from VSCode**
-
-https://github.com/user-attachments/assets/717948df-64ab-42c9-8dd6-3a4a2e3603da
+<img src="https://alanlivio.github.io/paper-webmedia26-ecosystem/slides/assets/gifs/vscode-launch.gif">
