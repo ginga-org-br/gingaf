@@ -2,10 +2,13 @@
 
 ## 0.3
 
-- Support to settings menu to allow pause, resume, and maange users.
-- Support to ginga_config.json as param, or automatically load when present in app folder.
-- Support to embed NCL in NCL and embed HTML in NCL.
-- New gingacc package to concentrate ccws, configuration, user data, and src functions.
+- Add settings menu to pause, resume, and manage multi-user sessions.
+- Support application configuration via `ginga_config.json`, CLI parameter, or environment variable.
+- Support embedding NCL in NCL and HTML in NCL.
+- New `gingacc` package concentrating CC WebServices, configuration, user data, and runtime sources.
+- Add Debian package (`.deb`) generation for Linux with Ubuntu 22.04+ compatibility.
+- Add multi-distro containerized test suite (`make test-linux-distros`) and builder (`make release-linux-deb`).
+- Add Node serve local examples (`make serve-examples`).
 
 ## 0.2
 
