@@ -199,7 +199,8 @@ make release          # Builds release for current host platform (Windows, macOS
 make release-web      # Builds web app (build/web)
 make release-android  # Produces gingaf-v<VERSION>-android.zip (app-release.apk)
 make release-windows  # Produces gingaf-v<VERSION>-windows-x64.zip
-make release-linux    # Produces gingaf-v<VERSION>-linux-x64.zip
+make release-linux    # Produces gingaf-v<VERSION>-linux-amd64.deb
+make release-linux-deb # Produces gingaf-v<VERSION>-linux-amd64.deb via Ubuntu 22.04 container
 make release-macos    # Produces gingaf-v<VERSION>-macos.zip
 ```
 

@@ -177,6 +177,8 @@ pyrightconfig.json
 
 site/
 gingaf-v*.zip
+gingaf-v*.deb
+*.deb
 examples/*.gif
 examples/**/*.gif
 # Created by https://www.toptal.com/developers/gitignore/api/node

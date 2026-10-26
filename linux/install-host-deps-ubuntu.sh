@@ -16,7 +16,5 @@ sudo apt-get install -y \
     mpv \
     curl \
     git \
-    unzip \
-    zip
-
+    unzip
 echo "Dependencies installed successfully."

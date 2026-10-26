@@ -13,11 +13,35 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Build node module
+        working-directory: ./node
+        run: |
+          npm install
+          npm run build
+      - name: Generate documentation
+        run: make doc
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v6
+      - name: Prepare site directory
+        run: |
+          mkdir -p site
+          touch site/.nojekyll
+          cp -r node/playground site/playground
+          cp -r doc/api site/docs
       - name: Generate redirect page
         run: |
-          mkdir -p site/playground
-          touch site/.nojekyll
-          cat << 'EOF' > site/index.html
+          cat << 'EOF' > site/playground/index.html
           <!DOCTYPE html>
           <html lang="en">
           <head>
@@ -28,12 +52,7 @@ jobs:
             <link rel="canonical" href="https://ginga.org.br/gingaf/playground/">
             <script>
               (function () {
-                var pathname = window.location.pathname;
-                var target = "https://ginga.org.br/gingaf/playground/";
-                if (pathname.includes('/gingaf/playground')) {
-                  target = "https://ginga.org.br" + (pathname.endsWith('/') ? pathname : pathname + '/');
-                }
-                window.location.replace(target + window.location.search + window.location.hash);
+                window.location.replace("https://ginga.org.br/gingaf/playground/" + window.location.search + window.location.hash);
               })();
             </script>
           </head>
@@ -42,11 +61,7 @@ jobs:
           </body>
           </html>
           EOF
-          cp site/index.html site/playground/index.html
-          cp site/index.html site/404.html
-      - name: Setup Pages
-        id: pages
-        uses: actions/configure-pages@v6
+          cp site/playground/index.html site/index.html
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
         with:

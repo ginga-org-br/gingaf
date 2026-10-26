@@ -2,9 +2,9 @@
 
 The [Makefile](./Makefile) has targets to build and publish platform release archives.
 
-- `make release`: Builds the production release bundle for the current platform and packages it into a distributable zip archive. It detects the host platform and architecture, gets the version from `pubspec.yaml`, builds (`flutter build <platform> --release`), and compresses the release bundle into a zip archive following the naming convention `gingaf-v$(VERSION)-$(PLATFORM).zip` (for example, `gingaf-v0.2.0-windows-x64.zip`).
+- `make release`: Builds the production release bundle for the current platform and packages it into a distributable archive (Debian `.deb` package on Linux, or `.zip` archive on Windows and macOS).
 
-- `make release-publish`: Packages the release and publishes the resulting zip archive to GitHub Releases. It executes `make release` and uploads the zip archive to the release tagged `v$(VERSION)` via `gh release upload v$(VERSION) $(ZIP_NAME) --clobber`. If the release does not exist yet, it creates the release automatically with release notes via `gh release create v$(VERSION) $(ZIP_NAME) --generate-notes`.
+- `make release-publish`: Publishes existing release artifacts (`.zip` and `.deb`) to GitHub Releases for tag `v$(VERSION)` via `gh release upload` (or creates the release via `gh release create --generate-notes` if it does not yet exist).
 
 ## Integration with ginga-code Extension
 

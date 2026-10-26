@@ -2,7 +2,7 @@ MAKEFLAGS += -s --no-print-directory
 .DEFAULT_GOAL := help
 $(if $(filter Windows_NT,$(OS)),$(if $(shell where printf 2>nul),,$(error coreutils is not installed. Please run: winget install coreutils)))
 
-.PHONY: help deps release release-web release-windows release-android release-linux release-macos test tests doc release-publish clean run-example check-app serve serve-examples integration_test
+.PHONY: help deps release release-web release-windows release-android release-linux release-linux-deb release-macos test tests doc release-publish clean run-example check-app serve serve-examples integration_test test-linux-distros
 
 BASE_HREF ?= /
 
@@ -29,8 +29,10 @@ help:
 		"  release-web                                  Build release application for web" \
 		"  release-android                              Build release application for Android" \
 		"  release-{windows,linux,macos}                Build release application for target desktop platform" \
+		"  release-linux-deb                            Build release Debian package inside Ubuntu 22.04 Docker container" \
 		"  serve                                        Serve web playground application" \
 		"  test                                         Run tests for Flutter workspace" \
+		"  test-linux-distros                           Test Linux release across Ubuntu 22.04, 24.04, 26.04" \
 		"  doc                                          Generate Dart documentation" \
 		"  release-publish                              Publish release to GitHub Releases via gh" \
 		"  clean                                        Clean build artifacts" \
@@ -57,6 +59,26 @@ release-android: deps
 
 release-linux: deps
 	flutter build linux --no-pub --release
+	bash linux/package-deb.sh build/linux/x64/release/bundle $(VERSION) $(CURDIR)/gingaf-v$(VERSION)-linux-amd64.deb
+
+FLUTTER_SDK_DIR := $(shell which flutter | xargs readlink -f | xargs dirname | xargs dirname)
+PUB_CACHE_DIR ?= $(HOME)/.pub-cache
+
+release-linux-deb:
+	docker build -t gingaf-builder-ubuntu2204 -f linux/Dockerfile.builder-ubuntu2204 linux/
+	docker run --rm \
+		--user $(shell id -u):$(shell id -g) \
+		-e HOME=/tmp \
+		-e PATH="$(FLUTTER_SDK_DIR)/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+		-v $(FLUTTER_SDK_DIR):$(FLUTTER_SDK_DIR) \
+		-v $(PUB_CACHE_DIR):$(PUB_CACHE_DIR):ro \
+		-v $(CURDIR):$(CURDIR) \
+		-w $(CURDIR) \
+		gingaf-builder-ubuntu2204 \
+		bash -c "flutter build linux --no-pub --release && bash linux/package-deb.sh build/linux/x64/release/bundle $(VERSION) $(CURDIR)/gingaf-v$(VERSION)-linux-amd64.deb"
+
+test-linux-distros:
+	bash linux/test-linux-distros.sh
 
 release-macos: deps
 	flutter build macos --no-pub --release
@@ -75,16 +97,19 @@ doc:
 	cp doc/architecture.svg doc/api/doc/architecture.svg
 	npx serve doc/api
 
-
 define package-zip
 	[ ! -d $(2) ] || (cd $(2) && zip -q -FS -r $(CURDIR)/$(1) .)
 endef
 
 release-publish:
 	$(call package-zip,gingaf-v$(VERSION)-windows-x64.zip,build/windows/x64/runner/Release)
-	$(call package-zip,gingaf-v$(VERSION)-linux-x64.zip,build/linux/x64/release/bundle)
 	$(call package-zip,gingaf-v$(VERSION)-macos.zip,build/macos/Build/Products/Release)
-	gh release upload v$(VERSION) gingaf-v$(VERSION)-*.zip --clobber || gh release create v$(VERSION) gingaf-v$(VERSION)-*.zip --generate-notes
+	RELEASE_FILES=$$(ls gingaf-v$(VERSION)-*.zip gingaf-v$(VERSION)-*.deb 2>/dev/null || true); \
+	if [ -z "$$RELEASE_FILES" ]; then \
+		echo "No release artifacts found to publish for v$(VERSION)."; \
+		exit 1; \
+	fi; \
+	gh release upload v$(VERSION) $$RELEASE_FILES --clobber || gh release create v$(VERSION) $$RELEASE_FILES --generate-notes
 
 
 serve: release-web
