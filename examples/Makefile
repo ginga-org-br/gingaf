@@ -1,7 +1,7 @@
 MAKEFLAGS += -s --no-print-directory
 .DEFAULT_GOAL := help
 
-.PHONY: help deps gifs download-puc-examples
+.PHONY: help deps gifs download-examples
 
 help:
 	@printf "%s\n" \
@@ -10,7 +10,7 @@ help:
 		"Targets:" \
 		"  deps                   Check dependencies for GIF generation (ffmpeg, flutter, dart)" \
 		"  gifs                   Generate GIFs (e.g. make gifs [target=video.ncl], default all)" \
-		"  download-puc-examples  Download PUC Ginga examples (hrace, luarocks, pacman)"
+		"  download-examples      Download examples (e.g. make download-examples [target=puc|guarana], default all)"
 
 deps:
 ifeq ($(OS),Windows_NT)
@@ -22,5 +22,5 @@ endif
 gifs: deps
 	dart run scripts/generate_gif.dart $(target)
 
-download-puc-examples:
-	python scripts/download_puc_examples.py
+download-examples:
+	python scripts/download_examples.py $(target)
