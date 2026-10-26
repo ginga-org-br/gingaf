@@ -140,9 +140,11 @@ app.listen(port, () => {
 
   if (withExpress) {
     const expressAppPath = path.resolve(__dirname, '..', 'example-node-express', 'index.js');
+    const expressPort = process.env.EXPRESS_PORT || '3000';
     const expressProcess = cp.spawn(process.execPath, [expressAppPath], {
       cwd: path.resolve(__dirname, '..', 'example-node-express'),
-      stdio: 'inherit'
+      stdio: 'inherit',
+      env: { ...process.env, PORT: expressPort }
     });
 
     const cleanup = () => {
