@@ -787,7 +787,20 @@ class NclDocument extends GingaApp {
     if (targetId != null && targetId.isNotEmpty) {
       setFocus(targetId);
       scheduler.triggerSelection(targetId, keyCode);
-      onStateChanged?.call();
+      if (onStateChanged != null) {
+        onStateChanged!.call();
+      } else {
+        scheduler.tick(0);
+      }
+    }
+  }
+
+  void handleViewTransition(String componentId, bool inView, [String? interfaceId]) {
+    scheduler.triggerViewTransition(componentId, inView, interfaceId);
+    if (onStateChanged != null) {
+      onStateChanged!.call();
+    } else {
+      scheduler.tick(0);
     }
   }
 

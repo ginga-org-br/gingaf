@@ -7,17 +7,15 @@ import 'srt_plugin.dart';
 import 'user_rule_plugin.dart';
 
 void registerAllPlugins(GetIt di) {
-  if (!di.isRegistered<NclMediaPlugin>(instanceName: 'ncl360_media_plugin')) {
+  if (!di.isRegistered<NclMediaPlugin>()) {
     di.registerFactory<NclMediaPlugin>(
       () => Ncl360MediaPlugin(),
-      instanceName: 'ncl360_media_plugin',
     );
   }
 
-  if (!di.isRegistered<NclMediaPlugin>(instanceName: 'srt_media_plugin')) {
-    di.registerFactory<NclMediaPlugin>(
-      () => SrtMediaPlugin(),
-      instanceName: 'srt_media_plugin',
+  if (!di.isRegistered<NclParserPlugin>()) {
+    di.registerFactory<NclParserPlugin>(
+      () => Ncl360ParserPlugin(),
     );
   }
 

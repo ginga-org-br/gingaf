@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:get_it/get_it.dart';
 import 'package:logging/logging.dart';
 import 'package:ncldoc/ncl_document.dart';
@@ -359,7 +360,14 @@ class NclWidgetState extends MediaState<NclWidget> {
 
       nclDocument = doc;
       doc.onStateChanged = () {
-        if (mounted) {
+        if (!mounted) return;
+        if (SchedulerBinding.instance.schedulerPhase == SchedulerPhase.persistentCallbacks) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              tick(0);
+            }
+          });
+        } else {
           tick(0);
         }
       };
@@ -447,13 +455,22 @@ class NclWidgetState extends MediaState<NclWidget> {
     }
   }
 
-  void handleKeyPress(String keyCode) {
+  @override
+  bool handleKeyPress(String keyCode) {
+    for (final key in _mediaStateKeys.values) {
+      if (key.currentState?.handleKeyPress(keyCode) ?? false) {
+        tick(0);
+        return true;
+      }
+    }
     if (nclDocument != null) {
       final handled = nclDocument!.handleKey(keyCode);
       if (handled) {
         tick(0);
       }
+      return handled;
     }
+    return false;
   }
 
   void handleKeyRelease(String keyCode) {
@@ -519,6 +536,11 @@ class NclWidgetState extends MediaState<NclWidget> {
           final resolvedZ = media.rawAttributes['resolvedZIndex'];
           if (resolvedZ != null) {
             return int.tryParse(resolvedZ) ?? 0;
+          }
+          final type = media.rawAttributes['type']?.toLowerCase() ?? '';
+          final src = (media.src ?? '').toLowerCase();
+          if (type == 'application/x-ncl360' || src.endsWith('.ncl360')) {
+            return 2;
           }
           return 0;
         }

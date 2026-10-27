@@ -314,8 +314,15 @@ class NclScheduler {
               parent.activeNodes++;
             } else if (newState == NclStateType.sleeping) {
               if (parent.activeNodes > 0) parent.activeNodes--;
-              if (parent.activeNodes == 0) {
-                _stackMainEvtNclAction(parent, NclActionType.stop);
+              if (parent != document.body && parent.activeNodes == 0) {
+                final hasPendingChildStart = _actionStack.any(
+                  (a) =>
+                      a.action == NclActionType.start &&
+                      a.event.targetNode.parent == parent,
+                );
+                if (!hasPendingChildStart) {
+                  _stackMainEvtNclAction(parent, NclActionType.stop);
+                }
               }
             }
           }
@@ -560,6 +567,23 @@ class NclScheduler {
                       }
                     }
                   }
+                } else if (actionType != NclActionType.set &&
+                    bind.interface != null &&
+                    bindNode is! Context) {
+                  final areas = bindNode.children.whereType<Area>().where(
+                        (a) => a.id == bind.interface,
+                      );
+                  if (areas.isNotEmpty) {
+                    targetNclEvent = bindNode.getAreaNclEvent(bind.interface!);
+                    if (actionType == NclActionType.start &&
+                        bindNode.getMainState() == NclStateType.sleeping) {
+                      stackNclAction(
+                        bindNode.getMainNclEvent(),
+                        NclActionType.start,
+                        delay: delayMs,
+                      );
+                    }
+                  }
                 }
 
                 if (actionType != NclActionType.set && bindNode is Switch) {
@@ -680,19 +704,49 @@ class NclScheduler {
     String keyCode, [
     String? interfaceId,
   ]) {
-    final node = document.getNodeById(componentId);
-    if (node == null || node.getMainState() != NclStateType.occurring) return;
+    final elem = document.getElementById(componentId);
+    if (elem == null) return;
 
-    final context = node.parent;
-    final links = getLinksForComponent(componentId);
+    Node? targetNode;
+    String actualComponentId = componentId;
+    String? actualInterfaceId = interfaceId;
+
+    if (elem is Area) {
+      actualInterfaceId = elem.id ?? componentId;
+      final parentNode = elem.parent;
+      if (parentNode is Node) {
+        targetNode = parentNode;
+        actualComponentId = parentNode.id ?? componentId;
+      }
+    } else if (elem is Node) {
+      targetNode = elem;
+    }
+
+    final finalNode = targetNode;
+    if (finalNode == null || finalNode.getMainState() != NclStateType.occurring) return;
+
+    final context = finalNode.parent;
+    final links = getLinksForComponent(actualComponentId);
+    if (actualInterfaceId != null) {
+      for (var l in getLinksForComponent(actualInterfaceId)) {
+        if (!links.contains(l)) {
+          links.add(l);
+        }
+      }
+    }
 
     for (var link in links) {
       bool triggered = false;
       triggered = link.children.whereType<Bind>().any((b) {
-        if ((b.role == 'onSelection' || b.role == 'onSelect') &&
-            b.component == componentId &&
-            (b.interface == interfaceId ||
-                (interfaceId == null && b.interface == null))) {
+        if (b.role == 'onSelection' || b.role == 'onSelect') {
+          final compMatch = (b.component == actualComponentId &&
+                  (b.interface == actualInterfaceId ||
+                      (actualInterfaceId == null && b.interface == null))) ||
+              (actualInterfaceId != null &&
+                  b.component == actualInterfaceId &&
+                  b.interface == null);
+          if (!compMatch) return false;
+
           final hasKeyParam = b.children.whereType<BindParam>().any(
                     (bp) => bp.name == 'keyCode' || bp.name == 'key',
                   ) ||
@@ -743,111 +797,7 @@ class NclScheduler {
       }
 
       if (triggered) {
-        for (var bind in link.children.whereType<Bind>()) {
-          final actionStr = bind.role;
-          if (actionStr != null &&
-              (actionStr == 'start' ||
-                  actionStr == 'stop' ||
-                  actionStr == 'abort' ||
-                  actionStr == 'pause' ||
-                  actionStr == 'resume' ||
-                  actionStr == 'set')) {
-            if (bind.component != null) {
-              final bindNode = document.getNodeById(bind.component!);
-              if (bindNode != null) {
-                final actionType = NclEvent.getStringAsActionType(actionStr);
-
-                var targetNclEvent = actionType == NclActionType.set
-                    ? bindNode.getPropertyNclEvent(bind.interface ?? '')
-                    : bindNode.getMainNclEvent();
-
-                int delayMs = 0;
-                int durationMs = 0;
-                for (var child in bind.children) {
-                  if (child is BindParam) {
-                    if (child.name == 'delay') {
-                      delayMs = _parseTimeMs(child.value) ?? 0;
-                    } else if (child.name == 'duration') {
-                      durationMs = _parseTimeMs(child.value) ?? 0;
-                    }
-                  }
-                }
-                if (delayMs == 0) {
-                  for (var child in link.children) {
-                    if (child is BindParam) {
-                      if (child.name == 'delay') {
-                        delayMs = _parseTimeMs(child.value) ?? 0;
-                      } else if (child.name == 'duration') {
-                        durationMs = _parseTimeMs(child.value) ?? 0;
-                      }
-                    }
-                  }
-                }
-
-                if (actionType != NclActionType.set &&
-                    bindNode is Context &&
-                    bind.interface != null) {
-                  final ports = bindNode.children.whereType<Port>().where(
-                        (p) => p.id == bind.interface,
-                      );
-                  if (ports.isNotEmpty) {
-                    final port = ports.first;
-                    if (port.component != null) {
-                      final targetNode = document.getNodeById(port.component!);
-                      if (targetNode != null) {
-                        targetNclEvent = targetNode.getMainNclEvent();
-                      }
-                    }
-                  }
-                }
-
-                if (actionType != NclActionType.set && bindNode is Switch) {
-                  if (actionType == NclActionType.stop) {
-                    for (var child in bindNode.children) {
-                      if (child is Node &&
-                          child.getMainState() != NclStateType.sleeping) {
-                        stackNclAction(
-                          child.getMainNclEvent(),
-                          NclActionType.stop,
-                          delay: delayMs,
-                        );
-                      }
-                    }
-                    continue;
-                  } else {
-                    final activeNode = document.resolveSwitch(bindNode);
-                    if (activeNode != null) {
-                      targetNclEvent = activeNode.getMainNclEvent();
-                    }
-                  }
-                }
-                String? setValue;
-                if (actionType == NclActionType.set) {
-                  setValue = _resolveSetValue(bind, link);
-                  if (setValue == null) {
-                    continue;
-                  }
-                }
-                if (actionType == NclActionType.set && durationMs > 0) {
-                  stackNclAction(targetNclEvent, NclActionType.start, delay: delayMs);
-                  stackNclAction(
-                    targetNclEvent,
-                    NclActionType.set,
-                    delay: delayMs + durationMs,
-                    value: setValue,
-                  );
-                } else {
-                  stackNclAction(
-                    targetNclEvent,
-                    actionType,
-                    delay: delayMs,
-                    value: setValue,
-                  );
-                }
-              }
-            }
-          }
-        }
+        _executeTriggeredLink(link);
       }
     }
 
@@ -857,6 +807,228 @@ class NclScheduler {
             (port.interface == interfaceId ||
                 (interfaceId == null && port.interface == null))) {
           _triggerSelectionInternal(context.id ?? '', keyCode, port.id);
+        }
+      }
+    }
+  }
+
+  void triggerViewTransition(String componentId, bool inView, [String? interfaceId]) {
+    _triggerViewInternal(componentId, inView, interfaceId);
+  }
+
+  void _triggerViewInternal(
+    String componentId,
+    bool inView, [
+    String? interfaceId,
+  ]) {
+    final elem = document.getElementById(componentId);
+    if (elem == null) return;
+
+    Node? targetNode;
+    String actualComponentId = componentId;
+    String? actualInterfaceId = interfaceId;
+
+    if (elem is Area) {
+      actualInterfaceId = elem.id ?? componentId;
+      final parentNode = elem.parent;
+      if (parentNode is Node) {
+        targetNode = parentNode;
+        actualComponentId = parentNode.id ?? componentId;
+      }
+    } else if (elem is Node) {
+      targetNode = elem;
+    }
+
+    final finalNode = targetNode;
+    if (finalNode == null || finalNode.getMainState() != NclStateType.occurring) return;
+
+    final context = finalNode.parent;
+    final links = getLinksForComponent(actualComponentId);
+    if (actualInterfaceId != null) {
+      for (var l in getLinksForComponent(actualInterfaceId)) {
+        if (!links.contains(l)) {
+          links.add(l);
+        }
+      }
+    }
+    final targetRole = inView ? 'onBeginView' : 'onEndView';
+
+    for (var link in links) {
+      bool triggered = link.children.whereType<Bind>().any((b) {
+        final matchesRole = b.role == targetRole ||
+            (inView && b.role == 'onLookAt') ||
+            (!inView && b.role == 'onLookAway');
+        if (matchesRole) {
+          if (b.component == actualComponentId &&
+              (b.interface == actualInterfaceId ||
+                  (actualInterfaceId == null && b.interface == null))) {
+            return true;
+          }
+          if (actualInterfaceId != null &&
+              b.component == actualInterfaceId &&
+              b.interface == null) {
+            return true;
+          }
+        }
+        return false;
+      });
+
+      if (triggered) {
+        final xconn = link.rawAttributes['xconnector'];
+        if (xconn != null) {
+          final connId = xconn.contains('#') ? xconn.split('#')[1] : xconn;
+          final connector = document.getElementById(connId);
+          if (connector != null) {
+            final cond = connector.children.firstWhere(
+              (c) =>
+                  c.xmlTagName == 'compoundCondition' ||
+                  c.xmlTagName == 'simpleCondition' ||
+                  c.xmlTagName == 'assessmentStatement',
+              orElse: () => null as dynamic,
+            );
+            if (!_evaluateCondition(cond, link)) {
+              triggered = false;
+            }
+          }
+        }
+      }
+
+      if (triggered) {
+        _executeTriggeredLink(link);
+      }
+    }
+
+    if (context is Context && context != document.body) {
+      for (var port in context.children.whereType<Port>()) {
+        if (port.component == componentId &&
+            (port.interface == interfaceId ||
+                (interfaceId == null && port.interface == null))) {
+          _triggerViewInternal(context.id ?? '', inView, port.id);
+        }
+      }
+    }
+  }
+
+  void _executeTriggeredLink(Link link) {
+    for (var bind in link.children.whereType<Bind>()) {
+      final actionStr = bind.role;
+      if (actionStr != null &&
+          (actionStr == 'start' ||
+              actionStr == 'stop' ||
+              actionStr == 'abort' ||
+              actionStr == 'pause' ||
+              actionStr == 'resume' ||
+              actionStr == 'set')) {
+        if (bind.component != null) {
+          final bindNode = document.getNodeById(bind.component!);
+          if (bindNode != null) {
+            final actionType = NclEvent.getStringAsActionType(actionStr);
+
+            var targetNclEvent = actionType == NclActionType.set
+                ? bindNode.getPropertyNclEvent(bind.interface ?? '')
+                : bindNode.getMainNclEvent();
+
+            int delayMs = 0;
+            int durationMs = 0;
+            for (var child in bind.children) {
+              if (child is BindParam) {
+                if (child.name == 'delay') {
+                  delayMs = _parseTimeMs(child.value) ?? 0;
+                } else if (child.name == 'duration') {
+                  durationMs = _parseTimeMs(child.value) ?? 0;
+                }
+              }
+            }
+            if (delayMs == 0) {
+              for (var child in link.children) {
+                if (child is BindParam) {
+                  if (child.name == 'delay') {
+                    delayMs = _parseTimeMs(child.value) ?? 0;
+                  } else if (child.name == 'duration') {
+                    durationMs = _parseTimeMs(child.value) ?? 0;
+                  }
+                }
+              }
+            }
+
+            if (actionType != NclActionType.set &&
+                bindNode is Context &&
+                bind.interface != null) {
+              final ports = bindNode.children.whereType<Port>().where(
+                    (p) => p.id == bind.interface,
+                  );
+              if (ports.isNotEmpty) {
+                final port = ports.first;
+                if (port.component != null) {
+                  final targetNode = document.getNodeById(port.component!);
+                  if (targetNode != null) {
+                    targetNclEvent = targetNode.getMainNclEvent();
+                  }
+                }
+              }
+            } else if (actionType != NclActionType.set &&
+                bind.interface != null &&
+                bindNode is! Context) {
+              final areas = bindNode.children.whereType<Area>().where(
+                    (a) => a.id == bind.interface,
+                  );
+              if (areas.isNotEmpty) {
+                targetNclEvent = bindNode.getAreaNclEvent(bind.interface!);
+                if (actionType == NclActionType.start &&
+                    bindNode.getMainState() == NclStateType.sleeping) {
+                  stackNclAction(
+                    bindNode.getMainNclEvent(),
+                    NclActionType.start,
+                    delay: delayMs,
+                  );
+                }
+              }
+            }
+
+            if (actionType != NclActionType.set && bindNode is Switch) {
+              if (actionType == NclActionType.stop) {
+                for (var child in bindNode.children) {
+                  if (child is Node &&
+                      child.getMainState() != NclStateType.sleeping) {
+                    stackNclAction(
+                      child.getMainNclEvent(),
+                      NclActionType.stop,
+                      delay: delayMs,
+                    );
+                  }
+                }
+                continue;
+              } else {
+                final activeNode = document.resolveSwitch(bindNode);
+                if (activeNode != null) {
+                  targetNclEvent = activeNode.getMainNclEvent();
+                }
+              }
+            }
+            String? setValue;
+            if (actionType == NclActionType.set) {
+              setValue = _resolveSetValue(bind, link);
+              if (setValue == null) {
+                continue;
+              }
+            }
+            if (actionType == NclActionType.set && durationMs > 0) {
+              stackNclAction(targetNclEvent, NclActionType.start, delay: delayMs);
+              stackNclAction(
+                targetNclEvent,
+                NclActionType.set,
+                delay: delayMs + durationMs,
+                value: setValue,
+              );
+            } else {
+              stackNclAction(
+                targetNclEvent,
+                actionType,
+                delay: delayMs,
+                value: setValue,
+              );
+            }
+          }
         }
       }
     }

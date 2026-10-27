@@ -23,6 +23,17 @@ class NclParser {
     final document = XmlDocument.parse(xmlString);
     final root = document.rootElement;
 
+    try {
+      for (final plugin in GetIt.instance.getAll<NclParserPlugin>()) {
+        if (plugin.targetTag == root.name.local) {
+          final docResult = plugin.parseDocument(root, this);
+          if (docResult != null) {
+            return docResult;
+          }
+        }
+      }
+    } catch (_) {}
+
     Head head = [];
     Body body = Context(rawAttributes: const {'id': 'body'});
 

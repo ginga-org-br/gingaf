@@ -88,6 +88,8 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
 
   void forward(Duration duration) {}
 
+  bool handleKeyPress(String keyCode) => false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -212,6 +214,9 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
         return Colors.black;
       case 'white':
         return Colors.white;
+      case 'gray':
+      case 'grey':
+        return Colors.grey;
       default:
         return Colors.transparent;
     }

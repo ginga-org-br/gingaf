@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get_it/get_it.dart';
 import 'package:gingaf/ginga.dart';
 import 'package:nclui/ncl.dart';
+import 'package:plugins/plugins_registry.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 import 'mock_video_player.dart';
@@ -17,6 +19,18 @@ void main() {
   group('Widget Tests', () {
     setUp(() {
       VideoPlayerPlatform.instance = MockVideoPlayer();
+      registerAllPlugins(GetIt.instance);
+    });
+
+    testWidgets('NclWidget mounts video360 example',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(const MaterialApp(
+        home: NclWidget(src: 'examples/video360/main.ncl360'),
+      ));
+
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.byType(NclWidget), findsOneWidget);
     });
 
     testWidgets('NclWidget mounts example', (WidgetTester tester) async {
