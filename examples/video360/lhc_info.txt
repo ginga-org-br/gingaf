@@ -1,0 +1,5 @@
+Large Hadron Collider (LHC)
+World's largest particle accelerator at CERN.
+Located 100m underground in a 27 km tunnel.
+Twin vacuum pipes accelerate protons to 99.9999991% of light speed.
+Superconducting dipole magnets operate at 1.9 K (-271.3°C).

@@ -1,5 +1,10 @@
 {
     "examples": {
+        "video360": {
+            "mainFile": "video360/main.ncl360",
+            "category": "360",
+            "description": "Interactive 360 panoramic CERN LHC tunnel presentation with hotspots and view transitions"
+        },
         "video": {
             "mainFile": "video.ncl",
             "category": "general",

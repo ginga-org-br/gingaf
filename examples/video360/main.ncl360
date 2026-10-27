@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<ncl360 id="cern_lhc_360">
+    <head>
+        <region id="rlhcInfo" polar="-3d" azimuthal="75d" width="1.5m" height="1.0m" radius="2.5m" pin="environment" zIndex="3"/>
+        
+        <descriptor id="dPano" region="default.sky" volume="1"/>
+        <descriptor id="dLhcInfo" region="rlhcInfo"/>
+    </head>
+    
+    <body>
+        <media id="mainVideo" src="https://threejs.org/examples/textures/pano.mp4" descriptor="dPano"/>
+        <media id="lhcInfo" src="lhc_info.txt" descriptor="dLhcInfo">
+            <property name="background" value="gray"/>
+        </media>
+    </body>
+</ncl360>
