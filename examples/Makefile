@@ -24,3 +24,4 @@ gifs: deps
 
 download-examples:
 	python scripts/download_examples.py $(target)
+

@@ -84,7 +84,7 @@ release-macos: deps
 	flutter build macos --no-pub --release
 
 test:
-	flutter test test packages/gingacc/test packages/ncldoc/test packages/nclui/test $(wildcard packages/playground/test) --no-pub
+	flutter test test packages/gingacc/test packages/ncldoc/test packages/nclui/test packages/plugins/test
 
 integration_test:
 	flutter test --no-pub integration_test $(if $(d),-d $(d))

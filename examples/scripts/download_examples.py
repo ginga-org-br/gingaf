@@ -40,10 +40,20 @@ def download_puc(base_dir):
         local_dir = os.path.join(base_dir, folder)
         download_dir(api_url, local_dir)
 
+import subprocess
+try:
+    from transcode_eac import transcode_eac_to_equirect
+except ImportError:
+    from scripts.transcode_eac import transcode_eac_to_equirect
+
+
 def download_guarana(base_dir):
     api_url = "https://api.github.com/repos/multisens/guarana-examples/contents"
     local_dir = os.path.join(base_dir, "guarana")
     download_dir(api_url, local_dir)
+    louvre_media = os.path.join(local_dir, "media", "louvre360.mp4")
+    if os.path.exists(louvre_media):
+        transcode_eac_to_equirect(louvre_media)
 
 if __name__ == "__main__":
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
