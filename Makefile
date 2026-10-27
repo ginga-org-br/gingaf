@@ -61,21 +61,8 @@ release-linux: deps
 	flutter build linux --no-pub --release
 	bash linux/package-deb.sh build/linux/x64/release/bundle $(VERSION) $(CURDIR)/gingaf-v$(VERSION)-linux-amd64.deb
 
-FLUTTER_SDK_DIR := $(shell which flutter | xargs readlink -f | xargs dirname | xargs dirname)
-PUB_CACHE_DIR ?= $(HOME)/.pub-cache
-
 release-linux-deb:
-	docker build -t gingaf-builder-ubuntu2204 -f linux/Dockerfile.builder-ubuntu2204 linux/
-	docker run --rm \
-		--user $(shell id -u):$(shell id -g) \
-		-e HOME=/tmp \
-		-e PATH="$(FLUTTER_SDK_DIR)/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
-		-v $(FLUTTER_SDK_DIR):$(FLUTTER_SDK_DIR) \
-		-v $(PUB_CACHE_DIR):$(PUB_CACHE_DIR):ro \
-		-v $(CURDIR):$(CURDIR) \
-		-w $(CURDIR) \
-		gingaf-builder-ubuntu2204 \
-		bash -c "flutter build linux --no-pub --release && bash linux/package-deb.sh build/linux/x64/release/bundle $(VERSION) $(CURDIR)/gingaf-v$(VERSION)-linux-amd64.deb"
+	bash linux/release-linux-deb.sh
 
 test-linux-distros:
 	bash linux/test-linux-distros.sh
