@@ -52,7 +52,8 @@ void main() {
       final doc = NclDocument.fromContent(xml);
       doc.start();
       doc.tick(45000);
-      expect(doc.getMediaById('advert')?.getMainState(), NclStateType.occurring);
+      expect(
+          doc.getMediaById('advert')?.getMainState(), NclStateType.occurring);
     });
   });
 }

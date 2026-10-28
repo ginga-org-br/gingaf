@@ -89,8 +89,8 @@ void main() {
       expect(result.app, equals('env_app.ncl'));
       expect(result.config, equals('env_config.json'));
 
-      final resultLower = parseArgsCliAndEnv(
-          [], {'ginga_app': 'lower_app.ncl', 'ginga_config': 'lower_config.json'});
+      final resultLower = parseArgsCliAndEnv([],
+          {'ginga_app': 'lower_app.ncl', 'ginga_config': 'lower_config.json'});
       expect(resultLower.app, equals('lower_app.ncl'));
       expect(resultLower.config, equals('lower_config.json'));
     });

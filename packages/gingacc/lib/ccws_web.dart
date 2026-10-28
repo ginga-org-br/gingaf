@@ -113,8 +113,8 @@ class CCWS {
       }
 
       if (mapData != null && mapData['type'] == 'CCWS_REQUEST') {
-        _logger.info(
-            'CCWS Dart received request from iframe: ${mapData["url"]}');
+        _logger
+            .info('CCWS Dart received request from iframe: ${mapData["url"]}');
         final url = mapData['url'] as String;
         final method = (mapData['method'] as String?) ?? 'GET';
 

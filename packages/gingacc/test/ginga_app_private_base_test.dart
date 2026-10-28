@@ -103,7 +103,8 @@ void main() {
       expect(app.privateBase.applicationId, 'main.ncl');
     });
 
-    test('gingacc.getPrivateBase caches per applicationId and inherits virtual files',
+    test(
+        'gingacc.getPrivateBase caches per applicationId and inherits virtual files',
         () async {
       final gingacc = GingaCC();
       gingacc.setVirtualFiles({'global.txt': 'hello global'});

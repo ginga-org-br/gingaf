@@ -85,7 +85,8 @@ Map<String, String>? getGingaAppFiles() {
         if (filesObj != null) {
           final dartified = filesObj.dartify();
           if (dartified is Map) {
-            return dartified.map((k, v) => MapEntry(k.toString(), v.toString()));
+            return dartified
+                .map((k, v) => MapEntry(k.toString(), v.toString()));
           }
         }
       }
@@ -101,7 +102,8 @@ Map<String, String>? getGingaAppFiles() {
           if (filesObj != null) {
             final dartified = filesObj.dartify();
             if (dartified is Map) {
-              return dartified.map((k, v) => MapEntry(k.toString(), v.toString()));
+              return dartified
+                  .map((k, v) => MapEntry(k.toString(), v.toString()));
             }
           }
         }
@@ -127,4 +129,3 @@ void notifyParentAppExited() {
     debugPrint('Failed to notify parent app exited: $e');
   }
 }
-

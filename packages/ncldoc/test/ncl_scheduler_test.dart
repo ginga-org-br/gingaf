@@ -36,7 +36,8 @@ void main() {
 ''';
       final doc = NclDocument.fromContent(xml);
       doc.start();
-      expect(doc.getPropertyValue(doc.getNodeById('dstMedia')!, 'dstProp'), 'hello');
+      expect(doc.getPropertyValue(doc.getNodeById('dstMedia')!, 'dstProp'),
+          'hello');
     });
 
     test('resolves multiple gets and sets in a single link', () {
@@ -141,7 +142,8 @@ void main() {
       expect(doc.getPropertyValue(dst, 'propB'), '200');
     });
 
-    test('does not perform attribution if variable value cannot be obtained', () {
+    test('does not perform attribution if variable value cannot be obtained',
+        () {
       const xml = '''
 <ncl>
   <head>

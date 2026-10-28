@@ -2,7 +2,7 @@ MAKEFLAGS += -s --no-print-directory
 .DEFAULT_GOAL := help
 $(if $(filter Windows_NT,$(OS)),$(if $(shell where printf 2>nul),,$(error coreutils is not installed. Please run: winget install coreutils)))
 
-.PHONY: help deps release release-web release-windows release-android release-linux release-linux-deb release-macos test tests doc release-publish clean run-example check-app serve serve-examples integration_test test-linux-distros
+.PHONY: help deps release release-web release-windows release-android release-linux release-linux-deb release-macos test tests doc release-publish clean run-example check-app serve serve-examples integration_test test-linux-distros format
 
 BASE_HREF ?= /
 
@@ -25,6 +25,7 @@ help:
 		"" \
 		"Targets:" \
 		"  deps                                         Install dependencies for Flutter workspace" \
+		"  format                                       Format Dart code across workspace" \
 		"  release                                      Build release application for current host OS" \
 		"  release-web                                  Build release application for web" \
 		"  release-android                              Build release application for Android" \
@@ -72,6 +73,9 @@ release-macos: deps
 
 test:
 	flutter test test packages/gingacc/test packages/ncldoc/test packages/nclui/test packages/plugins/test
+
+format:
+	dart format .
 
 integration_test:
 	flutter test --no-pub integration_test $(if $(d),-d $(d))

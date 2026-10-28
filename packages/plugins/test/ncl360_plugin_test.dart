@@ -4,7 +4,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
-import 'package:ncldoc/elements.dart';
 import 'package:ncldoc/ncl_document.dart';
 import 'package:nclui/base_widget.dart';
 import 'package:plugins/ncl360_plugin.dart';
@@ -25,17 +24,24 @@ void main() {
       expect(SphericalCoordinate.normalizeDegrees(0.0), closeTo(0.0, 0.001));
       expect(SphericalCoordinate.normalizeDegrees(360.0), closeTo(0.0, 0.001));
       expect(SphericalCoordinate.normalizeDegrees(720.0), closeTo(0.0, 0.001));
-      expect(SphericalCoordinate.normalizeDegrees(-90.0), closeTo(270.0, 0.001));
+      expect(
+          SphericalCoordinate.normalizeDegrees(-90.0), closeTo(270.0, 0.001));
       expect(SphericalCoordinate.normalizeDegrees(450.0), closeTo(90.0, 0.001));
-      expect(SphericalCoordinate.normalizeDegrees(-370.0), closeTo(350.0, 0.001));
+      expect(
+          SphericalCoordinate.normalizeDegrees(-370.0), closeTo(350.0, 0.001));
     });
 
     test('deltaAngleDegrees calculates shortest arc difference correctly', () {
-      expect(SphericalCoordinate.deltaAngleDegrees(0.0, 45.0), closeTo(45.0, 0.001));
-      expect(SphericalCoordinate.deltaAngleDegrees(45.0, 0.0), closeTo(-45.0, 0.001));
-      expect(SphericalCoordinate.deltaAngleDegrees(350.0, 10.0), closeTo(20.0, 0.001));
-      expect(SphericalCoordinate.deltaAngleDegrees(10.0, 350.0), closeTo(-20.0, 0.001));
-      expect(SphericalCoordinate.deltaAngleDegrees(0.0, 180.0), closeTo(180.0, 0.001));
+      expect(SphericalCoordinate.deltaAngleDegrees(0.0, 45.0),
+          closeTo(45.0, 0.001));
+      expect(SphericalCoordinate.deltaAngleDegrees(45.0, 0.0),
+          closeTo(-45.0, 0.001));
+      expect(SphericalCoordinate.deltaAngleDegrees(350.0, 10.0),
+          closeTo(20.0, 0.001));
+      expect(SphericalCoordinate.deltaAngleDegrees(10.0, 350.0),
+          closeTo(-20.0, 0.001));
+      expect(SphericalCoordinate.deltaAngleDegrees(0.0, 180.0),
+          closeTo(180.0, 0.001));
     });
 
     test('angularDistanceTo calculates great-circle distance accurately', () {
@@ -85,7 +91,8 @@ void main() {
         pin: PinType.camera,
       );
       expect(
-        targetCameraPinned.isInView(cameraYaw: 180.0, cameraPitch: 45.0, fov: 90.0),
+        targetCameraPinned.isInView(
+            cameraYaw: 180.0, cameraPitch: 45.0, fov: 90.0),
         isTrue,
       );
     });
@@ -154,7 +161,8 @@ void main() {
 
     test('rotateKey updates all navigation angles', () {
       final camera = ViewportCamera();
-      camera.rotateKey(deltaYaw: 15.0, deltaPitch: -10.0, deltaRoll: 5.0, deltaFov: -5.0);
+      camera.rotateKey(
+          deltaYaw: 15.0, deltaPitch: -10.0, deltaRoll: 5.0, deltaFov: -5.0);
       expect(camera.yaw, closeTo(15.0, 0.01));
       expect(camera.pitch, closeTo(-10.0, 0.01));
       expect(camera.roll, closeTo(5.0, 0.01));
@@ -178,14 +186,16 @@ void main() {
       expect(plugin.canHandle('video.360.mp4', null), isTrue);
       expect(plugin.canHandle('video.mp4', 'video/360'), isTrue);
       expect(plugin.canHandle('image.jpg', 'image/360'), isTrue);
-      expect(plugin.canHandle('custom_media', 'application/x-ginga-360'), isTrue);
+      expect(
+          plugin.canHandle('custom_media', 'application/x-ginga-360'), isTrue);
       expect(plugin.canHandle('custom_media', 'application/x-ncl-360'), isTrue);
     });
 
     test('canHandle rejects standard non-360 media', () {
       expect(plugin.canHandle('standard.mp4', 'video/mp4'), isFalse);
       expect(plugin.canHandle('photo.jpg', 'image/jpeg'), isFalse);
-      expect(plugin.canHandle('document.ncl', 'application/x-ncl-NCL'), isFalse);
+      expect(
+          plugin.canHandle('document.ncl', 'application/x-ncl-NCL'), isFalse);
       expect(plugin.canHandle('notes.txt', 'text/plain'), isFalse);
     });
   });
@@ -214,7 +224,8 @@ void main() {
       expect(find.textContaining('FoV: 90.0°'), findsOneWidget);
     });
 
-    testWidgets('supports drag gesture to update viewport yaw and pitch', (tester) async {
+    testWidgets('supports drag gesture to update viewport yaw and pitch',
+        (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
@@ -232,7 +243,8 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      await tester.drag(find.byType(Scene360Widget), const Offset(-100.0, 50.0));
+      await tester.drag(
+          find.byType(Scene360Widget), const Offset(-100.0, 50.0));
       await tester.pump();
 
       expect(find.byType(Scene360Widget), findsOneWidget);
@@ -240,7 +252,8 @@ void main() {
       expect(find.textContaining('Pitch: 15.0°'), findsOneWidget);
     });
 
-    testWidgets('extracts hotspots and triggers view transitions when in view', (tester) async {
+    testWidgets('extracts hotspots and triggers view transitions when in view',
+        (tester) async {
       final media = Media(rawAttributes: {'id': 'scene360'});
       final hotspotArea = Area(
         rawAttributes: {
@@ -293,7 +306,8 @@ void main() {
       expect(viewTransitionTriggered, isTrue);
     });
 
-    test('video360/main.ncl360 standalone parses and includes CERN LHC info', () {
+    test('video360/main.ncl360 standalone parses and includes CERN LHC info',
+        () {
       File xmlFile = File('examples/video360/main.ncl360');
       if (!xmlFile.existsSync()) {
         xmlFile = File('../../examples/video360/main.ncl360');
@@ -319,22 +333,28 @@ void main() {
         infoFile = File('../../examples/video360/lhc_info.txt');
       }
       expect(infoFile.existsSync(), isTrue);
-      expect(infoFile.readAsStringSync().contains('Large Hadron Collider'), isTrue);
+      expect(infoFile.readAsStringSync().contains('Large Hadron Collider'),
+          isTrue);
 
       doc.start();
       expect(doc.isPlaying, isTrue);
       expect(doc.getActiveMedia().contains(sceneMedia), isTrue);
     });
 
-    test('Ncl360MediaPlugin canHandle supports application/x-ncl360 and .ncl360', () {
+    test(
+        'Ncl360MediaPlugin canHandle supports application/x-ncl360 and .ncl360',
+        () {
       final plugin = Ncl360MediaPlugin();
       expect(plugin.canHandle('louvre.ncl360', null), isTrue);
-      expect(plugin.canHandle('https://example.com/scene.ncl360', null), isTrue);
+      expect(
+          plugin.canHandle('https://example.com/scene.ncl360', null), isTrue);
       expect(plugin.canHandle('anything', 'application/x-ncl360'), isTrue);
       expect(plugin.canHandle('anything', 'application/x-ncl-360'), isTrue);
     });
 
-    test('embedded application/x-ncl360 parses valid document with areas and links', () {
+    test(
+        'embedded application/x-ncl360 parses valid document with areas and links',
+        () {
       const xmlContent = '''
 <ncl id="Embedded360Test">
   <head>
@@ -377,18 +397,23 @@ void main() {
 
       doc.start();
       expect(doc.isPlaying, isTrue);
-      expect(doc.getNodeById('connect')?.getMainState(), equals(NclStateType.occurring));
+      expect(doc.getNodeById('connect')?.getMainState(),
+          equals(NclStateType.occurring));
 
       doc.triggerSelection('connect', 'OK');
       doc.tick(100);
-      expect(doc.getNodeById('connect')?.getMainState(), equals(NclStateType.sleeping));
-      expect(doc.getNodeById('intro')?.getMainState(), equals(NclStateType.occurring));
+      expect(doc.getNodeById('connect')?.getMainState(),
+          equals(NclStateType.sleeping));
+      expect(doc.getNodeById('intro')?.getMainState(),
+          equals(NclStateType.occurring));
       expect(doc.isPlaying, isTrue);
 
       doc.stop();
     });
 
-    testWidgets('navigation ignores keys so arrow keys do not modify yaw or pitch', (tester) async {
+    testWidgets(
+        'navigation ignores keys so arrow keys do not modify yaw or pitch',
+        (tester) async {
       final key = GlobalKey<MediaState>();
       await tester.pumpWidget(
         MaterialApp(
@@ -422,7 +447,8 @@ void main() {
       expect(find.textContaining('Pitch: 0.0°'), findsOneWidget);
     });
 
-    testWidgets('supports mouse scroll wheel to zoom field of view', (tester) async {
+    testWidgets('supports mouse scroll wheel to zoom field of view',
+        (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
@@ -459,14 +485,20 @@ void main() {
     test('fromString parses various projection formats', () {
       expect(Ncl360Projection.fromString(null), equals(Ncl360Projection.auto));
       expect(Ncl360Projection.fromString(''), equals(Ncl360Projection.auto));
-      expect(Ncl360Projection.fromString('auto'), equals(Ncl360Projection.auto));
+      expect(
+          Ncl360Projection.fromString('auto'), equals(Ncl360Projection.auto));
       expect(Ncl360Projection.fromString('eac'), equals(Ncl360Projection.eac));
       expect(Ncl360Projection.fromString('sbs'), equals(Ncl360Projection.eac));
-      expect(Ncl360Projection.fromString('cubemap'), equals(Ncl360Projection.eac));
-      expect(Ncl360Projection.fromString('equiangularcubemap'), equals(Ncl360Projection.eac));
-      expect(Ncl360Projection.fromString('equirectangular'), equals(Ncl360Projection.equirectangular));
-      expect(Ncl360Projection.fromString('equirect'), equals(Ncl360Projection.equirectangular));
-      expect(Ncl360Projection.fromString('erp'), equals(Ncl360Projection.equirectangular));
+      expect(
+          Ncl360Projection.fromString('cubemap'), equals(Ncl360Projection.eac));
+      expect(Ncl360Projection.fromString('equiangularcubemap'),
+          equals(Ncl360Projection.eac));
+      expect(Ncl360Projection.fromString('equirectangular'),
+          equals(Ncl360Projection.equirectangular));
+      expect(Ncl360Projection.fromString('equirect'),
+          equals(Ncl360Projection.equirectangular));
+      expect(Ncl360Projection.fromString('erp'),
+          equals(Ncl360Projection.equirectangular));
     });
 
     testWidgets('Scene360Widget displays standard 360 HUD', (tester) async {
@@ -565,13 +597,19 @@ void main() {
       final (head, body) = result!;
 
       expect(head.any((e) => e is Region && e.id == 'rg_ncl360_root'), isTrue);
-      expect(head.any((e) => e is Descriptor && e.id == 'desc_ncl360_root'), isTrue);
+      expect(head.any((e) => e is Descriptor && e.id == 'desc_ncl360_root'),
+          isTrue);
 
-      final sceneMedia = body.children.whereType<Media>().firstWhere((m) => m.id == 'scene360_root');
+      final sceneMedia = body.children
+          .whereType<Media>()
+          .firstWhere((m) => m.id == 'scene360_root');
       expect(sceneMedia.rawAttributes['type'], equals('application/x-ncl360'));
       expect(sceneMedia.children.whereType<Area>().length, equals(2));
-      expect(sceneMedia.children.whereType<Area>().any((a) => a.id == 'mainVideo'), isTrue);
-      expect(sceneMedia.children.whereType<Area>().any((a) => a.id == 'info1'), isTrue);
+      expect(
+          sceneMedia.children.whereType<Area>().any((a) => a.id == 'mainVideo'),
+          isTrue);
+      expect(sceneMedia.children.whereType<Area>().any((a) => a.id == 'info1'),
+          isTrue);
     });
 
     test('parseTag creates Media element with nested Area children', () {
@@ -603,8 +641,11 @@ void main() {
 </ncl360>
 ''');
       expect(head.any((e) => e.id == 'rg_ncl360_root'), isTrue);
-      final media = body.children.whereType<Media>().firstWhere((m) => m.id == 'scene360_root');
-      expect(media.children.whereType<Area>().any((a) => a.id == 'sceneMedia1'), isTrue);
+      final media = body.children
+          .whereType<Media>()
+          .firstWhere((m) => m.id == 'scene360_root');
+      expect(media.children.whereType<Area>().any((a) => a.id == 'sceneMedia1'),
+          isTrue);
     });
 
     test('Ncl360Hotspot supports backgroundColor styling', () {
@@ -617,7 +658,9 @@ void main() {
       expect(hotspot.backgroundColor, equals(Colors.grey));
     });
 
-    testWidgets('Ncl360 Hotspot widget renders with background container when backgroundColor is specified', (tester) async {
+    testWidgets(
+        'Ncl360 Hotspot widget renders with background container when backgroundColor is specified',
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -627,7 +670,8 @@ void main() {
                   left: 100,
                   top: 100,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10.0, vertical: 8.0),
                     color: Colors.grey,
                     child: const Text('Large Hadron Collider'),
                   ),

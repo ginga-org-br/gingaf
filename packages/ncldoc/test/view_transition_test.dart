@@ -1,11 +1,11 @@
-import 'package:ncldoc/elements.dart';
 import 'package:ncldoc/ncl_document.dart';
-import 'package:ncldoc/event.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('NclScheduler View Transition & Time Advancement Tests', () {
-    test('triggerViewTransition onBeginView starts target and onEndView stops target', () {
+    test(
+        'triggerViewTransition onBeginView starts target and onEndView stops target',
+        () {
       const xml = '''
 <ncl>
   <body>
@@ -38,7 +38,8 @@ void main() {
       expect(infoPanel.getMainState(), equals(NclStateType.sleeping));
     });
 
-    test('view transition link with delay executes only after time advances', () {
+    test('view transition link with delay executes only after time advances',
+        () {
       const xml = '''
 <ncl>
   <body>
@@ -113,7 +114,9 @@ void main() {
       expect(selectTarget.getMainState(), equals(NclStateType.occurring));
     });
 
-    test('time advancement across media explicit duration stops media and dependent links', () {
+    test(
+        'time advancement across media explicit duration stops media and dependent links',
+        () {
       const xml = '''
 <ncl>
   <head>

@@ -286,10 +286,8 @@ Future<void> main(List<String> args) async {
     }
 
     if (capturesDir.existsSync()) {
-      final frames = capturesDir
-          .listSync()
-          .where((f) => f.path.endsWith('.png'))
-          .toList();
+      final frames =
+          capturesDir.listSync().where((f) => f.path.endsWith('.png')).toList();
 
       if (frames.isNotEmpty) {
         final outGif = '${appFile.path}.gif';

@@ -206,9 +206,9 @@ class GingaState extends State<Ginga> {
       _gingacc.config.users.setCurrentUser(user.id);
       for (final entry in changes.entries) {
         _gingacc.config.systemVariables[entry.key] = entry.value;
-        _nclAppKey.currentState?.nclDocument
-            ?.dispatchSettingsUpdate(entry.key, entry.value,
-                userId: 'currentUser');
+        _nclAppKey.currentState?.nclDocument?.dispatchSettingsUpdate(
+            entry.key, entry.value,
+            userId: 'currentUser');
       }
       _showUsersOverlay = false;
       setState(() {});

@@ -211,4 +211,3 @@ class GingaCC {
     return cfg;
   }
 }
-

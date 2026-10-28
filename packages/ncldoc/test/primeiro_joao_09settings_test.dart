@@ -208,7 +208,8 @@ void main() {
         expect(advertCtx.getMainState(), NclStateType.sleeping);
 
         doc.tick(45000);
-        expect(doc.getMediaById('icon')?.getMainState(), NclStateType.occurring);
+        expect(
+            doc.getMediaById('icon')?.getMainState(), NclStateType.occurring);
         expect(interactivityCtx.getMainState(), NclStateType.occurring);
         expect(advertCtx.getMainState(), NclStateType.occurring);
       },

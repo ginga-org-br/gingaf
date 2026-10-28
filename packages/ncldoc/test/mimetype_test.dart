@@ -30,8 +30,10 @@ void main() {
     test('handles uppercase extensions and empty or unknown paths', () {
       expect(getMimeTypeFromExtension('VIDEO.MP4'), equals('video/mp4'));
       expect(getMimeTypeFromExtension(''), equals('application/x-ginga-time'));
-      expect(getMimeTypeFromExtension('file_without_ext'), equals('application/x-ginga-time'));
-      expect(getMimeTypeFromExtension('unknown.xyz'), equals('application/x-ginga-time'));
+      expect(getMimeTypeFromExtension('file_without_ext'),
+          equals('application/x-ginga-time'));
+      expect(getMimeTypeFromExtension('unknown.xyz'),
+          equals('application/x-ginga-time'));
     });
   });
 }

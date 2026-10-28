@@ -102,7 +102,9 @@ void main() {
       expect(zIndexProp.value, '3');
     });
 
-    test('NclDocument tick triggers links and duration limit across time advances', () {
+    test(
+        'NclDocument tick triggers links and duration limit across time advances',
+        () {
       final doc = NclDocument.fromContent(
         '''<ncl id="mySyncTest" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
   <head>

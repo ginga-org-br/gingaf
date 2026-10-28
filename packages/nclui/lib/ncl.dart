@@ -361,7 +361,8 @@ class NclWidgetState extends MediaState<NclWidget> {
       nclDocument = doc;
       doc.onStateChanged = () {
         if (!mounted) return;
-        if (SchedulerBinding.instance.schedulerPhase == SchedulerPhase.persistentCallbacks) {
+        if (SchedulerBinding.instance.schedulerPhase ==
+            SchedulerPhase.persistentCallbacks) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
               tick(0);

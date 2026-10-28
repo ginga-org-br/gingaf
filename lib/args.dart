@@ -3,8 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:logging/logging.dart';
 
-import 'web_utils_stub.dart'
-    if (dart.library.js_interop) 'web_utils_web.dart';
+import 'web_utils_stub.dart' if (dart.library.js_interop) 'web_utils_web.dart';
 
 final _logger = Logger('ginga.args');
 

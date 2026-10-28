@@ -26,8 +26,7 @@ class CCWS {
 
   CCWS({int port = ccwsDefaultPort}) : _port = port;
 
-  Handler get handler => Pipeline()
-      .addMiddleware((innerHandler) {
+  Handler get handler => Pipeline().addMiddleware((innerHandler) {
         return (Request request) async {
           if (request.method == 'OPTIONS') {
             return Response.ok('', headers: _corsHeaders);
@@ -35,15 +34,13 @@ class CCWS {
           final response = await innerHandler(request);
           return response.change(headers: _corsHeaders);
         };
-      })
-      .addMiddleware(logRequests(logger: (message, isError) {
+      }).addMiddleware(logRequests(logger: (message, isError) {
         if (isError) {
           _logger.severe(message);
         } else {
           _logger.info(message);
         }
-      }))
-      .addHandler(CCWSRouter.getHandler());
+      })).addHandler(CCWSRouter.getHandler());
 
   Future<void> start() async {
     if (_running) return;

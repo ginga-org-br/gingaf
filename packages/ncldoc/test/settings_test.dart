@@ -9,7 +9,8 @@ void main() {
       parser = NclParser();
     });
 
-    test('Settings media property request redirects to gingacc systemVariables', () {
+    test('Settings media property request redirects to gingacc systemVariables',
+        () {
       final sharedVars = {'system.language': 'por'};
       final gingacc = GingaCC(config: GingaConfig(systemVariables: sharedVars));
       final doc = NclDocument.fromContent(

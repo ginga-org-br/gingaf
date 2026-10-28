@@ -27,7 +27,8 @@ void main() {
       expect(config.users.getUser('u1')?.name, equals('Alice'));
     });
 
-    test('fromJson parses usersDataJson from JSON and populates users', () async {
+    test('fromJson parses usersDataJson from JSON and populates users',
+        () async {
       final config = await GingaConfig.fromJson(
         '{"usersDataJson": "[{\\"id\\": \\"u3\\", \\"name\\": \\"Charlie\\"}]"}',
       );
@@ -151,7 +152,8 @@ void main() {
       expect(config.getGroup('shared')['token'], equals('abc123'));
     });
 
-    test('fromJson parses nested groups under systemVariables and top-level groups',
+    test(
+        'fromJson parses nested groups under systemVariables and top-level groups',
         () async {
       const json = '''
       {
@@ -304,7 +306,8 @@ void main() {
       expect(config.graphicPlaneBounds.height, equals(480.0));
     });
 
-    test('fromJson parses graphicPlaneBounds from map or list or legacy keys', () async {
+    test('fromJson parses graphicPlaneBounds from map or list or legacy keys',
+        () async {
       final configMap = await GingaConfig.fromJson(
         '{"graphicPlaneBounds": {"left": 10, "top": 20, "width": 1280, "height": 720}}',
       );
@@ -330,15 +333,19 @@ void main() {
       expect(configDims.graphicPlaneBounds.height, equals(1080.0));
     });
 
-    test('loads ginga_config.json from the same folder of the application', () async {
-      final tempDir = Directory.systemTemp.createTempSync('ginga_config_folder_test_');
+    test('loads ginga_config.json from the same folder of the application',
+        () async {
+      final tempDir =
+          Directory.systemTemp.createTempSync('ginga_config_folder_test_');
       try {
         final subDir = Directory('${tempDir.path}/app')..createSync();
-        final appFile = File('${subDir.path}/main.ncl')..writeAsStringSync('<ncl/>');
-        File('${subDir.path}/ginga_config.json')
-            .writeAsStringSync('{"mainAvSrc": "https://example.com/custom.mp4", "startWithCCWS": true}');
+        final appFile = File('${subDir.path}/main.ncl')
+          ..writeAsStringSync('<ncl/>');
+        File('${subDir.path}/ginga_config.json').writeAsStringSync(
+            '{"mainAvSrc": "https://example.com/custom.mp4", "startWithCCWS": true}');
 
-        final config = await GingaConfig.fromJson('ginga_config.json', appFile.path);
+        final config =
+            await GingaConfig.fromJson('ginga_config.json', appFile.path);
         expect(config.mainAvSrc, equals('https://example.com/custom.mp4'));
         expect(config.startWithCCWS, isTrue);
       } finally {
@@ -347,30 +354,36 @@ void main() {
     });
 
     test('loads ginga_config.json with directory baseDirSrc', () async {
-      final tempDir = Directory.systemTemp.createTempSync('ginga_config_dir_test_');
+      final tempDir =
+          Directory.systemTemp.createTempSync('ginga_config_dir_test_');
       try {
         final subDir = Directory('${tempDir.path}/app')..createSync();
-        File('${subDir.path}/ginga_config.json')
-            .writeAsStringSync('{"mainAvSrc": "https://example.com/dir_custom.mp4"}');
+        File('${subDir.path}/ginga_config.json').writeAsStringSync(
+            '{"mainAvSrc": "https://example.com/dir_custom.mp4"}');
 
-        final config = await GingaConfig.fromJson('ginga_config.json', subDir.path);
+        final config =
+            await GingaConfig.fromJson('ginga_config.json', subDir.path);
         expect(config.mainAvSrc, equals('https://example.com/dir_custom.mp4'));
       } finally {
         tempDir.deleteSync(recursive: true);
       }
     });
 
-    test('loads ginga_config.json from virtualFiles in the same folder of the application', () async {
+    test(
+        'loads ginga_config.json from virtualFiles in the same folder of the application',
+        () async {
       final gingacc = GingaCC()
         ..setVirtualFiles({
           'app/main.ncl': '<ncl/>',
-          'app/ginga_config.json': '{"mainAvSrc": "https://example.com/virtual_custom.mp4", "startWithMainAv": true}',
+          'app/ginga_config.json':
+              '{"mainAvSrc": "https://example.com/virtual_custom.mp4", "startWithMainAv": true}',
         });
 
-      final config = await GingaConfig.fromJson('ginga_config.json', 'app/main.ncl', gingacc);
-      expect(config.mainAvSrc, equals('https://example.com/virtual_custom.mp4'));
+      final config = await GingaConfig.fromJson(
+          'ginga_config.json', 'app/main.ncl', gingacc);
+      expect(
+          config.mainAvSrc, equals('https://example.com/virtual_custom.mp4'));
       expect(config.startWithMainAv, isTrue);
     });
   });
 }
-

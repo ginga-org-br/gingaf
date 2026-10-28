@@ -10,7 +10,6 @@ void main() {
       runtime = NCLuaRuntime(document: doc);
     });
 
-
     test('Lua script event registration and posting', () {
       final script = '''
         local event = require 'event'
@@ -71,9 +70,23 @@ void main() {
       runtime.luaState.getGlobal('received_classes');
       expect(runtime.luaState.isTable(-1), true);
       final classes = [
-        'key', 'pointer', 'ncl', 'edit', 'tcp', 'udp', 'http', 'sms', 'si',
-        'sectionfilter', 'pesfilter', 'tpfilter', 'zip', 'streambuf',
-        'broadcastfs', 'mediakeysession', 'user'
+        'key',
+        'pointer',
+        'ncl',
+        'edit',
+        'tcp',
+        'udp',
+        'http',
+        'sms',
+        'si',
+        'sectionfilter',
+        'pesfilter',
+        'tpfilter',
+        'zip',
+        'streambuf',
+        'broadcastfs',
+        'mediakeysession',
+        'user'
       ];
       for (int i = 0; i < classes.length; i++) {
         runtime.luaState.getI(-1, i + 1);
@@ -130,23 +143,23 @@ void main() {
         _G.write_error_2 = ok2
       ''';
       runtime.execute(script);
-      
+
       runtime.luaState.getGlobal('lang');
       expect(runtime.luaState.toStr(-1), 'por');
       runtime.luaState.pop(1);
-      
+
       runtime.luaState.getGlobal('age');
       expect(runtime.luaState.toStr(-1), '25');
       runtime.luaState.pop(1);
-      
+
       runtime.luaState.getGlobal('nonexistent');
       expect(runtime.luaState.isNil(-1), true);
       runtime.luaState.pop(1);
-      
+
       runtime.luaState.getGlobal('write_error_1');
       expect(runtime.luaState.toBoolean(-1), false);
       runtime.luaState.pop(1);
-      
+
       runtime.luaState.getGlobal('write_error_2');
       expect(runtime.luaState.toBoolean(-1), false);
       runtime.luaState.pop(1);
@@ -169,11 +182,11 @@ void main() {
         _G.write_error = ok
       ''';
       runtime.execute(script);
-      
+
       runtime.luaState.getGlobal('val1');
       expect(runtime.luaState.toStr(-1), 'hello');
       runtime.luaState.pop(1);
-      
+
       runtime.luaState.getGlobal('val2');
       expect(runtime.luaState.toStr(-1), '42');
       runtime.luaState.pop(1);
@@ -181,7 +194,7 @@ void main() {
       runtime.luaState.getGlobal('val3');
       expect(runtime.luaState.toStr(-1), 'direct');
       runtime.luaState.pop(1);
-      
+
       runtime.luaState.getGlobal('write_error');
       expect(runtime.luaState.toBoolean(-1), false);
       runtime.luaState.pop(1);
@@ -507,8 +520,7 @@ void main() {
       expect(engine.luaState.isNil(-1), isTrue);
       engine.luaState.pop(1);
 
-      doc.doNclEditingCommand(
-          'setPropertyValue("mSttgs", "user.level", "5")');
+      doc.doNclEditingCommand('setPropertyValue("mSttgs", "user.level", "5")');
 
       engine.execute('_G.val2 = settings.user.level');
       engine.luaState.getGlobal('val2');

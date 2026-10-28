@@ -77,8 +77,7 @@ Uri resolvePathUri(
   }
 
   final resolved = resolvedBaseUri.resolveUri(srcUri);
-  final virtualResolved =
-      _lookupVirtualUri(resolved.toString(), virtualFiles);
+  final virtualResolved = _lookupVirtualUri(resolved.toString(), virtualFiles);
   if (virtualResolved != null) return virtualResolved;
 
   if (!_isWeb && !resolved.hasScheme) {
@@ -112,9 +111,7 @@ Future<String?> loadPathContent(
   final Uri uri = srcOrUri is Uri
       ? srcOrUri
       : resolvePathUri(rawInput,
-          baseDirSrc: baseDirSrc,
-          baseUri: baseUri,
-          virtualFiles: virtualFiles);
+          baseDirSrc: baseDirSrc, baseUri: baseUri, virtualFiles: virtualFiles);
   if (uri.isScheme('data')) {
     return _decodeDataUri(rawInput, uri);
   }
@@ -149,9 +146,8 @@ Future<String?> loadPathContent(
   }
 
   if (uri.isScheme('file') || (!uri.hasScheme && !_isWeb)) {
-    final filePath = uri.isScheme('file')
-        ? uri.toFilePath()
-        : Uri.decodeComponent(uri.path);
+    final filePath =
+        uri.isScheme('file') ? uri.toFilePath() : Uri.decodeComponent(uri.path);
     try {
       final file = File(filePath);
       if (file.existsSync()) {
@@ -184,9 +180,7 @@ String? loadPathContentSync(
   final Uri uri = srcOrUri is Uri
       ? srcOrUri
       : resolvePathUri(rawInput,
-          baseDirSrc: baseDirSrc,
-          baseUri: baseUri,
-          virtualFiles: virtualFiles);
+          baseDirSrc: baseDirSrc, baseUri: baseUri, virtualFiles: virtualFiles);
   if (uri.isScheme('data')) {
     return _decodeDataUri(rawInput, uri);
   }
@@ -206,9 +200,8 @@ String? loadPathContentSync(
   }
 
   if (uri.isScheme('file') || (!uri.hasScheme && !_isWeb)) {
-    final filePath = uri.isScheme('file')
-        ? uri.toFilePath()
-        : Uri.decodeComponent(uri.path);
+    final filePath =
+        uri.isScheme('file') ? uri.toFilePath() : Uri.decodeComponent(uri.path);
     try {
       final file = File(filePath);
       if (file.existsSync()) {
@@ -284,8 +277,7 @@ Future<String?> _fetchHttp(Uri uri) async {
   return null;
 }
 
-String? _lookupVirtualFile(
-    String rawSrc, Map<String, String>? virtualFiles) {
+String? _lookupVirtualFile(String rawSrc, Map<String, String>? virtualFiles) {
   if (virtualFiles == null || virtualFiles.isEmpty) return null;
   final clean = rawSrc.trim().split('?')[0].split('#')[0];
   final normalized = clean.replaceAll('\\', '/');

@@ -35,6 +35,7 @@ class SettingsMenuState extends State<SettingsMenu>
   void open() {
     if (!_isOpen) _toggle();
   }
+
   void close() {
     if (_isOpen) _toggle();
   }
@@ -66,6 +67,7 @@ class SettingsMenuState extends State<SettingsMenu>
     triggerPress(const Key('floating_pause_button'));
     widget.onTogglePause();
   }
+
   late final AnimationController _controller;
   late final Animation<double> _expandAnimation;
 

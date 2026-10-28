@@ -803,8 +803,7 @@ class Schema {
     final attributes = {for (var a in node.attributes) a.name.local: a.value};
 
     syntax.attributes.forEach((attrName, flag) {
-      final isRequired =
-          flag == attrId ||
+      final isRequired = flag == attrId ||
           flag == attrRequired ||
           flag == attrRequiredNonemptyName ||
           flag == attrIdref;

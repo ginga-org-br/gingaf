@@ -140,12 +140,14 @@ class NclScheduler {
 
             if (beginMs != null) {
               if (t1 < beginMs && t2 >= beginMs) {
-                stackNclAction(node.getAreaNclEvent(area.id ?? ''), NclActionType.start);
+                stackNclAction(
+                    node.getAreaNclEvent(area.id ?? ''), NclActionType.start);
               }
             }
             if (endMs != null) {
               if (t1 < endMs && t2 >= endMs) {
-                stackNclAction(node.getAreaNclEvent(area.id ?? ''), NclActionType.stop);
+                stackNclAction(
+                    node.getAreaNclEvent(area.id ?? ''), NclActionType.stop);
               }
             }
           }
@@ -614,7 +616,8 @@ class NclScheduler {
                   }
                 }
                 if (actionType == NclActionType.set && durationMs > 0) {
-                  stackNclAction(targetNclEvent, NclActionType.start, delay: delayMs);
+                  stackNclAction(targetNclEvent, NclActionType.start,
+                      delay: delayMs);
                   stackNclAction(
                     targetNclEvent,
                     NclActionType.set,
@@ -723,7 +726,10 @@ class NclScheduler {
     }
 
     final finalNode = targetNode;
-    if (finalNode == null || finalNode.getMainState() != NclStateType.occurring) return;
+    if (finalNode == null ||
+        finalNode.getMainState() != NclStateType.occurring) {
+      return;
+    }
 
     final context = finalNode.parent;
     final links = getLinksForComponent(actualComponentId);
@@ -812,7 +818,8 @@ class NclScheduler {
     }
   }
 
-  void triggerViewTransition(String componentId, bool inView, [String? interfaceId]) {
+  void triggerViewTransition(String componentId, bool inView,
+      [String? interfaceId]) {
     _triggerViewInternal(componentId, inView, interfaceId);
   }
 
@@ -840,7 +847,10 @@ class NclScheduler {
     }
 
     final finalNode = targetNode;
-    if (finalNode == null || finalNode.getMainState() != NclStateType.occurring) return;
+    if (finalNode == null ||
+        finalNode.getMainState() != NclStateType.occurring) {
+      return;
+    }
 
     final context = finalNode.parent;
     final links = getLinksForComponent(actualComponentId);
@@ -1013,7 +1023,8 @@ class NclScheduler {
               }
             }
             if (actionType == NclActionType.set && durationMs > 0) {
-              stackNclAction(targetNclEvent, NclActionType.start, delay: delayMs);
+              stackNclAction(targetNclEvent, NclActionType.start,
+                  delay: delayMs);
               stackNclAction(
                 targetNclEvent,
                 NclActionType.set,
@@ -1034,7 +1045,8 @@ class NclScheduler {
     }
   }
 
-  void _stackMainEvtNclAction(Node node, NclActionType actionType, {int delay = 0}) {
+  void _stackMainEvtNclAction(Node node, NclActionType actionType,
+      {int delay = 0}) {
     stackNclAction(node.getMainNclEvent(), actionType, delay: delay);
   }
 
@@ -1051,7 +1063,8 @@ class NclScheduler {
       value: value ?? '',
     );
     if (delay > 0) {
-      _delayedNclActions.add((action: action, executeTime: virtualClock + delay));
+      _delayedNclActions
+          .add((action: action, executeTime: virtualClock + delay));
     } else {
       _actionStack.add(action);
     }
@@ -1145,7 +1158,8 @@ class NclScheduler {
         if (connector != null) {
           Element? findAction(Element el) {
             if (el.rawAttributes['role'] == 'set' &&
-                (el.xmlTagName == 'simpleAction' || el.xmlTagName == 'action')) {
+                (el.xmlTagName == 'simpleAction' ||
+                    el.xmlTagName == 'action')) {
               return el;
             }
             for (var ch in el.children) {

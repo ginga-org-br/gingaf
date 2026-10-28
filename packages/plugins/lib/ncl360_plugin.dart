@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart' hide Element;
 import 'package:flutter/gestures.dart';
 import 'package:http/http.dart' as http;
-import 'package:ncldoc/elements.dart';
 import 'package:ncldoc/ncl_document.dart';
 import 'package:nclui/base_widget.dart';
 import 'package:nclui/nclui_plugins.dart';
@@ -25,7 +24,10 @@ enum Ncl360Projection {
   static Ncl360Projection fromString(String? val) {
     if (val == null) return Ncl360Projection.auto;
     final lower = val.toLowerCase().trim();
-    if (lower == 'eac' || lower == 'sbs' || lower == 'cubemap' || lower == 'equiangularcubemap') {
+    if (lower == 'eac' ||
+        lower == 'sbs' ||
+        lower == 'cubemap' ||
+        lower == 'equiangularcubemap') {
       return Ncl360Projection.eac;
     }
     if (lower == 'equirectangular' || lower == 'equirect' || lower == 'erp') {
@@ -208,18 +210,29 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
     String? rawProjection;
 
     for (final prop in m.getProperties()) {
-      if (prop.name == 'yaw') rawYaw = prop.value;
-      if (prop.name == 'pitch') rawPitch = prop.value;
-      if (prop.name == 'roll') rawRoll = prop.value;
-      if (prop.name == 'fieldOfView' || prop.name == 'fov') rawFov = prop.value;
-      if (prop.name == 'projection' || prop.name == 'format') rawProjection = prop.value;
+      if (prop.name == 'yaw') {
+        rawYaw = prop.value;
+      }
+      if (prop.name == 'pitch') {
+        rawPitch = prop.value;
+      }
+      if (prop.name == 'roll') {
+        rawRoll = prop.value;
+      }
+      if (prop.name == 'fieldOfView' || prop.name == 'fov') {
+        rawFov = prop.value;
+      }
+      if (prop.name == 'projection' || prop.name == 'format') {
+        rawProjection = prop.value;
+      }
     }
 
     rawYaw ??= m.rawAttributes['yaw'];
     rawPitch ??= m.rawAttributes['pitch'];
     rawRoll ??= m.rawAttributes['roll'];
     rawFov ??= m.rawAttributes['fieldOfView'] ?? m.rawAttributes['fov'];
-    rawProjection ??= m.rawAttributes['projection'] ?? m.rawAttributes['format'];
+    rawProjection ??=
+        m.rawAttributes['projection'] ?? m.rawAttributes['format'];
 
     final desc = widget.document?.getDescriptorForMedia(m);
     if (desc != null) {
@@ -234,7 +247,8 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
           rawProjection ??= param.value;
         }
       }
-      rawProjection ??= desc.rawAttributes['projection'] ?? desc.rawAttributes['format'];
+      rawProjection ??=
+          desc.rawAttributes['projection'] ?? desc.rawAttributes['format'];
     }
 
     if (rawProjection != null) {
@@ -272,8 +286,10 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
       final rawAzimuthal = child.rawAttributes['azimuthal'];
       final rawRadius = child.rawAttributes['radius'];
       final rawPin = child.rawAttributes['pin'];
-      final label = child.rawAttributes['label'] ?? child.rawAttributes['title'];
-      final target = child.rawAttributes['target'] ?? child.rawAttributes['component'];
+      final label =
+          child.rawAttributes['label'] ?? child.rawAttributes['title'];
+      final target =
+          child.rawAttributes['target'] ?? child.rawAttributes['component'];
 
       if (rawPolar != null || rawAzimuthal != null) {
         final polarVal = double.tryParse(rawPolar ?? '0') ?? 0.0;
@@ -344,12 +360,14 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
   bool _isHotspotActive(Ncl360Hotspot spot) {
     final lowerMime = widget.mimeType?.toLowerCase() ?? '';
     final lowerSrc = widget.src.toLowerCase();
-    final isNcl360 = (lowerMime == 'application/x-ncl360' || lowerSrc.endsWith('.ncl360'));
+    final isNcl360 =
+        (lowerMime == 'application/x-ncl360' || lowerSrc.endsWith('.ncl360'));
     if (!isNcl360) return true;
 
     final mediaNode = widget.media;
     if (mediaNode == null) return true;
-    final areas = mediaNode.children.whereType<Area>().where((a) => a.id == spot.id);
+    final areas =
+        mediaNode.children.whereType<Area>().where((a) => a.id == spot.id);
     if (areas.isEmpty) return true;
     final areaEvt = mediaNode.getAreaNclEvent(spot.id);
     if (widget.document != null &&
@@ -411,7 +429,8 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
     widget.media?.setPropertyValue('pitch', pitch.toStringAsFixed(2));
     widget.media?.setPropertyValue('roll', roll.toStringAsFixed(2));
     widget.media?.setPropertyValue('fov', fieldOfView.toStringAsFixed(2));
-    widget.media?.setPropertyValue('fieldOfView', fieldOfView.toStringAsFixed(2));
+    widget.media
+        ?.setPropertyValue('fieldOfView', fieldOfView.toStringAsFixed(2));
   }
 
   void _initMediaSource() {
@@ -423,7 +442,8 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
       return;
     }
 
-    final pathLower = (Uri.tryParse(widget.src)?.path ?? widget.src).toLowerCase();
+    final pathLower =
+        (Uri.tryParse(widget.src)?.path ?? widget.src).toLowerCase();
     _isVideo = pathLower.endsWith('.mp4') ||
         pathLower.endsWith('.360.mp4') ||
         pathLower.endsWith('.mpeg') ||
@@ -449,7 +469,8 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
       String effectiveDocPath = widget.src;
 
       final parsedUri = widget.privateBase.resolveUri(widget.src);
-      final fileName = path.basename(parsedUri.path.isNotEmpty ? parsedUri.path : widget.src);
+      final fileName = path
+          .basename(parsedUri.path.isNotEmpty ? parsedUri.path : widget.src);
 
       final candidates = [
         widget.src,
@@ -472,7 +493,9 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
         }
       }
 
-      if (xmlText == null && (widget.src.startsWith('http://') || widget.src.startsWith('https://'))) {
+      if (xmlText == null &&
+          (widget.src.startsWith('http://') ||
+              widget.src.startsWith('https://'))) {
         final resp = await http.get(Uri.parse(widget.src));
         if (resp.statusCode == 200) {
           xmlText = resp.body;
@@ -518,9 +541,11 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
         }
         descriptors[id] = {
           'region': desc.getAttribute('region'),
-          'volume': double.tryParse(desc.getAttribute('volume') ?? '1.0') ?? 1.0,
+          'volume':
+              double.tryParse(desc.getAttribute('volume') ?? '1.0') ?? 1.0,
           'soundType': desc.getAttribute('soundType'),
-          'projection': desc.getAttribute('projection') ?? desc.getAttribute('format'),
+          'projection':
+              desc.getAttribute('projection') ?? desc.getAttribute('format'),
           'background': descBg,
         };
       }
@@ -584,7 +609,8 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
       }
 
       if (skyboxSrc != null) {
-        final pathLower = (Uri.tryParse(skyboxSrc)?.path ?? skyboxSrc).toLowerCase();
+        final pathLower =
+            (Uri.tryParse(skyboxSrc)?.path ?? skyboxSrc).toLowerCase();
         if (pathLower.endsWith('.mp4') ||
             pathLower.endsWith('.webm') ||
             pathLower.endsWith('.mpeg') ||
@@ -842,7 +868,8 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
   void _handlePointerSignal(PointerSignalEvent event) {
     if (event is PointerScrollEvent) {
       setState(() {
-        fieldOfView = (fieldOfView + (event.scrollDelta.dy > 0 ? 3.0 : -3.0)).clamp(30.0, 120.0);
+        fieldOfView = (fieldOfView + (event.scrollDelta.dy > 0 ? 3.0 : -3.0))
+            .clamp(30.0, 120.0);
         _checkHotspotsView();
         _syncPropertiesToNcl();
       });
@@ -910,19 +937,22 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
     }
 
     final bool isEacSBS = _projection == Ncl360Projection.eac;
-    final double rawVideoAspect = controller.value.aspectRatio > 0
-        ? controller.value.aspectRatio
-        : 2.0;
-    final double effectiveAspect = isEacSBS ? (rawVideoAspect * 0.5) : rawVideoAspect;
+    final double rawVideoAspect =
+        controller.value.aspectRatio > 0 ? controller.value.aspectRatio : 2.0;
+    final double effectiveAspect =
+        isEacSBS ? (rawVideoAspect * 0.5) : rawVideoAspect;
 
     final double panoWidth = size.width * (360.0 / fieldOfView);
     final double panoHeight = math.max(
-      isEacSBS ? (panoWidth / (effectiveAspect * 2.0)) : (panoWidth / effectiveAspect),
+      isEacSBS
+          ? (panoWidth / (effectiveAspect * 2.0))
+          : (panoWidth / effectiveAspect),
       size.height * 2.0,
     );
 
     final double normalizedYaw = ((yaw % 360.0) + 360.0) % 360.0;
-    final double span = (panoWidth > size.width) ? (panoWidth - size.width) : 0.0;
+    final double span =
+        (panoWidth > size.width) ? (panoWidth - size.width) : 0.0;
     final double mainLeft = span > 0
         ? -(normalizedYaw / 360.0) * span
         : (size.width - panoWidth) / 2.0;
@@ -1005,9 +1035,11 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
         if (spot.mediaSrc != null) {
           final f = File(spot.mediaSrc!);
           if (f.existsSync()) {
-            imgWidget = Image.file(f, width: 140, height: 90, fit: BoxFit.contain);
+            imgWidget =
+                Image.file(f, width: 140, height: 90, fit: BoxFit.contain);
           } else if (spot.mediaSrc!.startsWith('http')) {
-            imgWidget = Image.network(spot.mediaSrc!, width: 140, height: 90, fit: BoxFit.contain);
+            imgWidget = Image.network(spot.mediaSrc!,
+                width: 140, height: 90, fit: BoxFit.contain);
           }
         }
         widgets.add(
@@ -1059,7 +1091,9 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
 
       if (spot.mediaSrc != null) {
         final lower = spot.mediaSrc!.toLowerCase();
-        if (lower.endsWith('.jpg') || lower.endsWith('.png') || lower.endsWith('.jpeg')) {
+        if (lower.endsWith('.jpg') ||
+            lower.endsWith('.png') ||
+            lower.endsWith('.jpeg')) {
           final f = File(spot.mediaSrc!);
           if (f.existsSync()) {
             thumbWidget = Image.file(f, fit: BoxFit.contain);
@@ -1119,7 +1153,6 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
           ),
         ),
       );
-
     }
 
     return widgets;
@@ -1182,7 +1215,8 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
                   left: 8.0,
                   bottom: 8.0,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8.0, vertical: 4.0),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(4.0),
@@ -1255,7 +1289,8 @@ class EquirectangularPainter extends CustomPainter {
       final leftPartWidth = -srcLeft;
       final rightPartWidth = srcW - leftPartWidth;
 
-      final src1 = Rect.fromLTWH(imgW - leftPartWidth, srcTop, leftPartWidth, srcH);
+      final src1 =
+          Rect.fromLTWH(imgW - leftPartWidth, srcTop, leftPartWidth, srcH);
       final dest1 = Rect.fromLTWH(
         0,
         0,
@@ -1374,12 +1409,13 @@ class Ncl360ParserPlugin implements NclParserPlugin, PluginBase {
   (Head, Body)? parseDocument(XmlElement root, NclParser parser) {
     if (root.name.local != targetTag) return null;
 
-    final effectiveSrc = (parser.docUri != null && parser.docUri!.isScheme('file')
-            ? parser.docUri!.toFilePath()
-            : parser.docUri?.toString()) ??
-        parser.document?.appSrc ??
-        root.getAttribute('id') ??
-        'scene.ncl360';
+    final effectiveSrc =
+        (parser.docUri != null && parser.docUri!.isScheme('file')
+                ? parser.docUri!.toFilePath()
+                : parser.docUri?.toString()) ??
+            parser.document?.appSrc ??
+            root.getAttribute('id') ??
+            'scene.ncl360';
 
     final Head head = [];
     final reg = Region(rawAttributes: const {
@@ -1429,4 +1465,3 @@ class Ncl360ParserPlugin implements NclParserPlugin, PluginBase {
     return (head, body);
   }
 }
-

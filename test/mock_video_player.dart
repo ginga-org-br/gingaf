@@ -7,7 +7,8 @@ class MockVideoPlayer extends VideoPlayerPlatform
     with MockPlatformInterfaceMixin {
   int _nextTextureId = 1;
   final Map<int, StreamController<VideoEvent>> _controllers = {};
-  final StreamController<VideoEvent> events = StreamController<VideoEvent>.broadcast();
+  final StreamController<VideoEvent> events =
+      StreamController<VideoEvent>.broadcast();
 
   @override
   Future<void> init() async {}

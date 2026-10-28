@@ -20,9 +20,10 @@ void main() {
       final tempFile = File('${tempDir.path}/sample.ncl');
       tempFile.writeAsStringSync('<ncl>test</ncl>');
 
-      final gingacc = GingaCC()..setVirtualFiles({
-        'app.ncl': '<ncl>virtual</ncl>',
-      });
+      final gingacc = GingaCC()
+        ..setVirtualFiles({
+          'app.ncl': '<ncl>virtual</ncl>',
+        });
       final fileUri = gingacc.resolveUri(tempFile.absolute.uri.toString());
       final content = await gingacc.loadContent(fileUri);
       expect(content, equals('<ncl>test</ncl>'));
@@ -35,7 +36,8 @@ void main() {
           await gingacc.loadContent('data:text/plain;utf-8,<ncl>data</ncl>');
       expect(dataContent, equals('<ncl>data</ncl>'));
 
-      expect(await gingacc.loadContent('app.ncl'), equals('<ncl>virtual</ncl>'));
+      expect(
+          await gingacc.loadContent('app.ncl'), equals('<ncl>virtual</ncl>'));
     });
   });
 
@@ -82,7 +84,8 @@ void main() {
 
         expect(uri.isScheme('file'), isTrue);
         expect(uri.toString(), startsWith('file://'));
-        final expected = File('${baseDir.path}/nested/assets/logo.png').absolute;
+        final expected =
+            File('${baseDir.path}/nested/assets/logo.png').absolute;
         expect(uri, equals(expected.uri));
         expect(uri.toFilePath(), equals(File.fromUri(expected.uri).path));
       } finally {
@@ -114,7 +117,8 @@ void main() {
         final uri = gingacc.resolveUri('ginga_config.json', baseDir.path);
         expect(uri.isScheme('file'), isTrue);
         expect(uri.toString(), startsWith('file://'));
-        expect(uri, equals(File('${baseDir.path}/ginga_config.json').absolute.uri));
+        expect(uri,
+            equals(File('${baseDir.path}/ginga_config.json').absolute.uri));
       } finally {
         baseDir.deleteSync(recursive: true);
       }
@@ -131,18 +135,20 @@ void main() {
     });
 
     test('preserves virtual files', () {
-      final gingacc = GingaCC()..setVirtualFiles({
-        'my_virtual.png': 'https://example.com/virtual.png',
-      });
+      final gingacc = GingaCC()
+        ..setVirtualFiles({
+          'my_virtual.png': 'https://example.com/virtual.png',
+        });
       final uri = gingacc.resolveUri('my_virtual.png');
       expect(uri.toString(), equals('https://example.com/virtual.png'));
     });
 
     test('resolves virtual files with spaces and percent encoding', () {
-      final gingacc = GingaCC()..setVirtualFiles({
-        'my image.png': 'blob:http://localhost:5173/blob-123',
-        'folder with spaces/pic.png': 'https://example.com/pic.png',
-      });
+      final gingacc = GingaCC()
+        ..setVirtualFiles({
+          'my image.png': 'blob:http://localhost:5173/blob-123',
+          'folder with spaces/pic.png': 'https://example.com/pic.png',
+        });
 
       expect(gingacc.resolveUri('my image.png').toString(),
           equals('blob:http://localhost:5173/blob-123'));
@@ -152,9 +158,15 @@ void main() {
           equals('blob:http://localhost:5173/blob-123'));
       expect(gingacc.resolveUri('my%20image.png', 'main.ncl').toString(),
           equals('blob:http://localhost:5173/blob-123'));
-      expect(gingacc.resolveUri('pic.png', 'folder with spaces/main.ncl').toString(),
+      expect(
+          gingacc
+              .resolveUri('pic.png', 'folder with spaces/main.ncl')
+              .toString(),
           equals('https://example.com/pic.png'));
-      expect(gingacc.resolveUri('pic.png', 'folder%20with%20spaces/main.ncl').toString(),
+      expect(
+          gingacc
+              .resolveUri('pic.png', 'folder%20with%20spaces/main.ncl')
+              .toString(),
           equals('https://example.com/pic.png'));
     });
 
@@ -199,10 +211,11 @@ void main() {
     });
 
     test('loads virtual file content synchronously', () {
-      final gingacc = GingaCC()..setVirtualFiles({
-        'levels/1.txt': 'WWWWW\nW P W\nWWWWW',
-        'config.lua': 'return { speed = 10 }',
-      });
+      final gingacc = GingaCC()
+        ..setVirtualFiles({
+          'levels/1.txt': 'WWWWW\nW P W\nWWWWW',
+          'config.lua': 'return { speed = 10 }',
+        });
 
       expect(
         gingacc.loadContentSync('levels/1.txt'),
@@ -241,7 +254,8 @@ void main() {
         final scriptFile = File('${subDir.path}/logic.lua');
         scriptFile.writeAsStringSync('local x = 42');
 
-        final content = gingacc.loadContentSync('scripts/logic.lua', mainNcl.path);
+        final content =
+            gingacc.loadContentSync('scripts/logic.lua', mainNcl.path);
         expect(content, equals('local x = 42'));
       } finally {
         tempDir.deleteSync(recursive: true);
@@ -290,7 +304,8 @@ void main() {
       expect(gingacc.config.appSrc, equals('main.ncl'));
     });
 
-    test('loadConfig with appSrc only resolves config and sets appSrc', () async {
+    test('loadConfig with appSrc only resolves config and sets appSrc',
+        () async {
       final gingacc = GingaCC();
       final result = await gingacc.loadConfig(null, 'main.ncl');
       expect(result.startWithCCWS, isTrue);

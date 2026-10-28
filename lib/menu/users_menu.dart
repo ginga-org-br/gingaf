@@ -306,7 +306,8 @@ class _UsersMenuState extends State<UsersMenu> {
                       right: 12,
                       child: IconButton(
                         key: const Key('user_selection_close_button'),
-                        icon: const Icon(Icons.close, color: Colors.white, size: 24),
+                        icon: const Icon(Icons.close,
+                            color: Colors.white, size: 24),
                         tooltip: 'Close',
                         onPressed: widget.onClose,
                       ),

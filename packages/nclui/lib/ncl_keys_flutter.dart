@@ -56,21 +56,42 @@ class NclKeysFlutter {
   }
 
   static PhysicalKeyboardKey resolvePhysicalKey(LogicalKeyboardKey key) {
-    if (key == LogicalKeyboardKey.arrowRight) return PhysicalKeyboardKey.arrowRight;
-    if (key == LogicalKeyboardKey.arrowLeft) return PhysicalKeyboardKey.arrowLeft;
-    if (key == LogicalKeyboardKey.arrowUp) return PhysicalKeyboardKey.arrowUp;
-    if (key == LogicalKeyboardKey.arrowDown) return PhysicalKeyboardKey.arrowDown;
-    if (key == LogicalKeyboardKey.enter) return PhysicalKeyboardKey.enter;
-    if (key == LogicalKeyboardKey.f1) return PhysicalKeyboardKey.f1;
-    if (key == LogicalKeyboardKey.f2) return PhysicalKeyboardKey.f2;
-    if (key == LogicalKeyboardKey.f3) return PhysicalKeyboardKey.f3;
-    if (key == LogicalKeyboardKey.f4) return PhysicalKeyboardKey.f4;
-    if (key == LogicalKeyboardKey.f5) return PhysicalKeyboardKey.f5;
+    if (key == LogicalKeyboardKey.arrowRight) {
+      return PhysicalKeyboardKey.arrowRight;
+    }
+    if (key == LogicalKeyboardKey.arrowLeft) {
+      return PhysicalKeyboardKey.arrowLeft;
+    }
+    if (key == LogicalKeyboardKey.arrowUp) {
+      return PhysicalKeyboardKey.arrowUp;
+    }
+    if (key == LogicalKeyboardKey.arrowDown) {
+      return PhysicalKeyboardKey.arrowDown;
+    }
+    if (key == LogicalKeyboardKey.enter) {
+      return PhysicalKeyboardKey.enter;
+    }
+    if (key == LogicalKeyboardKey.f1) {
+      return PhysicalKeyboardKey.f1;
+    }
+    if (key == LogicalKeyboardKey.f2) {
+      return PhysicalKeyboardKey.f2;
+    }
+    if (key == LogicalKeyboardKey.f3) {
+      return PhysicalKeyboardKey.f3;
+    }
+    if (key == LogicalKeyboardKey.f4) {
+      return PhysicalKeyboardKey.f4;
+    }
+    if (key == LogicalKeyboardKey.f5) {
+      return PhysicalKeyboardKey.f5;
+    }
     return PhysicalKeyboardKey.enter;
   }
 }
 
-LogicalKeyboardKey resolveKey(String keyName) => NclKeysFlutter.resolveKey(keyName);
+LogicalKeyboardKey resolveKey(String keyName) =>
+    NclKeysFlutter.resolveKey(keyName);
 
 PhysicalKeyboardKey resolvePhysicalKey(LogicalKeyboardKey key) =>
     NclKeysFlutter.resolvePhysicalKey(key);

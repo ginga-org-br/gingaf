@@ -129,8 +129,10 @@ void main() {
     test('NclEvent helper methods work correctly', () {
       expect(NclEvent.getStringAsActionType('start'), NclActionType.start);
       expect(NclEvent.getStringAsActionType('stop'), NclActionType.stop);
-      expect(NclEvent.getNclEventStateAsString(NclStateType.occurring), 'occurring');
-      expect(NclEvent.getEventTypeAsString(NclEventType.presentation), 'presentation');
+      expect(NclEvent.getNclEventStateAsString(NclStateType.occurring),
+          'occurring');
+      expect(NclEvent.getEventTypeAsString(NclEventType.presentation),
+          'presentation');
     });
 
     test('Media Initialization', () {

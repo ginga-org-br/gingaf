@@ -35,7 +35,8 @@ void main() {
         ),
       );
 
-      expect(find.byKey(const Key('floating_menu_toggle_button')), findsOneWidget);
+      expect(
+          find.byKey(const Key('floating_menu_toggle_button')), findsOneWidget);
       expect(find.byIcon(Icons.settings), findsOneWidget);
       expect(find.byKey(const Key('floating_users_button')), findsNothing);
       expect(find.byKey(const Key('floating_pause_button')), findsNothing);
@@ -45,7 +46,8 @@ void main() {
       expect(find.text('Restart'), findsNothing);
     });
 
-    testWidgets('tapping toggle button expands and collapses menu', (tester) async {
+    testWidgets('tapping toggle button expands and collapses menu',
+        (tester) async {
       await tester.pumpWidget(
         _buildTestWrapper(
           onRestart: () {},
@@ -72,7 +74,9 @@ void main() {
       expect(find.byKey(const Key('floating_restart_button')), findsNothing);
     });
 
-    testWidgets('tapping pause button triggers callback and updates icon and label', (tester) async {
+    testWidgets(
+        'tapping pause button triggers callback and updates icon and label',
+        (tester) async {
       int pauseCallCount = 0;
       bool isPaused = false;
 
@@ -118,7 +122,8 @@ void main() {
       expect(find.byIcon(Icons.pause), findsOneWidget);
     });
 
-    testWidgets('tapping restart button triggers onRestart and collapses menu', (tester) async {
+    testWidgets('tapping restart button triggers onRestart and collapses menu',
+        (tester) async {
       int restartCallCount = 0;
 
       await tester.pumpWidget(
@@ -140,7 +145,9 @@ void main() {
       expect(find.byKey(const Key('floating_restart_button')), findsNothing);
     });
 
-    testWidgets('tapping restart button triggers onReload when onRestart is null', (tester) async {
+    testWidgets(
+        'tapping restart button triggers onReload when onRestart is null',
+        (tester) async {
       int reloadCallCount = 0;
 
       await tester.pumpWidget(
@@ -162,7 +169,8 @@ void main() {
       expect(find.byKey(const Key('floating_restart_button')), findsNothing);
     });
 
-    testWidgets('tapping users button triggers onOpenUsers and collapses menu', (tester) async {
+    testWidgets('tapping users button triggers onOpenUsers and collapses menu',
+        (tester) async {
       int usersCallCount = 0;
 
       await tester.pumpWidget(

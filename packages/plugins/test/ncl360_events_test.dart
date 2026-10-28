@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ncldoc/elements.dart';
 import 'package:ncldoc/ncl_document.dart';
 import 'package:plugins/ncl360_plugin.dart';
 
@@ -9,7 +8,9 @@ bool isMediaActive(NclDocument doc, String mediaId) =>
 
 void main() {
   group('NCL360 View Transition & Event Tests', () {
-    test('onBeginView and onEndView trigger links when hotspot enters and exits view', () {
+    test(
+        'onBeginView and onEndView trigger links when hotspot enters and exits view',
+        () {
       const xml = '''
 <ncl>
   <body>
@@ -41,7 +42,8 @@ void main() {
       expect(isMediaActive(doc, 'banner'), isFalse);
     });
 
-    test('onBeginView triggers when link binds directly to area as component', () {
+    test('onBeginView triggers when link binds directly to area as component',
+        () {
       const xml = '''
 <ncl>
   <body>
@@ -156,7 +158,9 @@ void main() {
       expect(isMediaActive(doc, 'followUp'), isTrue);
     });
 
-    test('advancing time executes delayed link actions triggered by view transition', () {
+    test(
+        'advancing time executes delayed link actions triggered by view transition',
+        () {
       const xml = '''
 <ncl>
   <body>
@@ -189,7 +193,9 @@ void main() {
       expect(isMediaActive(doc, 'delayedInfo'), isTrue);
     });
 
-    test('stepped advance time accumulates clock and resolves multiple scheduled events', () {
+    test(
+        'stepped advance time accumulates clock and resolves multiple scheduled events',
+        () {
       const xml = '''
 <ncl>
   <head>
@@ -284,7 +290,9 @@ void main() {
   });
 
   group('Scene360Widget Interactive Viewport & Time Progression Tests', () {
-    testWidgets('camera rotation dynamically updates hotspot inView and triggers links', (tester) async {
+    testWidgets(
+        'camera rotation dynamically updates hotspot inView and triggers links',
+        (tester) async {
       const xml = '''
 <ncl>
   <body>
@@ -345,7 +353,9 @@ void main() {
       expect(find.text('South Landmark'), findsOneWidget);
     });
 
-    test('onLookAt and onLookAway trigger links when looking at and away from interface', () {
+    test(
+        'onLookAt and onLookAway trigger links when looking at and away from interface',
+        () {
       const xml = '''
 <ncl>
   <body>
@@ -403,21 +413,25 @@ void main() {
 
       final louvre = doc.getNodeById('louvre360') as Media;
       expect(louvre.getMainState(), equals(NclStateType.occurring));
-      expect(louvre.getAreaNclEvent('photo1').state, equals(NclStateType.sleeping));
+      expect(louvre.getAreaNclEvent('photo1').state,
+          equals(NclStateType.sleeping));
 
       final trigger = doc.getNodeById('trigger') as Media;
-      doc.scheduler.stackNclAction(trigger.getMainNclEvent(), NclActionType.start);
+      doc.scheduler
+          .stackNclAction(trigger.getMainNclEvent(), NclActionType.start);
       doc.scheduler.tick(0);
 
-      expect(louvre.getAreaNclEvent('photo1').state, equals(NclStateType.occurring));
+      expect(louvre.getAreaNclEvent('photo1').state,
+          equals(NclStateType.occurring));
       expect(louvre.getMainState(), equals(NclStateType.occurring));
 
-      doc.scheduler.stackNclAction(trigger.getMainNclEvent(), NclActionType.stop);
+      doc.scheduler
+          .stackNclAction(trigger.getMainNclEvent(), NclActionType.stop);
       doc.scheduler.tick(0);
 
-      expect(louvre.getAreaNclEvent('photo1').state, equals(NclStateType.sleeping));
+      expect(louvre.getAreaNclEvent('photo1').state,
+          equals(NclStateType.sleeping));
       expect(louvre.getMainState(), equals(NclStateType.occurring));
     });
   });
 }
-

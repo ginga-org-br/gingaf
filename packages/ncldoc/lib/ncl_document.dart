@@ -200,7 +200,7 @@ class NclDocument extends GingaApp {
     required super.appSrc,
     this.docUri,
     super.gingacc,
-  })  : super(
+  }) : super(
           applicationId: applicationId ?? appSrc,
           baseUri: docUri,
         ) {
@@ -795,7 +795,8 @@ class NclDocument extends GingaApp {
     }
   }
 
-  void handleViewTransition(String componentId, bool inView, [String? interfaceId]) {
+  void handleViewTransition(String componentId, bool inView,
+      [String? interfaceId]) {
     scheduler.triggerViewTransition(componentId, inView, interfaceId);
     if (onStateChanged != null) {
       onStateChanged!.call();

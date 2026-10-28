@@ -151,8 +151,10 @@ void main() {
       doc.tick(5000);
       expect(menuCtx.getMainState(), NclStateType.occurring);
 
-      expect(doc.getMediaById('imgChorinho')?.getMainState(), NclStateType.occurring);
-      expect(doc.getMediaById('imgRock')?.getMainState(), NclStateType.occurring);
+      expect(doc.getMediaById('imgChorinho')?.getMainState(),
+          NclStateType.occurring);
+      expect(
+          doc.getMediaById('imgRock')?.getMainState(), NclStateType.occurring);
     });
 
     test('D-pad navigation and onSelection switches music constituent', () {
@@ -167,7 +169,8 @@ void main() {
       expect(menuCtx.getMainState(), NclStateType.occurring);
 
       expect(doc.currentFocusNodeId, equals('imgChorinho'));
-      expect(doc.getSystemVariable('service.currentFocus'), equals('imgChorinho'));
+      expect(
+          doc.getSystemVariable('service.currentFocus'), equals('imgChorinho'));
 
       doc.handleKey('RIGHT');
       expect(doc.currentFocusNodeId, equals('imgRock'));
@@ -177,39 +180,47 @@ void main() {
       doc.tick(0);
 
       expect(doc.getMediaById('rock')?.getMainState(), NclStateType.occurring);
-      expect(doc.getPropertyValue(doc.getMediaById('choro')!, 'soundLevel'), equals('0'));
+      expect(doc.getPropertyValue(doc.getMediaById('choro')!, 'soundLevel'),
+          equals('0'));
 
       doc.handleKey('RIGHT');
       expect(doc.currentFocusNodeId, equals('imgTechno'));
-      expect(doc.getSystemVariable('service.currentFocus'), equals('imgTechno'));
+      expect(
+          doc.getSystemVariable('service.currentFocus'), equals('imgTechno'));
 
       doc.handleKey('ENTER');
       doc.tick(0);
 
-      expect(doc.getMediaById('techno')?.getMainState(), NclStateType.occurring);
+      expect(
+          doc.getMediaById('techno')?.getMainState(), NclStateType.occurring);
       expect(doc.getMediaById('rock')?.getMainState(), NclStateType.sleeping);
 
       doc.handleKey('RIGHT');
       expect(doc.currentFocusNodeId, equals('imgCartoon'));
-      expect(doc.getSystemVariable('service.currentFocus'), equals('imgCartoon'));
+      expect(
+          doc.getSystemVariable('service.currentFocus'), equals('imgCartoon'));
 
       doc.handleKey('ENTER');
       doc.tick(0);
 
-      expect(doc.getMediaById('cartoon')?.getMainState(), NclStateType.occurring);
+      expect(
+          doc.getMediaById('cartoon')?.getMainState(), NclStateType.occurring);
       expect(doc.getMediaById('techno')?.getMainState(), NclStateType.sleeping);
 
       doc.handleKey('RIGHT');
       expect(doc.currentFocusNodeId, equals('imgChorinho'));
-      expect(doc.getSystemVariable('service.currentFocus'), equals('imgChorinho'));
+      expect(
+          doc.getSystemVariable('service.currentFocus'), equals('imgChorinho'));
 
       doc.handleKey('ENTER');
       doc.tick(0);
 
       expect(doc.getMediaById('rock')?.getMainState(), NclStateType.sleeping);
       expect(doc.getMediaById('techno')?.getMainState(), NclStateType.sleeping);
-      expect(doc.getMediaById('cartoon')?.getMainState(), NclStateType.sleeping);
-      expect(doc.getPropertyValue(doc.getMediaById('choro')!, 'soundLevel'), equals('1'));
+      expect(
+          doc.getMediaById('cartoon')?.getMainState(), NclStateType.sleeping);
+      expect(doc.getPropertyValue(doc.getMediaById('choro')!, 'soundLevel'),
+          equals('1'));
     });
   });
 }
