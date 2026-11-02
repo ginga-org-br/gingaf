@@ -3,6 +3,9 @@ import fs from 'fs';
 import type { Express, Handler } from 'express';
 
 export function getAssetsPath(): string {
+  const buildWebPath = path.resolve(__dirname, '..', '..', 'build', 'web');
+  if (fs.existsSync(buildWebPath) && fs.existsSync(path.join(buildWebPath, 'index.html'))) return buildWebPath;
+
   const distPath = path.resolve(__dirname, 'gingaf-web');
   if (fs.existsSync(distPath)) return distPath;
 
@@ -11,6 +14,12 @@ export function getAssetsPath(): string {
 
   const distParentPath = path.resolve(__dirname, '..', 'dist', 'gingaf-web');
   if (fs.existsSync(distParentPath)) return distParentPath;
+
+  const webPath = path.resolve(__dirname, '..', '..', 'web');
+  if (fs.existsSync(webPath) && fs.existsSync(path.join(webPath, 'index.html'))) return webPath;
+
+  const gingafPath = path.resolve(__dirname, '..', 'gingaf');
+  if (fs.existsSync(gingafPath)) return gingafPath;
 
   const publicPath = path.resolve(__dirname, '..', 'public', 'gingaf-web');
   if (fs.existsSync(publicPath)) return publicPath;
@@ -28,7 +37,7 @@ export function gingafMiddleware(): Handler {
     });
   } catch (_) {}
   const assetsPath = getAssetsPath();
-  return express.static(assetsPath, {
+  const staticMiddleware = express.static(assetsPath, {
     setHeaders: (res: any, filePath: string) => {
       res.setHeader('Access-Control-Allow-Origin', '*');
       if (filePath.endsWith('.wasm')) {
@@ -36,6 +45,23 @@ export function gingafMiddleware(): Handler {
       }
     }
   });
+
+  return (req: any, res: any, next: any) => {
+    if (req.path === '/playground' || req.path === '/playground/') {
+      const playgroundIndex = path.join(assetsPath, 'playground', 'index.html');
+      if (fs.existsSync(playgroundIndex)) {
+        return res.sendFile(playgroundIndex);
+      }
+      const rootIndex = path.join(assetsPath, 'index.html');
+      if (fs.existsSync(rootIndex)) {
+        const query = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+        const params = new URLSearchParams(query.startsWith('?') ? query.substring(1) : query);
+        params.set('playground', 'true');
+        return res.redirect(`../?${params.toString()}`);
+      }
+    }
+    return staticMiddleware(req, res, next);
+  };
 }
 
 export const gingaMiddleware = gingafMiddleware;

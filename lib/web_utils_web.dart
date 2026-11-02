@@ -71,9 +71,46 @@ String? getGingaApp() {
             parent.getProperty<JSObject?>('GingaApp'.toJS));
         if (val != null && val.isNotEmpty) return val;
       }
+      final parentSessionVal = parent.sessionStorage.getItem('GINGA_APP');
+      if (parentSessionVal != null && parentSessionVal.isNotEmpty) {
+        return parentSessionVal;
+      }
     }
   } catch (_) {}
-  return _getSessionStorageItem('GINGA_APP');
+  return null;
+}
+
+bool? getGingaPlayground() {
+  try {
+    final uri = Uri.parse(web.window.location.href);
+    if (uri.path.contains('/playground')) {
+      return true;
+    }
+    final query = uri.queryParameters;
+    if (query.containsKey('playground') ||
+        query.containsKey('ginga_playground')) {
+      final val = (query['playground'] ?? query['ginga_playground'] ?? '')
+          .toLowerCase();
+      if (val == 'false' || val == '0' || val == 'no') return false;
+      return true;
+    }
+    final cleanPath = uri.path.replaceAll(RegExp(r'/index\.html$'), '');
+    if (cleanPath.endsWith('/gingaf') ||
+        cleanPath.endsWith('/gingaf/') ||
+        cleanPath.endsWith('/player') ||
+        cleanPath.endsWith('/player/')) {
+      return false;
+    }
+  } catch (_) {}
+  try {
+    final val = _getSessionStorageItem('GINGA_PLAYGROUND');
+    if (val != null) {
+      final lower = val.toLowerCase();
+      if (lower == 'true' || lower == '1' || lower == 'yes') return true;
+      if (lower == 'false' || lower == '0' || lower == 'no') return false;
+    }
+  } catch (_) {}
+  return null;
 }
 
 Map<String, String>? getGingaAppFiles() {
@@ -127,5 +164,30 @@ void notifyParentAppExited() {
     web.window.parent?.postMessage('ginga_app_exited'.toJS, '*'.toJS);
   } catch (e) {
     debugPrint('Failed to notify parent app exited: $e');
+  }
+}
+
+void updateWebUrlApp(String appName) {
+  try {
+    final uri = Uri.parse(web.window.location.href);
+    final newParams = Map<String, String>.from(uri.queryParameters);
+    newParams['app'] = appName;
+    newParams.remove('playground');
+    newParams.remove('ginga_playground');
+    var currentPath = uri.path;
+    if (!currentPath.contains('/playground')) {
+      if (currentPath.endsWith('/')) {
+        currentPath = '${currentPath}playground/';
+      } else {
+        currentPath = '$currentPath/playground/';
+      }
+    }
+    final newUri = uri.replace(
+      path: currentPath,
+      queryParameters: newParams.isEmpty ? null : newParams,
+    );
+    web.window.history.replaceState(null, '', newUri.toString());
+  } catch (e) {
+    debugPrint('Failed to update web url app: $e');
   }
 }

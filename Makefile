@@ -105,15 +105,36 @@ release-publish:
 	gh release upload v$(VERSION) $$RELEASE_FILES --clobber || gh release create v$(VERSION) $$RELEASE_FILES --generate-notes
 
 
-serve: release-web
-	make -C node serve
+build-web: release-web
 
-serve-examples: release-web
-	make -C node serve-examples
+serve: $(if $(wildcard build/web/main.dart.js),,build-web)
+	@printf "\n   playground alone:        http://localhost:5173/gingaf/playground/\n"
+	@printf "   playground with app:     http://localhost:5173/gingaf/playground/?app=https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/video.ncl\n"
+	@printf "   player with app:         http://localhost:5173/gingaf/?app=https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/video.ncl\n\n"
+	node serve.js
 
-clean:
+serve-node: $(if $(wildcard build/web/main.dart.js),,build-web)
+	npm --prefix node install --no-audit --no-fund
+	npm --prefix node/example-node-express install --no-audit --no-fund
+	npm --prefix node run build
+	mkdir -p node/playground/gingaf-web
+	cp -r build/web/* node/playground/gingaf-web/
+	npm --prefix node/example-node-express start &
+	node serve.js
+
+deploy-folder: build-web
+	$(if $(strip $(GINGA_DEPLOY)),,$(error GINGA_DEPLOY environment variable is not set))
+	mkdir -p $(GINGA_DEPLOY)/gingaf
+	rsync -av --delete build/web/ $(GINGA_DEPLOY)/gingaf/
+	rsync -av --delete examples/ $(GINGA_DEPLOY)/gingaf/examples/
+	cp examples/catalog.json $(GINGA_DEPLOY)/gingaf/catalog.json
+
+clean-web:
+	rm -rf build/web
+
+clean: clean-web
 	flutter clean
-	make -C node clean
+	rm -rf node/dist node/gingaf node/playground
 
 check-app:
 	$(if $(app),,$(error Please specify app (e.g. app=video.ncl)))
@@ -124,4 +145,13 @@ run-example: check-app
 	$(info ======================================================================)
 	$(info Running Example: $(APP_EXAMPLE))
 	$(info ======================================================================)
-	flutter run --no-pub $(if $(d),-d $(d)) --dart-define="GINGA_APP=examples/$(APP_EXAMPLE)" || true
+	flutter run --no-pub $(if $(d),-d $(d)) --dart-define="GINGA_APP=examples/$(APP_EXAMPLE)" --dart-define="GINGA_PLAYGROUND=false" || true
+
+run-playground: check-app
+	$(info ======================================================================)
+	$(info Starting Playground: $(APP_EXAMPLE))
+	$(info ======================================================================)
+	flutter run --no-pub $(if $(d),-d $(d)) --dart-define="GINGA_APP=examples/$(APP_EXAMPLE)" --dart-define="GINGA_PLAYGROUND=true" || true
+
+playground: run-playground
+

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../favicon.png?v=2" />
+  <link rel="shortcut icon" type="image/png" href="../favicon.png?v=2" />
+  <title>Ginga Playground</title>
+  <script>
+    const currentUrl = new URL(window.location.href);
+    const params = currentUrl.searchParams;
+    if (!params.has('playground')) {
+      params.set('playground', 'true');
+    }
+    let pathname = currentUrl.pathname;
+    if (pathname.endsWith('/index.html')) {
+      pathname = pathname.slice(0, -'index.html'.length);
+    }
+    if (!pathname.endsWith('/')) {
+      pathname += '/';
+    }
+    const targetUrl = new URL('../', currentUrl.origin + pathname);
+    targetUrl.search = params.toString();
+    targetUrl.hash = currentUrl.hash;
+    window.location.replace(targetUrl.href);
+  </script>
+</head>
+
+<body>
+</body>
+
+</html>
