@@ -1,11 +1,6 @@
 /// Main Ginga player application and widgets.
 library ginga;
 
-export 'main.dart';
-export 'menu/settings_menu.dart';
-export 'menu/users_menu.dart';
-export 'web_utils_stub.dart' if (dart.library.js_interop) 'web_utils_web.dart';
-
 import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -16,10 +11,18 @@ import 'package:logging/logging.dart';
 import 'package:nclui/html.dart' as html;
 import 'package:nclui/main_av.dart';
 import 'package:nclui/ncl.dart' as ncl;
+import 'package:playground/playground.dart';
 
 import 'menu/settings_menu.dart';
 import 'menu/users_menu.dart';
 import 'web_utils_stub.dart' if (dart.library.js_interop) 'web_utils_web.dart';
+
+export 'package:playground/playground.dart';
+
+export 'main.dart';
+export 'menu/settings_menu.dart';
+export 'menu/users_menu.dart';
+export 'web_utils_stub.dart' if (dart.library.js_interop) 'web_utils_web.dart';
 
 final _logger = Logger('ginga');
 
@@ -41,13 +44,20 @@ class GingaState extends State<Ginga> {
   Widget? mainAVWidget;
   Widget? htmlApp;
   Widget? nclApp;
+  String? _mainAppContent;
   bool _isExiting = false;
+  bool get isExiting => _isExiting;
+  bool _isRunning = true;
+  bool get isRunning => _isRunning;
   bool _initialized = false;
   bool _isPaused = false;
   bool _showUsersOverlay = false;
+  late final bool _showCatalogSelector;
 
   GlobalKey<ncl.NclWidgetState> _nclAppKey = GlobalKey<ncl.NclWidgetState>();
   GlobalKey<MainAVWidgetState> _mainAvKey = GlobalKey<MainAVWidgetState>();
+  final GlobalKey<PlaygroundEditorState> _playgroundKey =
+      GlobalKey<PlaygroundEditorState>();
   final GlobalKey<SettingsMenuState> _settingsMenuKey =
       GlobalKey<SettingsMenuState>();
 
@@ -66,11 +76,19 @@ class GingaState extends State<Ginga> {
   void initState() {
     super.initState();
     _gingacc = widget.gingacc ?? GingaCC();
-    if (_gingacc.config.startWithMainAv) {
-      mainAVWidget = MainAVWidget(
-        key: _mainAvKey,
-        src: _gingacc.config.mainAvSrc,
-      );
+    _showCatalogSelector = _gingacc.config.enablePlayground &&
+        (_gingacc.config.appSrc == null ||
+            _gingacc.config.appSrc!.trim().isEmpty);
+    if (_gingacc.config.enablePlayground) {
+      _isRunning = false;
+    } else {
+      _isRunning = true;
+      if (_gingacc.config.startWithMainAv) {
+        mainAVWidget = MainAVWidget(
+          key: _mainAvKey,
+          src: _gingacc.config.mainAvSrc,
+        );
+      }
     }
 
     if (_gingacc.config.startWithCCWS) {
@@ -79,17 +97,58 @@ class GingaState extends State<Ginga> {
     HardwareKeyboard.instance.addHandler(_handleKeyPress);
   }
 
+  Future<void> _autoResizeWindow() async {
+    if (!kIsWeb &&
+        (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) {
+      try {
+        const channel = MethodChannel('gingaf/window');
+        await channel.invokeMethod('autoResize', {
+          'playground': _gingacc.config.enablePlayground,
+        });
+      } catch (_) {}
+    }
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_initialized) {
       _initialized = true;
-      _setupApp();
+      _autoResizeWindow();
+      if (_gingacc.config.enablePlayground) {
+        _loadMainAppContent();
+      } else {
+        _setupApp();
+      }
+    }
+  }
+
+  Future<void> _loadMainAppContent() async {
+    final appSrc = _gingacc.config.appSrc;
+    if (appSrc != null) {
+      if (appSrc.trim().startsWith('<')) {
+        _mainAppContent = appSrc;
+      } else {
+        try {
+          final loaded = await _gingacc.loadContent(appSrc);
+          if (loaded != null) {
+            _mainAppContent = loaded;
+          }
+        } catch (e) {
+          _logger.warning('Failed to load main app content for playground: $e');
+        }
+      }
+      if (mounted) {
+        setState(() {});
+      }
     }
   }
 
   void _setupApp() {
     final appSrc = _gingacc.config.appSrc;
+    if (_gingacc.config.enablePlayground) {
+      _loadMainAppContent();
+    }
     if (appSrc != null) {
       final lowerSrc = appSrc.toLowerCase();
       if (lowerSrc.endsWith('.html') ||
@@ -106,6 +165,14 @@ class GingaState extends State<Ginga> {
           gingacc: _gingacc,
           mainAvKey: _mainAvKey,
           onRequestMainAv: _ensureMainAvMounted,
+          onBreakpointHit: (media, action, line) {
+            if (!_isPaused) {
+              setState(() {
+                _isPaused = true;
+              });
+            }
+            _playgroundKey.currentState?.pauseAtLine(line);
+          },
         );
       }
     }
@@ -114,6 +181,7 @@ class GingaState extends State<Ginga> {
   void _restart() {
     _logger.info('Restarting Ginga application');
     setState(() {
+      _isRunning = true;
       _isPaused = false;
       _showUsersOverlay = false;
       htmlApp = null;
@@ -134,16 +202,75 @@ class GingaState extends State<Ginga> {
     });
   }
 
-  void togglePause() {
+  void _savePlaygroundVirtualFiles() {
+    final currentFiles =
+        Map<String, String>.from(_gingacc.virtualFiles ?? {});
+    if (_mainAppContent != null && _gingacc.config.appSrc != null) {
+      currentFiles[_gingacc.config.appSrc!] = _mainAppContent!;
+    }
+    final editorFiles = _playgroundKey.currentState?.allFileContents;
+    if (editorFiles != null) {
+      for (final entry in editorFiles.entries) {
+        currentFiles[entry.key] = entry.value;
+        if (!entry.key.startsWith('examples/')) {
+          currentFiles['examples/${entry.key}'] = entry.value;
+        }
+        if (entry.key.contains('/')) {
+          currentFiles[entry.key.split('/').last] = entry.value;
+        }
+      }
+    }
+    _gingacc.setVirtualFiles(currentFiles);
+  }
+
+  void _stopFromPlayground() {
+    _logger.info('Stopping Ginga application from playground');
     setState(() {
-      _isPaused = !_isPaused;
+      _isRunning = false;
+      _isPaused = false;
+      _showUsersOverlay = false;
+      htmlApp = null;
+      nclApp = null;
+      mainAVWidget = null;
     });
+    _stopServices();
+  }
+
+  void pause() {
+    if (!_isPaused) {
+      setState(() {
+        _isPaused = true;
+      });
+    }
+    _nclAppKey.currentState?.pause();
+    _mainAvKey.currentState?.controller?.pause();
+  }
+
+  void resume() {
     if (_isPaused) {
-      _nclAppKey.currentState?.pause();
-      _mainAvKey.currentState?.controller?.pause();
+      setState(() {
+        _isPaused = false;
+      });
+    }
+    _nclAppKey.currentState?.resume();
+    _mainAvKey.currentState?.controller?.play();
+    _playgroundKey.currentState?.resumeFromPlayer();
+  }
+
+  void setBreakpoints(Iterable<int> breakpoints) {
+    _gingacc.config.breakpoints
+      ..clear()
+      ..addAll(breakpoints);
+    _nclAppKey.currentState?.setBreakpoints(breakpoints);
+  }
+
+  void togglePause() {
+    final currentPaused =
+        _isPaused || (_nclAppKey.currentState?.isPaused ?? false);
+    if (currentPaused) {
+      resume();
     } else {
-      _nclAppKey.currentState?.resume();
-      _mainAvKey.currentState?.controller?.play();
+      pause();
     }
   }
 
@@ -221,6 +348,9 @@ class GingaState extends State<Ginga> {
         if (_showUsersOverlay) {
           closeUsersOverlay();
           return true;
+        }
+        if (kIsWeb || _gingacc.config.enablePlayground) {
+          return false;
         }
         _logger.info('Captured ESC in Window, stopping app and mainAV.');
         _cleanup();
@@ -304,14 +434,15 @@ class GingaState extends State<Ginga> {
     if (_isExiting) return;
     setState(() {
       _isExiting = true;
+      _isRunning = false;
       htmlApp = null;
       nclApp = null;
       mainAVWidget = null;
     });
     _stopServices();
-    if (!kIsWeb) {
+    if (!kIsWeb && !Platform.environment.containsKey('FLUTTER_TEST')) {
       Future.delayed(const Duration(milliseconds: 200), () => exit(0));
-    } else {
+    } else if (kIsWeb) {
       notifyParentAppExited();
     }
   }
@@ -321,6 +452,77 @@ class GingaState extends State<Ginga> {
     HardwareKeyboard.instance.removeHandler(_handleKeyPress);
     _stopServices();
     super.dispose();
+  }
+
+  Widget _buildPlayer(BuildContext context) {
+    if (!_isRunning) {
+      return Container(
+        key: const Key('no_running_app_placeholder'),
+        color: Colors.black,
+        child: const Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.play_circle_outline,
+                size: 64,
+                color: Colors.white54,
+              ),
+              SizedBox(height: 16),
+              Text(
+                'No running application',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Click Run or Start Debugging to begin',
+                style: TextStyle(
+                  color: Colors.white38,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      color: Colors.black,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (mainAVWidget != null) mainAVWidget!,
+          if (htmlApp != null) htmlApp!,
+          if (nclApp != null) nclApp!,
+          if (!_showUsersOverlay)
+            SettingsMenu(
+              key: _settingsMenuKey,
+              isPaused: _isPaused,
+              onReload: _restart,
+              onTogglePause: togglePause,
+              onForward2s: forward2s,
+              onOpenUsers: openUsersOverlay,
+            ),
+          if (_showUsersOverlay)
+            UsersMenu(
+              users: _gingacc.config.users,
+              onClose: closeUsersOverlay,
+              onUserSelected: (_) => closeUsersOverlay(),
+              dispatchCurrentUserUpdate: (name, value) {
+                _gingacc.config.systemVariables[name] = value;
+                _nclAppKey.currentState?.nclDocument?.dispatchSettingsUpdate(
+                    name, value,
+                    userId: 'currentUser');
+              },
+            ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -334,6 +536,14 @@ class GingaState extends State<Ginga> {
       ),
       home: NotificationListener<ncl.NclWidgetExitNotification>(
         onNotification: (notification) {
+          if (_gingacc.config.enablePlayground) {
+            _logger.info(
+                'Received NclWidgetExitNotification in playground mode. Keeping playground active.');
+            setState(() {
+              _isRunning = false;
+            });
+            return true;
+          }
           _logger.info(
               'Received NclWidgetExitNotification. Cleaning up and exiting.');
           _cleanup();
@@ -342,35 +552,64 @@ class GingaState extends State<Ginga> {
         child: Scaffold(
           body: _isExiting
               ? const SizedBox.shrink()
-              : Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    if (mainAVWidget != null) mainAVWidget!,
-                    if (htmlApp != null) htmlApp!,
-                    if (nclApp != null) nclApp!,
-                    if (!_showUsersOverlay)
-                      SettingsMenu(
-                        key: _settingsMenuKey,
-                        isPaused: _isPaused,
-                        onReload: _restart,
-                        onTogglePause: togglePause,
-                        onForward2s: forward2s,
-                        onOpenUsers: openUsersOverlay,
-                      ),
-                    if (_showUsersOverlay)
-                      UsersMenu(
-                        users: _gingacc.config.users,
-                        onClose: closeUsersOverlay,
-                        onUserSelected: (_) => closeUsersOverlay(),
-                        dispatchCurrentUserUpdate: (name, value) {
-                          _gingacc.config.systemVariables[name] = value;
-                          _nclAppKey.currentState?.nclDocument
-                              ?.dispatchSettingsUpdate(name, value,
-                                  userId: 'currentUser');
-                        },
-                      ),
-                  ],
-                ),
+              : _gingacc.config.enablePlayground
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          flex: 1,
+                          child: KeyedSubtree(
+                            key: const Key('flutter_monaco_widget'),
+                            child: PlaygroundEditor(
+                              key: _playgroundKey,
+                              content: _mainAppContent ?? '',
+                              filePath: _gingacc.config.appSrc,
+                              gingacc: _gingacc,
+                              isRunning: _isRunning,
+                              showCatalogSelector: _showCatalogSelector,
+                              onCatalogExampleSelected: (selectedFile) {
+                                final appPath = selectedFile.startsWith('examples/')
+                                    ? selectedFile
+                                    : 'examples/$selectedFile';
+                                _gingacc.config =
+                                    _gingacc.config.copyWith(appSrc: appPath);
+                                if (kIsWeb) {
+                                  updateWebUrlApp(selectedFile);
+                                }
+                              },
+                              onContentChanged: (newText) {
+                                _mainAppContent = newText;
+                              },
+                              onRun: () {
+                                _savePlaygroundVirtualFiles();
+                                _restart();
+                              },
+                              onStop: _stopFromPlayground,
+                              onDebug: () {
+                                _savePlaygroundVirtualFiles();
+                                _restart();
+                              },
+                              onContinue: () {
+                                resume();
+                              },
+                              onReload: () {
+                                _savePlaygroundVirtualFiles();
+                                _restart();
+                              },
+                              initialBreakpoints: _gingacc.config.breakpoints,
+                              onBreakpointsChanged: (newBps) {
+                                setBreakpoints(newBps);
+                              },
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: _buildPlayer(context),
+                        ),
+                      ],
+                    )
+                  : _buildPlayer(context),
         ),
       ),
     );

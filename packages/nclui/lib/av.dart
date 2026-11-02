@@ -162,9 +162,19 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
         });
       }
 
-      if (isPlaying && !_isPaused) {
+      final mediaTimeMs = widget.media?.time ?? 0;
+      if (mediaTimeMs > 0) {
+        try {
+          await controller.seekTo(Duration(milliseconds: mediaTimeMs));
+        } catch (_) {}
+      }
+
+      if (isPlaying) {
         try {
           await controller.play();
+          if (_isPaused) {
+            await controller.pause();
+          }
         } catch (playErr) {
           debugPrint("AVWidget play error: $playErr");
         }
@@ -193,13 +203,25 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
     if (!_initialized || controller == null || !isPlaying) {
       return buildLoadingWidget(context);
     }
+    final size = controller.value.size;
+    final Widget player = (size.width > 0 && size.height > 0)
+        ? FittedBox(
+            fit: BoxFit.fill,
+            child: SizedBox(
+              width: size.width,
+              height: size.height,
+              child: VideoPlayer(controller),
+            ),
+          )
+        : VideoPlayer(controller);
+
     return Container(
       color: Colors.black,
       child: SizedBox.expand(
         child: GestureDetector(
           behavior: HitTestBehavior.translucent,
           onTap: unmute,
-          child: VideoPlayer(controller),
+          child: player,
         ),
       ),
     );

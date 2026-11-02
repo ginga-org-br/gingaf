@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:gingaf/ginga.dart';
@@ -41,6 +42,88 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
 
       expect(find.byType(NclWidget), findsOneWidget);
+    });
+
+    testWidgets('AVWidget resizes when window is resized',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(800, 600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(MaterialApp(
+        home: NclWidget(src: 'examples/video.ncl'),
+      ));
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.byType(AVWidget), findsOneWidget);
+      final initialRect = tester.getRect(find.byType(AVWidget));
+
+      tester.view.physicalSize = const Size(1200, 900);
+      await tester.pump();
+      final resizedRect = tester.getRect(find.byType(AVWidget));
+
+      expect(initialRect.size, equals(const Size(800, 600)));
+      expect(resizedRect.size, equals(const Size(1200, 900)));
+    });
+
+    testWidgets('Ginga player resizes AVWidget when window is resized',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(800, 600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      final gingacc = GingaCC(
+        config: GingaConfig(appSrc: 'examples/video.ncl', enablePlayground: false),
+      );
+      await tester.pumpWidget(Ginga(gingacc: gingacc));
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.byType(AVWidget), findsOneWidget);
+      final initialRect = tester.getRect(find.byType(AVWidget));
+
+      tester.view.physicalSize = const Size(1200, 900);
+      await tester.pump();
+      final resizedRect = tester.getRect(find.byType(AVWidget));
+
+      expect(initialRect.size, equals(const Size(800, 600)));
+      expect(resizedRect.size, equals(const Size(1200, 900)));
+    });
+
+    testWidgets('Ginga playground resizes AVWidget to player area',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1000, 600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      final gingacc = GingaCC(
+        config: GingaConfig(appSrc: 'examples/video.ncl', enablePlayground: true),
+      )..setVirtualFiles({
+        'examples/video.ncl': '''<ncl>
+  <body>
+    <port id="init" component="video"/>
+    <media id="video" src="video.mp4"/>
+  </body>
+</ncl>''',
+      });
+      await tester.pumpWidget(Ginga(gingacc: gingacc));
+      await tester.pump(const Duration(seconds: 1));
+
+      final runBtn = find.byKey(const Key('monaco_run_button'));
+      expect(runBtn, findsOneWidget);
+      await tester.tap(runBtn);
+      await tester.pumpAndSettle();
+
+      final avFinder = find.byType(AVWidget);
+      expect(avFinder, findsOneWidget);
+      final playerRect = tester.getRect(avFinder);
+      expect(playerRect.width, equals(500.0));
+
+      tester.view.physicalSize = const Size(1400, 800);
+      await tester.pump();
+      final resizedRect = tester.getRect(avFinder);
+      expect(resizedRect.width, equals(700.0));
+      expect(resizedRect.height, equals(800.0));
+      expect(resizedRect.left, equals(700.0));
     });
 
     testWidgets('NclWidget pauses and resumes AVWidget media',
@@ -486,5 +569,455 @@ void main() {
       expect(nclState.isPaused, isFalse);
       expect(find.text('Pause'), findsOneWidget);
     });
+
+    test('GingaConfig parses enablePlayground from JSON and constructor', () async {
+      final configDefault = GingaConfig();
+      expect(configDefault.enablePlayground, isFalse);
+
+      final configExplicit = GingaConfig(enablePlayground: true);
+      expect(configExplicit.enablePlayground, isTrue);
+      expect(configExplicit.toString(), contains('enablePlayground: true'));
+
+      final configJsonCamel = await GingaConfig.fromJson(
+        '{"enablePlayground": true, "appSrc": "main.ncl"}',
+      );
+      expect(configJsonCamel.enablePlayground, isTrue);
+    });
+
+    testWidgets(
+        'Ginga widget includes PlaygroundEditor widget open with current main app file content when enablePlayground is true',
+        (WidgetTester tester) async {
+      const sampleNcl = '<ncl id="playgroundApp"><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>';
+      final config = await GingaConfig.fromJson(
+        '{"enablePlayground": true, "appSrc": "playground.ncl"}',
+      );
+      final gingacc = GingaCC(
+        config: config,
+      )..setVirtualFiles({
+          'playground.ncl': sampleNcl,
+        });
+
+      await tester.pumpWidget(Ginga(
+        gingacc: gingacc,
+      ));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      final monacoFinder = find.byType(PlaygroundEditor);
+      expect(monacoFinder, findsOneWidget);
+
+      final monacoKeyFinder = find.byKey(const Key('flutter_monaco_widget'));
+      expect(monacoKeyFinder, findsOneWidget);
+
+      expect(find.text('playground.ncl'), findsOneWidget);
+      expect(find.text('Monaco Editor'), findsOneWidget);
+
+      final monacoState = tester.state<PlaygroundEditorState>(monacoFinder);
+      expect(monacoState.effectiveContent, equals(sampleNcl));
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets(
+        'Ginga widget does not include PlaygroundEditor when enablePlayground is false',
+        (WidgetTester tester) async {
+      final config = GingaConfig(
+        appSrc: 'normal.ncl',
+        enablePlayground: false,
+      );
+      final gingacc = GingaCC(
+        config: config,
+      )..setVirtualFiles({
+          'normal.ncl': '<ncl id="normal"/>',
+        });
+
+      await tester.pumpWidget(Ginga(
+        gingacc: gingacc,
+      ));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.byType(PlaygroundEditor), findsNothing);
+      expect(find.byKey(const Key('flutter_monaco_widget')), findsNothing);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets(
+        'Ginga widget mounts PlaygroundEditor when enablePlayground is enabled via copyWith',
+        (WidgetTester tester) async {
+      var config = GingaConfig(
+        appSrc: 'normal.ncl',
+        enablePlayground: false,
+      );
+      config = config.copyWith(enablePlayground: true);
+      final gingacc = GingaCC(
+        config: config,
+      )..setVirtualFiles({
+          'normal.ncl': '<ncl id="normal"/>',
+        });
+
+      await tester.pumpWidget(Ginga(
+        gingacc: gingacc,
+      ));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.byType(PlaygroundEditor), findsOneWidget);
+      expect(find.byKey(const Key('flutter_monaco_widget')), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets(
+        'Ginga mounts PlaygroundEditor on the left side of the player',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1920, 1080);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      const sampleNcl =
+          '<ncl id="pg"><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>';
+      final config = GingaConfig(
+        enablePlayground: true,
+        appSrc: 'playground.ncl',
+      );
+      final gingacc = GingaCC(
+        config: config,
+      )..setVirtualFiles({
+          'playground.ncl': sampleNcl,
+        });
+
+      await tester.pumpWidget(Ginga(
+        gingacc: gingacc,
+      ));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final editorFinder = find.byType(PlaygroundEditor);
+      expect(editorFinder, findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('monaco_run_button')));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final nclFinder = find.byType(NclWidget);
+      expect(nclFinder, findsOneWidget);
+
+      final editorRect = tester.getRect(editorFinder);
+      final nclRect = tester.getRect(nclFinder);
+      expect(editorRect.left, equals(0.0));
+      expect(editorRect.right, lessThanOrEqualTo(nclRect.left));
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets(
+        'Ginga keeps playground alive and does not exit when NclWidgetExitNotification is received in playground mode',
+        (WidgetTester tester) async {
+      const sampleNcl =
+          '<ncl id="pg"><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>';
+      final config = GingaConfig(
+        enablePlayground: true,
+        appSrc: 'playground.ncl',
+      );
+      final gingacc = GingaCC(
+        config: config,
+      )..setVirtualFiles({
+          'playground.ncl': sampleNcl,
+        });
+
+      await tester.pumpWidget(Ginga(
+        gingacc: gingacc,
+      ));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(find.byKey(const Key('monaco_run_button')));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final gingaState = tester.state<GingaState>(find.byType(Ginga));
+      expect(gingaState.isExiting, isFalse);
+
+      NclWidgetExitNotification()
+          .dispatch(tester.element(find.byType(NclWidget)));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(gingaState.isExiting, isFalse);
+      expect(find.byType(PlaygroundEditor), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets(
+        'Ginga cleans up and exits when NclWidgetExitNotification is received outside playground mode',
+        (WidgetTester tester) async {
+      const sampleNcl =
+          '<ncl id="normal"><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>';
+      final config = GingaConfig(
+        enablePlayground: false,
+        appSrc: 'normal.ncl',
+      );
+      final gingacc = GingaCC(
+        config: config,
+      )..setVirtualFiles({
+          'normal.ncl': sampleNcl,
+        });
+
+      await tester.pumpWidget(Ginga(
+        gingacc: gingacc,
+      ));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final gingaState = tester.state<GingaState>(find.byType(Ginga));
+      expect(gingaState.isExiting, isFalse);
+
+      NclWidgetExitNotification()
+          .dispatch(tester.element(find.byType(NclWidget)));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(gingaState.isExiting, isTrue);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets(
+        'Ginga playground handles debug start, stop, and virtualFiles without unmodifiable map errors',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1280, 720);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      const sampleNcl = '''<ncl id="dbg">
+  <body>
+    <port id="p1" component="m1"/>
+    <media id="m1" src="m1.mp4"/>
+  </body>
+</ncl>''';
+      final config = GingaConfig(
+        enablePlayground: true,
+        appSrc: 'dbg.ncl',
+        breakpoints: [4],
+      );
+      final gingacc = GingaCC(
+        config: config,
+      )..setVirtualFiles({
+          'dbg.ncl': sampleNcl,
+        });
+
+      await tester.pumpWidget(Ginga(
+        gingacc: gingacc,
+      ));
+      await tester.pump();
+
+      final gingaState = tester.state<GingaState>(find.byType(Ginga));
+      expect(gingaState.isRunning, isFalse);
+
+      final pEditor =
+          tester.widget<PlaygroundEditor>(find.byType(PlaygroundEditor));
+      expect(pEditor.isRunning, isFalse);
+
+      expect(find.byKey(const Key('monaco_stop_button')), findsNothing);
+      expect(find.byKey(const Key('monaco_debug_continue_button')), findsNothing);
+
+      final debugFinder = find.byKey(const Key('monaco_debug_start_button'));
+      expect(debugFinder, findsOneWidget);
+      await tester.tap(debugFinder);
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(gingaState.isRunning, isTrue);
+
+      final stopFinder = find.byKey(const Key('monaco_stop_button'));
+      expect(stopFinder, findsOneWidget);
+
+      final continueFinder =
+          find.byKey(const Key('monaco_debug_continue_button'));
+      expect(continueFinder, findsOneWidget);
+      await tester.tap(continueFinder);
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(stopFinder);
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(gingaState.isRunning, isFalse);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets(
+        'Ginga playground does not display continue or stop buttons when running without debugging',
+        (WidgetTester tester) async {
+      const sampleNcl =
+          '<ncl id="pg"><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>';
+      final config = GingaConfig(
+        enablePlayground: true,
+        appSrc: 'playground.ncl',
+      );
+      final gingacc = GingaCC(
+        config: config,
+      )..setVirtualFiles({
+          'playground.ncl': sampleNcl,
+        });
+
+      await tester.pumpWidget(Ginga(
+        gingacc: gingacc,
+      ));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.byKey(const Key('monaco_stop_button')), findsNothing);
+      expect(find.byKey(const Key('monaco_debug_continue_button')), findsNothing);
+      expect(find.byKey(const Key('monaco_debug_start_button')), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets(
+        'Ginga playground displays "No running application" placeholder when idle and hides it when running',
+        (WidgetTester tester) async {
+      const sampleNcl =
+          '<ncl id="pg"><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>';
+      final config = GingaConfig(
+        enablePlayground: true,
+        appSrc: 'playground.ncl',
+      );
+      final gingacc = GingaCC(
+        config: config,
+      )..setVirtualFiles({
+          'playground.ncl': sampleNcl,
+        });
+
+      await tester.pumpWidget(Ginga(
+        gingacc: gingacc,
+      ));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.byKey(const Key('no_running_app_placeholder')), findsOneWidget);
+      expect(find.text('No running application'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('monaco_run_button')));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.byKey(const Key('no_running_app_placeholder')), findsNothing);
+      expect(find.byType(NclWidget), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('monaco_stop_button')));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.byKey(const Key('no_running_app_placeholder')), findsOneWidget);
+      expect(find.text('No running application'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('Ginga playground continues from one breakpoint to another',
+        (WidgetTester tester) async {
+      const sampleNcl = '''<ncl>
+  <body>
+    <port id="init" component="video"/>
+    <media id="video" src="video.mp4">
+      <area id="a1" begin="2s" end="4s"/>
+    </media>
+    <media id="green_bg">
+      <property name="background" value="green"/>
+    </media>
+    <media id="red_bg">
+      <property name="background" value="red"/>
+      <property name="explicitDur" value="2s"/>
+    </media>
+    <link id="l1">
+      <bind role="onBegin" component="video" interface="a1"/>
+      <bind role="start" component="green_bg"/>
+    </link>
+    <link id="l2">
+      <bind role="onEnd" component="video" interface="a1"/>
+      <bind role="stop" component="green_bg"/>
+      <bind role="start" component="red_bg"/>
+    </link>
+  </body>
+</ncl>''';
+      final config = GingaConfig(
+        enablePlayground: true,
+        appSrc: 'video.ncl',
+        breakpoints: [7, 11],
+      );
+      final gingacc = GingaCC(
+        config: config,
+      )..setVirtualFiles({
+          'video.ncl': sampleNcl,
+        });
+
+      await tester.pumpWidget(Ginga(
+        gingacc: gingacc,
+      ));
+      await tester.pumpAndSettle();
+
+      final runBtn = find.byKey(const Key('monaco_run_button'));
+      expect(runBtn, findsOneWidget);
+      await tester.tap(runBtn);
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final nclFinder = find.byType(NclWidget);
+      expect(nclFinder, findsOneWidget);
+      final nclState = tester.state<NclWidgetState>(nclFinder);
+
+      final pState = tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
+
+      nclState.tick(2500);
+      await tester.pump();
+
+      expect(pState.isPaused, isTrue);
+      expect(pState.currentDebugLine, equals(7));
+
+      final continueBtn = find.byKey(const Key('monaco_debug_continue_button'));
+      expect(continueBtn, findsOneWidget);
+      await tester.tap(continueBtn);
+      await tester.pump();
+      expect(pState.isPaused, isFalse);
+
+      nclState.tick(2000);
+      await tester.pump();
+
+      expect(pState.isPaused, isTrue);
+      expect(pState.currentDebugLine, equals(11));
+
+      await tester.tap(continueBtn);
+      await tester.pump();
+      expect(pState.isPaused, isFalse);
+      expect(nclState.isPaused, isFalse);
+
+      nclState.tick(2500);
+      await tester.pump();
+      expect(pState.isPaused, isFalse);
+      expect(nclState.isPaused, isFalse);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets(
+        'Ginga keeps running and does not exit when ESC is pressed in playground mode',
+        (WidgetTester tester) async {
+      final gingacc = GingaCC(
+        config: GingaConfig(appSrc: 'examples/video.ncl', enablePlayground: true),
+      )..setVirtualFiles({
+          'examples/video.ncl': '''<ncl>
+  <body>
+    <port id="init" component="video"/>
+    <media id="video" src="video.mp4"/>
+  </body>
+</ncl>''',
+        });
+
+      await tester.pumpWidget(Ginga(
+        gingacc: gingacc,
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(PlaygroundEditor), findsOneWidget);
+      expect(find.byType(Ginga), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+    });
   });
 }
+

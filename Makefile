@@ -2,7 +2,7 @@ MAKEFLAGS += -s --no-print-directory
 .DEFAULT_GOAL := help
 $(if $(filter Windows_NT,$(OS)),$(if $(shell where printf 2>nul),,$(error coreutils is not installed. Please run: winget install coreutils)))
 
-.PHONY: help deps release release-web release-windows release-android release-linux release-linux-deb release-macos test tests doc release-publish clean run-example check-app serve serve-examples integration_test test-linux-distros format
+.PHONY: help deps release release-web build-web release-windows release-android release-linux release-linux-deb release-macos test tests doc release-publish clean clean-web run-example check-app serve serve-node deploy-folder integration_test test-linux-distros 	playground run-playground
 
 BASE_HREF ?= /
 
@@ -31,13 +31,15 @@ help:
 		"  release-android                              Build release application for Android" \
 		"  release-{windows,linux,macos}                Build release application for target desktop platform" \
 		"  release-linux-deb                            Build release Debian package inside Ubuntu 22.04 Docker container" \
-		"  serve                                        Serve web playground application" \
+		"  serve                                        Serve web player and playground" \
+		"  serve-node                                   Serve Node express embedded player and playground" \
 		"  test                                         Run tests for Flutter workspace" \
 		"  test-linux-distros                           Test Linux release across Ubuntu 22.04, 24.04, 26.04" \
 		"  doc                                          Generate Dart documentation" \
 		"  release-publish                              Publish release to GitHub Releases via gh" \
 		"  clean                                        Clean build artifacts" \
 		"  run-example                                  Run one application at examples/ (e.g. make run-example app=video.ncl)" \
+		"  run-playground                               Start playground with interactive editor (e.g. make run-playground app=video.ncl)" \
 		"  integration_test                             Run integration tests"
 
 .dart_tool/package_config.json: pubspec.yaml $(wildcard packages/*/pubspec.yaml)
@@ -72,11 +74,11 @@ release-macos: deps
 	flutter build macos --no-pub --release
 
 test:
-	flutter test test packages/gingacc/test packages/ncldoc/test packages/nclui/test packages/plugins/test
+	flutter test test packages/gingacc/test packages/ncldoc/test packages/nclui/test packages/plugins/test packages/playground/test --no-pub
 
 format:
 	dart format .
-
+	
 integration_test:
 	flutter test --no-pub integration_test $(if $(d),-d $(d))
 

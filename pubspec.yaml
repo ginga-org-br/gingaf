@@ -12,6 +12,7 @@ workspace:
   - packages/nclui
   - packages/gingacc
   - packages/plugins
+  - packages/playground
 
 dependencies:
   flutter:
@@ -33,6 +34,7 @@ dependencies:
   gingacc:
   plugins:
   get_it: ^9.3.0
+  playground:
 
 dev_dependencies:
   flutter_test:

@@ -58,7 +58,9 @@ class GingaConfig {
   final String mainAvSrc;
   final bool startWithCCWS;
   final bool startWithMainAv;
+  final bool enablePlayground;
   final Bounds graphicPlaneBounds;
+  final List<int> breakpoints;
   final Map<String, String> systemVariables;
   final Users users;
 
@@ -66,6 +68,7 @@ class GingaConfig {
     this.appSrc,
     this.startWithCCWS = false,
     this.startWithMainAv = false,
+    this.enablePlayground = false,
     this.mainAvSrc = defaultMainAvSrc,
     this.graphicPlaneBounds = const (
       left: 0.0,
@@ -73,13 +76,39 @@ class GingaConfig {
       width: 720.0,
       height: 480.0,
     ),
+    List<int>? breakpoints,
     Map<String, String>? systemVariables,
     Users? users,
-  })  : systemVariables = {
+  })  : breakpoints = breakpoints != null ? List<int>.from(breakpoints) : <int>[],
+        systemVariables = {
           'system.language': 'por',
           ...?systemVariables,
         },
         users = users ?? Users();
+
+  GingaConfig copyWith({
+    String? appSrc,
+    String? mainAvSrc,
+    bool? startWithCCWS,
+    bool? startWithMainAv,
+    bool? enablePlayground,
+    Bounds? graphicPlaneBounds,
+    List<int>? breakpoints,
+    Map<String, String>? systemVariables,
+    Users? users,
+  }) {
+    return GingaConfig(
+      appSrc: appSrc ?? this.appSrc,
+      mainAvSrc: mainAvSrc ?? this.mainAvSrc,
+      startWithCCWS: startWithCCWS ?? this.startWithCCWS,
+      startWithMainAv: startWithMainAv ?? this.startWithMainAv,
+      enablePlayground: enablePlayground ?? this.enablePlayground,
+      graphicPlaneBounds: graphicPlaneBounds ?? this.graphicPlaneBounds,
+      breakpoints: breakpoints ?? this.breakpoints,
+      systemVariables: systemVariables ?? this.systemVariables,
+      users: users ?? this.users,
+    );
+  }
 
   Map<String, String> getGroup(String group) {
     final prefix = group.endsWith('.') ? group : '$group.';
@@ -199,6 +228,7 @@ class GingaConfig {
       'mainAvSrc',
       'startWithCCWS',
       'startWithMainAv',
+      'enablePlayground',
       'graphicPlaneBounds',
       'graphicPlaneWidth',
       'graphicPlaneHeight',
@@ -250,12 +280,32 @@ class GingaConfig {
       planeBounds = (left: 0.0, top: 0.0, width: w, height: h);
     }
 
+    final rawBps = decoded['breakpoints'];
+    final List<int> breakpoints = [];
+    if (rawBps is List) {
+      for (final item in rawBps) {
+        if (item is int) {
+          breakpoints.add(item);
+        } else if (item is String) {
+          final parsed = int.tryParse(item.trim());
+          if (parsed != null) breakpoints.add(parsed);
+        }
+      }
+    } else if (rawBps is String && rawBps.trim().isNotEmpty) {
+      for (final part in rawBps.split(',')) {
+        final parsed = int.tryParse(part.trim());
+        if (parsed != null) breakpoints.add(parsed);
+      }
+    }
+
     return GingaConfig(
       appSrc: decoded['appSrc'] as String?,
       mainAvSrc: decoded['mainAvSrc'] as String? ?? defaultMainAvSrc,
       startWithCCWS: decoded['startWithCCWS'] as bool? ?? false,
       startWithMainAv: decoded['startWithMainAv'] as bool? ?? false,
+      enablePlayground: decoded['enablePlayground'] as bool? ?? false,
       graphicPlaneBounds: planeBounds,
+      breakpoints: breakpoints,
       systemVariables: envVars,
       users: users,
     );
@@ -269,6 +319,8 @@ class GingaConfig {
         'mainAvSrc: $mainAvSrc',
       'startWithCCWS: $startWithCCWS',
       'startWithMainAv: $startWithMainAv',
+      if (enablePlayground) 'enablePlayground: true',
+      if (breakpoints.isNotEmpty) 'breakpoints: $breakpoints',
       'systemVariables: $systemVariables',
       if (users.isNotEmpty) 'users: $users',
     ];

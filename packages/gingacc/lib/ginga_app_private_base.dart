@@ -135,13 +135,15 @@ Future<String?> loadPathContent(
   }
 
   if (isHttpUri(uri)) {
-    return await _fetchHttp(uri);
+    final res = await _fetchHttp(uri);
+    if (res != null) return res;
   }
 
   if (_isWeb && !uri.hasScheme) {
     final webUri = Uri.base.resolveUri(uri);
     if (isHttpUri(webUri)) {
-      return await _fetchHttp(webUri);
+      final res = await _fetchHttp(webUri);
+      if (res != null) return res;
     }
   }
 

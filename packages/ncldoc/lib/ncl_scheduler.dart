@@ -12,12 +12,21 @@ class NclScheduler {
   final NclDocument document;
   int virtualClock = 0;
   bool isPlaying = false;
+  bool isPaused = false;
   final List<NclAction> _actionStack = [];
   final List<({NclAction action, int executeTime})> _delayedNclActions = [];
   final List<NclAction> uiQueue = [];
   final List<Node> _timedNodes = [];
 
   NclScheduler(this.document);
+
+  void pause() {
+    isPaused = true;
+  }
+
+  void resume() {
+    isPaused = false;
+  }
 
   void stackKeyAction(String type, String keyCode) {
     final targetNode = (document.currentFocusNodeId != null
@@ -90,7 +99,7 @@ class NclScheduler {
         final res = _singleTick(inc);
         changedMedia.addAll(res);
         remaining -= inc;
-        if (!isPlaying) break;
+        if (!isPlaying || isPaused) break;
       }
       return changedMedia;
     }
@@ -98,6 +107,9 @@ class NclScheduler {
   }
 
   Set<Media> _singleTick([int incrementMs = 0]) {
+    if (isPaused) {
+      return const <Media>{};
+    }
     if (uiQueue.isNotEmpty) {
       _actionStack.addAll(uiQueue);
       uiQueue.clear();
@@ -254,6 +266,66 @@ class NclScheduler {
         _triggerLinks(nodeId, newState, interfaceId);
         changedNodes.add(actionItem.event.targetNode);
 
+        if (actionItem.event.targetNode is Media) {
+          final media = actionItem.event.targetNode as Media;
+          final isStart = (actionItem.action == NclActionType.start ||
+                  newState == NclStateType.occurring) &&
+              prevState != NclStateType.occurring;
+          final isStop = (actionItem.action == NclActionType.stop ||
+                  newState == NclStateType.sleeping) &&
+              prevState != NclStateType.sleeping;
+
+          if (isStart || isStop) {
+            bool bp = false;
+            int bpLine = 0;
+            if (interfaceId != null) {
+              final area = media
+                  .getAreas()
+                  .where((a) => a.id == interfaceId)
+                  .firstOrNull;
+              if (area != null &&
+                  area.line != null &&
+                  document.breakpointLines.contains(area.line)) {
+                bp = true;
+                bpLine = area.line!;
+              }
+            } else {
+              bp = document.hasBreakpointForMedia(media);
+              bpLine = media.line ?? 0;
+            }
+            if (bp) {
+              if (bpLine == 0 || !document.breakpointLines.contains(bpLine)) {
+                for (final line in document.breakpointLines) {
+                  if (document.findRelatedMediaIds(line).contains(media.id)) {
+                    bpLine = line;
+                    break;
+                  }
+                }
+              }
+              if (bpLine == 0) {
+                bpLine = media.line ?? 0;
+              }
+              if (isStop &&
+                  media.line != null &&
+                  bpLine >= media.line! &&
+                  bpLine <= (media.endLine ?? media.line!)) {
+                bp = false;
+              }
+            }
+            if (bp) {
+              _logger.info(
+                '[Breakpoint] Pausing on media "${media.id}" ${isStart ? "start" : "stop"} at line $bpLine',
+              );
+              pause();
+              document.onBreakpointHit?.call(
+                media,
+                isStart ? NclActionType.start : NclActionType.stop,
+                bpLine,
+              );
+            }
+          }
+        }
+
         if (actionItem.event.isMain) {
           if (newState == NclStateType.occurring) {
             actionItem.event.targetNode.time = 0;
@@ -348,11 +420,15 @@ class NclScheduler {
           }
         }
       }
+      if (isPaused) {
+        break;
+      }
     }
     return changedNodes;
   }
 
   void _checkIsPlaying() {
+    if (isPaused) return;
     if (_actionStack.isEmpty &&
         _delayedNclActions.isEmpty &&
         document.body.getMainState() == NclStateType.sleeping) {

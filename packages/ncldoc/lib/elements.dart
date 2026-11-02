@@ -9,8 +9,18 @@ class Element {
   final List<Element> children = [];
   Element? parent;
   String? xmlTagName;
-  Element({Map<String, String> rawAttributes = const {}, this.xmlTagName})
-      : rawAttributes = Map<String, String>.from(rawAttributes);
+  int? line;
+  int? endLine;
+
+  int? get startLine => line;
+  set startLine(int? val) => line = val;
+
+  Element({
+    Map<String, String> rawAttributes = const {},
+    this.xmlTagName,
+    this.line,
+    this.endLine,
+  }) : rawAttributes = Map<String, String>.from(rawAttributes);
 
   Iterable<Element> get descendants sync* {
     for (final child in children) {

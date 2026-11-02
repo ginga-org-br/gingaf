@@ -47,9 +47,35 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
 
   project.set_dart_entrypoint_arguments(std::move(command_line_arguments));
 
+  bool is_playground = false;
+  const char* pg_env = std::getenv("GINGA_PLAYGROUND");
+  if (pg_env != nullptr && (_stricmp(pg_env, "true") == 0 || _stricmp(pg_env, "1") == 0 || _stricmp(pg_env, "yes") == 0)) {
+    is_playground = true;
+  }
+  const char* pg_env_lower = std::getenv("ginga_playground");
+  if (pg_env_lower != nullptr && (_stricmp(pg_env_lower, "true") == 0 || _stricmp(pg_env_lower, "1") == 0 || _stricmp(pg_env_lower, "yes") == 0)) {
+    is_playground = true;
+  }
+  for (const auto& arg : command_line_arguments) {
+    if (arg == "--playground" || arg == "-p" ||
+        arg.rfind("--playground=", 0) == 0 || arg.rfind("-p=", 0) == 0 ||
+        arg.find("GINGA_PLAYGROUND=true") != std::string::npos) {
+      is_playground = true;
+      break;
+    }
+  }
+  if (flutter_engine_env != nullptr && std::string(flutter_engine_env).find("GINGA_PLAYGROUND=true") != std::string::npos) {
+    is_playground = true;
+  }
+
+  int screen_w = GetSystemMetrics(SM_CXSCREEN);
+  int screen_h = GetSystemMetrics(SM_CYSCREEN);
+  int initial_w = is_playground ? ((screen_w >= 1920) ? 1920 : (screen_w - 60)) : (screen_w < 1280 ? screen_w - 60 : 1280);
+  int initial_h = is_playground ? ((screen_h >= 1080) ? 800 : (screen_h - 100)) : (screen_h < 720 ? screen_h - 100 : 720);
+
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
-  Win32Window::Size size(1280, 720);
+  Win32Window::Size size(initial_w, initial_h);
   if (!window.Create(L"gingaf", origin, size)) {
     return EXIT_FAILURE;
   }

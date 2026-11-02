@@ -89,6 +89,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(VideoPlayer), findsOneWidget);
+    final fittedBoxFinder = find.byType(FittedBox);
+    expect(fittedBoxFinder, findsOneWidget);
+    final FittedBox fittedBox = tester.widget(fittedBoxFinder);
+    expect(fittedBox.fit, equals(BoxFit.fill));
   });
 
   testWidgets('NCLMediaState visual attributes and properties mapping tests',

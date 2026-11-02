@@ -33,12 +33,71 @@ class NclDocument extends GingaApp {
 
   Uri? get baseUri => docUri;
 
+  NclParser? parser;
   late final NclScheduler scheduler = NclScheduler(this);
   Users get users => gingacc.config.users;
   GingaConfig get config => gingacc.config;
   final Map<String, UserProfileQuery> _loadedProfiles = {};
   Map<String, UserProfileQuery> get loadedProfiles => _loadedProfiles;
   late final Map<String, String> _systemVariables;
+
+  final Set<int> _breakpointLines = {};
+  final Set<String> _breakpointMediaIds = {};
+
+  Set<int> get breakpointLines => Set.unmodifiable(_breakpointLines);
+  Set<String> get breakpointMediaIds => Set.unmodifiable(_breakpointMediaIds);
+
+  void Function(Media media, NclActionType action, int line)? onBreakpointHit;
+
+  Element? findElementByLine(int line) => parser?.findElementByLine(line);
+  Media? findRelatedMedia(int line) => parser?.findRelatedMedia(line, body);
+  List<Media> findRelatedMediaList(int line) =>
+      parser?.findRelatedMediaList(line, body) ?? const [];
+  Set<String> findRelatedMediaIds(int line) =>
+      parser?.findRelatedMediaIds(line, body) ?? const {};
+
+  void setBreakpoints(Iterable<int> lines) {
+    _breakpointLines.clear();
+    _breakpointMediaIds.clear();
+    for (final line in lines) {
+      _breakpointLines.add(line);
+      _breakpointMediaIds.addAll(findRelatedMediaIds(line));
+    }
+  }
+
+  void addBreakpoint(int line) {
+    _breakpointLines.add(line);
+    _breakpointMediaIds.addAll(findRelatedMediaIds(line));
+  }
+
+  void removeBreakpoint(int line) {
+    _breakpointLines.remove(line);
+    _breakpointMediaIds.clear();
+    for (final l in _breakpointLines) {
+      _breakpointMediaIds.addAll(findRelatedMediaIds(l));
+    }
+  }
+
+  void clearBreakpoints() {
+    _breakpointLines.clear();
+    _breakpointMediaIds.clear();
+  }
+
+  bool hasBreakpointForMedia(Media media) {
+    if (media.id != null && _breakpointMediaIds.contains(media.id)) {
+      return true;
+    }
+    if (media.line != null && _breakpointLines.contains(media.line)) {
+      return true;
+    }
+    return false;
+  }
+
+  bool get isPaused => scheduler.isPaused;
+  set isPaused(bool val) => scheduler.isPaused = val;
+
+  void pause() => scheduler.pause();
+  void resume() => scheduler.resume();
 
   String? getSystemVariable(String name) => _systemVariables[name];
 
@@ -187,10 +246,12 @@ class NclDocument extends GingaApp {
       docUri: resolvedUri,
       gingacc: cc,
     );
-    final (head, body) = NclParser(
+    final parser = NclParser(
       docUri: resolvedUri,
       document: doc,
-    ).parseString(xml);
+    );
+    final (head, body) = parser.parseString(xml);
+    doc.parser = parser;
     doc._init(head: head, body: body);
     return doc;
   }

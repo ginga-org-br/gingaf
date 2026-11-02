@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'av.dart';
+import 'ncl.dart';
 
 class MainAVWidget extends AVWidget {
   const MainAVWidget({
@@ -36,6 +36,30 @@ class MainAVWidgetState extends AVWidgetState<MainAVWidget> {
     _isPlaying = false;
     controller?.pause();
     if (mounted) setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final parentBounds = NclWidget.maybeOf(context)?.bounds;
+    if (parentBounds != null) {
+      return super.build(context);
+    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double planeWidth =
+            (constraints.hasBoundedWidth && constraints.maxWidth > 0)
+                ? constraints.maxWidth
+                : (MediaQuery.maybeOf(context)?.size.width ?? 720.0);
+        final double planeHeight =
+            (constraints.hasBoundedHeight && constraints.maxHeight > 0)
+                ? constraints.maxHeight
+                : (MediaQuery.maybeOf(context)?.size.height ?? 480.0);
+
+        rect = Rect.fromLTWH(0.0, 0.0, planeWidth, planeHeight);
+
+        return buildWidgetContent(context);
+      },
+    );
   }
 
   @override

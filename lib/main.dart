@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -25,8 +26,13 @@ void main(List<String> args) async {
 
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
-    debugPrint(
-        '[${record.loggerName}] ${record.level.name}: ${record.message}');
+    final msg =
+        '[${record.loggerName}] ${record.level.name}: ${record.message}';
+    if (kIsWeb) {
+      debugPrint(msg);
+    } else {
+      stdout.writeln(msg);
+    }
   });
 
   if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
@@ -62,8 +68,60 @@ void main(List<String> args) async {
     }
   }
   await gingacc.loadConfig(configSrc, appSrc);
+  if (parsedArgs.playground != null) {
+    gingacc.config = gingacc.config.copyWith(
+      enablePlayground: parsedArgs.playground!,
+    );
+  }
+  if (parsedArgs.breakpoints != null && parsedArgs.breakpoints!.isNotEmpty) {
+    for (final bp in parsedArgs.breakpoints!) {
+      if (!gingacc.config.breakpoints.contains(bp)) {
+        gingacc.config.breakpoints.add(bp);
+      }
+    }
+  }
 
   _logger.info(gingacc.config.toString());
 
-  runApp(Ginga(gingacc: gingacc));
+  final gingaKey = GlobalKey<GingaState>();
+
+  if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
+    try {
+      stdin.transform(utf8.decoder).transform(const LineSplitter()).listen(
+          (line) {
+        final trimmed = line.trim();
+        final lower = trimmed.toLowerCase();
+        if (lower == 'continue' || lower == 'c' || lower == 'resume') {
+          _logger.info('[Controller] Resuming presentation');
+          gingaKey.currentState?.resume();
+        } else if (lower == 'pause' || lower == 'p') {
+          _logger.info('[Controller] Pausing presentation');
+          gingaKey.currentState?.pause();
+        } else if (lower == 'forward' || lower == 'f') {
+          gingaKey.currentState?.forward2s();
+        } else if (lower == 'toggle' || lower == 't') {
+          gingaKey.currentState?.togglePause();
+        } else if (lower.startsWith('bp ') ||
+            lower.startsWith('breakpoints ')) {
+          final parts = trimmed.substring(trimmed.indexOf(' ') + 1);
+          final lines = parts
+              .split(RegExp(r'[\s,]+'))
+              .map((s) => int.tryParse(s.trim()))
+              .whereType<int>()
+              .toList();
+          _logger.info('[Controller] Updated breakpoints: $lines');
+          gingaKey.currentState?.setBreakpoints(lines);
+        }
+      }, onError: (e) {
+        _logger.warning('[Controller] stdin listener error: $e');
+      });
+    } catch (e) {
+      _logger.warning('[Controller] Could not listen to stdin: $e');
+    }
+  }
+
+  runApp(Ginga(
+    key: gingaKey,
+    gingacc: gingacc,
+  ));
 }

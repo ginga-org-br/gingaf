@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gingacc/ginga_config.dart';
 import 'package:gingaf/main.dart';
 
 void main() {
@@ -118,6 +119,78 @@ void main() {
       );
       expect(resultConfigFromCli.app, equals('env.ncl'));
       expect(resultConfigFromCli.config, equals('cli.json'));
+    });
+
+    test('parses --playground and -p flags', () {
+      final res1 = parseArgsCliAndEnv(['--playground'], {});
+      expect(res1.playground, isTrue);
+
+      final res2 = parseArgsCliAndEnv(['-p'], {});
+      expect(res2.playground, isTrue);
+
+      final res3 = parseArgsCliAndEnv(['--playground=true'], {});
+      expect(res3.playground, isTrue);
+
+      final res4 = parseArgsCliAndEnv(['-p=true'], {});
+      expect(res4.playground, isTrue);
+    });
+
+    test('parses --no-playground and false flag values', () {
+      final res1 = parseArgsCliAndEnv(['--no-playground'], {});
+      expect(res1.playground, isFalse);
+
+      final res2 = parseArgsCliAndEnv(['--playground=false'], {});
+      expect(res2.playground, isFalse);
+
+      final res3 = parseArgsCliAndEnv(['-p=false'], {});
+      expect(res3.playground, isFalse);
+    });
+
+    test('resolves playground flag from environment variables', () {
+      final res1 = parseArgsCliAndEnv([], {'GINGA_PLAYGROUND': 'true'});
+      expect(res1.playground, isTrue);
+
+      final res2 = parseArgsCliAndEnv([], {'ginga_playground': '1'});
+      expect(res2.playground, isTrue);
+
+      final res3 = parseArgsCliAndEnv([], {'GINGA_PLAYGROUND': 'false'});
+      expect(res3.playground, isFalse);
+    });
+
+    test('CLI playground argument takes precedence over environment variable', () {
+      final res1 = parseArgsCliAndEnv(
+        ['--playground'],
+        {'GINGA_PLAYGROUND': 'false'},
+      );
+      expect(res1.playground, isTrue);
+
+      final res2 = parseArgsCliAndEnv(
+        ['--no-playground'],
+        {'GINGA_PLAYGROUND': 'true'},
+      );
+      expect(res2.playground, isFalse);
+    });
+
+    test('running gingaf alone without playground flags keeps playground disabled', () {
+      final res = parseArgsCliAndEnv(['--app=examples/video.ncl'], {});
+      expect(res.app, equals('examples/video.ncl'));
+      expect(res.playground, isNull);
+
+      final config = GingaConfig();
+      expect(config.enablePlayground, isFalse);
+
+      if (res.playground != null) {
+        final updated = config.copyWith(enablePlayground: res.playground!);
+        expect(updated.enablePlayground, isFalse);
+      }
+    });
+
+    test('running with explicit --no-playground or GINGA_PLAYGROUND=false forces playground false', () {
+      final res1 = parseArgsCliAndEnv(['examples/video.ncl'], {'GINGA_PLAYGROUND': 'false'});
+      expect(res1.playground, isFalse);
+
+      final config = GingaConfig(enablePlayground: true).copyWith(enablePlayground: res1.playground);
+      expect(config.enablePlayground, isFalse);
     });
   });
 }

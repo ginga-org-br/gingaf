@@ -17,7 +17,77 @@ G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
 
 // Called when first Flutter frame received.
 static void first_frame_cb(MyApplication* self, FlView* view) {
-  gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
+  GtkWindow* window = GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(view)));
+  gtk_widget_show_all(GTK_WIDGET(window));
+  gtk_window_deiconify(window);
+  gtk_window_present(window);
+}
+
+static void get_screen_dimensions(GtkWindow* window, gint* out_w, gint* out_h) {
+  gint w = 1920;
+  gint h = 1080;
+  GdkDisplay* display = gtk_widget_get_display(GTK_WIDGET(window));
+  if (display != nullptr) {
+    GdkMonitor* monitor = gdk_display_get_primary_monitor(display);
+    if (monitor == nullptr && gdk_display_get_n_monitors(display) > 0) {
+      monitor = gdk_display_get_monitor(display, 0);
+    }
+    if (monitor != nullptr) {
+      GdkRectangle geom;
+      gdk_monitor_get_geometry(monitor, &geom);
+      if (geom.width > 0 && geom.height > 0) {
+        w = geom.width;
+        h = geom.height;
+      }
+    }
+  }
+  if (out_w) *out_w = w;
+  if (out_h) *out_h = h;
+}
+
+static void window_method_call_cb(FlMethodChannel* channel,
+                                  FlMethodCall* method_call,
+                                  gpointer user_data) {
+  GtkWindow* window = GTK_WINDOW(user_data);
+  const gchar* name = fl_method_call_get_name(method_call);
+
+  if (g_strcmp0(name, "resize") == 0) {
+    FlValue* args = fl_method_call_get_args(method_call);
+    if (args != nullptr && fl_value_get_type(args) == FL_VALUE_TYPE_MAP) {
+      FlValue* w_val = fl_value_lookup_string(args, "width");
+      FlValue* h_val = fl_value_lookup_string(args, "height");
+      if (w_val != nullptr && h_val != nullptr) {
+        int width = fl_value_get_int(w_val);
+        int height = fl_value_get_int(h_val);
+        gtk_window_resize(window, width, height);
+      }
+    }
+    g_autoptr(FlMethodResponse) response =
+        FL_METHOD_RESPONSE(fl_method_success_response_new(nullptr));
+    fl_method_call_respond(method_call, response, nullptr);
+  } else if (g_strcmp0(name, "autoResize") == 0) {
+    FlValue* args = fl_method_call_get_args(method_call);
+    gboolean playground = FALSE;
+    if (args != nullptr && fl_value_get_type(args) == FL_VALUE_TYPE_MAP) {
+      FlValue* pg_val = fl_value_lookup_string(args, "playground");
+      if (pg_val != nullptr) {
+        playground = fl_value_get_bool(pg_val);
+      }
+    }
+    gint sw = 1920;
+    gint sh = 1080;
+    get_screen_dimensions(window, &sw, &sh);
+    int w = playground ? ((sw >= 1920) ? 1920 : (sw - 60)) : (MIN(1280, sw - 60));
+    int h = playground ? ((sh >= 1080) ? 800 : (sh - 100)) : (MIN(720, sh - 100));
+    gtk_window_resize(window, w, h);
+    g_autoptr(FlMethodResponse) response =
+        FL_METHOD_RESPONSE(fl_method_success_response_new(nullptr));
+    fl_method_call_respond(method_call, response, nullptr);
+  } else {
+    g_autoptr(FlMethodResponse) response =
+        FL_METHOD_RESPONSE(fl_method_not_implemented_response_new());
+    fl_method_call_respond(method_call, response, nullptr);
+  }
 }
 
 // Implements GApplication::activate.
@@ -26,14 +96,10 @@ static void my_application_activate(GApplication* application) {
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
 
-  // Use a header bar when running in GNOME as this is the common style used
-  // by applications and is the setup most users will be using (e.g. Ubuntu
-  // desktop).
-  // If running on X and not using GNOME then just use a traditional title bar
-  // in case the window manager does more exotic layout, e.g. tiling.
-  // If running on Wayland assume the header bar will work (may need changing
-  // if future cases occur).
   gboolean use_header_bar = TRUE;
+  if (g_getenv("WSL_DISTRO_NAME") != nullptr || g_getenv("WSL_INTEROP") != nullptr) {
+    use_header_bar = FALSE;
+  }
 #ifdef GDK_WINDOWING_X11
   GdkScreen* screen = gtk_window_get_screen(window);
   if (GDK_IS_X11_SCREEN(screen)) {
@@ -53,7 +119,39 @@ static void my_application_activate(GApplication* application) {
     gtk_window_set_title(window, "gingaf");
   }
 
-  gtk_window_set_default_size(window, 1280, 720);
+  gboolean is_playground = FALSE;
+  const gchar* pg_env = g_getenv("GINGA_PLAYGROUND");
+  if (pg_env != nullptr && (g_strcmp0(pg_env, "true") == 0 || g_strcmp0(pg_env, "1") == 0 || g_strcmp0(pg_env, "yes") == 0)) {
+    is_playground = TRUE;
+  }
+  const gchar* pg_env_lower = g_getenv("ginga_playground");
+  if (pg_env_lower != nullptr && (g_strcmp0(pg_env_lower, "true") == 0 || g_strcmp0(pg_env_lower, "1") == 0 || g_strcmp0(pg_env_lower, "yes") == 0)) {
+    is_playground = TRUE;
+  }
+  if (self->dart_entrypoint_arguments != nullptr) {
+    for (gchar** arg = self->dart_entrypoint_arguments; *arg != nullptr; ++arg) {
+      if (g_strcmp0(*arg, "--playground") == 0 || g_strcmp0(*arg, "-p") == 0 ||
+          g_str_has_prefix(*arg, "--playground=") || g_str_has_prefix(*arg, "-p=") ||
+          strstr(*arg, "GINGA_PLAYGROUND=true") != nullptr) {
+        is_playground = TRUE;
+        break;
+      }
+    }
+  }
+  const gchar* flutter_engine_env = g_getenv("FLUTTER_ENGINE_SWITCHES");
+  if (flutter_engine_env != nullptr && strstr(flutter_engine_env, "GINGA_PLAYGROUND=true") != nullptr) {
+    is_playground = TRUE;
+  }
+
+  gint sw = 1920;
+  gint sh = 1080;
+  get_screen_dimensions(window, &sw, &sh);
+  int default_w = is_playground ? ((sw >= 1920) ? 1920 : (sw - 60)) : (MIN(1280, sw - 60));
+  int default_h = is_playground ? ((sh >= 1080) ? 800 : (sh - 100)) : (MIN(720, sh - 100));
+
+  gtk_window_set_default_size(window, default_w, default_h);
+  gtk_window_set_position(window, GTK_WIN_POS_CENTER);
+  gtk_window_set_decorated(window, TRUE);
 
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(
@@ -61,22 +159,28 @@ static void my_application_activate(GApplication* application) {
 
   FlView* view = fl_view_new(project);
   GdkRGBA background_color;
-  // Background defaults to black, override it here if necessary, e.g. #00000000
-  // for transparent.
   gdk_rgba_parse(&background_color, "#000000");
   fl_view_set_background_color(view, &background_color);
   gtk_widget_show(GTK_WIDGET(view));
   gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(view));
 
-  // Show the window when Flutter renders.
-  // Requires the view to be realized so we can start rendering.
   g_signal_connect_swapped(view, "first-frame", G_CALLBACK(first_frame_cb),
                            self);
   gtk_widget_realize(GTK_WIDGET(view));
 
   fl_register_plugins(FL_PLUGIN_REGISTRY(view));
 
+  FlBinaryMessenger* messenger =
+      fl_engine_get_binary_messenger(fl_view_get_engine(view));
+  g_autoptr(FlStandardMethodCodec) window_codec = fl_standard_method_codec_new();
+  FlMethodChannel* window_channel = fl_method_channel_new(
+      messenger, "gingaf/window", FL_METHOD_CODEC(window_codec));
+  fl_method_channel_set_method_call_handler(window_channel, window_method_call_cb,
+                                            window, nullptr);
+
   gtk_widget_grab_focus(GTK_WIDGET(view));
+  gtk_widget_show_all(GTK_WIDGET(window));
+  gtk_window_present(window);
 }
 
 // Implements GApplication::local_command_line.

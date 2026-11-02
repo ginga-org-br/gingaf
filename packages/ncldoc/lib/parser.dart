@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 import 'package:xml/xml.dart';
+import 'package:xml/xml_events.dart';
 
 import 'mimetype.dart';
 import 'ncl_document.dart';
@@ -10,6 +11,8 @@ class NclParser {
   final Uri? docUri;
   final NclDocument? document;
   Uri? get baseUri => docUri?.resolve('.');
+  final List<Element> allElements = [];
+  Map<XmlElement, ({int startLine, int endLine})> _nodeLineMap = {};
 
   NclParser({
     this.docUri,
@@ -20,8 +23,10 @@ class NclParser {
     if (xmlString.trim().isEmpty) {
       throw ArgumentError('empty src');
     }
-    final document = XmlDocument.parse(xmlString);
-    final root = document.rootElement;
+    allElements.clear();
+    final doc = XmlDocument.parse(xmlString);
+    final root = doc.rootElement;
+    _nodeLineMap = _buildNodeLineMap(xmlString, root);
 
     try {
       for (final plugin in GetIt.instance.getAll<NclParserPlugin>()) {
@@ -55,6 +60,154 @@ class NclParser {
     _resolveMediaProperties(head, body);
 
     return (head, body);
+  }
+
+  Map<XmlElement, ({int startLine, int endLine})> _buildNodeLineMap(
+    String xmlString,
+    XmlElement root,
+  ) {
+    final lineStarts = <int>[0];
+    for (var i = 0; i < xmlString.length; i++) {
+      if (xmlString.codeUnitAt(i) == 10) {
+        lineStarts.add(i + 1);
+      }
+    }
+
+    int getLineFromOffset(int offset) {
+      int low = 0;
+      int high = lineStarts.length - 1;
+      while (low <= high) {
+        final mid = (low + high) ~/ 2;
+        if (lineStarts[mid] <= offset) {
+          low = mid + 1;
+        } else {
+          high = mid - 1;
+        }
+      }
+      return high + 1;
+    }
+
+    final map = <XmlElement, ({int startLine, int endLine})>{};
+    try {
+      final events = parseEvents(xmlString, withLocation: true);
+      final allElements = [root, ...root.descendantElements];
+      final stack = <({XmlElement element, int startLine})>[];
+      int elemIdx = 0;
+
+      for (final event in events) {
+        if (event is XmlStartElementEvent) {
+          if (elemIdx < allElements.length) {
+            final elem = allElements[elemIdx++];
+            final startOffset = event.start ?? 0;
+            final startLine = getLineFromOffset(startOffset);
+            if (event.isSelfClosing) {
+              final stopOffset = event.stop ?? startOffset;
+              final endLine = getLineFromOffset(stopOffset);
+              map[elem] = (startLine: startLine, endLine: endLine);
+            } else {
+              stack.add((element: elem, startLine: startLine));
+            }
+          }
+        } else if (event is XmlEndElementEvent) {
+          if (stack.isNotEmpty) {
+            final entry = stack.removeLast();
+            final stopOffset = event.stop ?? event.start ?? 0;
+            final endLine = getLineFromOffset(stopOffset);
+            map[entry.element] = (startLine: entry.startLine, endLine: endLine);
+          }
+        }
+      }
+      while (stack.isNotEmpty) {
+        final entry = stack.removeLast();
+        map[entry.element] =
+            (startLine: entry.startLine, endLine: entry.startLine);
+      }
+    } catch (_) {}
+
+    return map;
+  }
+
+  Element? findElementByLine(int line) {
+    Element? best;
+    int bestSpan = 999999999;
+    for (final el in allElements) {
+      final start = el.line;
+      final end = el.endLine ?? start;
+      if (start != null && end != null && line >= start && line <= end) {
+        final span = end - start;
+        if (span < bestSpan) {
+          bestSpan = span;
+          best = el;
+        }
+      }
+    }
+    return best;
+  }
+
+  List<Media> findRelatedMediaList(int line, [Body? body]) {
+    final effectiveBody = body ?? document?.body;
+    final el = findElementByLine(line);
+    if (el == null) return const [];
+
+    final result = <Media>[];
+
+    void addMediaById(String? id) {
+      if (id == null) return;
+      if (effectiveBody != null) {
+        final node = effectiveBody.descendants
+            .whereType<Node>()
+            .where((n) => n.id == id)
+            .firstOrNull;
+        if (node is Media && !result.contains(node)) {
+          result.add(node);
+          return;
+        }
+      }
+      final match = allElements
+          .whereType<Media>()
+          .where((m) => m.id == id)
+          .firstOrNull;
+      if (match != null && !result.contains(match)) {
+        result.add(match);
+      }
+    }
+
+    if (el is Media) {
+      result.add(el);
+    } else if (el is Bind) {
+      addMediaById(el.component);
+    } else if (el is Port) {
+      addMediaById(el.component);
+    } else if (el is Link) {
+    } else if (el.parent is Media) {
+      result.add(el.parent as Media);
+    } else {
+      Element? curr = el.parent;
+      while (curr != null) {
+        if (curr is Media) {
+          result.add(curr);
+          break;
+        }
+        curr = curr.parent;
+      }
+      if (result.isEmpty && el.id != null) {
+        addMediaById(el.id);
+      }
+    }
+
+    return result;
+  }
+
+  Media? findRelatedMedia(int line, [Body? body]) {
+    final list = findRelatedMediaList(line, body);
+    return list.firstOrNull;
+  }
+
+  Set<String> findRelatedMediaIds(int line, [Body? body]) {
+    return findRelatedMediaList(line, body)
+        .map((m) => m.id)
+        .whereType<String>()
+        .toSet();
   }
 
   static int? parseDurStr(String? durStr) {
@@ -185,6 +338,12 @@ class NclParser {
         return null;
     }
     element.xmlTagName = node.name.local;
+    final lineRange = _nodeLineMap[node];
+    if (lineRange != null) {
+      element.line = lineRange.startLine;
+      element.endLine = lineRange.endLine;
+    }
+    allElements.add(element);
 
     for (var childNode in node.children.whereType<XmlElement>()) {
       final childElement = _parseNode(childNode);

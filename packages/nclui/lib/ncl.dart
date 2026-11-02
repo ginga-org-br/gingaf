@@ -32,6 +32,8 @@ class NclWidget extends BaseWidget {
   final GlobalKey<MainAVWidgetState>? mainAvKey;
   final VoidCallback? onRequestMainAv;
   final Bounds? bounds;
+  final void Function(Media media, NclActionType action, int line)?
+      onBreakpointHit;
 
   const NclWidget({
     super.key,
@@ -42,6 +44,7 @@ class NclWidget extends BaseWidget {
     this.mainAvKey,
     this.onRequestMainAv,
     this.bounds,
+    this.onBreakpointHit,
   });
 
   static NclWidgetState of(BuildContext context) {
@@ -183,6 +186,7 @@ class NclWidgetState extends MediaState<NclWidget> {
   void pause() {
     if (_isPaused) return;
     _isPaused = true;
+    nclDocument?.pause();
     widget.mainAvKey?.currentState?.controller?.pause();
     for (final key in _mediaStateKeys.values) {
       key.currentState?.pause();
@@ -194,8 +198,8 @@ class NclWidgetState extends MediaState<NclWidget> {
 
   @override
   void resume() {
-    if (!_isPaused) return;
     _isPaused = false;
+    nclDocument?.resume();
     widget.mainAvKey?.currentState?.controller?.play();
     for (final key in _mediaStateKeys.values) {
       key.currentState?.resume();
@@ -203,6 +207,10 @@ class NclWidgetState extends MediaState<NclWidget> {
     if (mounted) {
       setState(() {});
     }
+  }
+
+  void setBreakpoints(Iterable<int> breakpoints) {
+    nclDocument?.setBreakpoints(breakpoints);
   }
 
   void togglePause() {
@@ -236,9 +244,19 @@ class NclWidgetState extends MediaState<NclWidget> {
       }
     }
 
+    final wasDocPaused = nclDocument?.isPaused ?? false;
+    if (wasDocPaused) {
+      nclDocument?.resume();
+    }
+
     tick(duration.inMilliseconds);
 
-    if (nclDocument != null && !nclDocument!.isPlaying) {
+    if (nclDocument != null && !nclDocument!.isPaused) {
+      nclDocument!.pause();
+    }
+    _isPaused = true;
+
+    if (nclDocument != null && !nclDocument!.isPlaying && !nclDocument!.isPaused && !_isPaused) {
       _ticker?.cancel();
       _ticker = null;
       nclDocument = null;
@@ -372,7 +390,17 @@ class NclWidgetState extends MediaState<NclWidget> {
           tick(0);
         }
       };
+      doc.onBreakpointHit = (media, action, line) {
+        pause();
+        widget.onBreakpointHit?.call(media, action, line);
+      };
+      if (gingacc.config.breakpoints.isNotEmpty) {
+        doc.setBreakpoints(gingacc.config.breakpoints);
+      }
       doc.start();
+      if (doc.isPaused) {
+        pause();
+      }
       _syncActiveMedia(doc.getActiveMedia());
 
       if (mounted) {
@@ -397,7 +425,7 @@ class NclWidgetState extends MediaState<NclWidget> {
             lastTick = now;
             tick(deltaMs);
 
-            if (nclDocument != null && !nclDocument!.isPlaying) {
+            if (nclDocument != null && !nclDocument!.isPlaying && !nclDocument!.isPaused && !_isPaused) {
               _ticker?.cancel();
               _ticker = null;
               nclDocument = null;
@@ -492,6 +520,32 @@ class NclWidgetState extends MediaState<NclWidget> {
       _logger.warning("Error stopping doc in dispose: $e");
     }
     super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final parentBounds = NclWidget.maybeOf(context)?.bounds;
+    if (parentBounds != null) {
+      return super.build(context);
+    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double planeWidth =
+            (constraints.hasBoundedWidth && constraints.maxWidth > 0)
+                ? constraints.maxWidth
+                : (MediaQuery.maybeOf(context)?.size.width ??
+                    widget.gingacc.config.graphicPlaneBounds.width);
+        final double planeHeight =
+            (constraints.hasBoundedHeight && constraints.maxHeight > 0)
+                ? constraints.maxHeight
+                : (MediaQuery.maybeOf(context)?.size.height ??
+                    widget.gingacc.config.graphicPlaneBounds.height);
+
+        rect = Rect.fromLTWH(0.0, 0.0, planeWidth, planeHeight);
+
+        return buildWidgetContent(context);
+      },
+    );
   }
 
   @override
