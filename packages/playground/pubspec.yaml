@@ -1,0 +1,28 @@
+name: playground
+description: "Language Server Protocol (LSP), Debug Adapter Protocol (DAP), and Monaco Playground editor implementation for Ginga NCL."
+version: 0.1.0
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  logging: ^1.3.0
+  xml: ^7.0.1
+  stream_channel: ^2.1.2
+  ncldoc:
+  gingacc:
+  flutter_svg: ^2.3.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  test: ^1.24.0
+  lints: ^6.0.0
+
+flutter:
+  assets:
+    - assets/
