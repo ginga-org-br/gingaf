@@ -15,6 +15,18 @@ fi
 
 export PATH="/snap/bin:$PATH"
 
+REAL_DOCKER="$(command -v docker || true)"
+if [ -n "$REAL_DOCKER" ] && ! "$REAL_DOCKER" info >/dev/null 2>&1; then
+  if getent group docker >/dev/null 2>&1; then
+    sudo usermod -aG docker "${SUDO_USER:-$USER}"
+  fi
+  DOCKER_SHIM_DIR="$(mktemp -d)"
+  trap 'rm -rf "$DOCKER_SHIM_DIR"' EXIT
+  printf '#!/usr/bin/env bash\nexec sudo -E "%s" "$@"\n' "$REAL_DOCKER" > "$DOCKER_SHIM_DIR/docker"
+  chmod +x "$DOCKER_SHIM_DIR/docker"
+  export PATH="$DOCKER_SHIM_DIR:$PATH"
+fi
+
 release_tv30() {
   make -C "$ROOT_DIR" release-web
   mkdir -p "$TV30_DIR/bcast/public/gingaf-web"
