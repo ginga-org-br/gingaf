@@ -117,6 +117,14 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
           content = gingacc.ccws.injectCcwsFetch(content);
           await _controller!.loadHtmlString(content);
         }
+      } else if (kIsWeb) {
+        final content = await pb.loadContent(widget.src, base);
+        if (content != null && content.isNotEmpty) {
+          await _controller!
+              .loadHtmlString(gingacc.ccws.injectCcwsFetch(content));
+        } else if (uri.isScheme('http') || uri.isScheme('https')) {
+          await _controller!.loadRequest(uri);
+        }
       } else if (uri.isScheme('http') || uri.isScheme('https')) {
         await _controller!.loadRequest(uri);
       } else {

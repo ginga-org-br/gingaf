@@ -49,6 +49,7 @@ class Ncl360Hotspot {
   final String? targetComponent;
   final String? mediaSrc;
   final String? mediaType;
+  final String? textContent;
   bool inView;
 
   Ncl360Hotspot({
@@ -63,6 +64,7 @@ class Ncl360Hotspot {
     this.targetComponent,
     this.mediaSrc,
     this.mediaType,
+    this.textContent,
     this.inView = false,
   });
 }
@@ -472,25 +474,32 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
       final fileName = path
           .basename(parsedUri.path.isNotEmpty ? parsedUri.path : widget.src);
 
-      final candidates = [
-        widget.src,
-        if (parsedUri.isScheme('file')) parsedUri.toFilePath(),
-        path.join('examples', widget.src),
-        path.join(Directory.current.path, 'examples', widget.src),
-        fileName,
-        path.join('examples', 'video360', fileName),
-        path.join('examples', 'video360', widget.src),
-        path.join(Directory.current.path, fileName),
-        path.join(Directory.current.path, 'examples', 'video360', fileName),
-      ];
+      if (!kIsWeb) {
+        final candidates = [
+          widget.src,
+          if (parsedUri.isScheme('file')) parsedUri.toFilePath(),
+          path.join('examples', widget.src),
+          path.join(Directory.current.path, 'examples', widget.src),
+          fileName,
+          path.join('examples', 'video360', fileName),
+          path.join('examples', 'video360', widget.src),
+          path.join(Directory.current.path, fileName),
+          path.join(Directory.current.path, 'examples', 'video360', fileName),
+        ];
 
-      for (final cand in candidates) {
-        final f = File(cand);
-        if (f.existsSync()) {
-          xmlText = await f.readAsString();
-          effectiveDocPath = f.path;
-          break;
+        for (final cand in candidates) {
+          final f = File(cand);
+          if (f.existsSync()) {
+            xmlText = await f.readAsString();
+            effectiveDocPath = f.path;
+            break;
+          }
         }
+      }
+
+      xmlText ??= await widget.privateBase.loadContent(widget.src);
+      if (kIsWeb && parsedUri.hasScheme) {
+        effectiveDocPath = parsedUri.toString();
       }
 
       if (xmlText == null &&
@@ -591,6 +600,15 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
           mediaBg ??= reg?['background'] as String?;
           final bgColor = _parseColor(mediaBg);
 
+          String? preloadedText;
+          if (resolvedSrc.toLowerCase().endsWith('.txt')) {
+            preloadedText =
+                (await widget.privateBase.loadContent(resolvedSrc))?.trim() ??
+                    (await widget.privateBase
+                            .loadContent(mediaSrc, effectiveDocPath))
+                        ?.trim();
+          }
+
           _hotspots.add(
             Ncl360Hotspot(
               id: mediaId,
@@ -603,6 +621,7 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
               label: labelVal,
               mediaSrc: resolvedSrc,
               backgroundColor: bgColor,
+              textContent: preloadedText,
             ),
           );
         }
@@ -653,6 +672,13 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
     }
 
     final fileName = path.basename(Uri.tryParse(rawSrc)?.path ?? rawSrc);
+    if (kIsWeb) {
+      if (fileName == 'pano.mp4') {
+        return 'https://threejs.org/examples/textures/pano.mp4';
+      }
+      return widget.privateBase.resolveUri(rawSrc, '$docDir/').toString();
+    }
+
     final ext = path.extension(fileName);
     final baseWithoutExt = path.withoutExtension(fileName);
     final equirectFileName = '$baseWithoutExt.equirect$ext';
@@ -702,7 +728,8 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
     final isRemoteUrl =
         videoSrc.startsWith('http://') || videoSrc.startsWith('https://');
 
-    if (!isRemoteUrl &&
+    if (!kIsWeb &&
+        !isRemoteUrl &&
         _projection != Ncl360Projection.eac &&
         !videoSrc.contains('.equirect.')) {
       final dir = path.dirname(videoSrc);
@@ -724,9 +751,8 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
       final parsedUri = widget.privateBase.resolveUri(videoSrc);
       final VideoPlayerController controller;
 
-      final File directFile = File(videoSrc);
-      if (!isRemoteUrl && directFile.existsSync()) {
-        controller = VideoPlayerController.file(directFile.absolute);
+      if (!kIsWeb && !isRemoteUrl && File(videoSrc).existsSync()) {
+        controller = VideoPlayerController.file(File(videoSrc).absolute);
       } else if (kIsWeb ||
           isRemoteUrl ||
           (parsedUri.hasScheme && parsedUri.scheme != 'file')) {
@@ -742,7 +768,7 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
       _videoController = controller;
       await controller.initialize();
       await controller.setLooping(true);
-      await controller.setVolume(soundLevel);
+      await controller.setVolume(kIsWeb ? 0.0 : soundLevel);
       await controller.play();
 
       final ar = controller.value.aspectRatio;
@@ -763,7 +789,7 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
         });
       }
     } catch (e) {
-      if (isRemoteUrl) {
+      if (!kIsWeb && isRemoteUrl) {
         final fileName =
             path.basename(Uri.tryParse(videoSrc)?.path ?? videoSrc);
         final localCandidates = [
@@ -806,9 +832,8 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
       final parsedUri = widget.privateBase.resolveUri(imgSrc);
 
       ImageProvider provider;
-      final localFile = File(imgSrc);
-      if (localFile.existsSync()) {
-        provider = FileImage(localFile);
+      if (!kIsWeb && File(imgSrc).existsSync()) {
+        provider = FileImage(File(imgSrc));
       } else if (kIsWeb ||
           parsedUri.scheme == 'http' ||
           parsedUri.scheme == 'https' ||
@@ -912,7 +937,9 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
   void parseProperties([Media? targetMedia]) {
     super.parseProperties(targetMedia);
     _extractInitialProperties();
-    _videoController?.setVolume(soundLevel);
+    if (!kIsWeb) {
+      _videoController?.setVolume(soundLevel);
+    }
     if (mounted) {
       setState(() {});
       _checkHotspotsView();
@@ -1033,10 +1060,9 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
       if (spot.coordinate.pin == PinType.camera) {
         Widget? imgWidget;
         if (spot.mediaSrc != null) {
-          final f = File(spot.mediaSrc!);
-          if (f.existsSync()) {
-            imgWidget =
-                Image.file(f, width: 140, height: 90, fit: BoxFit.contain);
+          if (!kIsWeb && File(spot.mediaSrc!).existsSync()) {
+            imgWidget = Image.file(File(spot.mediaSrc!),
+                width: 140, height: 90, fit: BoxFit.contain);
           } else if (spot.mediaSrc!.startsWith('http')) {
             imgWidget = Image.network(spot.mediaSrc!,
                 width: 140, height: 90, fit: BoxFit.contain);
@@ -1087,20 +1113,19 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
       }
 
       Widget? thumbWidget;
-      String? infoText;
+      String? infoText = spot.textContent;
 
       if (spot.mediaSrc != null) {
         final lower = spot.mediaSrc!.toLowerCase();
         if (lower.endsWith('.jpg') ||
             lower.endsWith('.png') ||
             lower.endsWith('.jpeg')) {
-          final f = File(spot.mediaSrc!);
-          if (f.existsSync()) {
-            thumbWidget = Image.file(f, fit: BoxFit.contain);
+          if (!kIsWeb && File(spot.mediaSrc!).existsSync()) {
+            thumbWidget = Image.file(File(spot.mediaSrc!), fit: BoxFit.contain);
           } else if (spot.mediaSrc!.startsWith('http')) {
             thumbWidget = Image.network(spot.mediaSrc!, fit: BoxFit.contain);
           }
-        } else if (lower.endsWith('.txt')) {
+        } else if (infoText == null && lower.endsWith('.txt') && !kIsWeb) {
           final f = File(spot.mediaSrc!);
           if (f.existsSync()) {
             infoText = f.readAsStringSync().trim();

@@ -1,6 +1,7 @@
 /// Main Ginga player application and widgets.
 library ginga;
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -60,9 +61,12 @@ class GingaState extends State<Ginga> {
       GlobalKey<PlaygroundEditorState>();
   final GlobalKey<SettingsMenuState> _settingsMenuKey =
       GlobalKey<SettingsMenuState>();
+  StreamSubscription<String>? _tv30KeySub;
+  StreamSubscription<double>? _tv30TimeSub;
+  StreamSubscription<String>? _tv30StreamEventSub;
 
   void _ensureMainAvMounted() {
-    if (mainAVWidget == null) {
+    if (mainAVWidget == null && !isTv30Mode()) {
       setState(() {
         mainAVWidget = MainAVWidget(
           key: _mainAvKey,
@@ -76,6 +80,7 @@ class GingaState extends State<Ginga> {
   void initState() {
     super.initState();
     _gingacc = widget.gingacc ?? GingaCC();
+    final isOverlay = isTv30Mode();
     _showCatalogSelector = _gingacc.config.enablePlayground &&
         (_gingacc.config.appSrc == null ||
             _gingacc.config.appSrc!.trim().isEmpty);
@@ -83,7 +88,7 @@ class GingaState extends State<Ginga> {
       _isRunning = false;
     } else {
       _isRunning = true;
-      if (_gingacc.config.startWithMainAv) {
+      if (_gingacc.config.startWithMainAv && !isOverlay) {
         mainAVWidget = MainAVWidget(
           key: _mainAvKey,
           src: _gingacc.config.mainAvSrc,
@@ -95,6 +100,26 @@ class GingaState extends State<Ginga> {
       _gingacc.ccws.start();
     }
     HardwareKeyboard.instance.addHandler(_handleKeyPress);
+
+    if (kIsWeb) {
+      _tv30KeySub = tv30KeyStream.listen((rawKey) {
+        if (_isExiting) return;
+        final nclKey = mapTv30KeyToNclKey(rawKey);
+        if (nclKey == 'ESCAPE') {
+          if (_showUsersOverlay) {
+            closeUsersOverlay();
+          } else {
+            _cleanup();
+          }
+        } else if (nclKey != null) {
+          _nclAppKey.currentState?.handleKeyPress(nclKey);
+        }
+      });
+      _tv30TimeSub = tv30TimeStream.listen((time) {});
+      _tv30StreamEventSub = tv30StreamEventStream.listen((event) {
+        _logger.info('Received TV 3.0 stream event: $event');
+      });
+    }
   }
 
   Future<void> _autoResizeWindow() async {
@@ -349,7 +374,7 @@ class GingaState extends State<Ginga> {
           closeUsersOverlay();
           return true;
         }
-        if (kIsWeb || _gingacc.config.enablePlayground) {
+        if ((kIsWeb && !isTv30Mode()) || _gingacc.config.enablePlayground) {
           return false;
         }
         _logger.info('Captured ESC in Window, stopping app and mainAV.');
@@ -450,6 +475,9 @@ class GingaState extends State<Ginga> {
   @override
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_handleKeyPress);
+    _tv30KeySub?.cancel();
+    _tv30TimeSub?.cancel();
+    _tv30StreamEventSub?.cancel();
     _stopServices();
     super.dispose();
   }
@@ -491,8 +519,9 @@ class GingaState extends State<Ginga> {
       );
     }
 
+    final isOverlay = isTv30Mode();
     return Container(
-      color: Colors.black,
+      color: isOverlay ? Colors.transparent : Colors.black,
       child: Stack(
         fit: StackFit.expand,
         children: [
@@ -527,12 +556,14 @@ class GingaState extends State<Ginga> {
 
   @override
   Widget build(BuildContext context) {
+    final isOverlay = isTv30Mode();
     return MaterialApp(
       title: 'gingaf',
       themeMode: ThemeMode.light,
       theme: ThemeData(
         brightness: Brightness.light,
-        scaffoldBackgroundColor: Colors.grey[200],
+        scaffoldBackgroundColor:
+            isOverlay ? Colors.transparent : Colors.grey[200],
       ),
       home: NotificationListener<ncl.NclWidgetExitNotification>(
         onNotification: (notification) {
@@ -550,6 +581,7 @@ class GingaState extends State<Ginga> {
           return true;
         },
         child: Scaffold(
+          backgroundColor: isOverlay ? Colors.transparent : null,
           body: _isExiting
               ? const SizedBox.shrink()
               : _gingacc.config.enablePlayground

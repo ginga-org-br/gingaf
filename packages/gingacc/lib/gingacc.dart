@@ -13,6 +13,7 @@ export 'ginga_app.dart';
 export 'ginga_app_private_base.dart';
 export 'ginga_config.dart';
 export 'gingacc_plugins.dart';
+export 'tv3ws_client.dart';
 export 'users.dart';
 
 final _logger = Logger('gingacc');
