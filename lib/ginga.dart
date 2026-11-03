@@ -563,7 +563,7 @@ class GingaState extends State<Ginga> {
       theme: ThemeData(
         brightness: Brightness.light,
         scaffoldBackgroundColor:
-            isOverlay ? Colors.transparent : Colors.grey[200],
+            isOverlay ? Colors.transparent : const Color(0xFF1E1E1E),
       ),
       home: NotificationListener<ncl.NclWidgetExitNotification>(
         onNotification: (notification) {

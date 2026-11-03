@@ -4,7 +4,6 @@ import 'package:xml/xml_events.dart';
 
 import 'mimetype.dart';
 import 'ncl_document.dart';
-import 'schema.dart';
 
 class NclParser {
   final Schema schema = Schema();
@@ -322,7 +321,8 @@ class NclParser {
         Element? pluginElement;
         try {
           for (final plugin in GetIt.instance.getAll<NclParserPlugin>()) {
-            if (plugin.targetTag == node.name.local) {
+            if (plugin.targetTag == node.name.local ||
+                plugin.targetTag == '*') {
               final parsed = plugin.parseTag(node, this);
               if (parsed != null) {
                 pluginElement = parsed;
@@ -394,7 +394,12 @@ class NclParser {
     if (type == 'application/x-ncl-user-settings') {
       return UserSettings(rawAttributes: rawAttributes, mimeType: type);
     }
-    final uri = src.isNotEmpty ? (baseUri?.resolve(src).toString() ?? src) : '';
+    String uri = src;
+    if (src.isNotEmpty && baseUri != null && !src.contains('{')) {
+      try {
+        uri = baseUri!.resolve(src).toString();
+      } catch (_) {}
+    }
     final mimeType = type.isNotEmpty ? type : getMimeTypeFromExtension(src);
     if (type == 'application/x-ncl-NCLua' ||
         type == 'application/x-ginga-NCLua' ||
@@ -428,6 +433,14 @@ class NclParser {
       final document = XmlDocument.parse(xmlString);
       for (var node in document.descendants) {
         if (node is XmlElement) {
+          try {
+            for (final plugin in GetIt.instance.getAll<NclParserPlugin>()) {
+              if (plugin.targetTag == node.name.local ||
+                  plugin.targetTag == '*') {
+                plugin.parseTag(node, this);
+              }
+            }
+          } catch (_) {}
           errors.addAll(schema.validateElement(node));
         }
       }

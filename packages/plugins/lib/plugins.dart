@@ -1,3 +1,4 @@
+export 'data_binding_plugin.dart';
 export 'ncl360_plugin.dart';
 export 'plugin_base.dart';
 export 'plugins_registry.dart';

@@ -25,6 +25,10 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
   bool _initialized = false;
   bool _isCompleted = false;
   bool _isPaused = false;
+  String _activeSrc = '';
+  String _targetSrc = '';
+  bool _isSwitching = false;
+  final Set<VideoPlayerController> _disposedControllers = {};
   // Web browsers block programmatic autoplay for media with audio tracks unless muted.
   // Setting volume to 0.0 applies the muted attribute to HTMLVideoElement, allowing autoplay.
   // See: https://developer.mozilla.org/en-US/docs/Web/Media/Autoplay_guide
@@ -91,7 +95,18 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
   void initState() {
     super.initState();
     parseProperties(widget.media);
+    _targetSrc = widget.src.trim();
     initVideo();
+  }
+
+  @override
+  void didUpdateWidget(covariant T oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final newSrc = widget.src.trim();
+    if (newSrc != _targetSrc) {
+      _targetSrc = newSrc;
+      _switchToTargetVideo();
+    }
   }
 
   @override
@@ -125,10 +140,57 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
     }
   }
 
-  Future<void> initVideo() async {
-    if (widget.src.trim().isEmpty) return;
+  Future<void> _safeDisposeController(VideoPlayerController c) async {
+    if (_disposedControllers.contains(c)) return;
+    _disposedControllers.add(c);
+    if (notifyCompletion) {
+      try {
+        c.removeListener(_onVideoPositionChanged);
+      } catch (_) {}
+    }
     try {
-      final parsedUri = widget.privateBase.resolveUri(widget.src);
+      await c.pause();
+    } catch (_) {}
+    try {
+      await c.dispose();
+    } catch (_) {}
+  }
+
+  Future<void> _switchToTargetVideo() async {
+    if (_isSwitching) return;
+    _isSwitching = true;
+    try {
+      while (mounted && _targetSrc.isNotEmpty && _targetSrc != _activeSrc) {
+        final nextSrc = _targetSrc;
+        final prev = _controller;
+        if (prev != null) {
+          _controller = null;
+          _initialized = false;
+          _isCompleted = false;
+          if (mounted) {
+            setState(() {});
+          }
+          await _safeDisposeController(prev);
+        }
+        if (!mounted) break;
+        if (_targetSrc != nextSrc) continue;
+        await _initVideoForSrc(nextSrc);
+      }
+    } finally {
+      _isSwitching = false;
+    }
+  }
+
+  Future<void> initVideo() async {
+    _targetSrc = widget.src.trim();
+    if (_targetSrc.isEmpty) return;
+    await _switchToTargetVideo();
+  }
+
+  Future<void> _initVideoForSrc(String srcToLoad) async {
+    if (srcToLoad.trim().isEmpty) return;
+    try {
+      final parsedUri = widget.privateBase.resolveUri(srcToLoad);
       final VideoPlayerController controller;
 
       if (kIsWeb || (parsedUri.hasScheme && parsedUri.scheme != 'file')) {
@@ -141,12 +203,17 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
       }
 
       _controller = controller;
+      _activeSrc = srcToLoad;
 
       if (notifyCompletion) {
         controller.addListener(_onVideoPositionChanged);
       }
 
       await controller.initialize();
+      if (!mounted || _controller != controller) {
+        await _safeDisposeController(controller);
+        return;
+      }
       if (isLooping) {
         await controller.setLooping(true);
       }
@@ -162,19 +229,9 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
         });
       }
 
-      final mediaTimeMs = widget.media?.time ?? 0;
-      if (mediaTimeMs > 0) {
-        try {
-          await controller.seekTo(Duration(milliseconds: mediaTimeMs));
-        } catch (_) {}
-      }
-
-      if (isPlaying) {
+      if (isPlaying && !_isPaused) {
         try {
           await controller.play();
-          if (_isPaused) {
-            await controller.pause();
-          }
         } catch (playErr) {
           debugPrint("AVWidget play error: $playErr");
         }
@@ -186,7 +243,11 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
 
   @override
   void dispose() {
-    _controller?.dispose();
+    final prev = _controller;
+    _controller = null;
+    if (prev != null) {
+      _safeDisposeController(prev);
+    }
     super.dispose();
   }
 

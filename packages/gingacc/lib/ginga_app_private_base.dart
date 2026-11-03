@@ -263,7 +263,11 @@ String? _decodeDataUri(String rawInput, [Uri? uri]) {
       if (encodingPart.contains(';base64')) {
         return utf8.decode(base64.decode(dataPart));
       }
-      return Uri.decodeComponent(dataPart);
+      try {
+        return Uri.decodeComponent(dataPart);
+      } catch (_) {
+        return dataPart;
+      }
     }
   }
   return null;

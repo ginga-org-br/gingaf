@@ -275,8 +275,8 @@ class NclDocument extends GingaApp {
     _body = body;
     for (final s in body.descendants.whereType<Settings>()) {
       for (final p in s.children.whereType<Property>()) {
-        if (p.name != null && p.value != null) {
-          _systemVariables.putIfAbsent(p.name!, () => p.value!);
+        if (p.name != null && p.value != null && p.value!.isNotEmpty) {
+          _systemVariables[p.name!] = p.value!;
         }
       }
     }
@@ -876,6 +876,14 @@ class NclDocument extends GingaApp {
     final keyUpper = NclKeys.normalizeKey(keyCode);
     scheduler.stackKeyAction('press', keyUpper);
     scheduler.tick(0);
+    try {
+      for (final plugin in GetIt.instance.getAll<NclKeyPlugin>()) {
+        if (plugin.onKey(keyUpper, 'press', this)) {
+          onStateChanged?.call();
+          return true;
+        }
+      }
+    } catch (_) {}
     if (keyUpper == NclKeys.cursorRight ||
         keyUpper == NclKeys.cursorLeft ||
         keyUpper == NclKeys.cursorUp ||

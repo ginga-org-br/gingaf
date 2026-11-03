@@ -569,37 +569,116 @@ class NCLuaRuntime {
     return map;
   }
 
-  void _pushMapAsTable(LuaState ls, Map<String, dynamic> map) {
-    ls.newTable();
-    map.forEach((k, v) {
-      ls.pushString(k);
-      _pushValue(ls, v);
-      ls.setTable(-3);
-    });
+  static dynamic readLuaValue(LuaState ls, int idx) {
+    final absIdx = idx < 0 ? ls.getTop() + idx + 1 : idx;
+    final t = ls.type(absIdx);
+    switch (t) {
+      case LuaType.luaNil:
+      case LuaType.luaNone:
+        return null;
+      case LuaType.luaBoolean:
+        return ls.toBoolean(absIdx);
+      case LuaType.luaNumber:
+        if (ls.isInteger(absIdx)) {
+          return ls.toInteger(absIdx);
+        }
+        final numVal = ls.toNumber(absIdx);
+        if (numVal == numVal.truncateToDouble()) {
+          return numVal.toInt();
+        }
+        return numVal;
+      case LuaType.luaString:
+        return ls.toStr(absIdx);
+      case LuaType.luaTable:
+        return _readLuaTable(ls, absIdx);
+      default:
+        return null;
+    }
   }
 
-  void _pushValue(LuaState ls, dynamic v) {
-    if (v == null) {
+  static dynamic _readLuaTable(LuaState ls, int absIdx) {
+    final intEntries = <int, dynamic>{};
+    final strEntries = <String, dynamic>{};
+
+    ls.pushNil();
+    while (ls.next(absIdx)) {
+      final val = readLuaValue(ls, -1);
+      final keyType = ls.type(-2);
+      if (keyType == LuaType.luaNumber) {
+        if (ls.isInteger(-2)) {
+          intEntries[ls.toInteger(-2)] = val;
+        } else {
+          final numKey = ls.toNumber(-2);
+          if (numKey == numKey.truncateToDouble()) {
+            intEntries[numKey.toInt()] = val;
+          } else {
+            strEntries[numKey.toString()] = val;
+          }
+        }
+      } else {
+        ls.pushValue(-2);
+        final kStr = ls.toStr(-1);
+        ls.pop(1);
+        if (kStr != null) {
+          strEntries[kStr] = val;
+        }
+      }
+      ls.pop(1);
+    }
+
+    if (strEntries.isEmpty && intEntries.isNotEmpty) {
+      final n = intEntries.length;
+      bool isSequentialOneBased = true;
+      for (int i = 1; i <= n; i++) {
+        if (!intEntries.containsKey(i)) {
+          isSequentialOneBased = false;
+          break;
+        }
+      }
+      if (isSequentialOneBased) {
+        return List<dynamic>.generate(n, (i) => intEntries[i + 1]);
+      }
+    }
+
+    final result = <String, dynamic>{};
+    for (final entry in intEntries.entries) {
+      result[entry.key.toString()] = entry.value;
+    }
+    result.addAll(strEntries);
+    return result;
+  }
+
+  static void pushDartValue(LuaState ls, dynamic value) {
+    if (value == null) {
       ls.pushNil();
-    } else if (v is bool) {
-      ls.pushBoolean(v);
-    } else if (v is int) {
-      ls.pushInteger(v);
-    } else if (v is double) {
-      ls.pushNumber(v);
-    } else if (v is String) {
-      ls.pushString(v);
-    } else if (v is Map<String, dynamic>) {
-      _pushMapAsTable(ls, v);
-    } else if (v is List) {
+    } else if (value is bool) {
+      ls.pushBoolean(value);
+    } else if (value is int) {
+      ls.pushInteger(value);
+    } else if (value is double) {
+      ls.pushNumber(value);
+    } else if (value is String) {
+      ls.pushString(value);
+    } else if (value is Map) {
       ls.newTable();
-      for (int i = 0; i < v.length; i++) {
-        _pushValue(ls, v[i]);
+      value.forEach((k, v) {
+        ls.pushString(k.toString());
+        pushDartValue(ls, v);
+        ls.setTable(-3);
+      });
+    } else if (value is List) {
+      ls.newTable();
+      for (int i = 0; i < value.length; i++) {
+        pushDartValue(ls, value[i]);
         ls.setI(-2, i + 1);
       }
     } else {
-      ls.pushString(v.toString());
+      ls.pushString(value.toString());
     }
+  }
+
+  void _pushMapAsTable(LuaState ls, Map<String, dynamic> map) {
+    pushDartValue(ls, map);
   }
 
   void _queueInEvent(Map<String, dynamic> evt) {
