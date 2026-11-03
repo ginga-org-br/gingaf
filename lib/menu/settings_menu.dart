@@ -111,81 +111,83 @@ class SettingsMenuState extends State<SettingsMenu>
       key: const Key('floating_control_menu'),
       bottom: 24,
       right: 24,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          if (_isOpen)
-            ScaleTransition(
-              alignment: Alignment.bottomRight,
-              scale: _expandAnimation,
-              child: FadeTransition(
-                opacity: _expandAnimation,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    _buildActionButton(
-                      key: const Key('floating_users_button'),
-                      icon: Icons.people,
-                      label: 'Users',
-                      color: _buttonColor,
-                      onTap: () {
-                        _toggle();
-                        widget.onOpenUsers();
-                      },
-                    ),
-                    if (widget.onForward2s != null) ...[
+      child: ExcludeFocus(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            if (_isOpen)
+              ScaleTransition(
+                alignment: Alignment.bottomRight,
+                scale: _expandAnimation,
+                child: FadeTransition(
+                  opacity: _expandAnimation,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _buildActionButton(
+                        key: const Key('floating_users_button'),
+                        icon: Icons.people,
+                        label: 'Users',
+                        color: _buttonColor,
+                        onTap: () {
+                          _toggle();
+                          widget.onOpenUsers();
+                        },
+                      ),
+                      if (widget.onForward2s != null) ...[
+                        const SizedBox(height: 12),
+                        _buildActionButton(
+                          key: const Key('floating_forward_2s_button'),
+                          icon: Icons.fast_forward,
+                          label: 'Forward 2s',
+                          color: _buttonColor,
+                          onTap: widget.onForward2s!,
+                        ),
+                      ],
                       const SizedBox(height: 12),
                       _buildActionButton(
-                        key: const Key('floating_forward_2s_button'),
-                        icon: Icons.fast_forward,
-                        label: 'Forward 2s',
+                        key: const Key('floating_pause_button'),
+                        icon: widget.isPaused ? Icons.play_arrow : Icons.pause,
+                        label: widget.isPaused ? 'Resume' : 'Pause',
                         color: _buttonColor,
-                        onTap: widget.onForward2s!,
+                        onTap: widget.onTogglePause,
                       ),
+                      const SizedBox(height: 12),
+                      _buildActionButton(
+                        key: const Key('floating_restart_button'),
+                        icon: Icons.refresh,
+                        label: 'Restart',
+                        color: _buttonColor,
+                        onTap: () {
+                          _toggle();
+                          widget.restartCallback();
+                        },
+                      ),
+                      const SizedBox(height: 16),
                     ],
-                    const SizedBox(height: 12),
-                    _buildActionButton(
-                      key: const Key('floating_pause_button'),
-                      icon: widget.isPaused ? Icons.play_arrow : Icons.pause,
-                      label: widget.isPaused ? 'Resume' : 'Pause',
-                      color: _buttonColor,
-                      onTap: widget.onTogglePause,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildActionButton(
-                      key: const Key('floating_restart_button'),
-                      icon: Icons.refresh,
-                      label: 'Restart',
-                      color: _buttonColor,
-                      onTap: () {
-                        _toggle();
-                        widget.restartCallback();
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          SizedBox(
-            width: 48,
-            height: 48,
-            child: FloatingActionButton(
-              key: const Key('floating_menu_toggle_button'),
-              heroTag: null,
-              backgroundColor: _buttonColor,
-              foregroundColor: Colors.white,
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+            SizedBox(
+              width: 48,
+              height: 48,
+              child: FloatingActionButton(
+                key: const Key('floating_menu_toggle_button'),
+                heroTag: null,
+                backgroundColor: _buttonColor,
+                foregroundColor: Colors.white,
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                onPressed: _toggle,
+                child: Icon(_isOpen ? Icons.close : Icons.settings, size: 24),
               ),
-              onPressed: _toggle,
-              child: Icon(_isOpen ? Icons.close : Icons.settings, size: 24),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
