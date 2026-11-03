@@ -16,5 +16,14 @@ sudo apt-get install -y \
     mpv \
     curl \
     git \
-    unzip
+    unzip \
+    snapd
+
+if ! command -v flutter >/dev/null 2>&1 && [ ! -x /snap/bin/flutter ]; then
+    if command -v snap >/dev/null 2>&1; then
+        echo "Installing Flutter via snap..."
+        sudo snap install flutter --classic
+    fi
+fi
+
 echo "Dependencies installed successfully."
