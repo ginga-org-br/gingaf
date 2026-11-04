@@ -2,21 +2,18 @@ MAKEFLAGS += -s --no-print-directory
 .DEFAULT_GOAL := help
 $(if $(filter Windows_NT,$(OS)),$(if $(shell where printf 2>nul),,$(error coreutils is not installed. Please run: winget install coreutils)))
 
-.PHONY: help deps release release-web build-web release-windows release-android release-linux release-linux-deb release-macos test tests doc release-publish clean clean-web run-example check-app serve serve-node deploy-folder integration_test test-linux-distros 	playground run-playground
+.PHONY: help deps release release-web build-web release-windows release-android release-linux release-linux-deb release-macos test tests doc release-publish clean clean-web run-example check-app serve serve-node deploy-folder integration_test test-linux-distros
 
 BASE_HREF ?= /
 
-VERSION ?= $(shell grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1 | tr -d '\r')
+VERSION ?= $(firstword $(subst +, ,$(patsubst version:%,%,$(filter version:%,$(subst version: ,version:,$(file <pubspec.yaml))))))
 
 ifeq ($(OS),Windows_NT)
 CURRENT_OS := windows
-else
-UNAME_S := $(shell uname -s 2>/dev/null)
-ifeq ($(UNAME_S),Darwin)
+else ifneq ($(wildcard /System/Library),)
 CURRENT_OS := macos
 else
 CURRENT_OS := linux
-endif
 endif
 
 help:
@@ -39,7 +36,6 @@ help:
 		"  release-publish                              Publish release to GitHub Releases via gh" \
 		"  clean                                        Clean build artifacts" \
 		"  run-example                                  Run one application at examples/ (e.g. make run-example app=video.ncl)" \
-		"  run-playground                               Start playground with interactive editor (e.g. make run-playground app=video.ncl)" \
 		"  integration_test                             Run integration tests"
 
 .dart_tool/package_config.json: pubspec.yaml $(wildcard packages/*/pubspec.yaml)
@@ -52,7 +48,6 @@ release: release-$(CURRENT_OS)
 
 release-web: deps
 	flutter build web --no-pub --release
-
 
 release-windows: deps
 	flutter build windows --no-pub --release
@@ -90,19 +85,17 @@ doc:
 	cp doc/architecture.svg doc/api/doc/architecture.svg
 	npx serve doc/api
 
+RELEASE_FILES = $(sort $(if $(wildcard build/windows/x64/runner/Release/*),gingaf-v$(VERSION)-windows-x64.zip) $(if $(wildcard build/macos/Build/Products/Release/*),gingaf-v$(VERSION)-macos.zip) $(wildcard gingaf-v$(VERSION)-*.zip gingaf-v$(VERSION)-*.deb))
+
 define package-zip
-	[ ! -d $(2) ] || (cd $(2) && zip -q -FS -r $(CURDIR)/$(1) .)
+	$(if $(wildcard $(2)/*),cd $(2) && tar -a -cf $(CURDIR)/$(1) *)
 endef
 
 release-publish:
+	$(if $(strip $(RELEASE_FILES)),,$(error No release artifacts found to publish for v$(VERSION)))
 	$(call package-zip,gingaf-v$(VERSION)-windows-x64.zip,build/windows/x64/runner/Release)
 	$(call package-zip,gingaf-v$(VERSION)-macos.zip,build/macos/Build/Products/Release)
-	RELEASE_FILES=$$(ls gingaf-v$(VERSION)-*.zip gingaf-v$(VERSION)-*.deb 2>/dev/null || true); \
-	if [ -z "$$RELEASE_FILES" ]; then \
-		echo "No release artifacts found to publish for v$(VERSION)."; \
-		exit 1; \
-	fi; \
-	gh release upload v$(VERSION) $$RELEASE_FILES --clobber || gh release create v$(VERSION) $$RELEASE_FILES --generate-notes
+	gh release upload v$(VERSION) $(strip $(RELEASE_FILES)) --clobber || gh release create v$(VERSION) $(strip $(RELEASE_FILES)) --generate-notes
 
 
 build-web: release-web
@@ -146,12 +139,4 @@ run-example: check-app
 	$(info Running Example: $(APP_EXAMPLE))
 	$(info ======================================================================)
 	flutter run --no-pub $(if $(d),-d $(d)) --dart-define="GINGA_APP=examples/$(APP_EXAMPLE)" --dart-define="GINGA_PLAYGROUND=false" || true
-
-run-playground: check-app
-	$(info ======================================================================)
-	$(info Starting Playground: $(APP_EXAMPLE))
-	$(info ======================================================================)
-	flutter run --no-pub $(if $(d),-d $(d)) --dart-define="GINGA_APP=examples/$(APP_EXAMPLE)" --dart-define="GINGA_PLAYGROUND=true" || true
-
-playground: run-playground
 
