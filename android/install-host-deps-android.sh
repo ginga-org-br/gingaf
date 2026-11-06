@@ -30,6 +30,9 @@ SDKMANAGER="$CMDLINE_DIR/bin/sdkmanager"
 AVDMANAGER="$CMDLINE_DIR/bin/avdmanager"
 
 if [ -x "$SDKMANAGER" ]; then
+    echo "Accepting Android SDK licenses..."
+    yes | "$SDKMANAGER" --sdk_root="$ANDROID_HOME" --licenses >/dev/null 2>&1 || true
+
     echo "Installing Android platform-tools, platform 34, and emulator system image..."
     yes | "$SDKMANAGER" --sdk_root="$ANDROID_HOME" "platform-tools" "platforms;android-34" "system-images;android-34;google_apis;x86_64" >/dev/null 2>&1 || true
 

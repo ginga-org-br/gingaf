@@ -2,7 +2,7 @@ MAKEFLAGS += -s --no-print-directory
 .DEFAULT_GOAL := help
 $(if $(filter Windows_NT,$(OS)),$(if $(shell where printf 2>nul),,$(error coreutils is not installed. Please run: winget install coreutils)))
 
-.PHONY: help deps release release-web build-web release-windows release-android release-linux release-linux-deb release-macos test tests doc release-publish clean clean-web run-example check-app serve serve-node deploy-folder integration_test test-linux-distros
+.PHONY: help deps deps-host deps-android format build build-web build-android release release-web release-android publish test test-linux-distros doc clean run-example serve serve-node deploy-folder integration_test
 
 BASE_HREF ?= /
 
@@ -22,18 +22,21 @@ help:
 		"" \
 		"Targets:" \
 		"  deps                                         Install dependencies for Flutter workspace" \
+		"  deps-host                                    Install host OS dependencies" \
+		"  deps-android                                 Install Android SDK and emulator dependencies" \
 		"  format                                       Format Dart code across workspace" \
-		"  release                                      Build release application for current host OS" \
-		"  release-web                                  Build release application for web" \
-		"  release-android                              Build release application for Android" \
-		"  release-{windows,linux,macos}                Build release application for target desktop platform" \
-		"  release-linux-deb                            Build release Debian package inside Ubuntu 22.04 Docker container" \
+		"  build                                        Build application for current host OS" \
+		"  build-web                                    Build application for web" \
+		"  build-android                                Build application for Android" \
+		"  release                                      Build and package release for current host OS" \
+		"  release-web                                  Build and package release for web" \
+		"  release-android                              Build and package release for Android" \
+		"  publish                                      Publish release to GitHub" \
 		"  serve                                        Serve web player and playground" \
 		"  serve-node                                   Serve Node express embedded player and playground" \
 		"  test                                         Run tests for Flutter workspace" \
 		"  test-linux-distros                           Test Linux release across Ubuntu 22.04, 24.04, 26.04" \
 		"  doc                                          Generate Dart documentation" \
-		"  release-publish                              Publish release to GitHub Releases via gh" \
 		"  clean                                        Clean build artifacts" \
 		"  run-example                                  Run one application at examples/ (e.g. make run-example app=video.ncl)" \
 		"  integration_test                             Run integration tests"
@@ -44,36 +47,65 @@ help:
 
 deps: .dart_tool/package_config.json
 
-release: release-$(CURRENT_OS)
+ifeq ($(CURRENT_OS),windows)
+deps-host:
+	powershell -ExecutionPolicy Bypass -File windows/install-host-deps-windows.ps1
 
-release-web: deps
+deps-android:
+	powershell -ExecutionPolicy Bypass -File android/install-host-deps-android.ps1
+else ifeq ($(CURRENT_OS),macos)
+deps-host:
+	bash macos/install-host-deps-macos.sh
+
+deps-android:
+	bash android/install-host-deps-android.sh
+else
+deps-host:
+	bash linux/install-host-deps-ubuntu.sh
+
+deps-android:
+	bash android/install-host-deps-android.sh
+endif
+
+define package-zip
+	$(if $(wildcard $(2)/*),cd $(2) && tar -a -cf $(CURDIR)/$(1) *)
+endef
+
+build: deps
+	flutter build $(CURRENT_OS) --no-pub --release
+
+build-web: deps
 	flutter build web --no-pub --release
 
-release-windows: deps
-	flutter build windows --no-pub --release
-
-release-android: deps
+build-android: deps
 	flutter build apk --no-pub --release
 
-release-linux: deps
-	flutter build linux --no-pub --release
-	bash linux/package-deb.sh build/linux/x64/release/bundle $(VERSION) $(CURDIR)/gingaf-v$(VERSION)-linux-amd64.deb
+ifeq ($(CURRENT_OS),windows)
+release: build
+	$(call package-zip,gingaf-v$(VERSION)-windows-x64.zip,build/windows/x64/runner/Release)
+else ifeq ($(CURRENT_OS),macos)
+release: build
+	$(call package-zip,gingaf-v$(VERSION)-macos.zip,build/macos/Build/Products/Release)
+else
+release: deps
+	bash linux/release-linux-deb.sh $(VERSION)
+endif
 
-release-linux-deb:
-	bash linux/release-linux-deb.sh
+release-web: build-web
+	$(call package-zip,gingaf-v$(VERSION)-web.zip,build/web)
+
+release-android: build-android
+	cp build/app/outputs/flutter-apk/app-release.apk gingaf-v$(VERSION)-android.apk
 
 test-linux-distros:
 	bash linux/test-linux-distros.sh
-
-release-macos: deps
-	flutter build macos --no-pub --release
 
 test:
 	flutter test test packages/gingacc/test packages/ncldoc/test packages/nclui/test packages/plugins/test packages/playground/test --no-pub
 
 format:
 	dart format .
-	
+
 integration_test:
 	flutter test --no-pub integration_test $(if $(d),-d $(d))
 
@@ -85,20 +117,11 @@ doc:
 	cp doc/architecture.svg doc/api/doc/architecture.svg
 	npx serve doc/api
 
-RELEASE_FILES = $(sort $(if $(wildcard build/windows/x64/runner/Release/*),gingaf-v$(VERSION)-windows-x64.zip) $(if $(wildcard build/macos/Build/Products/Release/*),gingaf-v$(VERSION)-macos.zip) $(wildcard gingaf-v$(VERSION)-*.zip gingaf-v$(VERSION)-*.deb))
+RELEASE_FILES = $(sort $(wildcard gingaf-v$(VERSION)-*.zip gingaf-v$(VERSION)-*.deb gingaf-v$(VERSION)-*.apk))
 
-define package-zip
-	$(if $(wildcard $(2)/*),cd $(2) && tar -a -cf $(CURDIR)/$(1) *)
-endef
-
-release-publish:
+publish:
 	$(if $(strip $(RELEASE_FILES)),,$(error No release artifacts found to publish for v$(VERSION)))
-	$(call package-zip,gingaf-v$(VERSION)-windows-x64.zip,build/windows/x64/runner/Release)
-	$(call package-zip,gingaf-v$(VERSION)-macos.zip,build/macos/Build/Products/Release)
 	gh release upload v$(VERSION) $(strip $(RELEASE_FILES)) --clobber || gh release create v$(VERSION) $(strip $(RELEASE_FILES)) --generate-notes
-
-
-build-web: release-web
 
 serve: $(if $(wildcard build/web/main.dart.js),,build-web)
 	@printf "\n   playground alone:        http://localhost:5173/gingaf/playground/\n"
@@ -122,21 +145,22 @@ deploy-folder: build-web
 	rsync -av --delete examples/ $(GINGA_DEPLOY)/gingaf/examples/
 	cp examples/catalog.json $(GINGA_DEPLOY)/gingaf/catalog.json
 
-clean-web:
-	rm -rf build/web
-
-clean: clean-web
+clean:
 	flutter clean
-	rm -rf node/dist node/gingaf node/playground
+	rm -rf build/web node/dist node/gingaf node/playground
 
-check-app:
+define check-app
 	$(if $(app),,$(error Please specify app (e.g. app=video.ncl)))
-	$(eval APP_EXAMPLE := $(if $(findstring examples/,$(app)),$(subst examples/,,$(app)),$(app)))
-	$(if $(wildcard examples/$(APP_EXAMPLE)),,$(error File examples/$(APP_EXAMPLE) does not exist))
+	$(if $(filter http://% https://%,$(app)), \
+		$(eval APP_TARGET := $(app)), \
+		$(eval APP_EXAMPLE := $(if $(findstring examples/,$(app)),$(subst examples/,,$(app)),$(app))) \
+		$(if $(wildcard examples/$(APP_EXAMPLE)),,$(error File examples/$(APP_EXAMPLE) does not exist)) \
+		$(eval APP_TARGET := examples/$(APP_EXAMPLE)))
+endef
 
-run-example: check-app
+run-example:
+	$(call check-app)
 	$(info ======================================================================)
-	$(info Running Example: $(APP_EXAMPLE))
+	$(info Running Example: $(APP_TARGET))
 	$(info ======================================================================)
-	flutter run --no-pub $(if $(d),-d $(d)) --dart-define="GINGA_APP=examples/$(APP_EXAMPLE)" --dart-define="GINGA_PLAYGROUND=false" || true
-
+	flutter run --no-pub $(if $(d),-d $(d)) --dart-define="GINGA_APP=$(APP_TARGET)" --dart-define="GINGA_PLAYGROUND=false" || true

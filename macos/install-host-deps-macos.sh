@@ -3,6 +3,11 @@ set -e
 
 echo "Installing macOS dependencies via Homebrew..."
 
+if ! xcode-select -p >/dev/null 2>&1; then
+    echo "Installing Xcode Command Line Tools..."
+    xcode-select --install
+fi
+
 if ! command -v brew >/dev/null 2>&1; then
     echo "Homebrew not found. Please install Homebrew from https://brew.sh first."
     exit 1

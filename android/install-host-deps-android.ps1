@@ -47,6 +47,9 @@ $sdkmanager = "$cmdlineToolsDir\bin\sdkmanager.bat"
 $avdmanager = "$cmdlineToolsDir\bin\avdmanager.bat"
 
 if (Test-Path $sdkmanager) {
+    Write-Host "Accepting Android SDK licenses..."
+    ("y`n" * 20) | & $sdkmanager --sdk_root=$androidDir --licenses | Out-Null
+
     Write-Host "Installing Android SDK platform-tools and system image..."
     "y`ny`ny`ny`n" | & $sdkmanager --sdk_root=$androidDir "platform-tools" "platforms;android-34" "system-images;android-34;google_apis;x86_64" | Out-Null
 
