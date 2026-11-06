@@ -107,7 +107,7 @@ format:
 	dart format .
 
 integration_test:
-	flutter test --no-pub integration_test $(if $(d),-d $(d))
+	flutter test --no-pub integration_test -d $(if $(d),$(d),$(CURRENT_OS))
 
 doc:
 	npx -y @mermaid-js/mermaid-cli -i doc/architecture.mmd -o doc/architecture.svg -b transparent
@@ -163,4 +163,4 @@ run-example:
 	$(info ======================================================================)
 	$(info Running Example: $(APP_TARGET))
 	$(info ======================================================================)
-	flutter run --no-pub $(if $(d),-d $(d)) --dart-define="GINGA_APP=$(APP_TARGET)" --dart-define="GINGA_PLAYGROUND=false" || true
+	flutter run --no-pub -d $(if $(d),$(d),$(CURRENT_OS)) --dart-define="GINGA_APP=$(APP_TARGET)" --dart-define="GINGA_PLAYGROUND=false" || true
