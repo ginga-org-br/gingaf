@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<ncl id="focusNavEx" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">
+<ncl>
   <head>
     <regionBase>
       <region id="backgroundReg" width="100%" height="100%" zIndex="1"/>
