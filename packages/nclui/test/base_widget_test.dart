@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ncldoc/ncl_document.dart';
-import 'package:nclui/ncl.dart';
+import 'package:nclui/ncl_widget.dart';
 
 class _TestMediaWidget extends BaseWidget {
   const _TestMediaWidget({
     super.key,
     required super.src,
     super.media,
+    super.document,
   });
 
   @override
@@ -114,7 +115,14 @@ void main() {
         expect(state.selBorderColor, equals(const Color(0xFF00FF00)));
         expect(state.soundLevel, closeTo(0.75, 0.001));
 
+        final opacityBefore = tester.widget<Opacity>(
+          find.descendant(of: find.byKey(key), matching: find.byType(Opacity)),
+        );
+        expect(opacityBefore.opacity, closeTo(128 / 255.0, 0.01));
+
         state.clearMedia();
+        await tester.pump();
+
         expect(state.alpha, equals(255));
         expect(state.background, equals(Colors.transparent));
         expect(state.focusBorderColor, equals(Colors.transparent));
@@ -122,6 +130,95 @@ void main() {
         expect(state.focusBorderTransparency, equals(0));
         expect(state.selBorderColor, equals(Colors.transparent));
         expect(state.soundLevel, equals(1.0));
+
+        final opacityAfter = tester.widget<Opacity>(
+          find.descendant(of: find.byKey(key), matching: find.byType(Opacity)),
+        );
+        expect(opacityAfter.opacity, equals(1.0));
+      },
+    );
+
+    testWidgets(
+      'applies descriptor transparency to Opacity widget and handles selection tap',
+      (tester) async {
+        const nclSrc = '''
+<ncl>
+  <head>
+    <regionBase>
+      <region id="r1" left="0%" top="0%" width="50%" height="50%"/>
+      <region id="r2" left="50%" top="0%" width="50%" height="50%"/>
+    </regionBase>
+    <descriptorBase>
+      <descriptor id="d1" region="r1" focusIndex="1"/>
+      <descriptor id="d2" region="r2" focusIndex="2">
+        <descriptorParam name="transparency" value="25%"/>
+      </descriptor>
+    </descriptorBase>
+    <connectorBase>
+      <causalConnector id="onSelectionSet">
+        <connectorParam name="val"/>
+        <simpleCondition role="onSelection"/>
+        <simpleAction role="set" value="\$val"/>
+      </causalConnector>
+    </connectorBase>
+  </head>
+  <body>
+    <port id="p1" component="btn1"/>
+    <port id="p2" component="btn2"/>
+    <media id="btn1" descriptor="d1"/>
+    <media id="btn2" descriptor="d2">
+      <property name="background" value="blue"/>
+    </media>
+    <link xconnector="onSelectionSet">
+      <bind role="onSelection" component="btn2"/>
+      <bind role="set" component="btn2" interface="background">
+        <bindParam name="val" value="gold"/>
+      </bind>
+    </link>
+  </body>
+</ncl>
+''';
+        final doc = NclDocument.fromContent(nclSrc, appSrc: 'tap_test.ncl');
+        doc.start();
+        doc.scheduler.tick(100);
+        expect(doc.currentFocusNodeId, equals('btn1'));
+
+        final btn2Media = doc.getNodeById('btn2') as Media;
+        final key = GlobalKey<_TestMediaWidgetState>();
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SizedBox.expand(
+                child: Stack(
+                  children: [
+                    _TestMediaWidget(
+                      key: key,
+                      src: '',
+                      media: btn2Media,
+                      document: doc,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+
+        final opacityWidget = tester.widget<Opacity>(
+          find.descendant(of: find.byKey(key), matching: find.byType(Opacity)),
+        );
+        expect(opacityWidget.opacity, closeTo(0.75, 0.01));
+
+        await tester.tap(find.byKey(key));
+        await tester.pump();
+
+        expect(doc.currentFocusNodeId, equals('btn2'));
+        final bgProp = btn2Media
+            .getProperties()
+            .firstWhere((p) => p.name == 'background')
+            .value;
+        expect(bgProp, equals('gold'));
       },
     );
   });
