@@ -6,10 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:gingacc/gingacc.dart';
 import 'package:logging/logging.dart';
+import 'package:plugins/plugins_registry.dart';
 import 'package:video_player_media_kit/video_player_media_kit.dart';
 
+import 'args.dart';
 import 'ginga.dart';
-import 'plugins/plugins_registry.dart';
+import 'web_utils_stub.dart' if (dart.library.js_interop) 'web_utils_web.dart';
 
 export 'args.dart';
 

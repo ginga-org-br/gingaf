@@ -2,7 +2,7 @@ MAKEFLAGS += -s --no-print-directory
 .DEFAULT_GOAL := help
 $(if $(filter Windows_NT,$(OS)),$(if $(shell where printf 2>nul),,$(error coreutils is not installed. Please run: winget install coreutils)))
 
-.PHONY: help deps deps-host deps-android format build build-web build-android release release-web release-android publish test test-linux-distros doc clean run-example serve serve-node deploy-folder integration_test
+.PHONY: help deps deps-host deps-android format build build-web build-android release release-web release-android publish test test-linux-distros dartdoc clean run-example serve serve-node deploy-folder integration_test
 
 BASE_HREF ?= /
 
@@ -36,7 +36,7 @@ help:
 		"  serve-node                                   Serve Node express embedded player and playground" \
 		"  test                                         Run tests for Flutter workspace" \
 		"  test-linux-distros                           Test Linux release across Ubuntu 22.04, 24.04, 26.04" \
-		"  doc                                          Generate Dart documentation" \
+		"  dartdoc                                      Generate Dart documentation" \
 		"  clean                                        Clean build artifacts" \
 		"  run-example                                  Run one application at examples/ (e.g. make run-example app=video.ncl)" \
 		"  integration_test                             Run integration tests"
@@ -109,13 +109,13 @@ format:
 integration_test:
 	flutter test --no-pub integration_test -d $(if $(d),$(d),$(CURRENT_OS))
 
-doc:
-	npx -y @mermaid-js/mermaid-cli -i doc/architecture.mmd -o doc/architecture.svg -b transparent
-	dart doc
-	touch doc/api/.nojekyll
-	mkdir -p doc/api/doc
-	cp doc/architecture.svg doc/api/doc/architecture.svg
-	npx serve doc/api
+dartdoc:
+	npx -y @mermaid-js/mermaid-cli -i dartdoc/architecture.mmd -o dartdoc/architecture.svg -b transparent
+	dart doc -o dartdoc/api
+	touch dartdoc/api/.nojekyll
+	mkdir -p dartdoc/api/dartdoc
+	cp dartdoc/architecture.svg dartdoc/api/dartdoc/architecture.svg
+	npx serve dartdoc/api
 
 RELEASE_FILES = $(sort $(wildcard gingaf-v$(VERSION)-*.zip gingaf-v$(VERSION)-*.deb gingaf-v$(VERSION)-*.apk))
 
@@ -147,7 +147,7 @@ deploy-folder: build-web
 
 clean:
 	flutter clean
-	rm -rf build/web node/dist node/gingaf node/playground
+	rm -rf build/web dartdoc/api node/dist node/gingaf node/playground
 
 define check-app
 	$(if $(app),,$(error Please specify app (e.g. app=video.ncl)))

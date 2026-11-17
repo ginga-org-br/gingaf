@@ -18,13 +18,6 @@ import 'menu/settings_menu.dart';
 import 'menu/users_menu.dart';
 import 'web_utils_stub.dart' if (dart.library.js_interop) 'web_utils_web.dart';
 
-export 'package:playground/playground.dart';
-
-export 'main.dart';
-export 'menu/settings_menu.dart';
-export 'menu/users_menu.dart';
-export 'web_utils_stub.dart' if (dart.library.js_interop) 'web_utils_web.dart';
-
 final _logger = Logger('ginga');
 
 /// {@category Build}
@@ -40,6 +33,7 @@ class Ginga extends StatefulWidget {
   State<Ginga> createState() => GingaState();
 }
 
+/// @nodoc
 class GingaState extends State<Ginga> {
   late final GingaCC _gingacc;
   Widget? mainAVWidget;

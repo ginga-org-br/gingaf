@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gingaf/ginga.dart';
+import 'package:gingaf/web_utils_stub.dart'
+    if (dart.library.js_interop) 'package:gingaf/web_utils_web.dart';
 
 void main() {
   group('TV 3.0 Remote Control and Key Mapping Tests', () {

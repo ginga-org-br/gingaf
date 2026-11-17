@@ -354,7 +354,7 @@ dist
 
 ### Flutter ###
 # Flutter/Dart/Pub related
-**/doc/api/
+**/dartdoc/api/
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
@@ -433,6 +433,7 @@ pubspec.lock
 # Directory created by dartdoc
 # If you don't generate documentation locally you can remove this line.
 doc/api/
+dartdoc/api/
 
 # dotenv environment variables file
 .env*

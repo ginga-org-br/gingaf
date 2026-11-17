@@ -29,7 +29,7 @@ jobs:
           npm install
           npm run build
       - name: Generate documentation
-        run: make doc
+        run: make dartdoc
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v6
@@ -38,7 +38,7 @@ jobs:
           mkdir -p site
           touch site/.nojekyll
           cp -r node/playground site/playground
-          cp -r doc/api site/docs
+          cp -r dartdoc/api site/docs
       - name: Generate redirect page
         run: |
           cat << 'EOF' > site/playground/index.html

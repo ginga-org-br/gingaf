@@ -11,7 +11,7 @@ You can use `gingaf` to develop Ginga applications at web by using the playgroun
 
 The `gingaf` documentation is available at [https://ginga-org-br.github.io/gingaf/docs](https://ginga-org-br.github.io/gingaf/docs). The repository is organized as a monorepo: the root directory contains the Flutter host application. It include the following packages: [`packages/gingacc`](packages/gingacc) (configuration, users, and CCWS), [`packages/ncldoc`](packages/ncldoc) (NCL headless execution engine), [`packages/nclui`](packages/nclui) (NCL and visual widgets), and [`node`](node) (npm package and web interactive playground).
 
-<img src="doc/architecture.svg" width="480">
+<img src="dartdoc/architecture.svg" width="480">
 
 ## Selected Applications
 

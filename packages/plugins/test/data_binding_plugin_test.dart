@@ -6,7 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:ncldoc/ncl_document.dart';
 import 'package:nclui/ncl.dart';
-import 'package:plugins/data_binding_controller.dart';
 import 'package:plugins/plugins.dart';
 
 void main() {
