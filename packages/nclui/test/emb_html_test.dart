@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nclui/ncl.dart';
+import 'package:nclui/ncl_widget.dart';
 
 void main() {
   group('embHtml UI', () {

@@ -6,7 +6,7 @@ import 'package:ncldoc/elements.dart';
 import 'package:ncldoc/event.dart';
 import 'package:video_player/video_player.dart';
 
-import 'ncl.dart';
+import 'ncl_widget.dart';
 
 class AVWidget extends BaseWidget {
   const AVWidget({

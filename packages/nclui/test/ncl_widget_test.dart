@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ncldoc/ncl_document.dart';
-import 'package:nclui/ncl.dart';
+import 'package:nclui/ncl_widget.dart';
 
 const _testImageNcl = '''
 <ncl>

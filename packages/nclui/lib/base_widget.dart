@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ncldoc/ncl_document.dart';
 
-import 'ncl.dart';
+import 'ncl_widget.dart';
 
 export 'package:gingacc/gingacc.dart';
 

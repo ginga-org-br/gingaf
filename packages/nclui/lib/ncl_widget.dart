@@ -6,24 +6,24 @@ import 'package:get_it/get_it.dart';
 import 'package:logging/logging.dart';
 import 'package:ncldoc/ncl_document.dart';
 
-import 'av.dart';
+import 'av_widget.dart';
 import 'base_widget.dart';
-import 'html.dart';
-import 'image.dart';
-import 'lua.dart';
-import 'main_av.dart';
+import 'html_widget.dart';
+import 'image_widget.dart';
+import 'lua_widget.dart';
+import 'main_av_widget.dart';
 import 'nclui_plugins.dart';
-import 'text.dart';
+import 'text_widget.dart';
 
-export 'av.dart';
+export 'av_widget.dart';
 export 'base_widget.dart';
 export 'color.dart';
-export 'html.dart';
-export 'image.dart';
-export 'lua.dart';
-export 'main_av.dart';
+export 'html_widget.dart';
+export 'image_widget.dart';
+export 'lua_widget.dart';
+export 'main_av_widget.dart';
 export 'nclui_plugins.dart';
-export 'text.dart';
+export 'text_widget.dart';
 
 final _logger = Logger('ginga-ncl');
 

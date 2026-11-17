@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gingacc/gingacc.dart';
 import 'package:gingaf/args.dart';
 import 'package:gingaf/ginga.dart';
-import 'package:nclui/ncl.dart' as ncl;
+import 'package:nclui/ncl_widget.dart' as ncl;
 import 'package:playground/playground.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 

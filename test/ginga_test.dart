@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:gingaf/ginga.dart';
 import 'package:gingaf/menu/users_menu.dart';
-import 'package:nclui/ncl.dart';
+import 'package:nclui/ncl_widget.dart';
 import 'package:playground/playground.dart';
 import 'package:plugins/plugins_registry.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
