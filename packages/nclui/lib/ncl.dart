@@ -17,6 +17,7 @@ import 'text.dart';
 
 export 'av.dart';
 export 'base_widget.dart';
+export 'color.dart';
 export 'html.dart';
 export 'image.dart';
 export 'lua.dart';
@@ -256,7 +257,10 @@ class NclWidgetState extends MediaState<NclWidget> {
     }
     _isPaused = true;
 
-    if (nclDocument != null && !nclDocument!.isPlaying && !nclDocument!.isPaused && !_isPaused) {
+    if (nclDocument != null &&
+        !nclDocument!.isPlaying &&
+        !nclDocument!.isPaused &&
+        !_isPaused) {
       _ticker?.cancel();
       _ticker = null;
       nclDocument = null;
@@ -425,7 +429,10 @@ class NclWidgetState extends MediaState<NclWidget> {
             lastTick = now;
             tick(deltaMs);
 
-            if (nclDocument != null && !nclDocument!.isPlaying && !nclDocument!.isPaused && !_isPaused) {
+            if (nclDocument != null &&
+                !nclDocument!.isPlaying &&
+                !nclDocument!.isPaused &&
+                !_isPaused) {
               _ticker?.cancel();
               _ticker = null;
               nclDocument = null;

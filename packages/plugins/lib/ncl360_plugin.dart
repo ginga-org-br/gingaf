@@ -69,42 +69,6 @@ class Ncl360Hotspot {
   });
 }
 
-Color? _parseColor(String? colorStr) {
-  if (colorStr == null || colorStr.trim().isEmpty) return null;
-  final s = colorStr.trim();
-  if (s.startsWith('#')) {
-    final hex = s.substring(1);
-    if (hex.length == 6) {
-      return Color(int.parse('FF$hex', radix: 16));
-    } else if (hex.length == 8) {
-      return Color(int.parse(hex, radix: 16));
-    }
-  }
-  switch (s.toLowerCase()) {
-    case 'gray':
-    case 'grey':
-      return Colors.grey;
-    case 'red':
-      return Colors.red;
-    case 'green':
-      return Colors.green;
-    case 'blue':
-      return Colors.blue;
-    case 'yellow':
-      return Colors.yellow;
-    case 'black':
-      return Colors.black;
-    case 'white':
-      return Colors.white;
-    case 'cyan':
-      return Colors.cyan;
-    case 'transparent':
-      return Colors.transparent;
-    default:
-      return null;
-  }
-}
-
 class Ncl360MediaPlugin implements NclMediaPlugin, PluginBase {
   @override
   PluginType get type => PluginType.optional;
@@ -598,7 +562,7 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
           }
           mediaBg ??= desc?['background'] as String?;
           mediaBg ??= reg?['background'] as String?;
-          final bgColor = _parseColor(mediaBg);
+          final bgColor = tryParseNclColor(mediaBg);
 
           String? preloadedText;
           if (resolvedSrc.toLowerCase().endsWith('.txt')) {

@@ -71,45 +71,12 @@ class TextWidgetState extends MediaState<TextWidget> {
       }
     }
 
-    _fontColor = _parseFontColor(rawColor);
+    _fontColor = tryParseNclColor(rawColor);
     if (rawSize != null && rawSize.isNotEmpty) {
       final cleaned = rawSize.replaceAll('px', '').replaceAll('pt', '').trim();
       _fontSize = double.tryParse(cleaned);
     } else {
       _fontSize = null;
-    }
-  }
-
-  Color? _parseFontColor(String? raw) {
-    if (raw == null || raw.isEmpty) return null;
-    if (raw.startsWith('#')) {
-      final hex = raw.substring(1);
-      if (hex.length == 6) {
-        final v = int.tryParse('FF$hex', radix: 16);
-        if (v != null) return Color(v);
-      } else if (hex.length == 8) {
-        final v = int.tryParse(hex, radix: 16);
-        if (v != null) return Color(v);
-      }
-    }
-    switch (raw.toLowerCase()) {
-      case 'red':
-        return Colors.red;
-      case 'green':
-        return Colors.green;
-      case 'blue':
-        return Colors.blue;
-      case 'yellow':
-        return Colors.yellow;
-      case 'black':
-        return Colors.black;
-      case 'white':
-        return Colors.white;
-      case 'gray':
-      case 'grey':
-        return Colors.grey;
-      default:
-        return null;
     }
   }
 

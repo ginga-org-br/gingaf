@@ -5,6 +5,8 @@ import 'ncl.dart';
 
 export 'package:gingacc/gingacc.dart';
 
+export 'color.dart';
+
 abstract class BaseWidget extends StatefulWidget {
   final String src;
   final Media? media;
@@ -77,6 +79,13 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
     widthStr = '100%';
     heightStr = '100%';
     rect = Rect.zero;
+    alpha = 255;
+    background = Colors.transparent;
+    focusBorderColor = Colors.transparent;
+    focusBorderWidth = 0;
+    focusBorderTransparency = 0;
+    selBorderColor = Colors.transparent;
+    soundLevel = 1.0;
     if (mounted) {
       setState(() {});
     }
@@ -114,6 +123,8 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
     String? widthVal;
     String? heightVal;
     String? zIndexVal;
+    String? transparencyVal;
+    String? alphaVal;
     for (var prop in m.getProperties()) {
       if (prop.name == 'background') {
         backgroundVal = prop.value;
@@ -129,6 +140,10 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
         heightVal = prop.value;
       } else if (prop.name == 'zIndex' || prop.name == 'zOrder') {
         zIndexVal = prop.value;
+      } else if (prop.name == 'transparency') {
+        transparencyVal = prop.value;
+      } else if (prop.name == 'alpha') {
+        alphaVal = prop.value;
       } else if (prop.name == 'soundLevel') {
         final slStr = prop.value?.trim() ?? '';
         if (slStr.endsWith('%')) {
@@ -170,17 +185,55 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
     }
     final visibleStr = m.rawAttributes['visible'] ?? 'true';
     visible = visibleStr.toLowerCase() == 'true';
-    background = _parseColor(backgroundVal);
+
     final desc = document?.getDescriptorForMedia(m);
+    if (desc != null) {
+      for (final dp in desc.descriptorParams) {
+        if (dp.name == 'background' && backgroundVal == null) {
+          backgroundVal = dp.value;
+        } else if (dp.name == 'transparency' && transparencyVal == null) {
+          transparencyVal = dp.value;
+        } else if (dp.name == 'alpha' && alphaVal == null) {
+          alphaVal = dp.value;
+        }
+      }
+    }
+    transparencyVal ??= m.rawAttributes['transparency'] ??
+        desc?.rawAttributes['transparency'];
+    alphaVal ??= m.rawAttributes['alpha'] ?? desc?.rawAttributes['alpha'];
+
+    if (alphaVal != null) {
+      alpha = tryParseNclAlpha(alphaVal) ?? 255;
+    } else if (transparencyVal != null) {
+      alpha = tryParseNclTransparencyToAlpha(transparencyVal) ?? 255;
+    } else {
+      alpha = 255;
+    }
+
+    background = parseNclColor(backgroundVal);
     final fColorStr =
         m.rawAttributes['focusBorderColor'] ?? desc?.focusBorderColor;
-    focusBorderColor = _parseColor(fColorStr);
+    var parsedFocusColor = parseNclColor(fColorStr);
+    final fTransStr = m.rawAttributes['focusBorderTransparency'] ??
+        desc?.focusBorderTransparency;
+    if (fTransStr != null && fTransStr.trim().isNotEmpty) {
+      final fAlpha = tryParseNclTransparencyToAlpha(fTransStr);
+      if (fAlpha != null) {
+        focusBorderTransparency = 255 - fAlpha;
+        if (parsedFocusColor != Colors.transparent) {
+          parsedFocusColor = parsedFocusColor.withAlpha(fAlpha);
+        }
+      }
+    } else {
+      focusBorderTransparency = 0;
+    }
+    focusBorderColor = parsedFocusColor;
     final fWidthStr =
         m.rawAttributes['focusBorderWidth'] ?? desc?.focusBorderWidth;
     focusBorderWidth = int.tryParse(fWidthStr ?? '') ?? 0;
     final sColorStr = m.rawAttributes['selBorderColor'] ??
         desc?.rawAttributes['selBorderColor'];
-    selBorderColor = _parseColor(sColorStr);
+    selBorderColor = parseNclColor(sColorStr);
   }
 
   void syncProperties() {
@@ -188,37 +241,6 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
       setState(() {
         parseProperties(media);
       });
-    }
-  }
-
-  Color _parseColor(String? colorStr) {
-    if (colorStr == null || colorStr.isEmpty) return Colors.transparent;
-    if (colorStr.startsWith('#')) {
-      final hex = colorStr.substring(1);
-      if (hex.length == 6) {
-        return Color(int.parse('FF$hex', radix: 16));
-      } else if (hex.length == 8) {
-        return Color(int.parse(hex, radix: 16));
-      }
-    }
-    switch (colorStr.toLowerCase()) {
-      case 'red':
-        return Colors.red;
-      case 'green':
-        return Colors.green;
-      case 'blue':
-        return Colors.blue;
-      case 'yellow':
-        return Colors.yellow;
-      case 'black':
-        return Colors.black;
-      case 'white':
-        return Colors.white;
-      case 'gray':
-      case 'grey':
-        return Colors.grey;
-      default:
-        return Colors.transparent;
     }
   }
 
