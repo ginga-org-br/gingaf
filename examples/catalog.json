@@ -36,6 +36,14 @@
                 "lua_canvas.lua"
             ]
         },
+        "lua_zip_list": {
+            "mainFile": "lua/zip_list/main.ncl",
+            "category": "lua",
+            "description": "NCLua zip helper module archive explorer example",
+            "otherEditbleFiles": [
+                "main.lua"
+            ]
+        },
         "image": {
             "mainFile": "image.ncl",
             "category": "general",

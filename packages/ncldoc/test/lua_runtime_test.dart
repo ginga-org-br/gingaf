@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:archive/archive.dart';
 import 'package:ncldoc/ncl_document.dart';
 import 'package:test/test.dart';
 
@@ -283,18 +287,52 @@ void main() {
       runtime.luaState.pop(1);
     });
 
-    test('Lua helper module: zip', () {
+    test('Lua helper module: zip (virtual archive read, append, remove, extract)', () {
+      final initialArchive = Archive()
+        ..add(ArchiveFile.string('main.lua', 'return 42'))
+        ..add(ArchiveFile.string('assets/info.txt', 'ginga zip'));
+      final zipBytes = ZipEncoder().encodeBytes(initialArchive);
+      doc.privateBase.setVirtualFiles({
+        'test.zip': 'data:application/zip;base64,${base64.encode(zipBytes)}',
+      });
+
       final script = '''
         local zip = require "zip"
+        local missing, missing_err = zip.open("does_not_exist.zip")
+        _G.test_zip_missing_is_nil = (missing == nil)
+        _G.test_zip_missing_has_err = (type(missing_err) == "string")
+
         local z = zip.open("test.zip")
         _G.test_zip_path = z:attrPath()
         _G.test_zip_exists_before = z:exists("main.lua")
-        z:append("newfile.txt", "data")
+        _G.test_zip_read_main = z:read("main.lua")
+        z:append("newfile.txt", "data_payload")
         _G.test_zip_exists_after = z:exists("newfile.txt")
+        _G.test_zip_read_new = z:read("newfile.txt")
         _G.test_zip_remove_ok = z:remove("main.lua")
         _G.test_zip_exists_after_remove = z:exists("main.lua")
+        _G.test_zip_extract_ok = z:extract("assets/info.txt", "extracted_info.txt")
+        z:close()
+
+        local z2 = zip.open("test.zip")
+        _G.test_zip_persisted_new = z2:exists("newfile.txt")
+        _G.test_zip_persisted_removed = z2:exists("main.lua")
+        local list = z2:list()
+        _G.test_zip_list_count = #list
+        z2:close()
+
+        local f = io.open("extracted_info.txt", "r")
+        _G.test_zip_extracted_content = f and f:read("*a") or nil
       ''';
       runtime.execute(script);
+
+      runtime.luaState.getGlobal('test_zip_missing_is_nil');
+      expect(runtime.luaState.toBoolean(-1), isTrue);
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('test_zip_missing_has_err');
+      expect(runtime.luaState.toBoolean(-1), isTrue);
+      runtime.luaState.pop(1);
 
       runtime.luaState.getGlobal('test_zip_path');
       expect(runtime.luaState.toStr(-1), 'test.zip');
@@ -304,8 +342,16 @@ void main() {
       expect(runtime.luaState.toBoolean(-1), true);
       runtime.luaState.pop(1);
 
+      runtime.luaState.getGlobal('test_zip_read_main');
+      expect(runtime.luaState.toStr(-1), 'return 42');
+      runtime.luaState.pop(1);
+
       runtime.luaState.getGlobal('test_zip_exists_after');
       expect(runtime.luaState.toBoolean(-1), true);
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('test_zip_read_new');
+      expect(runtime.luaState.toStr(-1), 'data_payload');
       runtime.luaState.pop(1);
 
       runtime.luaState.getGlobal('test_zip_remove_ok');
@@ -314,6 +360,121 @@ void main() {
 
       runtime.luaState.getGlobal('test_zip_exists_after_remove');
       expect(runtime.luaState.toBoolean(-1), false);
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('test_zip_extract_ok');
+      expect(runtime.luaState.toBoolean(-1), true);
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('test_zip_persisted_new');
+      expect(runtime.luaState.toBoolean(-1), true);
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('test_zip_persisted_removed');
+      expect(runtime.luaState.toBoolean(-1), false);
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('test_zip_list_count');
+      expect(runtime.luaState.toInteger(-1), 2);
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('test_zip_extracted_content');
+      expect(runtime.luaState.toStr(-1), 'ginga zip');
+      runtime.luaState.pop(1);
+    });
+
+    test('Lua helper module: zip (filesystem archive create, read, and extractAll)', () {
+      final tmpDir = Directory.systemTemp.createTempSync('nclua_zip_test_');
+      addTearDown(() {
+        if (tmpDir.existsSync()) {
+          tmpDir.deleteSync(recursive: true);
+        }
+      });
+
+      final zipPath = '${tmpDir.path.replaceAll('\\', '/')}/bundle.zip';
+      final extractDir = '${tmpDir.path.replaceAll('\\', '/')}/unpacked';
+
+      final script = '''
+        local zip = require "zip"
+        local z = zip.open("$zipPath", "w")
+        z:append("hello.txt", "Hello Filesystem Zip")
+        z:append("nested/config.json", "{\\"ok\\":true}")
+        z:append("temp.txt", "remove me")
+        z:remove("temp.txt")
+        z:close()
+
+        local zRead = zip.open("$zipPath", "r")
+        _G.fs_zip_hello = zRead:read("hello.txt")
+        _G.fs_zip_extract_all = zRead:extractAll("$extractDir")
+        zRead:close()
+      ''';
+      runtime.execute(script);
+
+      runtime.luaState.getGlobal('fs_zip_hello');
+      expect(runtime.luaState.toStr(-1), 'Hello Filesystem Zip');
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('fs_zip_extract_all');
+      expect(runtime.luaState.toBoolean(-1), isTrue);
+      runtime.luaState.pop(1);
+
+      final zipFile = File(zipPath);
+      expect(zipFile.existsSync(), isTrue);
+      final decoded = ZipDecoder().decodeBytes(zipFile.readAsBytesSync());
+      final names = decoded.files.map((f) => f.name).toList();
+      expect(names, containsAll(['hello.txt', 'nested/config.json']));
+      expect(names, isNot(contains('temp.txt')));
+
+      expect(
+        File('$extractDir/hello.txt').readAsStringSync(),
+        'Hello Filesystem Zip',
+      );
+      expect(
+        File('$extractDir/nested/config.json').readAsStringSync(),
+        '{"ok":true}',
+      );
+    });
+
+    test('Lua helper module: zip (remote HTTP URL in headless NCLuaRuntime)', () async {
+      final prevOverrides = HttpOverrides.current;
+      HttpOverrides.global = null;
+      addTearDown(() {
+        HttpOverrides.global = prevOverrides;
+      });
+      final archive = Archive()
+        ..add(ArchiveFile.string('remote.txt', 'Loaded over HTTP'));
+      final zipBytes = ZipEncoder().encodeBytes(archive);
+
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(() async {
+        await server.close(force: true);
+      });
+      server.listen((req) {
+        if (req.uri.path == '/remote.zip') {
+          req.response.statusCode = 200;
+          req.response.headers.set('content-type', 'application/zip');
+          req.response.add(zipBytes);
+        } else {
+          req.response.statusCode = 404;
+        }
+        req.response.close();
+      });
+
+      final url = 'http://127.0.0.1:${server.port}/remote.zip';
+      await runtime.execute('''
+        local zip = require "zip"
+        local z = zip.open("$url", "r")
+        _G.http_zip_ok = (z ~= nil)
+        _G.http_zip_content = z and z:read("remote.txt") or nil
+        if z then z:close() end
+      ''');
+
+      runtime.luaState.getGlobal('http_zip_ok');
+      expect(runtime.luaState.toBoolean(-1), isTrue);
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('http_zip_content');
+      expect(runtime.luaState.toStr(-1), 'Loaded over HTTP');
       runtime.luaState.pop(1);
     });
 

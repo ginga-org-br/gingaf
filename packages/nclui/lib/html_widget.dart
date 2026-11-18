@@ -98,12 +98,9 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
           ? widget.media!.uri
           : (widget.document?.baseUri?.toString() ?? widget.document?.docSrc);
       final uri = pb.resolveUri(widget.src, base);
-      String? virtualContent;
-      if (pb.virtualFiles != null) {
-        virtualContent = await pb.loadContent(widget.src, base);
-      }
-      if (virtualContent != null && virtualContent.isNotEmpty) {
-        final content = gingacc.ccws.injectCcwsFetch(virtualContent);
+      final loadedContent = await pb.loadContent(widget.src, base);
+      if (loadedContent != null && loadedContent.isNotEmpty) {
+        final content = gingacc.ccws.injectCcwsFetch(loadedContent);
         await _controller!.loadHtmlString(content);
       } else if (!kIsWeb && (uri.isScheme('file') || !uri.hasScheme)) {
         final filePath = uri.isScheme('file')
@@ -113,17 +110,8 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
         if (file.existsSync()) {
           await _controller!.loadFile(file.path);
         } else {
-          var content = await pb.loadContent(widget.src, base) ?? '';
-          content = gingacc.ccws.injectCcwsFetch(content);
+          final content = gingacc.ccws.injectCcwsFetch('');
           await _controller!.loadHtmlString(content);
-        }
-      } else if (kIsWeb) {
-        final content = await pb.loadContent(widget.src, base);
-        if (content != null && content.isNotEmpty) {
-          await _controller!
-              .loadHtmlString(gingacc.ccws.injectCcwsFetch(content));
-        } else if (uri.isScheme('http') || uri.isScheme('https')) {
-          await _controller!.loadRequest(uri);
         }
       } else if (uri.isScheme('http') || uri.isScheme('https')) {
         await _controller!.loadRequest(uri);

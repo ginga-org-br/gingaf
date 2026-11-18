@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 
+import 'package:archive/archive.dart';
 import 'package:logging/logging.dart';
 
 import 'ncl_document.dart';
@@ -7,6 +10,8 @@ import 'ncl_document.dart';
 export 'package:lua_dardo_plus/lua.dart';
 
 final _logger = Logger('lua_runtime');
+
+const bool _isWeb = bool.fromEnvironment('dart.library.js_interop');
 
 class LuaTimer {
   final int id;
@@ -21,6 +26,31 @@ class LuaTimer {
     required this.luaCallbackRef,
     this.realTimer,
   });
+}
+
+class _LuaZipHandle {
+  final String path;
+  final String? baseDirSrc;
+  final Map<String, Uint8List> entries;
+  final List<String> order;
+
+  _LuaZipHandle({
+    required this.path,
+    required this.baseDirSrc,
+    required this.entries,
+    required this.order,
+  });
+}
+
+String _normalizeZipEntryName(String raw) {
+  var s = raw.trim().replaceAll('\\', '/');
+  while (s.startsWith('./')) {
+    s = s.substring(2);
+  }
+  while (s.startsWith('/')) {
+    s = s.substring(1);
+  }
+  return s;
 }
 
 String luaPatternToDartRegex(String p) {
@@ -99,6 +129,8 @@ class NCLuaRuntime {
   final List<int> _registeredCallbackRefs = [];
   final List<LuaTimer> _activeTimers = [];
   int _nextTimerId = 1;
+  final Map<int, _LuaZipHandle> _openZips = {};
+  int _nextZipId = 1;
   final int _startTime = DateTime.now().millisecondsSinceEpoch;
   int Function()? uptimeProvider;
   void Function(Map<String, dynamic> event)? onPostNclEvent;
@@ -318,6 +350,8 @@ class NCLuaRuntime {
       return 1;
     });
 
+    _registerZipBindings();
+
     _lua.register("_bit32_arshift", (LuaState ls) {
       int x = ls.toInteger(1) & 0xFFFFFFFF;
       final disp = ls.toInteger(2);
@@ -524,12 +558,40 @@ class NCLuaRuntime {
 
   Future<void> execute(String script) async {
     try {
-      final success = await _lua.doStringAsync(script);
-      if (!success) {
+      final effectiveBase = _effectiveBase;
+      List<String>? toFetch;
+      if (script.contains('.zip')) {
+        final matches =
+            RegExp(r'''['"]([^'"]+\.zip(?:\?[^'"]*)?)['"]''').allMatches(script);
+        for (final m in matches) {
+          final zipRef = m.group(1);
+          if (zipRef != null &&
+              (_isWeb || isHttpUri(zipRef)) &&
+              document.privateBase.loadBytesSync(zipRef, effectiveBase) ==
+                  null) {
+            (toFetch ??= <String>[]).add(zipRef);
+          }
+        }
+      }
+      if (toFetch != null) {
+        for (final zipRef in toFetch) {
+          final bytes =
+              await document.privateBase.loadBytes(zipRef, effectiveBase);
+          if (bytes != null) {
+            document.privateBase.writeBytesSync(
+              zipRef,
+              bytes,
+              baseDirSrc: effectiveBase,
+              mimeType: 'application/zip',
+            );
+          }
+        }
+      }
+      final ok = _lua.doString(script);
+      if (!ok) {
         final err = _lua.getTop() > 0 ? _lua.toStr(-1) : null;
         lastErrorMessage = err;
-        _logger.warning("doStringAsync failed: $err");
-        _lua.doString(script);
+        _logger.warning("doString failed: $err");
       }
     } catch (e) {
       lastErrorMessage = e.toString();
@@ -850,9 +912,261 @@ class NCLuaRuntime {
       _lua.unRef(luaRegistryIndex, refId);
     }
     _registeredCallbackRefs.clear();
+    _openZips.clear();
     lastKey = null;
     lastKeyType = null;
     lastEvent = null;
+  }
+
+  String? get _effectiveBase => (src != null && src!.isNotEmpty)
+      ? src
+      : (document.docUri?.toString() ?? document.docSrc);
+
+  bool _persistZip(_LuaZipHandle handle) {
+    final archive = Archive();
+    for (final name in handle.order) {
+      final data = handle.entries[name];
+      if (data != null) {
+        archive.add(ArchiveFile.bytes(name, data));
+      }
+    }
+    final encoded = ZipEncoder().encodeBytes(archive);
+    return document.privateBase.writeBytesSync(
+      handle.path,
+      encoded,
+      baseDirSrc: handle.baseDirSrc,
+      mimeType: 'application/zip',
+    );
+  }
+
+  void _registerZipBindings() {
+    _lua.register("_zip_open", (LuaState ls) {
+      final rawPath = ls.toStr(1) ?? "";
+      if (rawPath.trim().isEmpty) {
+        ls.pushNil();
+        ls.pushString("empty zip path");
+        return 2;
+      }
+      final mode =
+          (ls.isNoneOrNil(2) ? "r" : (ls.toStr(2) ?? "r")).toLowerCase();
+      final effectiveBase = _effectiveBase;
+
+      final entries = <String, Uint8List>{};
+      final order = <String>[];
+
+      if (mode.contains('w')) {
+        final handle = _LuaZipHandle(
+          path: rawPath,
+          baseDirSrc: effectiveBase,
+          entries: entries,
+          order: order,
+        );
+        if (!_persistZip(handle)) {
+          ls.pushNil();
+          ls.pushString("cannot create zip file: $rawPath");
+          return 2;
+        }
+        final id = _nextZipId++;
+        _openZips[id] = handle;
+        ls.pushInteger(id);
+        return 1;
+      }
+
+      final bytes = document.privateBase.loadBytesSync(rawPath, effectiveBase);
+      if (bytes == null) {
+        if (mode.contains('a')) {
+          final handle = _LuaZipHandle(
+            path: rawPath,
+            baseDirSrc: effectiveBase,
+            entries: entries,
+            order: order,
+          );
+          if (!_persistZip(handle)) {
+            ls.pushNil();
+            ls.pushString("cannot create zip file: $rawPath");
+            return 2;
+          }
+          final id = _nextZipId++;
+          _openZips[id] = handle;
+          ls.pushInteger(id);
+          return 1;
+        }
+        ls.pushNil();
+        ls.pushString("cannot open zip file: $rawPath");
+        return 2;
+      }
+
+      if (bytes.isNotEmpty || !mode.contains('a')) {
+        try {
+          final archive = ZipDecoder().decodeBytes(bytes);
+          for (final file in archive.files) {
+            if (!file.isFile) continue;
+            final norm = _normalizeZipEntryName(file.name);
+            if (norm.isEmpty) continue;
+            entries[norm] =
+                Uint8List.fromList(file.readBytes() ?? const <int>[]);
+            if (!order.contains(norm)) {
+              order.add(norm);
+            }
+          }
+        } catch (e) {
+          ls.pushNil();
+          ls.pushString("invalid zip archive: $rawPath");
+          return 2;
+        }
+      }
+
+      final handle = _LuaZipHandle(
+        path: rawPath,
+        baseDirSrc: effectiveBase,
+        entries: entries,
+        order: order,
+      );
+      final id = _nextZipId++;
+      _openZips[id] = handle;
+      ls.pushInteger(id);
+      return 1;
+    });
+
+    _lua.register("_zip_list", (LuaState ls) {
+      final id = ls.toInteger(1);
+      final handle = _openZips[id];
+      ls.newTable();
+      if (handle != null) {
+        for (var i = 0; i < handle.order.length; i++) {
+          ls.pushString(handle.order[i]);
+          ls.setI(-2, i + 1);
+        }
+      }
+      return 1;
+    });
+
+    _lua.register("_zip_exists", (LuaState ls) {
+      final id = ls.toInteger(1);
+      final name = _normalizeZipEntryName(ls.toStr(2) ?? "");
+      final handle = _openZips[id];
+      ls.pushBoolean(handle != null && handle.entries.containsKey(name));
+      return 1;
+    });
+
+    _lua.register("_zip_read", (LuaState ls) {
+      final id = ls.toInteger(1);
+      final rawName = ls.toStr(2) ?? "";
+      final name = _normalizeZipEntryName(rawName);
+      final handle = _openZips[id];
+      final bytes = handle?.entries[name];
+      if (bytes == null) {
+        ls.pushNil();
+        ls.pushString("entry not found: $rawName");
+        return 2;
+      }
+      String decoded;
+      try {
+        decoded = utf8.decode(bytes);
+      } on FormatException {
+        decoded = latin1.decode(bytes);
+      }
+      ls.pushString(decoded);
+      return 1;
+    });
+
+    _lua.register("_zip_append", (LuaState ls) {
+      final id = ls.toInteger(1);
+      final name = _normalizeZipEntryName(ls.toStr(2) ?? "");
+      final content = ls.toStr(3) ?? "";
+      final handle = _openZips[id];
+      if (handle == null || name.isEmpty) {
+        ls.pushBoolean(false);
+        return 1;
+      }
+      handle.entries[name] = Uint8List.fromList(utf8.encode(content));
+      if (!handle.order.contains(name)) {
+        handle.order.add(name);
+      }
+      ls.pushBoolean(_persistZip(handle));
+      return 1;
+    });
+
+    _lua.register("_zip_remove", (LuaState ls) {
+      final id = ls.toInteger(1);
+      final name = _normalizeZipEntryName(ls.toStr(2) ?? "");
+      final handle = _openZips[id];
+      if (handle == null || !handle.entries.containsKey(name)) {
+        ls.pushBoolean(false);
+        return 1;
+      }
+      handle.entries.remove(name);
+      handle.order.remove(name);
+      ls.pushBoolean(_persistZip(handle));
+      return 1;
+    });
+
+    _lua.register("_zip_extract", (LuaState ls) {
+      final id = ls.toInteger(1);
+      final rawName = ls.toStr(2) ?? "";
+      final name = _normalizeZipEntryName(rawName);
+      final dest = ls.isNoneOrNil(3) ? null : ls.toStr(3);
+      final handle = _openZips[id];
+      final bytes = handle?.entries[name];
+      if (handle == null || bytes == null) {
+        ls.pushNil();
+        ls.pushString("entry not found: $rawName");
+        return 2;
+      }
+      final target = (dest != null && dest.trim().isNotEmpty) ? dest : name;
+      final ok = document.privateBase.writeBytesSync(
+        target,
+        bytes,
+        baseDirSrc: handle.baseDirSrc,
+      );
+      if (!ok) {
+        ls.pushNil();
+        ls.pushString("failed to extract: $rawName");
+        return 2;
+      }
+      ls.pushBoolean(true);
+      return 1;
+    });
+
+    _lua.register("_zip_extract_all", (LuaState ls) {
+      final id = ls.toInteger(1);
+      final destDir = ls.isNoneOrNil(2) ? null : ls.toStr(2);
+      final handle = _openZips[id];
+      if (handle == null) {
+        ls.pushNil();
+        ls.pushString("closed zip handle");
+        return 2;
+      }
+      final prefix = (destDir != null && destDir.trim().isNotEmpty)
+          ? destDir.trim().replaceAll('\\', '/')
+          : '';
+      for (final name in handle.order) {
+        final bytes = handle.entries[name];
+        if (bytes == null) continue;
+        final target = prefix.isEmpty
+            ? name
+            : (prefix.endsWith('/') ? '$prefix$name' : '$prefix/$name');
+        final ok = document.privateBase.writeBytesSync(
+          target,
+          bytes,
+          baseDirSrc: handle.baseDirSrc,
+        );
+        if (!ok) {
+          ls.pushNil();
+          ls.pushString("failed to extract: $name");
+          return 2;
+        }
+      }
+      ls.pushBoolean(true);
+      return 1;
+    });
+
+    _lua.register("_zip_close", (LuaState ls) {
+      final id = ls.toInteger(1);
+      _openZips.remove(id);
+      ls.pushBoolean(true);
+      return 1;
+    });
   }
 }
 
@@ -1085,38 +1399,42 @@ end
 
 zip = {}
 zip.__index = zip
-function zip.open(path)
+function zip.open(path, mode)
+    local handle, err = _zip_open(path, mode)
+    if not handle then
+        return nil, err
+    end
     local self = setmetatable({}, zip)
+    self._handle = handle
     self.path = path
-    self.files = {"main.lua", "image.png"}
     return self
 end
 function zip:attrPath()
     return self.path
 end
 function zip:list()
-    return self.files
+    return _zip_list(self._handle)
 end
 function zip:exists(filename)
-    for _, f in ipairs(self.files) do
-        if f == filename then
-            return true
-        end
-    end
-    return false
+    return _zip_exists(self._handle, filename)
 end
-function zip:remove(filename)
-    for i, f in ipairs(self.files) do
-        if f == filename then
-            table.remove(self.files, i)
-            return true
-        end
-    end
-    return false
+function zip:read(filename)
+    return _zip_read(self._handle, filename)
 end
 function zip:append(filename, content)
-    table.insert(self.files, filename)
-    return true
+    return _zip_append(self._handle, filename, content)
+end
+function zip:remove(filename)
+    return _zip_remove(self._handle, filename)
+end
+function zip:extract(filename, destPath)
+    return _zip_extract(self._handle, filename, destPath)
+end
+function zip:extractAll(destDir)
+    return _zip_extract_all(self._handle, destDir)
+end
+function zip:close()
+    return _zip_close(self._handle)
 end
 package.preload["zip"] = function()
     return zip

@@ -1,6 +1,4 @@
-import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -730,30 +728,18 @@ class LuaWidgetState extends MediaState<LuaWidget> {
     final uri = pb.resolveUri(path, base);
     final resolvedPath =
         uri.isScheme('file') ? uri.toFilePath() : uri.toString();
-    if (pb.virtualFiles != null) {
-      final vf = pb.virtualFiles![resolvedPath] ??
-          pb.virtualFiles![path] ??
-          pb.virtualFiles![path.replaceAll('../', '')] ??
-          pb.virtualFiles!['../$path'];
-      if (vf != null) {
-        if (vf.startsWith('data:')) {
-          final comma = vf.indexOf(',');
-          if (comma != -1) {
-            return MemoryImage(base64.decode(vf.substring(comma + 1)));
-          }
-        }
-        if (vf.startsWith('http://') ||
-            vf.startsWith('https://') ||
-            vf.startsWith('blob:')) {
-          return NetworkImage(vf);
-        }
-        return MemoryImage(Uint8List.fromList(utf8.encode(vf)));
-      }
-    }
     if (uri.isScheme('http') ||
         uri.isScheme('https') ||
-        uri.isScheme('blob') ||
-        uri.isScheme('data')) {
+        uri.isScheme('blob')) {
+      return NetworkImage(uri.toString());
+    }
+    final bytes = pb.loadBytesSync(path, base) ??
+        pb.loadBytesSync(path.replaceAll('../', ''), base) ??
+        pb.loadBytesSync('../$path', base);
+    if (bytes != null) {
+      return MemoryImage(bytes);
+    }
+    if (uri.isScheme('data')) {
       return NetworkImage(uri.toString());
     }
     if (!kIsWeb) {
@@ -820,18 +806,12 @@ class LuaWidgetState extends MediaState<LuaWidget> {
       final uri = pb.resolveUri(path, base);
       final resolvedPath =
           uri.isScheme('file') ? uri.toFilePath() : uri.toString();
-      if (pb.virtualFiles != null) {
-        final vf = pb.virtualFiles![resolvedPath] ??
-            pb.virtualFiles![path] ??
-            pb.virtualFiles![path.replaceAll('../', '')] ??
-            pb.virtualFiles!['../$path'];
-        if (vf != null) {
-          final bytes = vf.startsWith('data:') && vf.contains(',')
-              ? base64.decode(vf.substring(vf.indexOf(',') + 1))
-              : Uint8List.fromList(utf8.encode(vf));
-          final dims = parseImageDimensions(bytes);
-          if (dims != null) return dims;
-        }
+      final vBytes = pb.loadBytesSync(path, base) ??
+          pb.loadBytesSync(path.replaceAll('../', ''), base) ??
+          pb.loadBytesSync('../$path', base);
+      if (vBytes != null) {
+        final dims = parseImageDimensions(vBytes);
+        if (dims != null) return dims;
       }
       if (!kIsWeb) {
         final candidates = [
