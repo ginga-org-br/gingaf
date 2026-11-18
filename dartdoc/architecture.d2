@@ -1,0 +1,225 @@
+vars: {
+  d2-config: {
+    pad: 6
+  }
+}
+
+style: {
+  fill: transparent
+}
+
+classes: {
+  invisible: {
+    label: ""
+    style: {
+      fill: transparent
+      stroke: transparent
+    }
+  }
+  external: {
+    height: 38
+    style: {
+      fill: "#f1f5f9"
+      stroke: "#64748b"
+      stroke-dash: 3
+      font-color: "#1e293b"
+      border-radius: 4
+      font-size: 14
+    }
+  }
+  target: {
+    height: 38
+    style: {
+      fill: "#e0f2fe"
+      stroke: "#0284c7"
+      font-color: "#0c4a6e"
+      border-radius: 4
+      font-size: 14
+    }
+  }
+  host_pkg: {
+    height: 38
+    style: {
+      fill: "#dbeafe"
+      stroke: "#2563eb"
+      font-color: "#1e3a8a"
+      bold: true
+      border-radius: 4
+      font-size: 15
+    }
+  }
+  ui_pkg: {
+    height: 38
+    style: {
+      fill: "#ede9fe"
+      stroke: "#7c3aed"
+      font-color: "#3b0764"
+      border-radius: 4
+      font-size: 14
+    }
+  }
+  core_sub: {
+    height: 34
+    style: {
+      fill: "#bbf7d0"
+      stroke: "#16a34a"
+      font-color: "#14532d"
+      border-radius: 4
+      font-size: 13
+    }
+  }
+}
+
+grid-rows: 3
+grid-columns: 1
+grid-gap: 10
+
+deployments: {
+  class: invisible
+  grid-rows: 2
+  grid-columns: 1
+  grid-gap: 0
+
+  ext: {
+    class: invisible
+    grid-columns: 3
+    grid-gap: 8
+
+    ginga_node: "ginga-node" {
+      class: external
+      width: 160
+    }
+    ginga_code: "ginga-code" {
+      class: external
+      width: 160
+    }
+    spacer: "" {
+      class: invisible
+      width: 160
+      height: 38
+    }
+  }
+
+  targets: {
+    class: invisible
+    grid-columns: 3
+    grid-gap: 8
+
+    web: "gingaf (web)" {
+      class: target
+      width: 160
+    }
+    desktop: "gingaf (desktop)" {
+      class: target
+      width: 160
+    }
+    mobile: "gingaf (mobile)" {
+      class: target
+      width: 160
+    }
+  }
+}
+
+flutter_layer: "Flutter" {
+  label.near: top-left
+  style: {
+    fill: "#f8fafc"
+    stroke: "#3b82f6"
+    stroke-dash: 4
+    font-color: "#1d4ed8"
+    bold: true
+    font-size: 13
+    border-radius: 6
+  }
+  grid-rows: 2
+  grid-columns: 1
+  grid-gap: 0
+
+  r1: {
+    class: invisible
+    grid-columns: 1
+    grid-gap: 8
+
+    gingaf: "gingaf" {
+      class: host_pkg
+      width: 496
+    }
+  }
+
+  r2: {
+    class: invisible
+    grid-columns: 3
+    grid-gap: 8
+
+    playground: "playground" {
+      class: ui_pkg
+      width: 160
+    }
+    plugins: "plugins" {
+      class: ui_pkg
+      width: 160
+    }
+    nclui: "nclui" {
+      class: ui_pkg
+      width: 160
+    }
+  }
+}
+
+dart_layer: "Pure Dart" {
+  label.near: top-left
+  style: {
+    fill: "#f0fdf4"
+    stroke: "#16a34a"
+    stroke-dash: 4
+    font-color: "#15803d"
+    bold: true
+    font-size: 13
+    border-radius: 6
+  }
+  grid-rows: 1
+  grid-columns: 2
+  grid-gap: 8
+
+  ncldoc: "ncldoc" {
+    label.near: top-center
+    style: {
+      fill: "#dcfce7"
+      stroke: "#16a34a"
+      font-color: "#14532d"
+      bold: true
+      border-radius: 4
+      font-size: 14
+    }
+    grid-columns: 2
+    grid-gap: 8
+
+    ncl_document: "NclDocument" {
+      class: core_sub
+      width: 132
+    }
+    lua_runtime: "LuaRuntime (lua_dardo)" {
+      class: core_sub
+      width: 172
+    }
+  }
+
+  gingacc: "gingacc" {
+    label.near: top-center
+    style: {
+      fill: "#dcfce7"
+      stroke: "#16a34a"
+      font-color: "#14532d"
+      bold: true
+      border-radius: 4
+      font-size: 14
+    }
+    grid-columns: 1
+    grid-gap: 8
+
+    ccws: "CCWS" {
+      class: core_sub
+      width: 144
+    }
+  }
+}

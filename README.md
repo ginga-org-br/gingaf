@@ -5,11 +5,11 @@
 
 `gingaf` is an MIT-licensed, multi-platform implementation of the interactive TV middleware Ginga standardised by ITU-T and SBTVD.
 
-You can use `gingaf` to develop Ginga applications at web by using the playground or acessing [ginga.org.br/gingaf/playground](https://ginga.org.br/gingaf/playground), or at desktop by the Visual Studio Code extension [ginga-code](https://github.com/ginga-org-br/ginga-code).
+You can use `gingaf` to develop Ginga applications on the web or desktop using the built-in playground (also hosted at [ginga.org.br/gingaf/playground](https://ginga.org.br/gingaf/playground)), or on desktop with the Visual Studio Code extension [ginga-code](https://github.com/ginga-org-br/ginga-code).
 
 ## Documentation
 
-The `gingaf` documentation is available at [https://ginga-org-br.github.io/gingaf/docs](https://ginga-org-br.github.io/gingaf/docs). The repository is organized as a monorepo: the root directory contains the Flutter host application. It include the following packages: [`packages/gingacc`](packages/gingacc) (configuration, users, and CCWS), [`packages/ncldoc`](packages/ncldoc) (NCL headless execution engine), [`packages/nclui`](packages/nclui) (NCL and visual widgets), and [`node`](node) (npm package and web interactive playground).
+The `gingaf` documentation is available at [https://ginga-org-br.github.io/gingaf/docs](https://ginga-org-br.github.io/gingaf/docs). The repository is organized as a monorepo: the root directory contains the Flutter host application, alongside `packages/gingacc` (configuration, users, and CCWS), `packages/ncldoc` (NCL headless execution engine), `packages/nclui` (NCL and visual widgets), `packages/plugins` (media and rule plugins), `packages/playground` (built-in editor, catalog, LSP, and DAP), and `node` (npm distribution package).
 
 <img src="dartdoc/architecture.svg" width="480">
 

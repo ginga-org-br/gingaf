@@ -118,7 +118,8 @@ integration_test:
 	flutter test --no-pub integration_test -d $(if $(d),$(d),$(CURRENT_OS))
 
 dartdoc:
-	npx -y @mermaid-js/mermaid-cli -i dartdoc/architecture.mmd -o dartdoc/architecture.svg -b transparent
+	d2 dartdoc/architecture.d2 dartdoc/architecture.svg
+	chmod 644 dartdoc/architecture.svg
 	dart doc -o dartdoc/api
 	touch dartdoc/api/.nojekyll
 	mkdir -p dartdoc/api/dartdoc
