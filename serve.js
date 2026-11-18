@@ -6,16 +6,12 @@ const url = require('url');
 const PORT = parseInt(process.env.PORT || '5173', 10);
 const ROOT = __dirname;
 const BUILD_WEB = path.join(ROOT, 'build', 'web');
-const EXAMPLES = path.join(ROOT, 'examples');
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'application/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
   '.wasm': 'application/wasm',
-  '.ncl': 'application/xml; charset=utf-8',
-  '.xml': 'application/xml; charset=utf-8',
-  '.lua': 'text/plain; charset=utf-8',
   '.txt': 'text/plain; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.png': 'image/png',
@@ -37,48 +33,6 @@ function resolveFilePath(reqPath) {
     return path.join(BUILD_WEB, 'favicon.png');
   }
 
-  if (pathname === '/gingaf/playground-embedded' || pathname === '/gingaf/playground-embedded/' ||
-      pathname === '/playground-embedded' || pathname === '/playground-embedded/') {
-    return path.join(EXAMPLES, 'playground-embedded.html');
-  }
-
-  if (pathname === '/gingaf/catalog.json' || pathname === '/catalog.json' ||
-      pathname === '/gingaf/examples/catalog.json' || pathname === '/examples/catalog.json' ||
-      pathname === '/gingaf/playground/catalog.json' || pathname === '/gingaf/playground/examples/catalog.json' ||
-      pathname === '/playground/catalog.json' || pathname === '/playground/examples/catalog.json') {
-    return path.join(EXAMPLES, 'catalog.json');
-  }
-
-  if (pathname.startsWith('/gingaf/examples/')) {
-    const rel = pathname.substring('/gingaf/examples/'.length);
-    const candidate = path.join(EXAMPLES, rel);
-    if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
-      return candidate;
-    }
-  }
-  if (pathname.startsWith('/examples/')) {
-    const rel = pathname.substring('/examples/'.length);
-    const candidate = path.join(EXAMPLES, rel);
-    if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
-      return candidate;
-    }
-  }
-
-  if (pathname.startsWith('/gingaf/playground/examples/')) {
-    const rel = pathname.substring('/gingaf/playground/examples/'.length);
-    const candidate = path.join(EXAMPLES, rel);
-    if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
-      return candidate;
-    }
-  }
-  if (pathname.startsWith('/playground/examples/')) {
-    const rel = pathname.substring('/playground/examples/'.length);
-    const candidate = path.join(EXAMPLES, rel);
-    if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
-      return candidate;
-    }
-  }
-
   if (pathname.startsWith('/gingaf/playground/')) {
     const rel = pathname.substring('/gingaf/playground/'.length);
     if (!rel || rel === 'index.html') {
@@ -87,10 +41,6 @@ function resolveFilePath(reqPath) {
     const buildCandidate = path.join(BUILD_WEB, rel);
     if (fs.existsSync(buildCandidate) && fs.statSync(buildCandidate).isFile()) {
       return buildCandidate;
-    }
-    const exCandidate = path.join(EXAMPLES, rel);
-    if (fs.existsSync(exCandidate) && fs.statSync(exCandidate).isFile()) {
-      return exCandidate;
     }
   }
 
@@ -102,10 +52,6 @@ function resolveFilePath(reqPath) {
     const buildCandidate = path.join(BUILD_WEB, rel);
     if (fs.existsSync(buildCandidate) && fs.statSync(buildCandidate).isFile()) {
       return buildCandidate;
-    }
-    const exCandidate = path.join(EXAMPLES, rel);
-    if (fs.existsSync(exCandidate) && fs.statSync(exCandidate).isFile()) {
-      return exCandidate;
     }
   }
 
@@ -119,20 +65,12 @@ function resolveFilePath(reqPath) {
     if (fs.existsSync(buildCandidate) && fs.statSync(buildCandidate).isFile()) {
       return buildCandidate;
     }
-    const exCandidate = path.join(EXAMPLES, rel);
-    if (fs.existsSync(exCandidate) && fs.statSync(exCandidate).isFile()) {
-      return exCandidate;
-    }
   }
 
   const directPath = pathname.replace(/^\//, '');
   const buildCandidate = path.join(BUILD_WEB, directPath);
   if (fs.existsSync(buildCandidate) && fs.statSync(buildCandidate).isFile()) {
     return buildCandidate;
-  }
-  const exCandidate = path.join(EXAMPLES, directPath);
-  if (fs.existsSync(exCandidate) && fs.statSync(exCandidate).isFile()) {
-    return exCandidate;
   }
 
   return null;

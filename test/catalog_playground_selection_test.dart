@@ -79,7 +79,12 @@ void main() {
       final editorState =
           tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
       expect(editorState.effectiveContent, contains('my_lua_demo'));
-      expect(gingacc.config.appSrc, equals('examples/lua_demo.ncl'));
+      expect(
+        gingacc.config.appSrc,
+        equals(
+          'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/lua_demo.ncl',
+        ),
+      );
 
       await tester.tap(find.byKey(const Key('monaco_run_button')));
       await tester.pump(const Duration(milliseconds: 100));
@@ -131,6 +136,28 @@ void main() {
           appSrc: null,
         ),
       );
+      gingacc.setVirtualFiles({
+        'examples/catalog.json': '''{
+          "examples": {
+            "sbtvd": {
+              "mainFile": "sbtvd/main.ncl",
+              "category": "general",
+              "description": "SBTVD broadcast video example",
+              "otherEditbleFiles": ["ginga_config.json"]
+            }
+          }
+        }''',
+        'examples/sbtvd/main.ncl': '''<ncl>
+          <body>
+            <port id="init" component="video"/>
+            <media id="video" src="sbtvd://video">
+              <property name="bounds" value="25%,25%,50%,50%"/>
+            </media>
+          </body>
+        </ncl>''',
+        'examples/sbtvd/ginga_config.json':
+            '{"mainAvSrc": "https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4"}',
+      });
 
       await tester.pumpWidget(Ginga(gingacc: gingacc));
       await tester.pump(const Duration(milliseconds: 200));

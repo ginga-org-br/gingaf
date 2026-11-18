@@ -230,15 +230,7 @@ class GingaState extends State<Ginga> {
     }
     final editorFiles = _playgroundKey.currentState?.allFileContents;
     if (editorFiles != null) {
-      for (final entry in editorFiles.entries) {
-        currentFiles[entry.key] = entry.value;
-        if (!entry.key.startsWith('examples/')) {
-          currentFiles['examples/${entry.key}'] = entry.value;
-        }
-        if (entry.key.contains('/')) {
-          currentFiles[entry.key.split('/').last] = entry.value;
-        }
-      }
+      currentFiles.addAll(editorFiles);
     }
     _gingacc.setVirtualFiles(currentFiles);
   }
@@ -246,12 +238,19 @@ class GingaState extends State<Ginga> {
   Future<void> _applyPlaygroundConfig(
     String? appPath, {
     required bool resetIfMissing,
+    bool fromCatalog = false,
   }) async {
     final enablePlayground = _gingacc.config.enablePlayground;
     final currentBps = List<int>.from(_gingacc.config.breakpoints);
 
     String? configJson;
-    final editorFiles = _playgroundKey.currentState?.allFileContents;
+    final editorState = _playgroundKey.currentState;
+    final editorFiles = editorState?.allFileContents;
+    final isCatalogApp = fromCatalog ||
+        (editorState != null &&
+            editorState.effectiveShowCatalogSelector &&
+            editorState.selectedExample != null);
+
     if (editorFiles != null) {
       for (final entry in editorFiles.entries) {
         final normalizedKey = entry.key.replaceAll('\\', '/');
@@ -264,6 +263,7 @@ class GingaState extends State<Ginga> {
     }
 
     if (configJson == null &&
+        !isCatalogApp &&
         appPath != null &&
         appPath.trim().isNotEmpty &&
         !appPath.trim().startsWith('<')) {
@@ -683,16 +683,15 @@ class GingaState extends State<Ginga> {
                               showCatalogSelector: _showCatalogSelector,
                               onCatalogExampleSelected: (selectedFile) async {
                                 final appPath =
-                                    selectedFile.startsWith('examples/')
-                                        ? selectedFile
-                                        : 'examples/$selectedFile';
+                                    resolveCatalogExampleUrl(selectedFile);
                                 _savePlaygroundVirtualFiles();
                                 await _applyPlaygroundConfig(
                                   appPath,
                                   resetIfMissing: true,
+                                  fromCatalog: true,
                                 );
                                 if (kIsWeb) {
-                                  updateWebUrlApp(selectedFile);
+                                  updateWebUrlApp(appPath);
                                 }
                               },
                               onContentChanged: (newText) {

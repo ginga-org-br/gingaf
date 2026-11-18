@@ -497,17 +497,23 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
       final exists = _catalogExamples.any((e) =>
           e.mainFile == _selectedExample ||
           'examples/${e.mainFile}' == _selectedExample ||
+          resolveCatalogExampleUrl(e.mainFile) == _selectedExample ||
           e.key == _selectedExample);
       if (exists) {
         final found = _catalogExamples.firstWhere((e) =>
             e.mainFile == _selectedExample ||
             'examples/${e.mainFile}' == _selectedExample ||
+            resolveCatalogExampleUrl(e.mainFile) == _selectedExample ||
             e.key == _selectedExample);
         _selectedExample = found.mainFile;
         _editableFiles =
             _computeEditableFiles(found.mainFile, found.otherEditableFiles);
-        _activeFilePath ??= found.mainFile;
-        _currentFilePath ??= found.mainFile;
+        if (_activeFilePath == null ||
+            _activeFilePath == widget.filePath ||
+            !_editableFiles.contains(_activeFilePath)) {
+          _activeFilePath = found.mainFile;
+          _currentFilePath = found.mainFile;
+        }
       }
     }
   }
@@ -517,7 +523,8 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
     for (final e in _catalogExamples) {
       if (e.mainFile == mainFile ||
           e.key == mainFile ||
-          'examples/${e.mainFile}' == mainFile) {
+          'examples/${e.mainFile}' == mainFile ||
+          resolveCatalogExampleUrl(e.mainFile) == mainFile) {
         example = e;
         break;
       }
@@ -874,6 +881,7 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
       for (final item in _catalogExamples) {
         if (item.mainFile == _selectedExample ||
             'examples/${item.mainFile}' == _selectedExample ||
+            resolveCatalogExampleUrl(item.mainFile) == _selectedExample ||
             item.key == _selectedExample) {
           selectedItem = item;
           break;

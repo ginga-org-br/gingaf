@@ -93,11 +93,23 @@ void main() {
       expect(content, equals(sampleContent));
     });
 
-    test('loadExampleContent loads existing filesystem files on desktop',
-        () async {
-      final content = await loadExampleContent('video.ncl');
-      expect(content, isNotNull);
-      expect(content, contains('<ncl'));
+    test('resolveCatalogExampleUrl resolves catalog entries to GitHub URL', () {
+      expect(
+        resolveCatalogExampleUrl('catalog.json'),
+        'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/catalog.json',
+      );
+      expect(
+        resolveCatalogExampleUrl('sbtvd/main.ncl'),
+        'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/sbtvd/main.ncl',
+      );
+      expect(
+        resolveCatalogExampleUrl('examples/video.ncl'),
+        'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/video.ncl',
+      );
+      expect(
+        resolveCatalogExampleUrl('https://custom.org/app.ncl'),
+        'https://custom.org/app.ncl',
+      );
     });
   });
 }

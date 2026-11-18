@@ -1,11 +1,34 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:gingacc/gingacc.dart';
+import 'package:material_ui/material_ui.dart';
+
+const String catalogExamplesBaseUrl =
+    'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples';
+
+String resolveCatalogExampleUrl(String pathOrUrl) {
+  final trimmed = pathOrUrl.trim();
+  if (trimmed.isEmpty ||
+      isHttpUri(trimmed) ||
+      isXmlString(trimmed) ||
+      trimmed.startsWith('data:') ||
+      trimmed.startsWith('blob:')) {
+    return trimmed;
+  }
+  var clean = trimmed.replaceAll('\\', '/');
+  while (clean.startsWith('./')) {
+    clean = clean.substring(2);
+  }
+  if (clean.startsWith('/')) {
+    clean = clean.substring(1);
+  }
+  if (clean.startsWith('examples/')) {
+    clean = clean.substring('examples/'.length);
+  }
+  return '$catalogExamplesBaseUrl/$clean';
+}
 
 class CatalogExample {
   final String key;
@@ -80,43 +103,12 @@ Future<List<CatalogExample>> loadCatalogExamples({
     return parseCatalog(catalogJsonContent);
   }
 
-  if (gingacc != null) {
-    try {
-      final content = await gingacc.loadContent('examples/catalog.json') ??
-          await gingacc.loadContent('catalog.json');
-      if (content != null && content.isNotEmpty) {
-        final parsed = parseCatalog(content);
-        if (parsed.isNotEmpty) return parsed;
-      }
-    } catch (_) {}
-  }
-
-  if (!kIsWeb) {
-    const candidatePaths = [
-      'examples/catalog.json',
-      'catalog.json',
-      '../examples/catalog.json',
-      '../../examples/catalog.json',
-    ];
-    for (final path in candidatePaths) {
-      try {
-        final f = File(path);
-        if (f.existsSync()) {
-          final content = f.readAsStringSync();
-          final parsed = parseCatalog(content);
-          if (parsed.isNotEmpty) return parsed;
-        }
-      } catch (_) {}
-    }
-  }
-
-  final fallbackCc = GingaCC();
+  final cc = gingacc ?? GingaCC();
+  final catalogUrl = resolveCatalogExampleUrl('catalog.json');
   try {
-    final content = await fallbackCc.loadContent('catalog.json') ??
-        await fallbackCc.loadContent('examples/catalog.json');
+    final content = await cc.loadContent(catalogUrl);
     if (content != null && content.isNotEmpty) {
-      final parsed = parseCatalog(content);
-      if (parsed.isNotEmpty) return parsed;
+      return parseCatalog(content);
     }
   } catch (_) {}
 
@@ -127,31 +119,17 @@ Future<String?> loadExampleContent(
   String mainFile, {
   GingaCC? gingacc,
 }) async {
+  final trimmed = mainFile.trim();
+  if (trimmed.isEmpty) return null;
+
   final cc = gingacc ?? GingaCC();
+  final githubUrl = resolveCatalogExampleUrl(trimmed);
   try {
-    final loaded = await cc.loadContent('examples/$mainFile') ??
-        await cc.loadContent(mainFile);
-    if (loaded != null && loaded.isNotEmpty) {
-      return loaded;
+    final content = await cc.loadContent(githubUrl);
+    if (content != null && content.isNotEmpty) {
+      return content;
     }
   } catch (_) {}
-
-  if (!kIsWeb) {
-    final paths = [
-      'examples/$mainFile',
-      mainFile,
-      '../examples/$mainFile',
-      '../../examples/$mainFile',
-    ];
-    for (final p in paths) {
-      try {
-        final f = File(p);
-        if (f.existsSync()) {
-          return f.readAsStringSync();
-        }
-      } catch (_) {}
-    }
-  }
 
   return null;
 }
@@ -206,9 +184,7 @@ class _CatalogGridViewState extends State<CatalogGridView> {
     if (widget.examples.isEmpty) return;
     if (widget.selectedExample != null) {
       for (final item in widget.examples) {
-        if (item.mainFile == widget.selectedExample ||
-            'examples/${item.mainFile}' == widget.selectedExample ||
-            item.key == widget.selectedExample) {
+        if (_isSelected(item)) {
           _focusedKey = item.key;
           return;
         }
@@ -377,6 +353,7 @@ class _CatalogGridViewState extends State<CatalogGridView> {
     if (widget.selectedExample == null) return false;
     return item.mainFile == widget.selectedExample ||
         'examples/${item.mainFile}' == widget.selectedExample ||
+        resolveCatalogExampleUrl(item.mainFile) == widget.selectedExample ||
         item.key == widget.selectedExample;
   }
 
