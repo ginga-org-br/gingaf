@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class SyntaxHighlighter {
   static const Color defaultColor = Color(0xFFD4D4D4);

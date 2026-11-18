@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:ncldoc/ncl_document.dart';
 import 'package:nclui/base_widget.dart';
 import 'package:nclui/nclui_plugins.dart';

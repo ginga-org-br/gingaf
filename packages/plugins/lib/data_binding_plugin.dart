@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart' hide Element;
+import 'package:material_ui/material_ui.dart' hide Element;
 import 'package:flutter/services.dart';
 import 'package:ncldoc/ncl_document.dart';
 import 'package:nclui/av_widget.dart';

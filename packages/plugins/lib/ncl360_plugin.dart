@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/material.dart' hide Element;
+import 'package:material_ui/material_ui.dart' hide Element;
 import 'package:flutter/gestures.dart';
 import 'package:http/http.dart' as http;
 import 'package:ncldoc/ncl_document.dart';

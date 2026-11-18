@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:get_it/get_it.dart';
 import 'package:gingacc/gingacc.dart';
 import 'package:logging/logging.dart';

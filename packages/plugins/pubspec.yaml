@@ -10,6 +10,7 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
+  material_ui: ^1.1.0
   ncldoc:
   nclui:
   video_player: ^2.14.0
