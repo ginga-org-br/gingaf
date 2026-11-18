@@ -48,6 +48,7 @@ class GingaState extends State<Ginga> {
   bool _isPaused = false;
   bool _showUsersOverlay = false;
   late final bool _showCatalogSelector;
+  Map<String, String>? _initialVirtualFiles;
 
   GlobalKey<ncl.NclWidgetState> _nclAppKey = GlobalKey<ncl.NclWidgetState>();
   GlobalKey<MainAVWidgetState> _mainAvKey = GlobalKey<MainAVWidgetState>();
@@ -74,6 +75,7 @@ class GingaState extends State<Ginga> {
   void initState() {
     super.initState();
     _gingacc = widget.gingacc ?? GingaCC();
+    _initialVirtualFiles = _gingacc.virtualFiles;
     final isOverlay = isTv30Mode();
     _showCatalogSelector = _gingacc.config.enablePlayground &&
         (_gingacc.config.appSrc == null ||
@@ -223,7 +225,7 @@ class GingaState extends State<Ginga> {
 
   void _savePlaygroundVirtualFiles() {
     final currentFiles =
-        Map<String, String>.from(_gingacc.virtualFiles ?? {});
+        Map<String, String>.from(_initialVirtualFiles ?? {});
     if (_mainAppContent != null && _gingacc.config.appSrc != null) {
       currentFiles[_gingacc.config.appSrc!] = _mainAppContent!;
     }
@@ -240,6 +242,90 @@ class GingaState extends State<Ginga> {
       }
     }
     _gingacc.setVirtualFiles(currentFiles);
+  }
+
+  Future<void> _applyPlaygroundConfig(
+    String? appPath, {
+    required bool resetIfMissing,
+  }) async {
+    final enablePlayground = _gingacc.config.enablePlayground;
+    final currentBps = List<int>.from(_gingacc.config.breakpoints);
+
+    String? configJson;
+    final editorFiles = _playgroundKey.currentState?.allFileContents;
+    if (editorFiles != null) {
+      for (final entry in editorFiles.entries) {
+        final normalizedKey = entry.key.replaceAll('\\', '/');
+        if (normalizedKey == 'ginga_config.json' ||
+            normalizedKey.endsWith('/ginga_config.json')) {
+          configJson = entry.value;
+          break;
+        }
+      }
+    }
+
+    if (configJson == null &&
+        appPath != null &&
+        appPath.trim().isNotEmpty &&
+        !appPath.trim().startsWith('<')) {
+      final normalizedApp = appPath.replaceAll('\\', '/');
+      final slashIdx = normalizedApp.lastIndexOf('/');
+      final siblingConfigPath = slashIdx != -1
+          ? '${normalizedApp.substring(0, slashIdx)}/ginga_config.json'
+          : 'ginga_config.json';
+      if (_initialVirtualFiles != null &&
+          _initialVirtualFiles!.containsKey(siblingConfigPath)) {
+        configJson = _initialVirtualFiles![siblingConfigPath];
+      } else if (!kIsWeb && !isHttpUri(siblingConfigPath)) {
+        final f = File(siblingConfigPath);
+        if (f.existsSync()) {
+          configJson = f.readAsStringSync();
+        }
+      } else if (kIsWeb || isHttpUri(appPath)) {
+        final configUri = _gingacc.resolveUri('ginga_config.json', appPath);
+        configJson = await _gingacc.loadContent(configUri);
+      }
+    }
+
+    if (configJson != null && configJson.trim().isNotEmpty) {
+      try {
+        final loadedCfg = await GingaConfig.fromJson(
+          configJson,
+          appPath,
+          _gingacc,
+        );
+        _gingacc.config = loadedCfg.copyWith(
+          appSrc: appPath ?? loadedCfg.appSrc,
+          enablePlayground: enablePlayground,
+          breakpoints:
+              currentBps.isNotEmpty ? currentBps : loadedCfg.breakpoints,
+        );
+        return;
+      } catch (e) {
+        _logger.warning('Failed to parse playground ginga_config.json: $e');
+      }
+    }
+
+    if (resetIfMissing) {
+      _gingacc.config = GingaConfig(
+        appSrc: appPath,
+        startWithCCWS: true,
+        enablePlayground: enablePlayground,
+        breakpoints: currentBps,
+      );
+    } else if (appPath != null && _gingacc.config.appSrc != appPath) {
+      _gingacc.config = _gingacc.config.copyWith(appSrc: appPath);
+    }
+  }
+
+  Future<void> _runFromPlayground() async {
+    _savePlaygroundVirtualFiles();
+    await _applyPlaygroundConfig(
+      _gingacc.config.appSrc,
+      resetIfMissing: false,
+    );
+    if (!mounted) return;
+    _restart();
   }
 
   void _stopFromPlayground() {
@@ -596,12 +682,15 @@ class GingaState extends State<Ginga> {
                               gingacc: _gingacc,
                               isRunning: _isRunning,
                               showCatalogSelector: _showCatalogSelector,
-                              onCatalogExampleSelected: (selectedFile) {
+                              onCatalogExampleSelected: (selectedFile) async {
                                 final appPath = selectedFile.startsWith('examples/')
                                     ? selectedFile
                                     : 'examples/$selectedFile';
-                                _gingacc.config =
-                                    _gingacc.config.copyWith(appSrc: appPath);
+                                _savePlaygroundVirtualFiles();
+                                await _applyPlaygroundConfig(
+                                  appPath,
+                                  resetIfMissing: true,
+                                );
                                 if (kIsWeb) {
                                   updateWebUrlApp(selectedFile);
                                 }
@@ -609,22 +698,13 @@ class GingaState extends State<Ginga> {
                               onContentChanged: (newText) {
                                 _mainAppContent = newText;
                               },
-                              onRun: () {
-                                _savePlaygroundVirtualFiles();
-                                _restart();
-                              },
+                              onRun: _runFromPlayground,
                               onStop: _stopFromPlayground,
-                              onDebug: () {
-                                _savePlaygroundVirtualFiles();
-                                _restart();
-                              },
+                              onDebug: _runFromPlayground,
                               onContinue: () {
                                 resume();
                               },
-                              onReload: () {
-                                _savePlaygroundVirtualFiles();
-                                _restart();
-                              },
+                              onReload: _runFromPlayground,
                               initialBreakpoints: _gingacc.config.breakpoints,
                               onBreakpointsChanged: (newBps) {
                                 setBreakpoints(newBps);

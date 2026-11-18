@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gingacc/gingacc.dart';
 import 'package:gingaf/args.dart';
 import 'package:gingaf/ginga.dart';
+import 'package:nclui/main_av_widget.dart';
 import 'package:nclui/ncl_widget.dart' as ncl;
 import 'package:playground/playground.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
@@ -111,6 +112,51 @@ void main() {
       expect(find.byType(PlaygroundEditor), findsOneWidget);
       expect(find.byKey(const Key('catalog_select')), findsNothing);
       expect(find.text('video.ncl'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets(
+        'applies ginga_config.json mainAvSrc when selecting sbtvd example in playground',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1920, 1080);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final gingacc = GingaCC(
+        config: GingaConfig(
+          enablePlayground: true,
+          appSrc: null,
+        ),
+      );
+
+      await tester.pumpWidget(Ginga(gingacc: gingacc));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      await tester.tap(find.byKey(const Key('catalog_select')));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      await tester.tap(find.byKey(const Key('catalog_option_sbtvd')));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        gingacc.config.mainAvSrc,
+        equals(
+            'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4'),
+      );
+
+      await tester.tap(find.byKey(const Key('monaco_run_button')));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      final mainAvFinder = find.byType(MainAVWidget);
+      expect(mainAvFinder, findsOneWidget);
+      final mainAv = tester.widget<MainAVWidget>(mainAvFinder);
+      expect(
+        mainAv.src,
+        equals(
+            'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4'),
+      );
 
       await tester.pumpWidget(const SizedBox());
     });

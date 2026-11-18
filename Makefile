@@ -2,7 +2,7 @@ MAKEFLAGS += -s --no-print-directory
 .DEFAULT_GOAL := help
 $(if $(filter Windows_NT,$(OS)),$(if $(shell where printf 2>nul),,$(error coreutils is not installed. Please run: winget install coreutils)))
 
-.PHONY: help deps deps-host deps-android format build build-web build-android release release-web release-android publish test test-linux-distros dartdoc clean run-example serve serve-node deploy-folder integration_test
+.PHONY: help deps deps-host deps-android format build build-web build-android release release-web release-android publish test test-linux-distros dartdoc clean run-example run-playground-web run-playground-desktop run-examples-node deploy-folder integration_test
 
 BASE_HREF ?= /
 
@@ -32,8 +32,9 @@ help:
 		"  release-web                                  Build and package release for web" \
 		"  release-android                              Build and package release for Android" \
 		"  publish                                      Publish release to GitHub" \
-		"  serve                                        Serve web player and playground" \
-		"  serve-node                                   Serve Node express embedded player and playground" \
+		"  run-playground-web                           Serve web player and playground" \
+		"  run-playground-desktop                       Run playground on current desktop OS" \
+		"  run-examples-node                            Serve Node express embedded player and playground" \
 		"  test                                         Run tests for Flutter workspace" \
 		"  test-linux-distros                           Test Linux release across Ubuntu 22.04, 24.04, 26.04" \
 		"  dartdoc                                      Generate Dart documentation" \
@@ -71,11 +72,18 @@ define package-zip
 	$(if $(wildcard $(2)/*),cd $(2) && tar -a -cf $(CURDIR)/$(1) *)
 endef
 
+WEB_SOURCES = $(wildcard lib/*.dart lib/*/*.dart packages/*/lib/*.dart packages/*/lib/*/*.dart web/*)
+
+build/web/main.dart.js: .dart_tool/package_config.json $(WEB_SOURCES)
+	flutter build web --no-pub --release
+	@touch -c build/web/main.dart.js
+
 build: deps
 	flutter build $(CURRENT_OS) --no-pub --release
 
 build-web: deps
 	flutter build web --no-pub --release
+	@touch -c build/web/main.dart.js
 
 build-android: deps
 	flutter build apk --no-pub --release
@@ -123,13 +131,16 @@ publish:
 	$(if $(strip $(RELEASE_FILES)),,$(error No release artifacts found to publish for v$(VERSION)))
 	gh release upload v$(VERSION) $(strip $(RELEASE_FILES)) --clobber || gh release create v$(VERSION) $(strip $(RELEASE_FILES)) --generate-notes
 
-serve: $(if $(wildcard build/web/main.dart.js),,build-web)
+run-playground-web: build/web/main.dart.js
 	@printf "\n   playground alone:        http://localhost:5173/gingaf/playground/\n"
 	@printf "   playground with app:     http://localhost:5173/gingaf/playground/?app=https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/video.ncl\n"
 	@printf "   player with app:         http://localhost:5173/gingaf/?app=https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/video.ncl\n\n"
 	node serve.js
 
-serve-node: $(if $(wildcard build/web/main.dart.js),,build-web)
+run-playground-desktop: deps
+	flutter run --no-pub -d $(if $(d),$(d),$(CURRENT_OS)) --dart-define="GINGA_PLAYGROUND=true" || true
+
+run-examples-node: build/web/main.dart.js
 	npm --prefix node install --no-audit --no-fund
 	npm --prefix node/example-node-express install --no-audit --no-fund
 	npm --prefix node run build

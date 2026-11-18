@@ -9,11 +9,11 @@ Node.js package and distribution for [gingaf](https://github.com/ginga-org-br/gi
 To build and serve the playground locally:
 
 ```bash
-make serve
+make run-playground-web
 ```
 
 To serve Node Express embedded player and playground:
 
 ```bash
-make serve-node
+make run-examples-node
 ```

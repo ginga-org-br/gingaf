@@ -14,13 +14,14 @@ make run-example app=video.ncl
 
 ## Running Examples
 
-Example NCL, Lua, and HTML documents are located in `examples/`. Run an example locally or directly from a remote URL with `make run-example` (optionally passing `d=<device>` such as `linux`, `windows`, `macos`, `chrome`, or `emulator-5554`), or launch the local web playground server at `http://localhost:5173/gingaf/playground/` with `make serve`:
+Example NCL, Lua, and HTML documents are located in `examples/`. Run an example locally or directly from a remote URL with `make run-example` (optionally passing `d=<device>` such as `linux`, `windows`, `macos`, `chrome`, or `emulator-5554`), launch the desktop playground with `make run-playground-desktop`, or launch the local web playground server at `http://localhost:5173/gingaf/playground/` with `make run-playground-web`:
 
 ```bash
 make run-example app=video.ncl
 make run-example app=video.ncl d=chrome
 make run-example app=https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/video.ncl d=emulator-5554
-make serve
+make run-playground-desktop
+make run-playground-web
 ```
 
 ## Releases
