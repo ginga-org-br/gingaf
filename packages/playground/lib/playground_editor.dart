@@ -58,8 +58,8 @@ class PlaygroundTextEditingController extends TextEditingController {
         for (var p = 0; p < parts.length; p++) {
           if (parts[p].isNotEmpty) {
             tokensByLine.putIfAbsent(currentLine, () => []).add(
-              TextSpan(text: parts[p], style: token.style),
-            );
+                  TextSpan(text: parts[p], style: token.style),
+                );
           }
           if (p < parts.length - 1) {
             currentLine++;
@@ -87,8 +87,8 @@ class PlaygroundTextEditingController extends TextEditingController {
         );
       }
 
-      final children = tokensByLine[lineNum] ??
-          [TextSpan(text: lines[i], style: lineStyle)];
+      final children =
+          tokensByLine[lineNum] ?? [TextSpan(text: lines[i], style: lineStyle)];
 
       lineSpans.add(TextSpan(
         style: lineStyle,
@@ -191,8 +191,7 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
       widget.showCatalogSelector ??
       (widget.filePath == null || widget.filePath!.isEmpty);
 
-  String get effectiveActiveFilePath =>
-      _activeFilePath ?? effectiveFilePath;
+  String get effectiveActiveFilePath => _activeFilePath ?? effectiveFilePath;
 
   String get effectiveFilePath =>
       _activeFilePath ?? _currentFilePath ?? widget.filePath ?? 'main.ncl';
@@ -214,18 +213,19 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
     }
   }
 
-  String get documentUri =>
-      'inmemory://$effectiveActiveFilePath';
+  String get documentUri => 'inmemory://$effectiveActiveFilePath';
 
   MonacoBridge? get bridge => _bridge;
   List<dynamic> get diagnostics => List.unmodifiable(_diagnostics);
   Set<int> get breakpoints => Set.unmodifiable(_breakpoints);
-  Set<int> get highlightedMediaLines => Set.unmodifiable(_highlightedMediaLines);
+  Set<int> get highlightedMediaLines =>
+      Set.unmodifiable(_highlightedMediaLines);
   int? get currentDebugLine => _currentDebugLine;
   bool get isDebugging => _isDebugging;
   bool get isPaused => _isPaused;
   int get virtualClock => _virtualClock;
-  List<CatalogExample> get catalogExamples => List.unmodifiable(_catalogExamples);
+  List<CatalogExample> get catalogExamples =>
+      List.unmodifiable(_catalogExamples);
   String? get selectedExample => _selectedExample;
   bool get isCatalogOpen => _isCatalogOpen;
   List<String> get editableFiles => List.unmodifiable(_editableFiles);
@@ -254,7 +254,9 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
     if (path.endsWith('.ncl')) return 'ncl';
     if (path.endsWith('.lua')) return 'lua';
     if (path.endsWith('.json')) return 'json';
-    if (path.endsWith('.html') || path.endsWith('.htm') || path.endsWith('.xhtml')) {
+    if (path.endsWith('.html') ||
+        path.endsWith('.htm') ||
+        path.endsWith('.xhtml')) {
       return 'html';
     }
     return 'text';
@@ -265,7 +267,9 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
     if (path.endsWith('.ncl')) return 'NCL';
     if (path.endsWith('.lua')) return 'Lua';
     if (path.endsWith('.json')) return 'JSON';
-    if (path.endsWith('.html') || path.endsWith('.htm') || path.endsWith('.xhtml')) {
+    if (path.endsWith('.html') ||
+        path.endsWith('.htm') ||
+        path.endsWith('.xhtml')) {
       return 'HTML';
     }
     if (path.contains('.')) {
@@ -391,13 +395,17 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
     _controller.addListener(_handleTextControllerChange);
     _editorScrollController.addListener(() {
       if (_gutterScrollController.hasClients &&
-          (_gutterScrollController.offset - _editorScrollController.offset).abs() > 0.5) {
+          (_gutterScrollController.offset - _editorScrollController.offset)
+                  .abs() >
+              0.5) {
         _gutterScrollController.jumpTo(_editorScrollController.offset);
       }
     });
     _gutterScrollController.addListener(() {
       if (_editorScrollController.hasClients &&
-          (_editorScrollController.offset - _gutterScrollController.offset).abs() > 0.5) {
+          (_editorScrollController.offset - _gutterScrollController.offset)
+                  .abs() >
+              0.5) {
         _editorScrollController.jumpTo(_gutterScrollController.offset);
       }
     });
@@ -428,7 +436,8 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
           setState(() {
             if (event['event'] == 'stopped') {
               _isPaused = true;
-              _currentDebugLine = _bridge?.currentDebugLine ?? (event['body']?['line'] as int?);
+              _currentDebugLine =
+                  _bridge?.currentDebugLine ?? (event['body']?['line'] as int?);
               _updateMediaHighlight(_currentDebugLine);
             } else if (event['event'] == 'terminated') {
               if (widget.isRunning != true) {
@@ -469,7 +478,10 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
     final cc = widget.gingacc ?? GingaCC();
     try {
       final loaded = await cc.loadContent(path);
-      if (loaded != null && loaded.isNotEmpty && mounted && _controller.text.isEmpty) {
+      if (loaded != null &&
+          loaded.isNotEmpty &&
+          mounted &&
+          _controller.text.isEmpty) {
         setState(() {
           _controller.text = loaded;
         });
@@ -776,7 +788,8 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
     final text = _controller.text;
     final selection = _controller.selection;
     if (selection.isValid) {
-      final prefix = text.substring(0, selection.baseOffset.clamp(0, text.length));
+      final prefix =
+          text.substring(0, selection.baseOffset.clamp(0, text.length));
       final lines = prefix.split('\n');
       _cursorLine = lines.length;
       _cursorColumn = lines.last.length + 1;
@@ -953,9 +966,8 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
     final fileName = (filePath.contains('/') || filePath.contains('\\'))
         ? filePath.split(RegExp(r'[/\\]')).last.split('?').first
         : filePath.split('?').first;
-    final fileExt = fileName.contains('.')
-        ? fileName.split('.').last.toLowerCase()
-        : '';
+    final fileExt =
+        fileName.contains('.') ? fileName.split('.').last.toLowerCase() : '';
 
     IconData icon;
     Color iconColor;
@@ -993,7 +1005,9 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
               ),
               right: const BorderSide(color: Color(0xFF2D2D2D), width: 1),
               bottom: BorderSide(
-                color: isActive ? const Color(0xFF1E1E1E) : const Color(0xFF2D2D2D),
+                color: isActive
+                    ? const Color(0xFF1E1E1E)
+                    : const Color(0xFF2D2D2D),
                 width: 1,
               ),
             ),
@@ -1055,7 +1069,8 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
                   disabledColor: const Color(0xFF555555),
                   onPressed: canRun ? _handleRun : null,
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+                  constraints:
+                      const BoxConstraints(minWidth: 26, minHeight: 26),
                   style: IconButton.styleFrom(
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     minimumSize: const Size(26, 26),
@@ -1073,7 +1088,8 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
                     disabledColor: const Color(0xFF555555),
                     onPressed: canDebug ? _handleDebug : null,
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+                    constraints:
+                        const BoxConstraints(minWidth: 26, minHeight: 26),
                     style: IconButton.styleFrom(
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       minimumSize: const Size(26, 26),
@@ -1084,7 +1100,8 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
                   const SizedBox(width: 6),
                   Container(
                     key: const Key('monaco_debug_controls_box'),
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: const Color(0xFF2D2D2D),
                       borderRadius: BorderRadius.circular(4),
@@ -1111,7 +1128,9 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
                             width: 16,
                             height: 16,
                             colorFilter: ColorFilter.mode(
-                              _isPaused ? const Color(0xFF75BEFF) : const Color(0xFF666666),
+                              _isPaused
+                                  ? const Color(0xFF75BEFF)
+                                  : const Color(0xFF666666),
                               BlendMode.srcIn,
                             ),
                           ),
@@ -1119,7 +1138,8 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
                           disabledColor: const Color(0xFF666666),
                           onPressed: _isPaused ? continueExecution : null,
                           padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                          constraints:
+                              const BoxConstraints(minWidth: 24, minHeight: 24),
                           style: IconButton.styleFrom(
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             minimumSize: const Size(24, 24),
@@ -1140,7 +1160,8 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
                           disabledColor: const Color(0xFF666666),
                           onPressed: canStop ? _handleStop : null,
                           padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                          constraints:
+                              const BoxConstraints(minWidth: 24, minHeight: 24),
                           style: IconButton.styleFrom(
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             minimumSize: const Size(24, 24),
@@ -1160,7 +1181,8 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
                     disabledColor: const Color(0xFF555555),
                     onPressed: canStop ? _handleStop : null,
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+                    constraints:
+                        const BoxConstraints(minWidth: 26, minHeight: 26),
                     style: IconButton.styleFrom(
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       minimumSize: const Size(26, 26),
@@ -1207,7 +1229,8 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
                       width: 18,
                       height: 18,
                       fit: BoxFit.contain,
-                      errorBuilder: (context, error2, stackTrace2) => const Icon(
+                      errorBuilder: (context, error2, stackTrace2) =>
+                          const Icon(
                         Icons.play_circle_filled,
                         size: 18,
                         color: Color(0xFF38BDF8),
@@ -1309,8 +1332,8 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
                                           Container(
                                             width: 8,
                                             height: 8,
-                                            margin: const EdgeInsets.only(
-                                                right: 2),
+                                            margin:
+                                                const EdgeInsets.only(right: 2),
                                             decoration: const BoxDecoration(
                                               color: Colors.redAccent,
                                               shape: BoxShape.circle,
@@ -1330,8 +1353,7 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
                                             style: TextStyle(
                                               fontFamily: 'monospace',
                                               fontSize: 12,
-                                              height:
-                                                  _editorLineHeight / 12.0,
+                                              height: _editorLineHeight / 12.0,
                                               color: isCurrentLine
                                                   ? Colors.amberAccent
                                                   : (isMediaLine
@@ -1340,10 +1362,10 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
                                                           ? Colors.redAccent
                                                           : const Color(
                                                               0xFF858585))),
-                                              fontWeight: (isCurrentLine ||
-                                                      isMediaLine)
-                                                  ? FontWeight.bold
-                                                  : FontWeight.normal,
+                                              fontWeight:
+                                                  (isCurrentLine || isMediaLine)
+                                                      ? FontWeight.bold
+                                                      : FontWeight.normal,
                                             ),
                                           ),
                                         ),

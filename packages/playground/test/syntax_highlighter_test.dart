@@ -28,8 +28,7 @@ void main() {
           s.text == 'id' &&
           s.style?.color == SyntaxHighlighter.attributeNameColor);
       final hasString = spans.any((s) =>
-          s.text == '"app"' &&
-          s.style?.color == SyntaxHighlighter.stringColor);
+          s.text == '"app"' && s.style?.color == SyntaxHighlighter.stringColor);
 
       expect(hasComment, isTrue);
       expect(hasTagName, isTrue);
@@ -156,7 +155,8 @@ end''';
     testWidgets('renders long text with word wrap and expanded gutter height',
         (WidgetTester tester) async {
       final veryLongLine =
-          '<media id="very_long_media_element_with_many_attributes" ' * 10 + '/>';
+          '<media id="very_long_media_element_with_many_attributes" ' * 10 +
+              '/>';
       final content = '<ncl>\n$veryLongLine\n</ncl>';
 
       await tester.pumpWidget(
@@ -180,8 +180,10 @@ end''';
       expect(find.byKey(const Key('monaco_gutter_line_2')), findsOneWidget);
       expect(find.byKey(const Key('monaco_gutter_line_3')), findsOneWidget);
 
-      final line1Box = tester.getRect(find.byKey(const Key('monaco_gutter_line_1')));
-      final line2Box = tester.getRect(find.byKey(const Key('monaco_gutter_line_2')));
+      final line1Box =
+          tester.getRect(find.byKey(const Key('monaco_gutter_line_1')));
+      final line2Box =
+          tester.getRect(find.byKey(const Key('monaco_gutter_line_2')));
 
       expect(line1Box.height, equals(20.0));
       expect(line2Box.height, greaterThan(20.0));

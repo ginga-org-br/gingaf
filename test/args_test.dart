@@ -157,7 +157,8 @@ void main() {
       expect(res3.playground, isFalse);
     });
 
-    test('CLI playground argument takes precedence over environment variable', () {
+    test('CLI playground argument takes precedence over environment variable',
+        () {
       final res1 = parseArgsCliAndEnv(
         ['--playground'],
         {'GINGA_PLAYGROUND': 'false'},
@@ -171,7 +172,9 @@ void main() {
       expect(res2.playground, isFalse);
     });
 
-    test('running gingaf alone without playground flags keeps playground disabled', () {
+    test(
+        'running gingaf alone without playground flags keeps playground disabled',
+        () {
       final res = parseArgsCliAndEnv(['--app=examples/video.ncl'], {});
       expect(res.app, equals('examples/video.ncl'));
       expect(res.playground, isNull);
@@ -185,11 +188,15 @@ void main() {
       }
     });
 
-    test('running with explicit --no-playground or GINGA_PLAYGROUND=false forces playground false', () {
-      final res1 = parseArgsCliAndEnv(['examples/video.ncl'], {'GINGA_PLAYGROUND': 'false'});
+    test(
+        'running with explicit --no-playground or GINGA_PLAYGROUND=false forces playground false',
+        () {
+      final res1 = parseArgsCliAndEnv(
+          ['examples/video.ncl'], {'GINGA_PLAYGROUND': 'false'});
       expect(res1.playground, isFalse);
 
-      final config = GingaConfig(enablePlayground: true).copyWith(enablePlayground: res1.playground);
+      final config = GingaConfig(enablePlayground: true)
+          .copyWith(enablePlayground: res1.playground);
       expect(config.enablePlayground, isFalse);
     });
   });

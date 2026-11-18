@@ -287,7 +287,9 @@ void main() {
       runtime.luaState.pop(1);
     });
 
-    test('Lua helper module: zip (virtual archive read, append, remove, extract)', () {
+    test(
+        'Lua helper module: zip (virtual archive read, append, remove, extract)',
+        () {
       final initialArchive = Archive()
         ..add(ArchiveFile.string('main.lua', 'return 42'))
         ..add(ArchiveFile.string('assets/info.txt', 'ginga zip'));
@@ -383,7 +385,9 @@ void main() {
       runtime.luaState.pop(1);
     });
 
-    test('Lua helper module: zip (filesystem archive create, read, and extractAll)', () {
+    test(
+        'Lua helper module: zip (filesystem archive create, read, and extractAll)',
+        () {
       final tmpDir = Directory.systemTemp.createTempSync('nclua_zip_test_');
       addTearDown(() {
         if (tmpDir.existsSync()) {
@@ -435,7 +439,8 @@ void main() {
       );
     });
 
-    test('Lua helper module: zip (remote HTTP URL in headless NCLuaRuntime)', () async {
+    test('Lua helper module: zip (remote HTTP URL in headless NCLuaRuntime)',
+        () async {
       final prevOverrides = HttpOverrides.current;
       HttpOverrides.global = null;
       addTearDown(() {

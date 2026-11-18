@@ -463,8 +463,9 @@ class _CatalogGridViewState extends State<CatalogGridView> {
           child: Text(
             label,
             style: TextStyle(
-              color:
-                  isSelected ? const Color(0xFFE5E5E5) : const Color(0xFF9E9E9E),
+              color: isSelected
+                  ? const Color(0xFFE5E5E5)
+                  : const Color(0xFF9E9E9E),
               fontSize: 11,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
               letterSpacing: 0.4,

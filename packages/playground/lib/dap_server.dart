@@ -40,7 +40,8 @@ class DapStackFrame {
         'name': name,
         'line': line,
         'column': column,
-        if (sourcePath != null) 'source': {'path': sourcePath, 'name': sourcePath!.split('/').last},
+        if (sourcePath != null)
+          'source': {'path': sourcePath, 'name': sourcePath!.split('/').last},
       };
 }
 
@@ -88,7 +89,12 @@ class DapServer {
   bool get isPaused => _isStopped || (document?.isPaused ?? false);
   int get virtualClock => document?.scheduler.virtualClock ?? 0;
   List<String> get activeMediaIds =>
-      document?.getActiveMedia().map((m) => m.id ?? '').where((id) => id.isNotEmpty).toList() ?? [];
+      document
+          ?.getActiveMedia()
+          .map((m) => m.id ?? '')
+          .where((id) => id.isNotEmpty)
+          .toList() ??
+      [];
 
   List<int> getBreakpoints(String? source) => _getBreakpointsForSource(source);
 
@@ -216,7 +222,8 @@ class DapServer {
       _isStopped = true;
     } else {
       _isStopped = false;
-      if (document!.getActiveMedia().isEmpty && !document!.scheduler.isPlaying) {
+      if (document!.getActiveMedia().isEmpty &&
+          !document!.scheduler.isPlaying) {
         _isRunning = false;
         _sendEvent('terminated', {});
       }
@@ -293,7 +300,11 @@ class DapServer {
       case 'scopes':
         return _respond(seq, command, {
           'scopes': [
-            {'name': 'Active NCL Context', 'variablesReference': 1000, 'expensive': false},
+            {
+              'name': 'Active NCL Context',
+              'variablesReference': 1000,
+              'expensive': false
+            },
           ]
         });
       case 'variables':
@@ -380,11 +391,11 @@ class DapServer {
           result = '$isPaused';
         } else if (expr == 'relatedMedia') {
           final m = findRelatedMedia(_currentLine);
-          result = m != null
-              ? '{id="${m.id}", src="${m.src ?? m.uri}"}'
-              : 'nil';
+          result =
+              m != null ? '{id="${m.id}", src="${m.src ?? m.uri}"}' : 'nil';
         } else if (expr.contains('animation')) {
-          result = '{id="animation", src="media/animGar.mp4", status="PLAYING"}';
+          result =
+              '{id="animation", src="media/animGar.mp4", status="PLAYING"}';
         } else if (expr.contains('video')) {
           result = '{id="video", src="butterfly.mp4", status="PLAYING"}';
         } else {
@@ -406,7 +417,8 @@ class DapServer {
         _sendEvent('terminated', {});
         return _respond(seq, command, {});
       default:
-        return _respond(seq, command, {}, success: false, message: 'Unsupported command: $command');
+        return _respond(seq, command, {},
+            success: false, message: 'Unsupported command: $command');
     }
   }
 
@@ -471,7 +483,8 @@ class DapServer {
 
     if (ref == 1000) {
       vars.addAll([
-        const DapVariable(name: 'activeContext', value: 'body', type: 'Context'),
+        const DapVariable(
+            name: 'activeContext', value: 'body', type: 'Context'),
         DapVariable(name: 'currentLine', value: '$_currentLine', type: 'int'),
         DapVariable(
           name: 'state',
@@ -496,7 +509,8 @@ class DapServer {
       if (relatedMedia != null) {
         vars.add(DapVariable(
           name: 'relatedMedia',
-          value: '{id="${relatedMedia.id}", src="${relatedMedia.src ?? relatedMedia.uri}"}',
+          value:
+              '{id="${relatedMedia.id}", src="${relatedMedia.src ?? relatedMedia.uri}"}',
           type: 'Media',
         ));
       }

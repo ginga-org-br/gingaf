@@ -49,13 +49,19 @@ ncl myApp {
 ''';
 
       final xml = NclDslTranspiler.dslToXml(dsl);
-      expect(xml, contains('<ncl id="myApp" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">'));
+      expect(
+          xml,
+          contains(
+              '<ncl id="myApp" xmlns="http://www.ncl.org.br/NCL3.0/EDTVProfile">'));
       expect(xml, contains('<head>'));
       expect(xml, contains('<regionBase>'));
       expect(xml, contains('<region width="80%" height="80%" id="rg_main"/>'));
       expect(xml, contains('<descriptor region="rg_main" id="ds_main"/>'));
       expect(xml, contains('<port id="p_start" component="m_main"/>'));
-      expect(xml, contains('<media src="intro.mp4" descriptor="ds_main" id="m_main"/>'));
+      expect(
+          xml,
+          contains(
+              '<media src="intro.mp4" descriptor="ds_main" id="m_main"/>'));
     });
 
     test('transpiles links and binds with arrow syntax', () {
@@ -103,8 +109,10 @@ ncl linkApp {
       expect(dsl, contains('bind onBegin -> m1::area1'));
 
       final generatedXml = NclDslTranspiler.dslToXml(dsl);
-      expect(generatedXml, contains('<port id="p1" component="m1" interface="area1"/>'));
-      expect(generatedXml, contains('<bind role="onBegin" component="m1" interface="area1"/>'));
+      expect(generatedXml,
+          contains('<port id="p1" component="m1" interface="area1"/>'));
+      expect(generatedXml,
+          contains('<bind role="onBegin" component="m1" interface="area1"/>'));
     });
   });
 }

@@ -198,8 +198,8 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
         }
       }
     }
-    transparencyVal ??= m.rawAttributes['transparency'] ??
-        desc?.rawAttributes['transparency'];
+    transparencyVal ??=
+        m.rawAttributes['transparency'] ?? desc?.rawAttributes['transparency'];
     alphaVal ??= m.rawAttributes['alpha'] ?? desc?.rawAttributes['alpha'];
 
     if (alphaVal != null) {

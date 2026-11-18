@@ -66,7 +66,8 @@ void main() {
       expect(editorFinder, findsOneWidget);
 
       expect(find.byKey(const Key('catalog_select')), findsOneWidget);
-      expect(find.byKey(const Key('no_running_app_placeholder')), findsOneWidget);
+      expect(
+          find.byKey(const Key('no_running_app_placeholder')), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('catalog_select')));
       await tester.pump(const Duration(milliseconds: 200));
@@ -147,6 +148,7 @@ void main() {
       );
 
       await tester.tap(find.byKey(const Key('monaco_run_button')));
+      await tester.pump(const Duration(milliseconds: 200));
       await tester.pump(const Duration(milliseconds: 200));
 
       final mainAvFinder = find.byType(MainAVWidget);

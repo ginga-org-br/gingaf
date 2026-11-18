@@ -123,7 +123,9 @@ void main() {
       expect(stopped['body']['reason'], equals('breakpoint'));
     });
 
-    test('continues execution until stopping at subsequent breakpoints in NCL XML', () {
+    test(
+        'continues execution until stopping at subsequent breakpoints in NCL XML',
+        () {
       final events = <Map<String, dynamic>>[];
       dap.onEvent = (e) => events.add(e);
 
@@ -152,14 +154,19 @@ void main() {
       dap.handleRequest({'seq': 4, 'command': 'continue'});
 
       expect(dap.currentLine, equals(25));
-      expect(events.any((e) => e['event'] == 'stopped' && e['body']['reason'] == 'breakpoint'), isTrue);
+      expect(
+          events.any((e) =>
+              e['event'] == 'stopped' && e['body']['reason'] == 'breakpoint'),
+          isTrue);
 
       events.clear();
       dap.handleRequest({'seq': 5, 'command': 'continue'});
       expect(events.any((e) => e['event'] == 'terminated'), isTrue);
     });
 
-    test('notifies stopped with reason breakpoint when stepping lands on a breakpoint', () {
+    test(
+        'notifies stopped with reason breakpoint when stepping lands on a breakpoint',
+        () {
       final events = <Map<String, dynamic>>[];
       dap.onEvent = (e) => events.add(e);
 
@@ -174,7 +181,9 @@ void main() {
         'command': 'setBreakpoints',
         'arguments': {
           'source': {'path': '/app/sample.ncl'},
-          'breakpoints': [{'line': 2}],
+          'breakpoints': [
+            {'line': 2}
+          ],
         },
       });
 
@@ -234,7 +243,10 @@ void main() {
 
       final resp = dap.handleRequest({'seq': 2, 'command': 'pause'});
       expect(resp['success'], isTrue);
-      expect(events.any((e) => e['event'] == 'stopped' && e['body']['reason'] == 'pause'), isTrue);
+      expect(
+          events.any(
+              (e) => e['event'] == 'stopped' && e['body']['reason'] == 'pause'),
+          isTrue);
     });
 
     test('DAP disconnect terminates running session', () {
@@ -254,7 +266,9 @@ void main() {
       expect(events.any((e) => e['event'] == 'terminated'), isTrue);
     });
 
-    test('DAP executes Primeiro Joao presentation sequence with breakpoints and stepping', () {
+    test(
+        'DAP executes Primeiro Joao presentation sequence with breakpoints and stepping',
+        () {
       final events = <Map<String, dynamic>>[];
       dap.onEvent = (e) => events.add(e);
 
@@ -295,7 +309,9 @@ void main() {
       expect(events.any((e) => e['event'] == 'terminated'), isTrue);
     });
 
-    test('DAP handles Primeiro Joao area segment stepping, stack trace, and expression evaluation', () {
+    test(
+        'DAP handles Primeiro Joao area segment stepping, stack trace, and expression evaluation',
+        () {
       final dap = DapServer();
       dap.handleRequest({
         'seq': 1,
@@ -308,7 +324,10 @@ void main() {
         'command': 'setBreakpoints',
         'arguments': {
           'source': {'path': '/examples/primeiro_joao.ncl'},
-          'breakpoints': [{'line': 21}, {'line': 25}],
+          'breakpoints': [
+            {'line': 21},
+            {'line': 25}
+          ],
         },
       });
 
@@ -351,7 +370,9 @@ void main() {
       expect(dap.currentLine, equals(25));
     });
 
-    test('DAP handles Primeiro Joao dynamic breakpoint modification, synchronization links, and restart', () {
+    test(
+        'DAP handles Primeiro Joao dynamic breakpoint modification, synchronization links, and restart',
+        () {
       final dap = DapServer();
       dap.handleRequest({
         'seq': 1,
@@ -364,7 +385,9 @@ void main() {
         'command': 'setBreakpoints',
         'arguments': {
           'source': {'path': '/examples/primeiro_joao.ncl'},
-          'breakpoints': [{'line': 28}],
+          'breakpoints': [
+            {'line': 28}
+          ],
         },
       });
 
@@ -376,7 +399,12 @@ void main() {
         'command': 'setBreakpoints',
         'arguments': {
           'source': {'path': '/examples/primeiro_joao.ncl'},
-          'breakpoints': [{'line': 28}, {'line': 34}, {'line': 38}, {'line': 42}],
+          'breakpoints': [
+            {'line': 28},
+            {'line': 34},
+            {'line': 38},
+            {'line': 42}
+          ],
         },
       });
 
@@ -393,7 +421,9 @@ void main() {
       expect(dap.currentLine, equals(28));
     });
 
-    test('DAP handles exception breakpoints and pause during Primeiro Joao playback', () {
+    test(
+        'DAP handles exception breakpoints and pause during Primeiro Joao playback',
+        () {
       final dap = DapServer();
       final events = <Map<String, dynamic>>[];
       dap.onEvent = (e) => events.add(e);
@@ -413,10 +443,15 @@ void main() {
 
       final pauseResp = dap.handleRequest({'seq': 3, 'command': 'pause'});
       expect(pauseResp['success'], isTrue);
-      expect(events.any((e) => e['event'] == 'stopped' && e['body']['reason'] == 'pause'), isTrue);
+      expect(
+          events.any(
+              (e) => e['event'] == 'stopped' && e['body']['reason'] == 'pause'),
+          isTrue);
     });
 
-    test('finds related media by line number and configures document breakpoints', () {
+    test(
+        'finds related media by line number and configures document breakpoints',
+        () {
       const nclContent = '''<ncl>
   <body>
     <port id="p1" component="video1"/>
@@ -464,7 +499,9 @@ void main() {
       expect(dap.document!.breakpointMediaIds, contains('banner'));
     });
 
-    test('DAP debugging simulates time passing with tick across media lifecycle breakpoints', () {
+    test(
+        'DAP debugging simulates time passing with tick across media lifecycle breakpoints',
+        () {
       final events = <Map<String, dynamic>>[];
       final dap = DapServer();
       dap.onEvent = (e) => events.add(e);
@@ -493,7 +530,9 @@ void main() {
       expect(dap.isPaused, isTrue);
       expect(dap.currentLine, equals(4));
       expect(dap.virtualClock, equals(0));
-      expect(events.any((e) => e['event'] == 'stopped' && e['body']['line'] == 4), isTrue);
+      expect(
+          events.any((e) => e['event'] == 'stopped' && e['body']['line'] == 4),
+          isTrue);
 
       events.clear();
       dap.tick(1000);
@@ -505,7 +544,9 @@ void main() {
       expect(dap.virtualClock, equals(2000));
       expect(dap.isPaused, isTrue);
       expect(dap.currentLine, equals(7));
-      expect(events.any((e) => e['event'] == 'stopped' && e['body']['line'] == 7), isTrue);
+      expect(
+          events.any((e) => e['event'] == 'stopped' && e['body']['line'] == 7),
+          isTrue);
 
       final varsResp = dap.handleRequest({
         'seq': 4,
@@ -523,7 +564,12 @@ void main() {
       expect(dap.virtualClock, equals(4000));
       expect(dap.isPaused, isTrue);
       expect(dap.currentLine, equals(11));
-      expect(events.any((e) => e['event'] == 'stopped' && e['body']['line'] == 11 && e['body']['action'] == 'start'), isTrue);
+      expect(
+          events.any((e) =>
+              e['event'] == 'stopped' &&
+              e['body']['line'] == 11 &&
+              e['body']['action'] == 'start'),
+          isTrue);
 
       events.clear();
       dap.tick(2000);
@@ -534,7 +580,9 @@ void main() {
       expect(events.any((e) => e['event'] == 'terminated'), isTrue);
     });
 
-    test('DAP handles tick command over JSON-RPC request and updates virtualClock and activeMedia', () {
+    test(
+        'DAP handles tick command over JSON-RPC request and updates virtualClock and activeMedia',
+        () {
       final dap = DapServer();
       dap.handleRequest({
         'seq': 1,
@@ -546,7 +594,9 @@ void main() {
         'command': 'setBreakpoints',
         'arguments': {
           'source': {'path': 'examples/video.ncl'},
-          'breakpoints': [{'line': 7}],
+          'breakpoints': [
+            {'line': 7}
+          ],
         },
       });
       dap.handleRequest({'seq': 3, 'command': 'configurationDone'});

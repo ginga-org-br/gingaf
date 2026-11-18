@@ -162,10 +162,8 @@ class NclParser {
           return;
         }
       }
-      final match = allElements
-          .whereType<Media>()
-          .where((m) => m.id == id)
-          .firstOrNull;
+      final match =
+          allElements.whereType<Media>().where((m) => m.id == id).firstOrNull;
       if (match != null && !result.contains(match)) {
         result.add(match);
       }

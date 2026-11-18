@@ -141,7 +141,9 @@ class MonacoBridge {
     }
     if (uriOrLine is String && line != null) {
       final text = server.documents[uriOrLine];
-      if (text == null || text.trim().isEmpty) return dap.findRelatedMedia(line);
+      if (text == null || text.trim().isEmpty) {
+        return dap.findRelatedMedia(line);
+      }
       try {
         final doc = NclDocument.fromContent(text, docSrc: uriOrLine);
         return doc.findRelatedMedia(line);

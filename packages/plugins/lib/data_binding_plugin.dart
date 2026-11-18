@@ -169,16 +169,18 @@ class DataBindingMediaPlugin
       if (region.rawAttributes['left'] != null) {
         leftVal = parsePercent(region.rawAttributes['left']!);
       } else if (region.rawAttributes['right'] != null) {
-        leftVal = (1.0 - widthVal - parsePercent(region.rawAttributes['right']!))
-            .clamp(0.0, 1.0);
+        leftVal =
+            (1.0 - widthVal - parsePercent(region.rawAttributes['right']!))
+                .clamp(0.0, 1.0);
       }
 
       double topVal = 0.0;
       if (region.rawAttributes['top'] != null) {
         topVal = parsePercent(region.rawAttributes['top']!);
       } else if (region.rawAttributes['bottom'] != null) {
-        topVal = (1.0 - heightVal - parsePercent(region.rawAttributes['bottom']!))
-            .clamp(0.0, 1.0);
+        topVal =
+            (1.0 - heightVal - parsePercent(region.rawAttributes['bottom']!))
+                .clamp(0.0, 1.0);
       } else if (parentEl is Region &&
           (parentEl.rawAttributes.containsKey('rows') ||
               parentEl.rawAttributes['scroll'] == 'vertical')) {
@@ -465,12 +467,11 @@ class DataBindingMediaPlugin
   }) {
     ensureDocumentPrepared(document);
     final map = controllersForDocument(document);
-    final parentCtx = (media?.parent is Context
-            ? media!.parent as Context
-            : null) ??
-        (explicitContextId != null
-            ? document.getContextById(explicitContextId)
-            : null);
+    final parentCtx =
+        (media?.parent is Context ? media!.parent as Context : null) ??
+            (explicitContextId != null
+                ? document.getContextById(explicitContextId)
+                : null);
     final ctxId = explicitContextId ??
         parentCtx?.id ??
         document.currentKeyMaster ??
@@ -756,8 +757,9 @@ class _DataBindingWidgetState extends MediaState<DataBindingWidget> {
         ctrl.isLoadingExternalData) {
       return;
     }
-    final parentCtx =
-        widget.media?.parent is Context ? widget.media!.parent as Context : null;
+    final parentCtx = widget.media?.parent is Context
+        ? widget.media!.parent as Context
+        : null;
     final dataBindingPath = parentCtx?.rawAttributes['data-binding'] ??
         widget.media?.rawAttributes['data-binding'];
     if (dataBindingPath == null || dataBindingPath.isEmpty) return;

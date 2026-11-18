@@ -121,7 +121,9 @@ void main() {
       expect(doc.isPaused, isFalse);
     });
 
-    test('pauses execution when subsequent breakpoint media starts on link trigger', () {
+    test(
+        'pauses execution when subsequent breakpoint media starts on link trigger',
+        () {
       final doc = NclDocument.fromContent(videoNcl);
 
       final hits = <({String mediaId, NclActionType action, int line})>[];
@@ -139,7 +141,10 @@ void main() {
       doc.tick(2500);
 
       expect(doc.isPaused, isTrue);
-      expect(hits.any((h) => h.mediaId == 'green_bg' && h.action == NclActionType.start), isTrue);
+      expect(
+          hits.any((h) =>
+              h.mediaId == 'green_bg' && h.action == NclActionType.start),
+          isTrue);
     });
 
     test('pauses execution when breakpoint media stops on link trigger', () {
@@ -158,7 +163,10 @@ void main() {
 
       doc.tick(2500);
       expect(doc.isPaused, isTrue);
-      expect(hits.any((h) => h.mediaId == 'green_bg' && h.action == NclActionType.start), isTrue);
+      expect(
+          hits.any((h) =>
+              h.mediaId == 'green_bg' && h.action == NclActionType.start),
+          isTrue);
       expect(hits.first.line, equals(22));
       expect(hits.where((h) => h.action == NclActionType.stop), isEmpty);
 
@@ -167,10 +175,15 @@ void main() {
 
       doc.tick(2000);
       expect(doc.isPaused, isTrue);
-      expect(hits.any((h) => h.mediaId == 'green_bg' && h.action == NclActionType.stop), isTrue);
+      expect(
+          hits.any(
+              (h) => h.mediaId == 'green_bg' && h.action == NclActionType.stop),
+          isTrue);
     });
 
-    test('pauses on green media start then red media start when continuing without pausing on media stop', () {
+    test(
+        'pauses on green media start then red media start when continuing without pausing on media stop',
+        () {
       final doc = NclDocument.fromContent(videoNcl);
 
       final hits = <({String mediaId, NclActionType action, int line})>[];

@@ -26,7 +26,10 @@ String? mapTv30KeyToNclKey(String rawKey) {
   if (lower == 'arrowleft' || lower == 'left') return 'LEFT';
   if (lower == 'arrowright' || lower == 'right') return 'RIGHT';
   if (lower == 'enter' || lower == 'select' || lower == 'ok') return 'ENTER';
-  if (lower == 'f1' || lower == 'red' || lower == 'r' || lower == 'colorf0red') {
+  if (lower == 'f1' ||
+      lower == 'red' ||
+      lower == 'r' ||
+      lower == 'colorf0red') {
     return 'RED';
   }
   if (lower == 'f2' ||
@@ -41,7 +44,10 @@ String? mapTv30KeyToNclKey(String rawKey) {
       lower == 'colorf2yellow') {
     return 'YELLOW';
   }
-  if (lower == 'f4' || lower == 'blue' || lower == 'b' || lower == 'colorf3blue') {
+  if (lower == 'f4' ||
+      lower == 'blue' ||
+      lower == 'b' ||
+      lower == 'colorf3blue') {
     return 'BLUE';
   }
   if (lower == 'f5' || lower == 'info' || lower == 'i') return 'INFO';

@@ -23,8 +23,8 @@ void main() {
       expect(expr2D.usesColumn, isTrue);
       expect(expr2D.astDepth, equals(3));
 
-      final exprField =
-          BindingExpression.parse('data:text/plain,{schedule[row][column].title}');
+      final exprField = BindingExpression.parse(
+          'data:text/plain,{schedule[row][column].title}');
       expect(exprField.isDynamic, isTrue);
       expect(exprField.astDepth, equals(4));
       final data = <String, dynamic>{
@@ -85,7 +85,9 @@ return data
   });
 
   group('SlotPool & Operational Semantics Navigation', () {
-    test('maintains bounded slot pool capacity during continuous D-pad navigation', () {
+    test(
+        'maintains bounded slot pool capacity during continuous D-pad navigation',
+        () {
       final catalog = <String, dynamic>{
         'movies': List.generate(
           6,
@@ -182,7 +184,9 @@ return data
       expect(epgCtrl.focusedCol, equals(0));
     });
 
-    test('updatePolicy stream updates in-place without mutating focus or viewport', () {
+    test(
+        'updatePolicy stream updates in-place without mutating focus or viewport',
+        () {
       final sportsCtrl = DataBindingController(
         contextId: 'sports_ctx',
         visibleRows: 2,
@@ -278,8 +282,18 @@ return data
           explicitContextId: 'catalog',
           initialData: {
             'movies': [
-              ['Cosmos Odyssey 4K', 'Amazonia Viva', 'Cyber Horizon', 'Sertao Digital'],
-              ['Velocity GT', 'Orbital Strike', 'Neon Protocol', 'Quantum Drift'],
+              [
+                'Cosmos Odyssey 4K',
+                'Amazonia Viva',
+                'Cyber Horizon',
+                'Sertao Digital'
+              ],
+              [
+                'Velocity GT',
+                'Orbital Strike',
+                'Neon Protocol',
+                'Quantum Drift'
+              ],
             ],
           },
         );
@@ -408,7 +422,9 @@ return data
       },
     );
 
-    test('NclParserPlugin validates Extended NCL schema and synthesizes ports for all 3 data-binding examples', () {
+    test(
+        'NclParserPlugin validates Extended NCL schema and synthesizes ports for all 3 data-binding examples',
+        () {
       const exampleNames = [
         'hero_carousel.ncl',
         'epg_grid.ncl',
@@ -422,12 +438,14 @@ return data
         final file = candidates.firstWhere((f) => f.existsSync());
         final xml = file.readAsStringSync();
         final validationErrors = NclParser().validate(xml);
-        expect(validationErrors, isEmpty, reason: 'Failed validation for $fileName');
+        expect(validationErrors, isEmpty,
+            reason: 'Failed validation for $fileName');
 
         final doc = NclDocument.fromContent(xml, appSrc: fileName);
         doc.start();
         doc.tick(100);
-        expect(doc.getActiveMedia(), isNotEmpty, reason: 'No active media in $fileName');
+        expect(doc.getActiveMedia(), isNotEmpty,
+            reason: 'No active media in $fileName');
         doc.stop();
       }
     });
@@ -443,8 +461,10 @@ return data
           File('../../examples/data-binding/epg_grid.lua'),
           File('examples/data-binding/epg_grid.lua'),
         ];
-        final epgXml = epgCandidates.firstWhere((f) => f.existsSync()).readAsStringSync();
-        final epgLua = luaCandidates.firstWhere((f) => f.existsSync()).readAsStringSync();
+        final epgXml =
+            epgCandidates.firstWhere((f) => f.existsSync()).readAsStringSync();
+        final epgLua =
+            luaCandidates.firstWhere((f) => f.existsSync()).readAsStringSync();
         final parsedData = DataBindingLuaRuntime().execute(epgLua);
 
         final doc = NclDocument.fromContent(epgXml, appSrc: 'epg_grid.ncl');
@@ -479,7 +499,8 @@ return data
         }
 
         HardwareKeyboard.instance.addHandler(hostKeyHandler);
-        addTearDown(() => HardwareKeyboard.instance.removeHandler(hostKeyHandler));
+        addTearDown(
+            () => HardwareKeyboard.instance.removeHandler(hostKeyHandler));
 
         final widgets = activeMedias
             .map((m) => NclWidget.createMediaWidget(media: m, document: doc))
@@ -532,7 +553,8 @@ return data
         expect(ctrl.focusedRow, equals(1));
         expect(ctrl.focusedCol, equals(1));
 
-        for (final container in tester.widgetList<Container>(find.byType(Container))) {
+        for (final container
+            in tester.widgetList<Container>(find.byType(Container))) {
           final dec = container.decoration;
           if (dec is BoxDecoration) {
             expect(dec.borderRadius, isNull);
@@ -578,9 +600,8 @@ return data
           File('../../examples/data-binding/hero_carousel.lua'),
           File('examples/data-binding/hero_carousel.lua'),
         ];
-        final heroXml = heroCandidates
-            .firstWhere((f) => f.existsSync())
-            .readAsStringSync();
+        final heroXml =
+            heroCandidates.firstWhere((f) => f.existsSync()).readAsStringSync();
         final moviesLua = moviesCandidates
             .firstWhere((f) => f.existsSync())
             .readAsStringSync();
@@ -733,7 +754,8 @@ return data
 
         expect(m.rawAttributes['descriptorParam.fontColor'], equals('#FFFF00'));
         expect(m.rawAttributes['descriptorParam.fontSize'], equals('16'));
-        expect(m.rawAttributes['descriptorParam.background'], equals('#121212'));
+        expect(
+            m.rawAttributes['descriptorParam.background'], equals('#121212'));
         expect(doc.getPropertyValue(m, 'fontColor'), equals('#FFFF00'));
 
         doc.stop();

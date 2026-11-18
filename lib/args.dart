@@ -74,7 +74,8 @@ final _logger = Logger('ginga.args');
   if (environment != null) {
     appEnv = environment['GINGA_APP'] ?? environment['ginga_app'];
     configEnv = environment['GINGA_CONFIG'] ?? environment['ginga_config'];
-    final rawPg = environment['GINGA_PLAYGROUND'] ?? environment['ginga_playground'];
+    final rawPg =
+        environment['GINGA_PLAYGROUND'] ?? environment['ginga_playground'];
     if (rawPg != null) {
       final lower = rawPg.toLowerCase();
       if (lower == 'true' || lower == '1' || lower == 'yes') {

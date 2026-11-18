@@ -561,8 +561,8 @@ class NCLuaRuntime {
       final effectiveBase = _effectiveBase;
       List<String>? toFetch;
       if (script.contains('.zip')) {
-        final matches =
-            RegExp(r'''['"]([^'"]+\.zip(?:\?[^'"]*)?)['"]''').allMatches(script);
+        final matches = RegExp(r'''['"]([^'"]+\.zip(?:\?[^'"]*)?)['"]''')
+            .allMatches(script);
         for (final m in matches) {
           final zipRef = m.group(1);
           if (zipRef != null &&

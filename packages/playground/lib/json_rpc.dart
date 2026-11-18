@@ -173,7 +173,8 @@ class MessageFramer {
   int? _parseContentLength(String header) {
     for (final line in header.split('\r\n')) {
       final parts = line.split(':');
-      if (parts.length >= 2 && parts[0].trim().toLowerCase() == 'content-length') {
+      if (parts.length >= 2 &&
+          parts[0].trim().toLowerCase() == 'content-length') {
         return int.tryParse(parts[1].trim());
       }
     }

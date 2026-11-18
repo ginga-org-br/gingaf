@@ -79,7 +79,8 @@ class GingaConfig {
     List<int>? breakpoints,
     Map<String, String>? systemVariables,
     Users? users,
-  })  : breakpoints = breakpoints != null ? List<int>.from(breakpoints) : <int>[],
+  })  : breakpoints =
+            breakpoints != null ? List<int>.from(breakpoints) : <int>[],
         systemVariables = {
           'system.language': 'por',
           ...?systemVariables,

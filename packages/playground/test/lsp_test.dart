@@ -61,9 +61,16 @@ void main() {
 </ncl>''';
 
       final diagnostics = server.validateDocument(invalidNcl);
-      expect(diagnostics.any((d) => d.message.contains('Unknown NCL element')), isTrue);
-      expect(diagnostics.any((d) => d.message.contains("Missing required attribute 'id'")), isTrue);
-      expect(diagnostics.any((d) => d.message.contains("Missing required attribute 'src'")), isTrue);
+      expect(diagnostics.any((d) => d.message.contains('Unknown NCL element')),
+          isTrue);
+      expect(
+          diagnostics.any(
+              (d) => d.message.contains("Missing required attribute 'id'")),
+          isTrue);
+      expect(
+          diagnostics.any(
+              (d) => d.message.contains("Missing required attribute 'src'")),
+          isTrue);
     });
 
     test('handles document synchronization and publishes diagnostics', () {
@@ -158,7 +165,8 @@ void main() {
           params: {
             'textDocument': {
               'uri': 'file:///test.ncl',
-              'text': '<descriptor id="ds1"/>\n<media id="m1" descriptor="ds1"/>',
+              'text':
+                  '<descriptor id="ds1"/>\n<media id="m1" descriptor="ds1"/>',
             }
           },
         ),
@@ -180,7 +188,8 @@ void main() {
       expect(range['start']['line'], equals(0));
     });
 
-    test('extracts hierarchical document symbols for NCL document structure', () {
+    test('extracts hierarchical document symbols for NCL document structure',
+        () {
       const nclContent = '''<?xml version="1.0" encoding="ISO-8859-1"?>
 <ncl id="app">
   <head>
@@ -245,14 +254,16 @@ void main() {
       expect(regionBase['name'], equals('regionBase'));
       expect(regionBase['kind'], equals(11));
 
-      final rgScreen = (regionBase['children'] as List<dynamic>)[0] as Map<String, dynamic>;
+      final rgScreen =
+          (regionBase['children'] as List<dynamic>)[0] as Map<String, dynamic>;
       expect(rgScreen['name'], equals('rgScreen'));
       expect(rgScreen['detail'], equals('<region>'));
       expect(rgScreen['kind'], equals(8));
 
       final descBase = headChildren[1] as Map<String, dynamic>;
       expect(descBase['name'], equals('descriptorBase'));
-      final descMain = (descBase['children'] as List<dynamic>)[0] as Map<String, dynamic>;
+      final descMain =
+          (descBase['children'] as List<dynamic>)[0] as Map<String, dynamic>;
       expect(descMain['name'], equals('descMain'));
       expect(descMain['detail'], equals('<descriptor>'));
       expect(descMain['kind'], equals(7));
@@ -276,7 +287,8 @@ void main() {
       final link = bodyChildren[2] as Map<String, dynamic>;
       expect(link['name'], equals('l1'));
       expect(link['kind'], equals(12));
-      final bind = (link['children'] as List<dynamic>)[0] as Map<String, dynamic>;
+      final bind =
+          (link['children'] as List<dynamic>)[0] as Map<String, dynamic>;
       expect(bind['name'], equals('bind'));
       expect(bind['kind'], equals(6));
     });
@@ -295,7 +307,9 @@ void main() {
       expect(resp!.result as List<dynamic>, isEmpty);
     });
 
-    test('validates complex NCL application (video.ncl) with zero diagnostics errors', () {
+    test(
+        'validates complex NCL application (video.ncl) with zero diagnostics errors',
+        () {
       const videoNcl = '''<ncl>
   <body>
     <port id="init" component="video"/>
@@ -325,7 +339,10 @@ void main() {
 
       final diagnostics = server.validateDocument(videoNcl);
       expect(diagnostics.length, equals(2));
-      expect(diagnostics.every((d) => d.message.contains("Missing required attribute 'src' on '<media>'")), isTrue);
+      expect(
+          diagnostics.every((d) => d.message
+              .contains("Missing required attribute 'src' on '<media>'")),
+          isTrue);
 
       final fullNcl = videoNcl
           .replaceAll('<media id="green_bg">', '<media id="green_bg" src="">')
@@ -367,7 +384,9 @@ void main() {
         ),
       );
       expect(headResp?.result, isNotNull);
-      final headItems = (headResp!.result['items'] as List<dynamic>).map((i) => i['label'] as String).toList();
+      final headItems = (headResp!.result['items'] as List<dynamic>)
+          .map((i) => i['label'] as String)
+          .toList();
       expect(headItems, contains('regionBase'));
       expect(headItems, contains('descriptorBase'));
 
@@ -382,7 +401,9 @@ void main() {
         ),
       );
       expect(bodyResp?.result, isNotNull);
-      final bodyItems = (bodyResp!.result['items'] as List<dynamic>).map((i) => i['label'] as String).toList();
+      final bodyItems = (bodyResp!.result['items'] as List<dynamic>)
+          .map((i) => i['label'] as String)
+          .toList();
       expect(bodyItems, contains('port'));
       expect(bodyItems, contains('media'));
       expect(bodyItems, contains('link'));
@@ -395,7 +416,8 @@ void main() {
           params: {
             'textDocument': {
               'uri': 'file:///attr_completion.ncl',
-              'text': '<ncl><head><regionBase><region </regionBase><descriptorBase><descriptor </descriptorBase></head></ncl>',
+              'text':
+                  '<ncl><head><regionBase><region </regionBase><descriptorBase><descriptor </descriptorBase></head></ncl>',
             }
           },
         ),
@@ -412,7 +434,9 @@ void main() {
         ),
       );
       expect(regionResp?.result, isNotNull);
-      final regionItems = (regionResp!.result['items'] as List<dynamic>).map((i) => i['label'] as String).toList();
+      final regionItems = (regionResp!.result['items'] as List<dynamic>)
+          .map((i) => i['label'] as String)
+          .toList();
       expect(regionItems, contains('id'));
       expect(regionItems, contains('width'));
       expect(regionItems, contains('height'));
@@ -428,7 +452,9 @@ void main() {
         ),
       );
       expect(descResp?.result, isNotNull);
-      final descItems = (descResp!.result['items'] as List<dynamic>).map((i) => i['label'] as String).toList();
+      final descItems = (descResp!.result['items'] as List<dynamic>)
+          .map((i) => i['label'] as String)
+          .toList();
       expect(descItems, contains('id'));
       expect(descItems, contains('region'));
     });
@@ -440,7 +466,8 @@ void main() {
           params: {
             'textDocument': {
               'uri': 'file:///hover_test.ncl',
-              'text': '<ncl><head><regionBase><region id="r1"/></regionBase></head><body><link id="l1"/></body></ncl>',
+              'text':
+                  '<ncl><head><regionBase><region id="r1"/></regionBase></head><body><link id="l1"/></body></ncl>',
             }
           },
         ),
@@ -513,7 +540,8 @@ void main() {
           },
         ),
       );
-      expect(server.documents['file:///lifecycle.ncl'], equals('<ncl id="v1"/>'));
+      expect(
+          server.documents['file:///lifecycle.ncl'], equals('<ncl id="v1"/>'));
 
       server.handleNotification(
         JsonRpcNotification(
@@ -526,7 +554,8 @@ void main() {
           },
         ),
       );
-      expect(server.documents['file:///lifecycle.ncl'], equals('<ncl id="v2"/>'));
+      expect(
+          server.documents['file:///lifecycle.ncl'], equals('<ncl id="v2"/>'));
 
       server.handleNotification(
         JsonRpcNotification(
@@ -552,7 +581,8 @@ void main() {
       expect(unknownResp!.error!.code, equals(-32601));
     });
 
-    test('validates Primeiro Joao NCL document structure without schema errors', () {
+    test('validates Primeiro Joao NCL document structure without schema errors',
+        () {
       const joaoNcl = '''<?xml version="1.0" encoding="ISO-8859-1"?>
 <ncl id="primeiro_joao">
   <head>
@@ -615,11 +645,14 @@ void main() {
       expect(head.children.any((c) => c.name == 'descriptorBase'), isTrue);
       expect(head.children.any((c) => c.name == 'connectorBase'), isTrue);
 
-      final regionBase = head.children.firstWhere((c) => c.name == 'regionBase');
-      final screenReg = regionBase.children.firstWhere((c) => c.name == 'screenReg');
+      final regionBase =
+          head.children.firstWhere((c) => c.name == 'regionBase');
+      final screenReg =
+          regionBase.children.firstWhere((c) => c.name == 'screenReg');
       expect(screenReg.children.any((c) => c.name == 'frameReg'), isTrue);
 
-      final descBase = head.children.firstWhere((c) => c.name == 'descriptorBase');
+      final descBase =
+          head.children.firstWhere((c) => c.name == 'descriptorBase');
       expect(descBase.children.any((c) => c.name == 'screenDesc'), isTrue);
       expect(descBase.children.any((c) => c.name == 'photoDesc'), isTrue);
       expect(descBase.children.any((c) => c.name == 'audioDesc'), isTrue);

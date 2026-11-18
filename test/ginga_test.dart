@@ -75,7 +75,8 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
 
       final gingacc = GingaCC(
-        config: GingaConfig(appSrc: 'examples/video.ncl', enablePlayground: false),
+        config:
+            GingaConfig(appSrc: 'examples/video.ncl', enablePlayground: false),
       );
       await tester.pumpWidget(Ginga(gingacc: gingacc));
       await tester.pump(const Duration(seconds: 1));
@@ -98,15 +99,16 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
 
       final gingacc = GingaCC(
-        config: GingaConfig(appSrc: 'examples/video.ncl', enablePlayground: true),
+        config:
+            GingaConfig(appSrc: 'examples/video.ncl', enablePlayground: true),
       )..setVirtualFiles({
-        'examples/video.ncl': '''<ncl>
+          'examples/video.ncl': '''<ncl>
   <body>
     <port id="init" component="video"/>
     <media id="video" src="video.mp4"/>
   </body>
 </ncl>''',
-      });
+        });
       await tester.pumpWidget(Ginga(gingacc: gingacc));
       await tester.pump(const Duration(seconds: 1));
 
@@ -572,7 +574,8 @@ void main() {
       expect(find.text('Pause'), findsOneWidget);
     });
 
-    test('GingaConfig parses enablePlayground from JSON and constructor', () async {
+    test('GingaConfig parses enablePlayground from JSON and constructor',
+        () async {
       final configDefault = GingaConfig();
       expect(configDefault.enablePlayground, isFalse);
 
@@ -589,7 +592,8 @@ void main() {
     testWidgets(
         'Ginga widget includes PlaygroundEditor widget open with current main app file content when enablePlayground is true',
         (WidgetTester tester) async {
-      const sampleNcl = '<ncl id="playgroundApp"><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>';
+      const sampleNcl =
+          '<ncl id="playgroundApp"><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>';
       final config = await GingaConfig.fromJson(
         '{"enablePlayground": true, "appSrc": "playground.ncl"}',
       );
@@ -668,8 +672,7 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
 
-    testWidgets(
-        'Ginga mounts PlaygroundEditor on the left side of the player',
+    testWidgets('Ginga mounts PlaygroundEditor on the left side of the player',
         (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1920, 1080);
       tester.view.devicePixelRatio = 1.0;
@@ -818,7 +821,8 @@ void main() {
       expect(pEditor.isRunning, isFalse);
 
       expect(find.byKey(const Key('monaco_stop_button')), findsNothing);
-      expect(find.byKey(const Key('monaco_debug_continue_button')), findsNothing);
+      expect(
+          find.byKey(const Key('monaco_debug_continue_button')), findsNothing);
 
       final debugFinder = find.byKey(const Key('monaco_debug_start_button'));
       expect(debugFinder, findsOneWidget);
@@ -865,8 +869,10 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.byKey(const Key('monaco_stop_button')), findsNothing);
-      expect(find.byKey(const Key('monaco_debug_continue_button')), findsNothing);
-      expect(find.byKey(const Key('monaco_debug_start_button')), findsOneWidget);
+      expect(
+          find.byKey(const Key('monaco_debug_continue_button')), findsNothing);
+      expect(
+          find.byKey(const Key('monaco_debug_start_button')), findsOneWidget);
 
       await tester.pumpWidget(const SizedBox());
     });
@@ -891,7 +897,8 @@ void main() {
       ));
       await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.byKey(const Key('no_running_app_placeholder')), findsOneWidget);
+      expect(
+          find.byKey(const Key('no_running_app_placeholder')), findsOneWidget);
       expect(find.text('No running application'), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('monaco_run_button')));
@@ -903,7 +910,8 @@ void main() {
       await tester.tap(find.byKey(const Key('monaco_stop_button')));
       await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.byKey(const Key('no_running_app_placeholder')), findsOneWidget);
+      expect(
+          find.byKey(const Key('no_running_app_placeholder')), findsOneWidget);
       expect(find.text('No running application'), findsOneWidget);
 
       await tester.pumpWidget(const SizedBox());
@@ -960,7 +968,8 @@ void main() {
       expect(nclFinder, findsOneWidget);
       final nclState = tester.state<NclWidgetState>(nclFinder);
 
-      final pState = tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
+      final pState =
+          tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
 
       nclState.tick(2500);
       await tester.pump();
@@ -997,7 +1006,8 @@ void main() {
         'Ginga keeps running and does not exit when ESC is pressed in playground mode',
         (WidgetTester tester) async {
       final gingacc = GingaCC(
-        config: GingaConfig(appSrc: 'examples/video.ncl', enablePlayground: true),
+        config:
+            GingaConfig(appSrc: 'examples/video.ncl', enablePlayground: true),
       )..setVirtualFiles({
           'examples/video.ncl': '''<ncl>
   <body>
@@ -1022,4 +1032,3 @@ void main() {
     });
   });
 }
-

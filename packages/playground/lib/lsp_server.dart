@@ -166,8 +166,7 @@ class LspServer {
       case 'textDocument/didChange':
         final params = notification.params as Map<String, dynamic>?;
         final textDocument = params?['textDocument'] as Map<String, dynamic>?;
-        final contentChanges =
-            params?['contentChanges'] as List<dynamic>?;
+        final contentChanges = params?['contentChanges'] as List<dynamic>?;
         if (textDocument != null &&
             contentChanges != null &&
             contentChanges.isNotEmpty) {
@@ -240,8 +239,10 @@ class LspServer {
       diagnostics.add(
         Diagnostic(
           range: Range(
-            start: Position(line: line < 0 ? 0 : line, character: col < 0 ? 0 : col),
-            end: Position(line: line < 0 ? 0 : line, character: (col < 0 ? 0 : col) + 10),
+            start: Position(
+                line: line < 0 ? 0 : line, character: col < 0 ? 0 : col),
+            end: Position(
+                line: line < 0 ? 0 : line, character: (col < 0 ? 0 : col) + 10),
           ),
           severity: 1,
           message: 'XML syntax error: $msg',
@@ -311,7 +312,8 @@ class LspServer {
               Diagnostic(
                 range: _findRangeForTag(element, fullText),
                 severity: 1,
-                message: "Missing required attribute '$attrName' on '<$tagName>'",
+                message:
+                    "Missing required attribute '$attrName' on '<$tagName>'",
               ),
             );
           }
@@ -335,15 +337,21 @@ class LspServer {
       case 'head':
         return const ElementSyntax(possibleParents: ['ncl']);
       case 'body':
-        return const ElementSyntax(possibleParents: ['ncl'], attributes: {'id': attrOptId});
+        return const ElementSyntax(
+            possibleParents: ['ncl'], attributes: {'id': attrOptId});
       case 'regionBase':
-        return const ElementSyntax(possibleParents: ['head'], attributes: {
+        return const ElementSyntax(possibleParents: [
+          'head'
+        ], attributes: {
           'id': attrOptId,
           'device': attrOptional,
           'region': attrOptional,
         });
       case 'region':
-        return const ElementSyntax(possibleParents: ['regionBase', 'region'], attributes: {
+        return const ElementSyntax(possibleParents: [
+          'regionBase',
+          'region'
+        ], attributes: {
           'id': attrId,
           'title': attrOptional,
           'left': attrOptional,
@@ -355,19 +363,29 @@ class LspServer {
           'zIndex': attrOptional,
         });
       case 'descriptorBase':
-        return const ElementSyntax(possibleParents: ['head'], attributes: {'id': attrOptId});
+        return const ElementSyntax(
+            possibleParents: ['head'], attributes: {'id': attrOptId});
       case 'descriptor':
-        return const ElementSyntax(possibleParents: ['descriptorBase'], attributes: {
+        return const ElementSyntax(possibleParents: [
+          'descriptorBase'
+        ], attributes: {
           'id': attrId,
           'region': attrOptIdref,
           'player': attrOptional,
           'explicitDur': attrOptional,
         });
       case 'connectorBase':
-        return const ElementSyntax(possibleParents: ['head'], attributes: {'id': attrOptId});
+        return const ElementSyntax(
+            possibleParents: ['head'], attributes: {'id': attrOptId});
       case 'importBase':
         return const ElementSyntax(
-          possibleParents: ['connectorBase', 'descriptorBase', 'regionBase', 'ruleBase', 'transitionBase'],
+          possibleParents: [
+            'connectorBase',
+            'descriptorBase',
+            'regionBase',
+            'ruleBase',
+            'transitionBase'
+          ],
           attributes: {
             'documentURI': attrRequired,
             'alias': attrRequired,
@@ -375,12 +393,17 @@ class LspServer {
           },
         );
       case 'causalConnector':
-        return const ElementSyntax(possibleParents: ['connectorBase'], attributes: {
+        return const ElementSyntax(possibleParents: [
+          'connectorBase'
+        ], attributes: {
           'id': attrId,
           'title': attrOptional,
         });
       case 'media':
-        return const ElementSyntax(possibleParents: ['body', 'context'], attributes: {
+        return const ElementSyntax(possibleParents: [
+          'body',
+          'context'
+        ], attributes: {
           'id': attrId,
           'src': attrRequired,
           'type': attrOptional,
@@ -389,40 +412,59 @@ class LspServer {
           'instance': attrOptional,
         });
       case 'context':
-        return const ElementSyntax(possibleParents: ['body', 'context'], attributes: {
+        return const ElementSyntax(possibleParents: [
+          'body',
+          'context'
+        ], attributes: {
           'id': attrId,
           'refer': attrOptIdref,
         });
       case 'port':
-        return const ElementSyntax(possibleParents: ['body', 'context'], attributes: {
+        return const ElementSyntax(possibleParents: [
+          'body',
+          'context'
+        ], attributes: {
           'id': attrId,
           'component': attrIdref,
           'interface': attrOptIdref,
         });
       case 'property':
-        return const ElementSyntax(possibleParents: ['media', 'context'], attributes: {
+        return const ElementSyntax(possibleParents: [
+          'media',
+          'context'
+        ], attributes: {
           'name': attrRequiredNonemptyName,
           'value': attrOptional,
         });
       case 'area':
-        return const ElementSyntax(possibleParents: ['media'], attributes: {
+        return const ElementSyntax(possibleParents: [
+          'media'
+        ], attributes: {
           'id': attrId,
           'begin': attrOptional,
           'end': attrOptional,
         });
       case 'link':
-        return const ElementSyntax(possibleParents: ['body', 'context'], attributes: {
+        return const ElementSyntax(possibleParents: [
+          'body',
+          'context'
+        ], attributes: {
           'id': attrOptId,
           'xconnector': attrIdref,
         });
       case 'bind':
-        return const ElementSyntax(possibleParents: ['link'], attributes: {
+        return const ElementSyntax(possibleParents: [
+          'link'
+        ], attributes: {
           'role': attrRequired,
           'component': attrIdref,
           'interface': attrOptIdref,
         });
       case 'bindParam':
-        return const ElementSyntax(possibleParents: ['bind', 'link'], attributes: {
+        return const ElementSyntax(possibleParents: [
+          'bind',
+          'link'
+        ], attributes: {
           'name': attrRequiredNonemptyName,
           'value': attrRequired,
         });
@@ -544,7 +586,10 @@ class LspServer {
 
     return JsonRpcResponse(
       id: request.id,
-      result: {'isIncomplete': false, 'items': items.map((i) => i.toJson()).toList()},
+      result: {
+        'isIncomplete': false,
+        'items': items.map((i) => i.toJson()).toList()
+      },
     );
   }
 
@@ -709,8 +754,9 @@ class LspServer {
       }
 
       if (startLine == -1) {
-        startLine =
-            currentSearchLine < lines.length ? currentSearchLine : lines.length - 1;
+        startLine = currentSearchLine < lines.length
+            ? currentSearchLine
+            : lines.length - 1;
         startCol = 0;
       }
 
@@ -782,7 +828,8 @@ class LspServer {
         ),
         selectionRange: Range(
           start: Position(line: startLine, character: startCol),
-          end: Position(line: startLine, character: startCol + tagPrefix.length),
+          end:
+              Position(line: startLine, character: startCol + tagPrefix.length),
         ),
         children: children,
       );
@@ -837,4 +884,3 @@ class LspServer {
     }
   }
 }
-

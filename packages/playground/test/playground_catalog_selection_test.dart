@@ -76,7 +76,8 @@ void main() {
       expect(find.byKey(const Key('catalog_select')), findsOneWidget);
     });
 
-    testWidgets('defaults showCatalogSelector to false when filePath is provided',
+    testWidgets(
+        'defaults showCatalogSelector to false when filePath is provided',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
@@ -94,7 +95,8 @@ void main() {
       expect(find.text('test.ncl'), findsOneWidget);
     });
 
-    testWidgets('selecting an item from catalog dropdown loads file content into editor',
+    testWidgets(
+        'selecting an item from catalog dropdown loads file content into editor',
         (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1920, 1080);
       tester.view.devicePixelRatio = 1.0;
@@ -125,7 +127,8 @@ void main() {
       );
       await tester.pump();
 
-      final state = tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
+      final state =
+          tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
       expect(state.effectiveContent, isEmpty);
 
       await state.selectCatalogExample('video.ncl');
@@ -137,7 +140,8 @@ void main() {
       expect(lastChangedContent, contains('video_body'));
       expect(lastSelectedExample, equals('video.ncl'));
 
-      final textField = tester.widget<TextField>(find.byKey(const Key('monaco_editor_text_field')));
+      final textField = tester
+          .widget<TextField>(find.byKey(const Key('monaco_editor_text_field')));
       expect(textField.controller?.text, contains('video_body'));
 
       await state.selectCatalogExample('image.ncl');
@@ -165,7 +169,8 @@ void main() {
       await tester.pump();
 
       expect(
-        find.text('Select an example from the catalog above to view and run code'),
+        find.text(
+            'Select an example from the catalog above to view and run code'),
         findsOneWidget,
       );
     });
@@ -247,7 +252,8 @@ void main() {
       await tester.tap(find.byKey(const Key('catalog_category_chip_lua')));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('catalog_option_lua_zip_list')), findsOneWidget);
+      expect(
+          find.byKey(const Key('catalog_option_lua_zip_list')), findsOneWidget);
       expect(find.byKey(const Key('catalog_option_video')), findsNothing);
 
       await tester.tap(find.byKey(const Key('catalog_category_chip_all')));
@@ -286,13 +292,15 @@ void main() {
       expect(find.byKey(const Key('catalog_grid_dialog')), findsNothing);
     });
 
-    testWidgets('displays short filename for URL filePath and hides catalog selector',
+    testWidgets(
+        'displays short filename for URL filePath and hides catalog selector',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
             body: PlaygroundEditor(
-              filePath: 'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/video.ncl',
+              filePath:
+                  'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/video.ncl',
             ),
           ),
         ),
@@ -341,7 +349,8 @@ void main() {
           home: Scaffold(
             body: PlaygroundEditor(
               filePath: 'image.html',
-              content: '<!DOCTYPE html><html><body><h1>Hello</h1></body></html>',
+              content:
+                  '<!DOCTYPE html><html><body><h1>Hello</h1></body></html>',
             ),
           ),
         ),

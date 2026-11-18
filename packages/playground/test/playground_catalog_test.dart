@@ -77,10 +77,12 @@ void main() {
 
       final examples = await loadCatalogExamples(gingacc: gingacc);
       expect(examples.length, equals(3));
-      expect(examples.map((e) => e.key), containsAll(['video', 'sbtvd', 'minimal']));
+      expect(examples.map((e) => e.key),
+          containsAll(['video', 'sbtvd', 'minimal']));
     });
 
-    test('loadExampleContent loads content from GingaCC virtualFiles', () async {
+    test('loadExampleContent loads content from GingaCC virtualFiles',
+        () async {
       const sampleContent = '<ncl><body/></ncl>';
       final gingacc = GingaCC();
       gingacc.setVirtualFiles({
@@ -91,7 +93,8 @@ void main() {
       expect(content, equals(sampleContent));
     });
 
-    test('loadExampleContent loads existing filesystem files on desktop', () async {
+    test('loadExampleContent loads existing filesystem files on desktop',
+        () async {
       final content = await loadExampleContent('video.ncl');
       expect(content, isNotNull);
       expect(content, contains('<ncl'));

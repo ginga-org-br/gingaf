@@ -751,7 +751,8 @@ class DataBindingController extends ChangeNotifier {
       _rowColOffsets = List<int>.filled(totalR, 0, growable: true);
     }
     _focusedRow = _focusedRow.clamp(0, totalR - 1);
-    _focusedCol = _focusedCol.clamp(0, math.max(0, totalColumnsForRow(_focusedRow) - 1));
+    _focusedCol =
+        _focusedCol.clamp(0, math.max(0, totalColumnsForRow(_focusedRow) - 1));
     _rebindVisibleViewport();
     notifyListeners();
   }
@@ -973,8 +974,8 @@ class DataBindingController extends ChangeNotifier {
     if (hasIndependentRowHorizontalScroll &&
         targetRow >= 0 &&
         targetRow < _rowColOffsets.length) {
-      final int visualSlot =
-          (_focusedCol - _viewportColStart).clamp(0, math.max(0, visibleColumns - 1));
+      final int visualSlot = (_focusedCol - _viewportColStart)
+          .clamp(0, math.max(0, visibleColumns - 1));
       _viewportColStart = _rowColOffsets[targetRow].clamp(
         0,
         math.max(0, maxCols - visibleColumns),

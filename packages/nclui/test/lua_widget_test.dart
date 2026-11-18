@@ -65,7 +65,8 @@ c:drawRect("fill", 110, 110, 20, 20)
       expect(commands[2].paint.color, const Color(0xFF00FF00));
     });
 
-    testWidgets('examples/lua/zip_list/main.ncl opens web zip and navigates entries',
+    testWidgets(
+        'examples/lua/zip_list/main.ncl opens web zip and navigates entries',
         (WidgetTester tester) async {
       final candidateRoot = File('examples/lua/zip_list/main.ncl');
       final examplePath = candidateRoot.existsSync()

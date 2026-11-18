@@ -224,8 +224,7 @@ class GingaState extends State<Ginga> {
   }
 
   void _savePlaygroundVirtualFiles() {
-    final currentFiles =
-        Map<String, String>.from(_initialVirtualFiles ?? {});
+    final currentFiles = Map<String, String>.from(_initialVirtualFiles ?? {});
     if (_mainAppContent != null && _gingacc.config.appSrc != null) {
       currentFiles[_gingacc.config.appSrc!] = _mainAppContent!;
     }
@@ -683,9 +682,10 @@ class GingaState extends State<Ginga> {
                               isRunning: _isRunning,
                               showCatalogSelector: _showCatalogSelector,
                               onCatalogExampleSelected: (selectedFile) async {
-                                final appPath = selectedFile.startsWith('examples/')
-                                    ? selectedFile
-                                    : 'examples/$selectedFile';
+                                final appPath =
+                                    selectedFile.startsWith('examples/')
+                                        ? selectedFile
+                                        : 'examples/$selectedFile';
                                 _savePlaygroundVirtualFiles();
                                 await _applyPlaygroundConfig(
                                   appPath,

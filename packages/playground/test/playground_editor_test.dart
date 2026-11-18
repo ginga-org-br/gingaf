@@ -19,7 +19,8 @@ void main() {
 </ncl>''';
 
   group('PlaygroundEditor Widget (Monaco Editor)', () {
-    testWidgets('renders Monaco editor with gutter, line numbers, and debug actions',
+    testWidgets(
+        'renders Monaco editor with gutter, line numbers, and debug actions',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
@@ -36,7 +37,8 @@ void main() {
       expect(find.text('Monaco Editor'), findsOneWidget);
       expect(find.text('test.ncl'), findsOneWidget);
       expect(find.byKey(const Key('monaco_editor_text_field')), findsOneWidget);
-      expect(find.byKey(const Key('monaco_debug_start_button')), findsOneWidget);
+      expect(
+          find.byKey(const Key('monaco_debug_start_button')), findsOneWidget);
       expect(find.byKey(const Key('monaco_gutter_line_4')), findsOneWidget);
       expect(find.byKey(const Key('monaco_gutter_line_7')), findsOneWidget);
     });
@@ -58,7 +60,8 @@ void main() {
       );
       await tester.pump();
 
-      final state = tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
+      final state =
+          tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
       expect(state.breakpoints, isEmpty);
 
       // Tap line 4 in Monaco gutter to set breakpoint
@@ -84,7 +87,8 @@ void main() {
       expect(breakpointsChanged.last, equals([7]));
     });
 
-    testWidgets('simulates time passing with tick while debugging in Monaco editor',
+    testWidgets(
+        'simulates time passing with tick while debugging in Monaco editor',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
@@ -99,7 +103,8 @@ void main() {
       );
       await tester.pump();
 
-      final state = tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
+      final state =
+          tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
       expect(state.breakpoints, containsAll([4, 7]));
       expect(state.isDebugging, isFalse);
 
@@ -112,7 +117,8 @@ void main() {
       expect(state.currentDebugLine, equals(4));
       expect(state.virtualClock, equals(0));
       expect(find.byKey(const Key('monaco_debug_step_button')), findsNothing);
-      expect(find.byKey(const Key('monaco_debug_continue_button')), findsOneWidget);
+      expect(find.byKey(const Key('monaco_debug_continue_button')),
+          findsOneWidget);
 
       state.tick(1000);
       await tester.pump();
@@ -136,7 +142,8 @@ void main() {
       expect(state.currentDebugLine, isNull);
     });
 
-    testWidgets('steps and continues debugging timeline with tick in Monaco editor',
+    testWidgets(
+        'steps and continues debugging timeline with tick in Monaco editor',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
@@ -151,7 +158,8 @@ void main() {
       );
       await tester.pump();
 
-      final state = tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
+      final state =
+          tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
 
       // Start debugging
       state.startDebugging();
@@ -396,7 +404,8 @@ void main() {
       expect(state.currentDebugLine, equals(7));
     });
 
-    testWidgets('toolbar buttons reflect enabled and disabled states for idle, running, and debugging',
+    testWidgets(
+        'toolbar buttons reflect enabled and disabled states for idle, running, and debugging',
         (WidgetTester tester) async {
       bool stopCalled = false;
       bool runCalled = false;
@@ -416,13 +425,16 @@ void main() {
       );
       await tester.pump();
 
-      final runBtnIdle = tester.widget<IconButton>(find.byKey(const Key('monaco_run_button')));
-      final debugBtnIdle = tester.widget<IconButton>(find.byKey(const Key('monaco_debug_start_button')));
+      final runBtnIdle =
+          tester.widget<IconButton>(find.byKey(const Key('monaco_run_button')));
+      final debugBtnIdle = tester.widget<IconButton>(
+          find.byKey(const Key('monaco_debug_start_button')));
 
       expect(runBtnIdle.onPressed, isNotNull);
       expect(debugBtnIdle.onPressed, isNotNull);
       expect(find.byKey(const Key('monaco_stop_button')), findsNothing);
-      expect(find.byKey(const Key('monaco_debug_continue_button')), findsNothing);
+      expect(
+          find.byKey(const Key('monaco_debug_continue_button')), findsNothing);
 
       await tester.tap(find.byKey(const Key('monaco_run_button')));
       await tester.pump();
@@ -446,9 +458,12 @@ void main() {
       await tester.tap(find.byKey(const Key('monaco_debug_start_button')));
       await tester.pump();
 
-      final runBtnRunning = tester.widget<IconButton>(find.byKey(const Key('monaco_run_button')));
-      final debugBtnRunning = tester.widget<IconButton>(find.byKey(const Key('monaco_debug_start_button')));
-      final stopBtnRunning = tester.widget<IconButton>(find.byKey(const Key('monaco_stop_button')));
+      final runBtnRunning =
+          tester.widget<IconButton>(find.byKey(const Key('monaco_run_button')));
+      final debugBtnRunning = tester.widget<IconButton>(
+          find.byKey(const Key('monaco_debug_start_button')));
+      final stopBtnRunning = tester
+          .widget<IconButton>(find.byKey(const Key('monaco_stop_button')));
 
       expect(runBtnRunning.onPressed, isNull);
       expect(debugBtnRunning.onPressed, isNull);
@@ -459,7 +474,8 @@ void main() {
       expect(stopCalled, isTrue);
     });
 
-    testWidgets('toolbar enables continue and stop buttons and disables run and debug during debugging',
+    testWidgets(
+        'toolbar enables continue and stop buttons and disables run and debug during debugging',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
@@ -475,7 +491,8 @@ void main() {
       );
       await tester.pump();
 
-      final state = tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
+      final state =
+          tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
       expect(state.canDebug, isTrue);
       expect(state.canStop, isFalse);
       expect(state.canRun, isTrue);
@@ -488,14 +505,22 @@ void main() {
       expect(state.canRun, isFalse);
       expect(state.canStop, isTrue);
 
-      final continueBtnDebug = tester.widget<IconButton>(find.byKey(const Key('monaco_debug_continue_button')));
-      final stopBtnDebug = tester.widget<IconButton>(find.byKey(const Key('monaco_stop_button')));
-      final runBtnDebug = tester.widget<IconButton>(find.byKey(const Key('monaco_run_button')));
-      final debugBtnDebug = tester.widget<IconButton>(find.byKey(const Key('monaco_debug_start_button')));
+      final continueBtnDebug = tester.widget<IconButton>(
+          find.byKey(const Key('monaco_debug_continue_button')));
+      final stopBtnDebug = tester
+          .widget<IconButton>(find.byKey(const Key('monaco_stop_button')));
+      final runBtnDebug =
+          tester.widget<IconButton>(find.byKey(const Key('monaco_run_button')));
+      final debugBtnDebug = tester.widget<IconButton>(
+          find.byKey(const Key('monaco_debug_start_button')));
 
       expect(continueBtnDebug.onPressed, isNotNull);
       expect(continueBtnDebug.color, equals(const Color(0xFF75BEFF)));
-      expect(find.descendant(of: find.byKey(const Key('monaco_debug_continue_button')), matching: find.byType(SvgPicture)), findsOneWidget);
+      expect(
+          find.descendant(
+              of: find.byKey(const Key('monaco_debug_continue_button')),
+              matching: find.byType(SvgPicture)),
+          findsOneWidget);
       expect(stopBtnDebug.onPressed, isNotNull);
       expect(runBtnDebug.onPressed, isNull);
       expect(debugBtnDebug.onPressed, isNull);
@@ -530,7 +555,8 @@ void main() {
       );
       await tester.pump();
 
-      final state = tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
+      final state =
+          tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
       expect(state.effectiveHasPlayer, isTrue);
 
       state.startDebugging();
@@ -543,7 +569,8 @@ void main() {
       await tester.pump();
       expect(state.isPaused, isTrue);
       expect(state.currentDebugLine, equals(7));
-      expect(find.byKey(const Key('monaco_debug_controls_box')), findsOneWidget);
+      expect(
+          find.byKey(const Key('monaco_debug_controls_box')), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('monaco_debug_continue_button')));
       await tester.pump();
@@ -561,7 +588,8 @@ void main() {
       expect(state.isDebugging, isFalse);
     });
 
-    testWidgets('highlights all lines of the media changing font background when debugging',
+    testWidgets(
+        'highlights all lines of the media changing font background when debugging',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
@@ -575,7 +603,8 @@ void main() {
       );
       await tester.pump();
 
-      final state = tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
+      final state =
+          tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
       expect(state.highlightedMediaLines, isEmpty);
 
       // Pause at line 4 (video media, lines 4 to 6)
@@ -586,13 +615,17 @@ void main() {
       expect(state.highlightedMediaLines, containsAll([4, 5, 6]));
 
       // Verify text field controller buildTextSpan has styled spans
-      final textField = tester.widget<TextField>(find.byKey(const Key('monaco_editor_text_field')));
-      final controller = textField.controller as PlaygroundTextEditingController;
+      final textField = tester
+          .widget<TextField>(find.byKey(const Key('monaco_editor_text_field')));
+      final controller =
+          textField.controller as PlaygroundTextEditingController;
       expect(controller.highlightedMediaLines, containsAll([4, 5, 6]));
       expect(controller.currentDebugLine, equals(4));
 
-      final element = tester.element(find.byKey(const Key('monaco_editor_text_field')));
-      final span = controller.buildTextSpan(context: element, withComposing: false);
+      final element =
+          tester.element(find.byKey(const Key('monaco_editor_text_field')));
+      final span =
+          controller.buildTextSpan(context: element, withComposing: false);
       expect(span.children, isNotEmpty);
 
       // Line 4 span (current line: i=3, index = 3*2 = 6) has amber background

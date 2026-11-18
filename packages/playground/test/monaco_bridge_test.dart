@@ -32,9 +32,8 @@ void main() {
 
       final result = bridge.getCompletions('inmemory://model/2', 0, 19);
       expect(result, isNotNull);
-      final items = (result!['items'] as List<dynamic>)
-          .map((i) => i['label'])
-          .toList();
+      final items =
+          (result!['items'] as List<dynamic>).map((i) => i['label']).toList();
       expect(items, contains('src'));
     });
 
@@ -95,7 +94,9 @@ void main() {
       expect(bps, containsAll([4, 7, 12]));
     });
 
-    test('MonacoBridge simulates time passing with tick during debugging session', () async {
+    test(
+        'MonacoBridge simulates time passing with tick during debugging session',
+        () async {
       const sample = '''<ncl>
   <body>
     <port id="p1" component="video1"/>
@@ -142,7 +143,10 @@ void main() {
       expect(evalMedia?['result'], contains('banner'));
 
       final vars = bridge.getVariables();
-      expect(vars.any((v) => v['name'] == 'virtualClock' && v['value'] == '2000ms'), isTrue);
+      expect(
+          vars.any(
+              (v) => v['name'] == 'virtualClock' && v['value'] == '2000ms'),
+          isTrue);
 
       bridge.stopDebugging();
       expect(bridge.isDebugging, isFalse);
@@ -150,7 +154,9 @@ void main() {
       await sub.cancel();
     });
 
-    test('MonacoBridge step simulation advances clock and stops at timed breakpoints', () {
+    test(
+        'MonacoBridge step simulation advances clock and stops at timed breakpoints',
+        () {
       const sample = '''<ncl>
   <body>
     <port id="p1" component="v1"/>

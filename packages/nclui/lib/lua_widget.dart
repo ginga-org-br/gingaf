@@ -728,9 +728,7 @@ class LuaWidgetState extends MediaState<LuaWidget> {
     final uri = pb.resolveUri(path, base);
     final resolvedPath =
         uri.isScheme('file') ? uri.toFilePath() : uri.toString();
-    if (uri.isScheme('http') ||
-        uri.isScheme('https') ||
-        uri.isScheme('blob')) {
+    if (uri.isScheme('http') || uri.isScheme('https') || uri.isScheme('blob')) {
       return NetworkImage(uri.toString());
     }
     final bytes = pb.loadBytesSync(path, base) ??

@@ -16,7 +16,8 @@ class NclDslTranspiler {
     if (dslText.trim().isEmpty) return '';
     final trimmed = dslText.trim();
 
-    final idMatch = RegExp(r'^ncl\s+([a-zA-Z0-9_-]+)\s*\{', multiLine: true).firstMatch(trimmed);
+    final idMatch = RegExp(r'^ncl\s+([a-zA-Z0-9_-]+)\s*\{', multiLine: true)
+        .firstMatch(trimmed);
     final rootId = idMatch != null ? idMatch.group(1)! : 'main';
 
     final buffer = StringBuffer();
@@ -29,7 +30,9 @@ class NclDslTranspiler {
 
     for (var rawLine in lines) {
       final line = rawLine.trim();
-      if (line.isEmpty || line.startsWith('//') || line.startsWith('#')) continue;
+      if (line.isEmpty || line.startsWith('//') || line.startsWith('#')) {
+        continue;
+      }
 
       if (line.startsWith('head {')) {
         currentBlock = 'head';
@@ -66,16 +69,21 @@ class NclDslTranspiler {
       } else if (currentBlock == 'body') {
         if (line.startsWith('link') && line.endsWith('{')) {
           currentSubBlock = 'link';
-          final linkIdMatch = RegExp(r'link\s+([a-zA-Z0-9_-]+)').firstMatch(line);
-          final idAttr = linkIdMatch != null ? ' id="${linkIdMatch.group(1)}"' : '';
+          final linkIdMatch =
+              RegExp(r'link\s+([a-zA-Z0-9_-]+)').firstMatch(line);
+          final idAttr =
+              linkIdMatch != null ? ' id="${linkIdMatch.group(1)}"' : '';
           buffer.writeln('    <link$idAttr>');
         } else if (line.startsWith('context') && line.endsWith('{')) {
           currentSubBlock = 'context';
-          final ctxIdMatch = RegExp(r'context\s+([a-zA-Z0-9_-]+)').firstMatch(line);
-          final idAttr = ctxIdMatch != null ? ' id="${ctxIdMatch.group(1)}"' : '';
+          final ctxIdMatch =
+              RegExp(r'context\s+([a-zA-Z0-9_-]+)').firstMatch(line);
+          final idAttr =
+              ctxIdMatch != null ? ' id="${ctxIdMatch.group(1)}"' : '';
           buffer.writeln('    <context$idAttr>');
         } else {
-          _convertDslStatementToXml(line, buffer, currentSubBlock != null ? 3 : 2);
+          _convertDslStatementToXml(
+              line, buffer, currentSubBlock != null ? 3 : 2);
         }
       }
     }
@@ -84,10 +92,13 @@ class NclDslTranspiler {
     return buffer.toString();
   }
 
-  static void _convertDslStatementToXml(String line, StringBuffer buffer, int indentLevel) {
+  static void _convertDslStatementToXml(
+      String line, StringBuffer buffer, int indentLevel) {
     final prefix = '  ' * indentLevel;
 
-    final portArrowMatch = RegExp(r'^port\s+([a-zA-Z0-9_-]+)\s*->\s*([a-zA-Z0-9_-]+)(?:::([a-zA-Z0-9_-]+))?').firstMatch(line);
+    final portArrowMatch = RegExp(
+            r'^port\s+([a-zA-Z0-9_-]+)\s*->\s*([a-zA-Z0-9_-]+)(?:::([a-zA-Z0-9_-]+))?')
+        .firstMatch(line);
     if (portArrowMatch != null) {
       final portId = portArrowMatch.group(1)!;
       final comp = portArrowMatch.group(2)!;
@@ -97,7 +108,9 @@ class NclDslTranspiler {
       return;
     }
 
-    final bindArrowMatch = RegExp(r'^bind\s+([a-zA-Z0-9_-]+)\s*->\s*([a-zA-Z0-9_-]+)(?:::([a-zA-Z0-9_-]+))?').firstMatch(line);
+    final bindArrowMatch = RegExp(
+            r'^bind\s+([a-zA-Z0-9_-]+)\s*->\s*([a-zA-Z0-9_-]+)(?:::([a-zA-Z0-9_-]+))?')
+        .firstMatch(line);
     if (bindArrowMatch != null) {
       final role = bindArrowMatch.group(1)!;
       final comp = bindArrowMatch.group(2)!;
@@ -107,7 +120,9 @@ class NclDslTranspiler {
       return;
     }
 
-    final blockDeclMatch = RegExp(r'^([a-zA-Z0-9_-]+)(?:\s+([a-zA-Z0-9_-]+))?\s*\{([^}]*)\}').firstMatch(line);
+    final blockDeclMatch =
+        RegExp(r'^([a-zA-Z0-9_-]+)(?:\s+([a-zA-Z0-9_-]+))?\s*\{([^}]*)\}')
+            .firstMatch(line);
     if (blockDeclMatch != null) {
       final tag = blockDeclMatch.group(1)!;
       final id = blockDeclMatch.group(2);
@@ -118,7 +133,8 @@ class NclDslTranspiler {
         attrMap['id'] = id;
       }
 
-      final attrString = attrMap.entries.map((e) => '${e.key}="${e.value}"').join(' ');
+      final attrString =
+          attrMap.entries.map((e) => '${e.key}="${e.value}"').join(' ');
       final space = attrString.isNotEmpty ? ' $attrString' : '';
       buffer.writeln('$prefix<$tag$space/>');
       return;
@@ -128,7 +144,8 @@ class NclDslTranspiler {
     if (propMatch != null) {
       final key = propMatch.group(1)!;
       var val = propMatch.group(2)!.trim();
-      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+      if ((val.startsWith('"') && val.endsWith('"')) ||
+          (val.startsWith("'") && val.endsWith("'"))) {
         val = val.substring(1, val.length - 1);
       }
       buffer.writeln('$prefix<$key value="$val"/>');
@@ -143,7 +160,8 @@ class NclDslTranspiler {
       if (kv.length == 2) {
         final k = kv[0].trim();
         var v = kv[1].trim();
-        if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+        if ((v.startsWith('"') && v.endsWith('"')) ||
+            (v.startsWith("'") && v.endsWith("'"))) {
           v = v.substring(1, v.length - 1);
         }
         if (k.isNotEmpty && v.isNotEmpty) {
@@ -154,7 +172,8 @@ class NclDslTranspiler {
     return result;
   }
 
-  static void _formatElementDsl(XmlElement element, StringBuffer buffer, int indentLevel) {
+  static void _formatElementDsl(
+      XmlElement element, StringBuffer buffer, int indentLevel) {
     final indent = '  ' * indentLevel;
     final tag = element.name.local;
 
@@ -179,7 +198,9 @@ class NclDslTranspiler {
       return;
     }
 
-    if (tag == 'regionBase' || tag == 'descriptorBase' || tag == 'connectorBase') {
+    if (tag == 'regionBase' ||
+        tag == 'descriptorBase' ||
+        tag == 'connectorBase') {
       buffer.writeln('$indent$tag {');
       for (final child in element.children.whereType<XmlElement>()) {
         _formatElementDsl(child, buffer, indentLevel + 1);

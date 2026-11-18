@@ -6,7 +6,8 @@ void main() {
   group('JSON-RPC and Framing', () {
     test('frames and unframes single message correctly', () {
       final framer = MessageFramer();
-      final body = jsonEncode({'jsonrpc': '2.0', 'id': 1, 'method': 'initialize'});
+      final body =
+          jsonEncode({'jsonrpc': '2.0', 'id': 1, 'method': 'initialize'});
       final framed = MessageFramer.frameMessage(body);
 
       final extracted = framer.appendBytes(framed);
