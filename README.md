@@ -5,11 +5,11 @@
 
 `gingaf` is an MIT-licensed, multi-platform implementation of the interactive TV middleware Ginga standardised by ITU-T and SBTVD.
 
-You can use `gingaf` to develop Ginga applications on the web or desktop using the built-in playground (also hosted at [ginga.org.br/gingaf/playground](https://ginga.org.br/gingaf/playground)), or on desktop with the Visual Studio Code extension [ginga-code](https://github.com/ginga-org-br/ginga-code).
+You can use `gingaf` to develop Ginga applications on the web or desktop using the its `ginga-playground` (hosted at [ginga.org.br/gingaf/playground](https://ginga.org.br/gingaf/playground)), or on desktop with the Visual Studio Code extension [ginga-code](https://github.com/ginga-org-br/ginga-code).
 
-## Documentation
+## Architecture
 
-The `gingaf` documentation is available at [https://ginga-org-br.github.io/gingaf/docs](https://ginga-org-br.github.io/gingaf/docs). The repository is organized as a monorepo: the root directory contains the Flutter host application, alongside `packages/gingacc` (configuration, users, and CCWS), `packages/ncldoc` (NCL headless execution engine), `packages/nclui` (NCL and visual widgets), `packages/plugins` (media and rule plugins), `packages/playground` (built-in editor, catalog, LSP, and DAP), and `node` (npm distribution package).
+The repository is organized as a monorepo: the root directory contains the Flutter host application, alongside `packages/gingacc` (configuration, users, and CCWS), `packages/ncldoc` (NCL headless execution engine), `packages/nclui` (NCL and visual widgets), `packages/plugins` (media and rule plugins), `packages/playground` (built-in editor, catalog, LSP, and DAP), and `node` (npm distribution package).
 
 <img src="dartdoc/architecture.svg" width="480">
 
@@ -19,41 +19,41 @@ The `gingaf` documentation is available at [https://ginga-org-br.github.io/ginga
   <tbody>
     <tr>
       <td align="center" width="50%">
-        <img src="https://alanlivio.github.io/paper-mm26-gingaf/slides/assets/gifs/video.ncl.gif" /><br />
+        <img src="https://alanlivio.github.io/paper-webmedia26-gingaf/slides/assets/gifs/video.ncl.gif" /><br />
         NCL with basic links (<a href="https://ginga.org.br/gingaf/playground/?app=video.ncl">video.ncl</a>)
       </td>
       <td align="center" width="50%">
-        <img src="https://alanlivio.github.io/paper-mm26-gingaf/slides/assets/gifs/video_grid.ncl.gif" /><br />
+        <img src="https://alanlivio.github.io/paper-webmedia26-gingaf/slides/assets/gifs/video_grid.ncl.gif" /><br />
         NCL with videos grid (<a href="https://ginga.org.br/gingaf/playground/?app=video_grid.ncl">video_grid.ncl</a>)
       </td>
     </tr>
     <tr>
       <td align="center" width="50%">
-        <img src="https://alanlivio.github.io/paper-mm26-gingaf/slides/assets/gifs/emb_ncl.ncl.gif" /><br />
+        <img src="https://alanlivio.github.io/paper-webmedia26-gingaf/slides/assets/gifs/emb_ncl.ncl.gif" /><br />
         NCL embedded with NCL (<a href="https://ginga.org.br/gingaf/playground/?app=emb_ncl.ncl">emb_ncl.ncl</a>)
       </td>
       <td align="center" width="50%">
-        <img src="https://alanlivio.github.io/paper-mm26-gingaf/slides/assets/gifs/focus_nav.ncl.gif" /><br />
+        <img src="https://alanlivio.github.io/paper-webmedia26-gingaf/slides/assets/gifs/focus_nav.ncl.gif" /><br />
         NCL with focus navigation and selection (<a href="https://ginga.org.br/gingaf/playground/?app=focus_nav.ncl">focus_nav.ncl</a>)
       </td>
     </tr>
     <tr>
       <td align="center" width="50%">
-        <img src="https://alanlivio.github.io/paper-mm26-gingaf/slides/assets/gifs/lua_canvas.ncl.gif" /><br />
+        <img src="https://alanlivio.github.io/paper-webmedia26-gingaf/slides/assets/gifs/lua_canvas.ncl.gif" /><br />
         NCL with lua canvas drawing and keys (<a href="https://ginga.org.br/gingaf/playground/?app=lua_canvas.ncl">lua_canvas.ncl</a>)
       </td>
       <td align="center" width="50%">
-        <img src="https://alanlivio.github.io/paper-mm26-gingaf/slides/assets/gifs/current_service.html.gif" /><br />
+        <img src="https://alanlivio.github.io/paper-webmedia26-gingaf/slides/assets/gifs/current_service.html.gif" /><br />
         HTML with CCWS /current-service/ (<a href="https://ginga.org.br/gingaf/playground/?app=current_service.html">current_service.html</a>)
       </td>
     </tr>
     <tr>
       <td align="center" width="50%">
-        <img src="https://alanlivio.github.io/paper-mm26-gingaf/slides/assets/gifs/emb_html.ncl.gif" /><br />
+        <img src="https://alanlivio.github.io/paper-webmedia26-gingaf/slides/assets/gifs/emb_html.ncl.gif" /><br />
         NCL with embedded HTML document (<a href="https://ginga.org.br/gingaf/playground/?app=emb_html.ncl">emb_html.ncl</a>)
       </td>
       <td align="center" width="50%">
-        <img src="https://alanlivio.github.io/paper-mm26-gingaf/slides/assets/gifs/multiuser_profile.gif" /><br />
+        <img src="https://alanlivio.github.io/paper-webmedia26-gingaf/slides/assets/gifs/multiuser_profile.gif" /><br />
         NCL with multi-user profile switching and targeted advertising (<a href="https://ginga.org.br/gingaf/playground/?app=multiuser_profile/main.ncl">multiuser_profile/main.ncl</a>)
       </td>
     </tr>
