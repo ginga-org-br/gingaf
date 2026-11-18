@@ -1,10 +1,5 @@
 {
     "examples": {
-        "video360": {
-            "mainFile": "video360/main.ncl360",
-            "category": "360",
-            "description": "Interactive 360 panoramic CERN LHC tunnel presentation with hotspots and view transitions"
-        },
         "video": {
             "mainFile": "video.ncl",
             "category": "general",
@@ -30,7 +25,7 @@
         },
         "lua_canvas": {
             "mainFile": "lua_canvas.ncl",
-            "category": "general",
+            "category": "lua",
             "description": "Lua canvas graphics example",
             "otherEditbleFiles": [
                 "lua_canvas.lua"
@@ -84,6 +79,11 @@
             "otherEditbleFiles": [
                 "current_service.html"
             ]
+        },
+        "video360": {
+            "mainFile": "video360/main.ncl360",
+            "category": "video 360",
+            "description": "Interactive 360 panoramic CERN LHC tunnel presentation with hotspots and view transitions"
         },
         "multiuser_profile": {
             "mainFile": "multiuser_profile/main.ncl",

@@ -36,10 +36,21 @@ void main() {
               "mainFile": "video.ncl",
               "category": "general",
               "description": "Video media presentation example"
+            },
+            "lua_demo": {
+              "mainFile": "lua_demo.ncl",
+              "category": "lua",
+              "description": "Lua demo application"
             }
           }
         }''',
         'examples/video.ncl': '''<ncl id="my_test_video">
+          <body>
+            <port id="p1" component="v1"/>
+            <media id="v1" src="movie.mp4"/>
+          </body>
+        </ncl>''',
+        'examples/lua_demo.ncl': '''<ncl id="my_lua_demo">
           <body>
             <port id="p1" component="v1"/>
             <media id="v1" src="movie.mp4"/>
@@ -56,13 +67,17 @@ void main() {
       expect(find.byKey(const Key('catalog_select')), findsOneWidget);
       expect(find.byKey(const Key('no_running_app_placeholder')), findsOneWidget);
 
+      await tester.tap(find.byKey(const Key('catalog_select')));
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.byKey(const Key('catalog_grid_dialog')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('catalog_option_lua_demo')));
+      await tester.pump(const Duration(milliseconds: 200));
+
       final editorState =
           tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
-      await editorState.selectCatalogExample('video.ncl');
-      await tester.pump(const Duration(milliseconds: 100));
-
-      expect(editorState.effectiveContent, contains('my_test_video'));
-      expect(gingacc.config.appSrc, equals('examples/video.ncl'));
+      expect(editorState.effectiveContent, contains('my_lua_demo'));
+      expect(gingacc.config.appSrc, equals('examples/lua_demo.ncl'));
 
       await tester.tap(find.byKey(const Key('monaco_run_button')));
       await tester.pump(const Duration(milliseconds: 100));

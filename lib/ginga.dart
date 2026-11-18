@@ -382,6 +382,9 @@ class GingaState extends State<Ginga> {
       if (currentFocus?.context?.widget is EditableText) {
         return false;
       }
+      if (_playgroundKey.currentState?.isCatalogOpen == true) {
+        return false;
+      }
       String? nclKey;
       final lk = event.logicalKey;
       if (lk == LogicalKeyboardKey.arrowRight) {

@@ -53,7 +53,10 @@ void main(List<String> args) async {
   final appSrc = parsedArgs.app;
   final configSrc = parsedArgs.config;
 
-  if (!kIsWeb && appSrc == null && configSrc == null) {
+  if (!kIsWeb &&
+      parsedArgs.playground != true &&
+      appSrc == null &&
+      configSrc == null) {
     _logger.severe('both APP and CONFIG are empty, exiting');
     exit(1);
   }

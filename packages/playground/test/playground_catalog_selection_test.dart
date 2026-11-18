@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingacc/gingacc.dart';
 import 'package:playground/playground.dart';
@@ -37,7 +38,7 @@ void main() {
       await tester.pump();
 
       expect(find.byKey(const Key('catalog_select')), findsOneWidget);
-      expect(find.text('Catalog:'), findsOneWidget);
+      expect(find.text('Catalog'), findsOneWidget);
     });
 
     testWidgets('hides catalog selector when showCatalogSelector is false',
@@ -169,13 +170,56 @@ void main() {
       );
     });
 
-    testWidgets('groups catalog items by category and renders category header in dropdown',
+    testWidgets(
+        'opens catalog grid dialog organized by category and supports card click, category filtering, and keyboard grid navigation',
         (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final gingacc = GingaCC();
+      gingacc.setVirtualFiles({
+        'examples/video360/main.ncl360': '<ncl id="v360"><body/></ncl>',
+        'examples/video.ncl': '<ncl id="vid"><body/></ncl>',
+        'examples/image.ncl': '<ncl id="img"><body/></ncl>',
+        'examples/lua/zip_list/main.ncl': '<ncl id="luazip"><body/></ncl>',
+      });
+
+      final categorizedExamples = [
+        const CatalogExample(
+          key: 'video360',
+          mainFile: 'video360/main.ncl360',
+          category: 'video 360',
+          description: 'Interactive 360 presentation',
+        ),
+        const CatalogExample(
+          key: 'video',
+          mainFile: 'video.ncl',
+          category: 'general',
+          description: 'Video presentation example',
+        ),
+        const CatalogExample(
+          key: 'image',
+          mainFile: 'image.ncl',
+          category: 'general',
+          description: 'Image presentation example',
+        ),
+        const CatalogExample(
+          key: 'lua_zip_list',
+          mainFile: 'lua/zip_list/main.ncl',
+          category: 'lua',
+          description: 'Lua zip helper example',
+          otherEditableFiles: ['main.lua'],
+        ),
+      ];
+
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: PlaygroundEditor(
-              catalogExamples: testExamples,
+              gingacc: gingacc,
+              catalogExamples: categorizedExamples,
               showCatalogSelector: true,
             ),
           ),
@@ -183,10 +227,63 @@ void main() {
       );
       await tester.pump();
 
+      expect(find.byKey(const Key('monaco_editor_text_field')), findsOneWidget);
+
       await tester.tap(find.byKey(const Key('catalog_select')));
       await tester.pumpAndSettle();
 
-      expect(find.text('-- GENERAL --'), findsWidgets);
+      expect(find.byKey(const Key('catalog_grid_dialog')), findsOneWidget);
+      expect(find.byKey(const Key('monaco_editor_text_field')), findsNothing);
+      final editorRect = tester.getRect(find.byType(PlaygroundEditor));
+      final catalogRect =
+          tester.getRect(find.byKey(const Key('catalog_grid_dialog')));
+      expect(catalogRect.left, equals(editorRect.left));
+      expect(catalogRect.right, equals(editorRect.right));
+      expect(find.text('Application Catalog'), findsOneWidget);
+      expect(find.text('VIDEO 360'), findsOneWidget);
+      expect(find.text('GENERAL'), findsOneWidget);
+      expect(find.text('LUA'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('catalog_category_chip_lua')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('catalog_option_lua_zip_list')), findsOneWidget);
+      expect(find.byKey(const Key('catalog_option_video')), findsNothing);
+
+      await tester.tap(find.byKey(const Key('catalog_category_chip_all')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('catalog_option_video')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('catalog_option_image')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('catalog_grid_dialog')), findsNothing);
+      final state =
+          tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
+      expect(state.selectedExample, equals('image.ncl'));
+      expect(state.effectiveContent, contains('id="img"'));
+      expect(find.text('image'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('catalog_select')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('catalog_grid_dialog')), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('catalog_grid_dialog')), findsNothing);
+      expect(state.selectedExample, equals('lua/zip_list/main.ncl'));
+      expect(state.effectiveContent, contains('id="luazip"'));
+
+      await tester.tap(find.byKey(const Key('catalog_select')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('catalog_grid_dialog')), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('catalog_grid_dialog')), findsNothing);
     });
 
     testWidgets('displays short filename for URL filePath and hides catalog selector',
