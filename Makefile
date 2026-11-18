@@ -153,9 +153,8 @@ run-examples-node: build/web/main.dart.js
 deploy-folder: build-web
 	$(if $(strip $(GINGA_ORG_DEPLOY)),,$(error GINGA_ORG_DEPLOY environment variable is not set))
 	mkdir -p $(GINGA_ORG_DEPLOY)/gingaf
-	rsync -av --delete build/web/ $(GINGA_ORG_DEPLOY)/gingaf/
-	rsync -av --delete examples/ $(GINGA_ORG_DEPLOY)/gingaf/examples/
-	cp examples/catalog.json $(GINGA_ORG_DEPLOY)/gingaf/catalog.json
+	rsync -av --delete --delete-excluded --exclude='examples' --exclude='catalog.json' build/web/ $(GINGA_ORG_DEPLOY)/gingaf/
+	rm -rf $(GINGA_ORG_DEPLOY)/gingaf/examples $(GINGA_ORG_DEPLOY)/gingaf/catalog.json
 
 clean:
 	flutter clean
