@@ -14,12 +14,8 @@ Uri resolvePathUri(
   String src, {
   String? baseDirSrc,
   Uri? baseUri,
-  Map<String, String>? virtualFiles,
 }) {
   final rawSrc = src.trim();
-  final virtualUri = _lookupVirtualUri(rawSrc, virtualFiles);
-  if (virtualUri != null) return virtualUri;
-
   final srcUri = _parseUri(rawSrc);
   final effectiveBaseDir = (baseDirSrc != null && !isXmlString(baseDirSrc))
       ? baseDirSrc.trim()
@@ -78,9 +74,6 @@ Uri resolvePathUri(
   }
 
   final resolved = resolvedBaseUri.resolveUri(srcUri);
-  final virtualResolved = _lookupVirtualUri(resolved.toString(), virtualFiles);
-  if (virtualResolved != null) return virtualResolved;
-
   if (!_isWeb && !resolved.hasScheme) {
     final decoded = Uri.decodeComponent(resolved.path);
     return File(path.normalize(decoded)).absolute.uri;
@@ -95,7 +88,6 @@ Future<String?> loadPathContent(
   dynamic srcOrUri, {
   String? baseDirSrc,
   Uri? baseUri,
-  Map<String, String>? virtualFiles,
 }) async {
   final String rawInput =
       (srcOrUri is Uri ? srcOrUri.toString() : srcOrUri.toString()).trim();
@@ -111,31 +103,9 @@ Future<String?> loadPathContent(
 
   final Uri uri = srcOrUri is Uri
       ? srcOrUri
-      : resolvePathUri(rawInput,
-          baseDirSrc: baseDirSrc, baseUri: baseUri, virtualFiles: virtualFiles);
+      : resolvePathUri(rawInput, baseDirSrc: baseDirSrc, baseUri: baseUri);
   if (uri.isScheme('data')) {
     return _decodeDataUri(rawInput, uri);
-  }
-
-  if (virtualFiles != null && virtualFiles.isNotEmpty) {
-    final matched = _lookupVirtualFile(rawInput, virtualFiles) ??
-        (uri.isScheme('file')
-            ? _lookupVirtualFile(uri.toFilePath(), virtualFiles)
-            : null) ??
-        _lookupVirtualFile(uri.path, virtualFiles) ??
-        (uri.pathSegments.isNotEmpty
-            ? _lookupVirtualFile(uri.pathSegments.last, virtualFiles)
-            : null);
-    if (matched != null) {
-      if (matched.startsWith('data:')) {
-        return _decodeDataUri(matched);
-      }
-      final parsedMatched = Uri.tryParse(matched);
-      if (parsedMatched != null && isHttpUri(parsedMatched)) {
-        return await _fetchHttp(parsedMatched);
-      }
-      return matched;
-    }
   }
 
   if (isHttpUri(uri)) {
@@ -169,7 +139,6 @@ String? loadPathContentSync(
   dynamic srcOrUri, {
   String? baseDirSrc,
   Uri? baseUri,
-  Map<String, String>? virtualFiles,
 }) {
   final String rawInput =
       (srcOrUri is Uri ? srcOrUri.toString() : srcOrUri.toString()).trim();
@@ -185,27 +154,9 @@ String? loadPathContentSync(
 
   final Uri uri = srcOrUri is Uri
       ? srcOrUri
-      : resolvePathUri(rawInput,
-          baseDirSrc: baseDirSrc, baseUri: baseUri, virtualFiles: virtualFiles);
+      : resolvePathUri(rawInput, baseDirSrc: baseDirSrc, baseUri: baseUri);
   if (uri.isScheme('data')) {
     return _decodeDataUri(rawInput, uri);
-  }
-
-  if (virtualFiles != null && virtualFiles.isNotEmpty) {
-    final matched = _lookupVirtualFile(rawInput, virtualFiles) ??
-        (uri.isScheme('file')
-            ? _lookupVirtualFile(uri.toFilePath(), virtualFiles)
-            : null) ??
-        _lookupVirtualFile(uri.path, virtualFiles) ??
-        (uri.pathSegments.isNotEmpty
-            ? _lookupVirtualFile(uri.pathSegments.last, virtualFiles)
-            : null);
-    if (matched != null) {
-      if (matched.startsWith('data:')) {
-        return _decodeDataUri(matched);
-      }
-      return matched;
-    }
   }
 
   if (uri.isScheme('file') || (!uri.hasScheme && !_isWeb)) {
@@ -226,7 +177,6 @@ Uint8List? loadPathBytesSync(
   dynamic srcOrUri, {
   String? baseDirSrc,
   Uri? baseUri,
-  Map<String, String>? virtualFiles,
 }) {
   final String rawInput =
       (srcOrUri is Uri ? srcOrUri.toString() : srcOrUri.toString()).trim();
@@ -238,27 +188,9 @@ Uint8List? loadPathBytesSync(
 
   final Uri uri = srcOrUri is Uri
       ? srcOrUri
-      : resolvePathUri(rawInput,
-          baseDirSrc: baseDirSrc, baseUri: baseUri, virtualFiles: virtualFiles);
+      : resolvePathUri(rawInput, baseDirSrc: baseDirSrc, baseUri: baseUri);
   if (uri.isScheme('data')) {
     return _decodeDataUriBytes(rawInput, uri);
-  }
-
-  if (virtualFiles != null && virtualFiles.isNotEmpty) {
-    final matched = _lookupVirtualFile(rawInput, virtualFiles) ??
-        (uri.isScheme('file')
-            ? _lookupVirtualFile(uri.toFilePath(), virtualFiles)
-            : null) ??
-        _lookupVirtualFile(uri.path, virtualFiles) ??
-        (uri.pathSegments.isNotEmpty
-            ? _lookupVirtualFile(uri.pathSegments.last, virtualFiles)
-            : null);
-    if (matched != null) {
-      if (matched.startsWith('data:')) {
-        return _decodeDataUriBytes(matched);
-      }
-      return Uint8List.fromList(utf8.encode(matched));
-    }
   }
 
   if (uri.isScheme('file') || (!uri.hasScheme && !_isWeb)) {
@@ -286,26 +218,6 @@ Uri _parseUri(String raw) {
     return Uri.file(raw);
   }
   return Uri.tryParse(raw) ?? Uri(path: raw);
-}
-
-Uri? _lookupVirtualUri(String rawSrc, Map<String, String>? virtualFiles) {
-  if (virtualFiles == null || virtualFiles.isEmpty) return null;
-  final matched = _lookupVirtualFile(rawSrc, virtualFiles);
-  if (matched != null) {
-    if (matched.startsWith('data:')) {
-      return Uri.tryParse(matched) ?? Uri.dataFromString(matched);
-    }
-    final parsed = Uri.tryParse(matched);
-    if (parsed != null &&
-        (parsed.isScheme('http') ||
-            parsed.isScheme('https') ||
-            parsed.isScheme('blob') ||
-            parsed.isScheme('data') ||
-            parsed.isScheme('file'))) {
-      return parsed;
-    }
-  }
-  return null;
 }
 
 String? _decodeDataUri(String rawInput, [Uri? uri]) {
@@ -377,60 +289,10 @@ Future<Uint8List?> _fetchHttpBytes(Uri uri) async {
   return null;
 }
 
-String? _lookupVirtualFile(String rawSrc, Map<String, String>? virtualFiles) {
-  if (virtualFiles == null || virtualFiles.isEmpty) return null;
-  final clean = rawSrc.trim().split('?')[0].split('#')[0];
-  final normalized = clean.replaceAll('\\', '/');
-  final decodedNormalized = Uri.decodeComponent(normalized);
-
-  if (virtualFiles.containsKey(rawSrc)) return virtualFiles[rawSrc];
-  if (virtualFiles.containsKey(clean)) return virtualFiles[clean];
-  if (virtualFiles.containsKey(normalized)) return virtualFiles[normalized];
-  if (virtualFiles.containsKey(decodedNormalized)) {
-    return virtualFiles[decodedNormalized];
-  }
-
-  for (final entry in virtualFiles.entries) {
-    final k = entry.key.replaceAll('\\', '/');
-    final decodedK = Uri.decodeComponent(k);
-    if (k == normalized ||
-        k == decodedNormalized ||
-        decodedK == normalized ||
-        decodedK == decodedNormalized ||
-        normalized.endsWith('/$k') ||
-        normalized.endsWith('/$decodedK') ||
-        decodedNormalized.endsWith('/$k') ||
-        decodedNormalized.endsWith('/$decodedK') ||
-        k.endsWith('/$normalized') ||
-        k.endsWith('/$decodedNormalized') ||
-        decodedK.endsWith('/$normalized') ||
-        decodedK.endsWith('/$decodedNormalized')) {
-      return entry.value;
-    }
-  }
-
-  final fileName = path.basename(normalized);
-  final decodedFileName = path.basename(decodedNormalized);
-  for (final entry in virtualFiles.entries) {
-    final k = entry.key.replaceAll('\\', '/');
-    final entryBase = path.basename(k);
-    final decodedEntryBase = path.basename(Uri.decodeComponent(k));
-    if (entryBase == fileName ||
-        entryBase == decodedFileName ||
-        decodedEntryBase == fileName ||
-        decodedEntryBase == decodedFileName) {
-      return entry.value;
-    }
-  }
-
-  return null;
-}
-
 class GingaAppPrivateBase {
   final String applicationId;
   final GingaCC? gingacc;
-  final Map<String, String> _virtualFiles = {};
-  bool _isolatedVirtualFiles = false;
+  final Map<String, String> _virtualFiles;
   Uri? baseUri;
 
   GingaAppPrivateBase({
@@ -438,39 +300,38 @@ class GingaAppPrivateBase {
     this.gingacc,
     Map<String, String>? virtualFiles,
     this.baseUri,
-  }) {
-    if (virtualFiles != null) {
-      _virtualFiles.addAll(virtualFiles);
-    }
-  }
+  }) : _virtualFiles =
+            virtualFiles != null ? Map<String, String>.from(virtualFiles) : {};
 
-  Map<String, String>? get _effectiveVirtualFiles {
-    final parentFiles = _isolatedVirtualFiles ? null : gingacc?.virtualFiles;
-    if ((parentFiles == null || parentFiles.isEmpty) && _virtualFiles.isEmpty) {
-      return null;
-    }
-    return <String, String>{
-      if (parentFiles != null) ...parentFiles,
-      ..._virtualFiles,
-    };
-  }
+  GingaAppPrivateBase._scoped({
+    required this.applicationId,
+    required this.gingacc,
+    required this.baseUri,
+    required Map<String, String> sharedVirtualFiles,
+  }) : _virtualFiles = sharedVirtualFiles;
+
+  Map<String, String>? get virtualFiles =>
+      _virtualFiles.isEmpty ? null : Map.unmodifiable(_virtualFiles);
 
   void setVirtualFiles(Map<String, String>? files) {
-    _isolatedVirtualFiles = true;
     _virtualFiles.clear();
     if (files != null) {
       _virtualFiles.addAll(files);
     }
   }
 
+  void dispose() {
+    _virtualFiles.clear();
+  }
+
   GingaAppPrivateBase scoped({String? baseDir, Uri? baseUri}) {
     final effectiveBaseUri =
         baseUri ?? (baseDir != null ? resolveUri(baseDir) : this.baseUri);
-    return GingaAppPrivateBase(
+    return GingaAppPrivateBase._scoped(
       applicationId: applicationId,
       gingacc: gingacc,
-      virtualFiles: _effectiveVirtualFiles,
       baseUri: effectiveBaseUri,
+      sharedVirtualFiles: _virtualFiles,
     );
   }
 
@@ -478,32 +339,114 @@ class GingaAppPrivateBase {
         src,
         baseDirSrc: baseDirSrc,
         baseUri: baseUri,
-        virtualFiles: _effectiveVirtualFiles,
       );
 
-  Future<String?> loadContent(dynamic srcOrUri, [String? baseDirSrc]) =>
-      loadPathContent(
-        srcOrUri,
-        baseDirSrc: baseDirSrc,
-        baseUri: baseUri,
-        virtualFiles: _effectiveVirtualFiles,
-      );
+  static String _normalizePath(String raw) {
+    var clean = raw.trim().split('?').first.split('#').first;
+    if (clean.startsWith('http://') ||
+        clean.startsWith('https://') ||
+        clean.startsWith('file:')) {
+      final parsed = Uri.tryParse(clean);
+      if (parsed != null) {
+        clean = parsed.isScheme('file') ? parsed.toFilePath() : parsed.path;
+      }
+    }
+    try {
+      clean = Uri.decodeComponent(clean);
+    } catch (_) {}
+    clean = clean.replaceAll('\\', '/');
+    while (clean.startsWith('./')) {
+      clean = clean.substring(2);
+    }
+    return clean;
+  }
 
-  String? loadContentSync(dynamic srcOrUri, [String? baseDirSrc]) =>
-      loadPathContentSync(
-        srcOrUri,
-        baseDirSrc: baseDirSrc,
-        baseUri: baseUri,
-        virtualFiles: _effectiveVirtualFiles,
-      );
+  String? _lookupVirtualFile(dynamic srcOrUri, [String? baseDirSrc]) {
+    if (_virtualFiles.isEmpty) return null;
+    final raw = srcOrUri.toString().trim();
+    if (raw.isEmpty || isXmlString(raw) || raw.startsWith('data:')) {
+      return null;
+    }
 
-  Uint8List? loadBytesSync(dynamic srcOrUri, [String? baseDirSrc]) =>
-      loadPathBytesSync(
-        srcOrUri,
-        baseDirSrc: baseDirSrc,
-        baseUri: baseUri,
-        virtualFiles: _effectiveVirtualFiles,
-      );
+    if (_virtualFiles.containsKey(raw)) return _virtualFiles[raw];
+    final cleanRaw = _normalizePath(raw);
+    if (_virtualFiles.containsKey(cleanRaw)) return _virtualFiles[cleanRaw];
+
+    final Uri uri = srcOrUri is Uri ? srcOrUri : resolveUri(raw, baseDirSrc);
+    final reqPath = _normalizePath(uri.toString());
+    if (reqPath.isEmpty) return null;
+
+    for (final entry in _virtualFiles.entries) {
+      final keyPath = _normalizePath(entry.key);
+      if (keyPath.isNotEmpty && reqPath == keyPath) {
+        return entry.value;
+      }
+    }
+
+    String? bestMatch;
+    int bestLen = -1;
+    for (final entry in _virtualFiles.entries) {
+      final keyPath = _normalizePath(entry.key);
+      if (keyPath.isEmpty ||
+          keyPath.startsWith('/') ||
+          RegExp(r'^[a-zA-Z]:/').hasMatch(keyPath)) {
+        continue;
+      }
+      if (reqPath.endsWith('/$keyPath') && keyPath.length > bestLen) {
+        bestLen = keyPath.length;
+        bestMatch = entry.value;
+      }
+    }
+    return bestMatch;
+  }
+
+  bool hasVirtualFile(dynamic srcOrUri, [String? baseDirSrc]) =>
+      _lookupVirtualFile(srcOrUri, baseDirSrc) != null;
+
+  Future<String?> loadContent(dynamic srcOrUri, [String? baseDirSrc]) async {
+    final matched = _lookupVirtualFile(srcOrUri, baseDirSrc);
+    if (matched != null) {
+      if (matched.startsWith('data:')) {
+        return _decodeDataUri(matched);
+      }
+      return matched;
+    }
+    return loadPathContent(
+      srcOrUri,
+      baseDirSrc: baseDirSrc,
+      baseUri: baseUri,
+    );
+  }
+
+  String? loadContentSync(dynamic srcOrUri, [String? baseDirSrc]) {
+    final matched = _lookupVirtualFile(srcOrUri, baseDirSrc);
+    if (matched != null) {
+      if (matched.startsWith('data:')) {
+        return _decodeDataUri(matched);
+      }
+      return matched;
+    }
+    return loadPathContentSync(
+      srcOrUri,
+      baseDirSrc: baseDirSrc,
+      baseUri: baseUri,
+    );
+  }
+
+  Uint8List? loadBytesSync(dynamic srcOrUri, [String? baseDirSrc]) {
+    final matched = _lookupVirtualFile(srcOrUri, baseDirSrc);
+    if (matched != null) {
+      if (matched.startsWith('data:')) {
+        return _decodeDataUriBytes(matched);
+      }
+      return Uint8List.fromList(utf8.encode(matched));
+    }
+    return loadPathBytesSync(
+      srcOrUri,
+      baseDirSrc: baseDirSrc,
+      baseUri: baseUri,
+    );
+  }
 
   Future<Uint8List?> loadBytes(dynamic srcOrUri, [String? baseDirSrc]) async {
     final syncBytes = loadBytesSync(srcOrUri, baseDirSrc);
@@ -522,18 +465,6 @@ class GingaAppPrivateBase {
       }
     }
     return null;
-  }
-
-  bool _hasVirtualEntry(String src, [String? baseDirSrc]) {
-    final vf = _effectiveVirtualFiles;
-    if (vf == null || vf.isEmpty) return false;
-    final uri = resolveUri(src, baseDirSrc);
-    final matched = _lookupVirtualFile(src, vf) ??
-        (uri.isScheme('file')
-            ? _lookupVirtualFile(uri.toFilePath(), vf)
-            : null) ??
-        _lookupVirtualFile(uri.path, vf);
-    return matched != null;
   }
 
   static bool _isExplicitFsPath(String raw) {
@@ -580,7 +511,7 @@ class GingaAppPrivateBase {
         (baseUri != null && existsOnDiskSync(baseUri.toString()));
     final useVirtual = _isWeb ||
         isHttpUri(cleanTarget) ||
-        _hasVirtualEntry(cleanTarget, baseDirSrc) ||
+        hasVirtualFile(cleanTarget, baseDirSrc) ||
         (!targetOnDisk && !_isExplicitFsPath(cleanTarget) && !baseOnDisk);
 
     if (useVirtual) {

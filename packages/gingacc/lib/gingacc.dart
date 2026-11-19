@@ -39,46 +39,36 @@ class GingaCC {
   GingaConfig config;
   late final CCWS ccws = CCWS();
   final Map<String, GingaAppPrivateBase> _privateBases = {};
-  final Map<String, String> _virtualFiles = {};
-
-  Map<String, String>? get virtualFiles =>
-      _virtualFiles.isEmpty ? null : Map.unmodifiable(_virtualFiles);
-
-  void setVirtualFiles(Map<String, String>? files) {
-    _virtualFiles.clear();
-    if (files != null) {
-      _virtualFiles.addAll(files);
-    }
-  }
 
   Uri resolveUri(String src, [String? baseDirSrc]) => resolvePathUri(
         src,
         baseDirSrc: baseDirSrc,
-        virtualFiles: _virtualFiles,
       );
 
   Future<String?> loadContent(dynamic srcOrUri, [String? baseDirSrc]) =>
       loadPathContent(
         srcOrUri,
         baseDirSrc: baseDirSrc,
-        virtualFiles: _virtualFiles,
       );
 
   String? loadContentSync(dynamic srcOrUri, [String? baseDirSrc]) =>
       loadPathContentSync(
         srcOrUri,
         baseDirSrc: baseDirSrc,
-        virtualFiles: _virtualFiles,
       );
 
   GingaAppPrivateBase getPrivateBase({
     required String applicationId,
     Uri? baseUri,
+    Map<String, String>? virtualFiles,
   }) {
     final existing = _privateBases[applicationId];
     if (existing != null) {
       if (baseUri != null) {
         existing.baseUri = baseUri;
+      }
+      if (virtualFiles != null) {
+        existing.setVirtualFiles(virtualFiles);
       }
       return existing;
     }
@@ -93,7 +83,8 @@ class GingaCC {
   }
 
   void removePrivateBase(String applicationId) {
-    _privateBases.remove(applicationId);
+    final removed = _privateBases.remove(applicationId);
+    removed?.dispose();
   }
 
   GingaCC({

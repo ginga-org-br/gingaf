@@ -23,9 +23,19 @@ final _logger = Logger('ginga');
 /// {@category Build}
 class Ginga extends StatefulWidget {
   final GingaCC? gingacc;
+  final String? content;
+  final Map<String, String>? virtualFiles;
 
   const Ginga({
     super.key,
+    this.gingacc,
+  })  : content = null,
+        virtualFiles = null;
+
+  const Ginga.fromContent(
+    String this.content, {
+    super.key,
+    this.virtualFiles,
     this.gingacc,
   });
 
@@ -48,7 +58,6 @@ class GingaState extends State<Ginga> {
   bool _isPaused = false;
   bool _showUsersOverlay = false;
   late final bool _showCatalogSelector;
-  Map<String, String>? _initialVirtualFiles;
 
   GlobalKey<ncl.NclWidgetState> _nclAppKey = GlobalKey<ncl.NclWidgetState>();
   GlobalKey<MainAVWidgetState> _mainAvKey = GlobalKey<MainAVWidgetState>();
@@ -56,9 +65,7 @@ class GingaState extends State<Ginga> {
       GlobalKey<PlaygroundEditorState>();
   final GlobalKey<SettingsMenuState> _settingsMenuKey =
       GlobalKey<SettingsMenuState>();
-  StreamSubscription<String>? _tv30KeySub;
-  StreamSubscription<double>? _tv30TimeSub;
-  StreamSubscription<String>? _tv30StreamEventSub;
+  void Function()? _detachTv30Testbed;
 
   void _ensureMainAvMounted() {
     if (mainAVWidget == null && !isTv30Mode()) {
@@ -75,9 +82,16 @@ class GingaState extends State<Ginga> {
   void initState() {
     super.initState();
     _gingacc = widget.gingacc ?? GingaCC();
-    _initialVirtualFiles = _gingacc.virtualFiles;
+    if (widget.content != null) {
+      _mainAppContent = widget.content;
+      if (_gingacc.config.appSrc == null ||
+          _gingacc.config.appSrc!.trim().isEmpty) {
+        _gingacc.config.appSrc = 'main.ncl';
+      }
+    }
     final isOverlay = isTv30Mode();
     _showCatalogSelector = _gingacc.config.enablePlayground &&
+        widget.content == null &&
         (_gingacc.config.appSrc == null ||
             _gingacc.config.appSrc!.trim().isEmpty);
     if (_gingacc.config.enablePlayground) {
@@ -97,23 +111,29 @@ class GingaState extends State<Ginga> {
     }
     HardwareKeyboard.instance.addHandler(_handleKeyPress);
 
-    if (kIsWeb) {
-      _tv30KeySub = tv30KeyStream.listen((rawKey) {
-        if (_isExiting) return;
-        final nclKey = mapTv30KeyToNclKey(rawKey);
-        if (nclKey == 'ESCAPE') {
-          if (_showUsersOverlay) {
-            closeUsersOverlay();
+    if (kIsWeb && isOverlay) {
+      attachTv30Testbed(
+        onKey: (nclKey) {
+          if (_isExiting) return;
+          if (nclKey == 'ESCAPE') {
+            if (_showUsersOverlay) {
+              closeUsersOverlay();
+            } else {
+              _cleanup();
+            }
           } else {
-            _cleanup();
+            _nclAppKey.currentState?.handleKeyPress(nclKey);
           }
-        } else if (nclKey != null) {
-          _nclAppKey.currentState?.handleKeyPress(nclKey);
+        },
+        onStreamEvent: (event) {
+          _logger.info('Received TV 3.0 stream event: $event');
+        },
+      ).then((detach) {
+        if (mounted) {
+          _detachTv30Testbed = detach;
+        } else {
+          detach?.call();
         }
-      });
-      _tv30TimeSub = tv30TimeStream.listen((time) {});
-      _tv30StreamEventSub = tv30StreamEventStream.listen((event) {
-        _logger.info('Received TV 3.0 stream event: $event');
       });
     }
   }
@@ -145,6 +165,12 @@ class GingaState extends State<Ginga> {
   }
 
   Future<void> _loadMainAppContent() async {
+    if (_mainAppContent != null && _mainAppContent!.isNotEmpty) {
+      if (mounted) {
+        setState(() {});
+      }
+      return;
+    }
     final appSrc = _gingacc.config.appSrc;
     if (appSrc != null) {
       if (appSrc.trim().startsWith('<')) {
@@ -167,34 +193,69 @@ class GingaState extends State<Ginga> {
 
   void _setupApp() {
     final appSrc = _gingacc.config.appSrc;
-    if (_gingacc.config.enablePlayground) {
+    if (_gingacc.config.enablePlayground && _mainAppContent == null) {
       _loadMainAppContent();
     }
     if (appSrc != null) {
+      final editorFiles = _gingacc.config.enablePlayground
+          ? _playgroundKey.currentState?.allFileContents
+          : null;
+      final virtualFiles =
+          (widget.virtualFiles != null || editorFiles != null)
+              ? <String, String>{
+                  ...?widget.virtualFiles,
+                  ...?editorFiles,
+                }
+              : null;
+      final content =
+          (_gingacc.config.enablePlayground || widget.content != null)
+              ? (_mainAppContent ?? widget.content)
+              : null;
+
+      void onBreakpointHit(Object? media, Object? action, int line) {
+        if (!_isPaused) {
+          setState(() {
+            _isPaused = true;
+          });
+        }
+        _playgroundKey.currentState?.pauseAtLine(line);
+      }
+
       final lowerSrc = appSrc.toLowerCase();
       if (lowerSrc.endsWith('.html') ||
           lowerSrc.endsWith('.htm') ||
           lowerSrc.endsWith('.xhtml')) {
-        htmlApp = html.HtmlWidget(
-          src: appSrc,
-          gingacc: _gingacc,
-        );
+        htmlApp = content != null
+            ? html.HtmlWidget.fromContent(
+                content,
+                src: appSrc,
+                virtualFiles: virtualFiles,
+                gingacc: _gingacc,
+              )
+            : html.HtmlWidget(
+                src: appSrc,
+                gingacc: _gingacc,
+              );
       } else {
-        nclApp = ncl.NclWidget(
-          key: _nclAppKey,
-          src: appSrc,
-          gingacc: _gingacc,
-          mainAvKey: _mainAvKey,
-          onRequestMainAv: _ensureMainAvMounted,
-          onBreakpointHit: (media, action, line) {
-            if (!_isPaused) {
-              setState(() {
-                _isPaused = true;
-              });
-            }
-            _playgroundKey.currentState?.pauseAtLine(line);
-          },
-        );
+        nclApp = content != null
+            ? ncl.NclWidget.fromContent(
+                content,
+                key: _nclAppKey,
+                src: appSrc,
+                virtualFiles: virtualFiles,
+                gingacc: _gingacc,
+                mainAvKey: _mainAvKey,
+                onRequestMainAv: _ensureMainAvMounted,
+                onBreakpointHit: onBreakpointHit,
+              )
+            : ncl.NclWidget(
+                key: _nclAppKey,
+                src: appSrc,
+                gingacc: _gingacc,
+                mainAvKey: _mainAvKey,
+                onRequestMainAv: _ensureMainAvMounted,
+                onBreakpointHit: onBreakpointHit,
+              );
       }
     }
   }
@@ -223,18 +284,6 @@ class GingaState extends State<Ginga> {
     });
   }
 
-  void _savePlaygroundVirtualFiles() {
-    final currentFiles = Map<String, String>.from(_initialVirtualFiles ?? {});
-    if (_mainAppContent != null && _gingacc.config.appSrc != null) {
-      currentFiles[_gingacc.config.appSrc!] = _mainAppContent!;
-    }
-    final editorFiles = _playgroundKey.currentState?.allFileContents;
-    if (editorFiles != null) {
-      currentFiles.addAll(editorFiles);
-    }
-    _gingacc.setVirtualFiles(currentFiles);
-  }
-
   Future<void> _applyPlaygroundConfig(
     String? appPath, {
     required bool resetIfMissing,
@@ -247,9 +296,7 @@ class GingaState extends State<Ginga> {
     final editorState = _playgroundKey.currentState;
     final editorFiles = editorState?.allFileContents;
     final isCatalogApp = fromCatalog ||
-        (editorState != null &&
-            editorState.effectiveShowCatalogSelector &&
-            editorState.selectedExample != null);
+        (_showCatalogSelector && editorState?.selectedExample != null);
 
     if (editorFiles != null) {
       for (final entry in editorFiles.entries) {
@@ -272,15 +319,17 @@ class GingaState extends State<Ginga> {
       final siblingConfigPath = slashIdx != -1
           ? '${normalizedApp.substring(0, slashIdx)}/ginga_config.json'
           : 'ginga_config.json';
-      if (_initialVirtualFiles != null &&
-          _initialVirtualFiles!.containsKey(siblingConfigPath)) {
-        configJson = _initialVirtualFiles![siblingConfigPath];
-      } else if (!kIsWeb && !isHttpUri(siblingConfigPath)) {
+      if (widget.virtualFiles != null &&
+          widget.virtualFiles!.containsKey(siblingConfigPath)) {
+        configJson = widget.virtualFiles![siblingConfigPath];
+      } else if (!kIsWeb &&
+          !isHttpUri(siblingConfigPath) &&
+          !siblingConfigPath.startsWith('file:')) {
         final f = File(siblingConfigPath);
         if (f.existsSync()) {
           configJson = f.readAsStringSync();
         }
-      } else if (kIsWeb || isHttpUri(appPath)) {
+      } else {
         final configUri = _gingacc.resolveUri('ginga_config.json', appPath);
         configJson = await _gingacc.loadContent(configUri);
       }
@@ -313,14 +362,17 @@ class GingaState extends State<Ginga> {
         breakpoints: currentBps,
       );
     } else if (appPath != null && _gingacc.config.appSrc != appPath) {
-      _gingacc.config = _gingacc.config.copyWith(appSrc: appPath);
+      _gingacc.config = _gingacc.config.copyWith(
+        appSrc: appPath,
+      );
     }
   }
 
   Future<void> _runFromPlayground() async {
-    _savePlaygroundVirtualFiles();
+    final appSrc =
+        _gingacc.config.appSrc ?? _playgroundKey.currentState?.activeFilePath;
     await _applyPlaygroundConfig(
-      _gingacc.config.appSrc,
+      appSrc,
       resetIfMissing: false,
     );
     if (!mounted) return;
@@ -557,9 +609,7 @@ class GingaState extends State<Ginga> {
   @override
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_handleKeyPress);
-    _tv30KeySub?.cancel();
-    _tv30TimeSub?.cancel();
-    _tv30StreamEventSub?.cancel();
+    _detachTv30Testbed?.call();
     _stopServices();
     super.dispose();
   }
@@ -684,15 +734,11 @@ class GingaState extends State<Ginga> {
                               onCatalogExampleSelected: (selectedFile) async {
                                 final appPath =
                                     resolveCatalogExampleUrl(selectedFile);
-                                _savePlaygroundVirtualFiles();
                                 await _applyPlaygroundConfig(
                                   appPath,
                                   resetIfMissing: true,
                                   fromCatalog: true,
                                 );
-                                if (kIsWeb) {
-                                  updateWebUrlApp(appPath);
-                                }
                               },
                               onContentChanged: (newText) {
                                 _mainAppContent = newText;
