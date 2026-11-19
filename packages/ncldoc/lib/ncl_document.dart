@@ -224,6 +224,7 @@ class NclDocument extends GingaApp {
     String? applicationId,
     String? appSrc,
     String? docSrc,
+    Map<String, String>? virtualFiles,
     GingaCC? gingacc,
     String? baseDirSrc,
   }) {
@@ -233,7 +234,10 @@ class NclDocument extends GingaApp {
     final resolvedAppSrc = appSrc ?? docSrc ?? 'tmp.ncl';
     final effectiveId = applicationId ?? resolvedAppSrc;
     final cc = gingacc ?? GingaCC();
-    final pb = cc.getPrivateBase(applicationId: effectiveId);
+    final pb = cc.getPrivateBase(
+      applicationId: effectiveId,
+      virtualFiles: virtualFiles,
+    );
     final Uri? resolvedUri = (!isXmlString(resolvedAppSrc))
         ? pb.resolveUri(resolvedAppSrc, baseDirSrc)
         : null;
@@ -342,8 +346,11 @@ class NclDocument extends GingaApp {
     if (src == null) return;
     try {
       _logger.fine('Loading user profile "$id" from src: $src');
-      final profileUri = privateBase.resolveUri(src, docSrc);
-      final jsonContent = await privateBase.loadContent(profileUri);
+      String? jsonContent = privateBase.loadContentSync(src, docSrc);
+      if (jsonContent == null || jsonContent.isEmpty) {
+        final profileUri = privateBase.resolveUri(src, docSrc);
+        jsonContent = await privateBase.loadContent(profileUri);
+      }
       if (jsonContent != null && jsonContent.isNotEmpty) {
         final query = json.decode(jsonContent);
         final queryMap = query is Map<String, dynamic>

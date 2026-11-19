@@ -25,7 +25,7 @@ void main() {
     final config = GingaConfig(mainAvSrc: mainAvUri);
     final gingacc = GingaCC(
       config: config,
-    )..setVirtualFiles({'test_bg.ncl': nclData});
+    );
     final mainAvKey = GlobalKey<MainAVWidgetState>();
 
     await tester.pumpWidget(
@@ -38,8 +38,8 @@ void main() {
                 key: mainAvKey,
                 src: mainAvUri,
               ),
-              NclWidget(
-                src: 'test_bg.ncl',
+              NclWidget.fromContent(
+                nclData,
                 gingacc: gingacc,
                 mainAvKey: mainAvKey,
               ),
@@ -73,7 +73,7 @@ void main() {
     final config = GingaConfig(mainAvSrc: mainAvUri);
     final gingacc = GingaCC(
       config: config,
-    )..setVirtualFiles({'test_bg.ncl': nclData});
+    );
     final mainAvKey = GlobalKey<MainAVWidgetState>();
 
     await tester.pumpWidget(
@@ -86,8 +86,8 @@ void main() {
                 key: mainAvKey,
                 src: mainAvUri,
               ),
-              NclWidget(
-                src: 'test_bg.ncl',
+              NclWidget.fromContent(
+                nclData,
                 gingacc: gingacc,
                 mainAvKey: mainAvKey,
               ),
@@ -120,7 +120,7 @@ void main() {
     final config = GingaConfig(mainAvSrc: mainAvUri);
     final gingacc = GingaCC(
       config: config,
-    )..setVirtualFiles({'test_bg.ncl': nclData});
+    );
     final mainAvKey = GlobalKey<MainAVWidgetState>();
 
     await tester.pumpWidget(
@@ -133,8 +133,8 @@ void main() {
                 key: mainAvKey,
                 src: mainAvUri,
               ),
-              NclWidget(
-                src: 'test_bg.ncl',
+              NclWidget.fromContent(
+                nclData,
                 gingacc: gingacc,
                 mainAvKey: mainAvKey,
               ),

@@ -72,15 +72,14 @@ void main() {
     });
   });
 
-  group('TV 3.0 Mode and Streams on non-web platforms', () {
+  group('TV 3.0 Mode and Testbed Attachment on non-web platforms', () {
     test('isTv30Mode defaults to false', () {
       expect(isTv30Mode(), isFalse);
     });
 
-    test('event streams are available', () {
-      expect(tv30KeyStream, isNotNull);
-      expect(tv30TimeStream, isNotNull);
-      expect(tv30StreamEventStream, isNotNull);
+    test('attachTv30Testbed returns null when not in TV 3.0 mode', () async {
+      final detach = await attachTv30Testbed(onKey: (_) {});
+      expect(detach, isNull);
     });
   });
 }

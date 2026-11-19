@@ -381,6 +381,8 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
       if (effectiveContent.isNotEmpty) {
         _fileContents[widget.filePath!] = effectiveContent;
       }
+    } else if (effectiveContent.isNotEmpty) {
+      _fileContents[effectiveActiveFilePath] = effectiveContent;
     }
     if (isNclApplication && widget.initialBreakpoints != null) {
       _breakpoints.addAll(widget.initialBreakpoints!);
@@ -482,6 +484,7 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
           loaded.isNotEmpty &&
           mounted &&
           _controller.text.isEmpty) {
+        _fileContents[path] = loaded;
         setState(() {
           _controller.text = loaded;
         });

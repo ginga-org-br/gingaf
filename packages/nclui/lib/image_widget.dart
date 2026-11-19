@@ -34,6 +34,21 @@ class ImageWidgetState extends MediaState<ImageWidget> {
 
   @override
   Widget buildWidgetContent(BuildContext context) {
+    if (widget.privateBase.hasVirtualFile(widget.src)) {
+      final bytes = widget.privateBase.loadBytesSync(widget.src);
+      if (bytes != null && bytes.isNotEmpty) {
+        return Image.memory(
+          bytes,
+          fit: BoxFit.fill,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (context, error, stackTrace) {
+            return const Center(
+                child: Icon(Icons.error, color: Colors.red, size: 50));
+          },
+        );
+      }
+    }
     final parsedUri = _parsedUri;
     if (parsedUri == null) {
       return const SizedBox.shrink();

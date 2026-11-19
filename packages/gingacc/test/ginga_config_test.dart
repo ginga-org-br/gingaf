@@ -370,20 +370,26 @@ void main() {
     });
 
     test(
-        'loads ginga_config.json from virtualFiles in the same folder of the application',
+        'loads ginga_config.json from the same folder of the application file',
         () async {
-      final gingacc = GingaCC()
-        ..setVirtualFiles({
-          'app/main.ncl': '<ncl/>',
-          'app/ginga_config.json':
-              '{"mainAvSrc": "https://example.com/virtual_custom.mp4", "startWithMainAv": true}',
-        });
+      final tempDir =
+          Directory.systemTemp.createTempSync('ginga_config_app_folder_test_');
+      try {
+        final appDir = Directory('${tempDir.path}/app')..createSync();
+        final appFile = File('${appDir.path}/main.ncl')
+          ..writeAsStringSync('<ncl/>');
+        File('${appDir.path}/ginga_config.json').writeAsStringSync(
+            '{"mainAvSrc": "https://example.com/folder_custom.mp4", "startWithMainAv": true}');
 
-      final config = await GingaConfig.fromJson(
-          'ginga_config.json', 'app/main.ncl', gingacc);
-      expect(
-          config.mainAvSrc, equals('https://example.com/virtual_custom.mp4'));
-      expect(config.startWithMainAv, isTrue);
+        final gingacc = GingaCC();
+        final config = await GingaConfig.fromJson(
+            'ginga_config.json', appFile.path, gingacc);
+        expect(
+            config.mainAvSrc, equals('https://example.com/folder_custom.mp4'));
+        expect(config.startWithMainAv, isTrue);
+      } finally {
+        tempDir.deleteSync(recursive: true);
+      }
     });
   });
 }

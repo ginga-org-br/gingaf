@@ -659,6 +659,16 @@ class LuaWidget extends BaseWidget {
     super.gingacc,
   });
 
+  const LuaWidget.fromContent(
+    String content, {
+    super.key,
+    super.src = 'main.lua',
+    super.virtualFiles,
+    super.media,
+    super.document,
+    super.gingacc,
+  }) : super(content: content);
+
   @override
   State<LuaWidget> createState() => LuaWidgetState();
 }
@@ -847,7 +857,8 @@ class LuaWidgetState extends MediaState<LuaWidget> {
   Future<void> _runScript() async {
     canvasState.reset();
     try {
-      final script = await widget.privateBase.loadContent(widget.src);
+      final script =
+          widget.content ?? await widget.privateBase.loadContent(widget.src);
       if (script != null) {
         await _engine.execute(script);
         if (widget.media == null ||

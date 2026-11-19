@@ -1,26 +1,29 @@
+import 'dart:io';
+
 import 'package:gingacc/gingacc.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('GingaAppPrivateBase', () {
-    test('isolates virtual files across distinct application instances',
+    test('isolates virtualFiles across distinct application instances',
         () async {
       final gingacc = GingaCC();
 
-      final baseApp1 = GingaAppPrivateBase(
+      final baseApp1 = gingacc.getPrivateBase(
         applicationId: 'app1',
-        gingacc: gingacc,
-      )..setVirtualFiles({'main.txt': 'Content from App 1'});
+        virtualFiles: {'main.txt': 'Content from App 1'},
+      );
 
-      final baseApp2 = GingaAppPrivateBase(
+      final baseApp2 = gingacc.getPrivateBase(
         applicationId: 'app2',
-        gingacc: gingacc,
-      )..setVirtualFiles({'main.txt': 'Content from App 2'});
+        virtualFiles: {'main.txt': 'Content from App 2'},
+      );
 
       expect(await baseApp1.loadContent('main.txt'), 'Content from App 1');
       expect(await baseApp2.loadContent('main.txt'), 'Content from App 2');
       expect(baseApp1.loadContentSync('main.txt'), 'Content from App 1');
       expect(baseApp2.loadContentSync('main.txt'), 'Content from App 2');
+      expect(await gingacc.loadContent('main.txt'), isNull);
     });
 
     test(
@@ -33,21 +36,21 @@ void main() {
       const app2Ncl =
           '<ncl id="app2"><body><media id="img2" src="icon.png"/></body></ncl>';
 
-      final pb1 = GingaAppPrivateBase(
+      final pb1 = gingacc.getPrivateBase(
         applicationId: 'app1',
-        gingacc: gingacc,
-      )..setVirtualFiles({
+        virtualFiles: {
           'app1.ncl': app1Ncl,
           'icon.png': 'app1_icon_bytes',
-        });
+        },
+      );
 
-      final pb2 = GingaAppPrivateBase(
+      final pb2 = gingacc.getPrivateBase(
         applicationId: 'app2',
-        gingacc: gingacc,
-      )..setVirtualFiles({
+        virtualFiles: {
           'app2.ncl': app2Ncl,
           'icon.png': 'app2_icon_bytes',
-        });
+        },
+      );
 
       expect(pb1.applicationId, 'app1');
       expect(pb2.applicationId, 'app2');
@@ -63,15 +66,16 @@ void main() {
     });
 
     test(
-        'scoped child private base shares virtual files but isolates relative base',
+        'scoped child private base shares virtualFiles and isolates relative subdirectory base',
         () async {
       final rootBase = GingaAppPrivateBase(
         applicationId: 'app1',
         baseUri: Uri.file('/app/main.ncl'),
-      )..setVirtualFiles({
+        virtualFiles: {
           '/app/sub/image.png': 'sub-image-bytes',
           '/app/main.ncl': '<ncl></ncl>',
-        });
+        },
+      );
 
       final childBase = rootBase.scoped(baseDir: 'sub/');
 
@@ -79,14 +83,37 @@ void main() {
       expect(await childBase.loadContent('image.png'), 'sub-image-bytes');
     });
 
-    test('GingaCC resolves and loads content directly via virtualFiles',
+    test('resolves same filename in different folders without collision',
         () async {
-      final gingacc = GingaCC();
-      gingacc.setVirtualFiles({'legacy.txt': 'legacy data'});
+      final pb = GingaAppPrivateBase(
+        applicationId: 'multi_dir',
+        baseUri: Uri.parse('https://example.org/examples/dirA/main.ncl'),
+        virtualFiles: {
+          'dirA/main.ncl': '<ncl id="A"/>',
+          'dirB/main.ncl': '<ncl id="B"/>',
+        },
+      );
 
-      expect(await gingacc.loadContent('legacy.txt'), 'legacy data');
-      expect(gingacc.loadContentSync('legacy.txt'), 'legacy data');
-      expect(gingacc.virtualFiles?['legacy.txt'], 'legacy data');
+      expect(await pb.loadContent('main.ncl'), '<ncl id="A"/>');
+      final scopedB = pb.scoped(
+        baseUri: Uri.parse('https://example.org/examples/dirB/main.ncl'),
+      );
+      expect(await scopedB.loadContent('main.ncl'), '<ncl id="B"/>');
+    });
+
+    test('loads real files from temporary directory via baseUri', () async {
+      final tempDir = Directory.systemTemp.createTempSync('ginga_pb_disk_');
+      try {
+        File('${tempDir.path}/asset.txt').writeAsStringSync('disk_asset');
+        final pb = GingaAppPrivateBase(
+          applicationId: 'disk_app',
+          baseUri: tempDir.uri,
+        );
+        expect(await pb.loadContent('asset.txt'), 'disk_asset');
+        expect(pb.loadContentSync('asset.txt'), 'disk_asset');
+      } finally {
+        tempDir.deleteSync(recursive: true);
+      }
     });
 
     test('GingaApp obtains privateBase from gingacc and uses appSrc', () async {
@@ -103,20 +130,25 @@ void main() {
       expect(app.privateBase.applicationId, 'main.ncl');
     });
 
-    test(
-        'gingacc.getPrivateBase caches per applicationId and inherits virtual files',
+    test('gingacc.getPrivateBase caches per applicationId and cleans up',
         () async {
       final gingacc = GingaCC();
-      gingacc.setVirtualFiles({'global.txt': 'hello global'});
-
-      final pbApp1 = gingacc.getPrivateBase(applicationId: 'app1');
+      final pbApp1 = gingacc.getPrivateBase(
+        applicationId: 'app1',
+        virtualFiles: {'a.txt': 'v1'},
+      );
       final pbApp1Again = gingacc.getPrivateBase(applicationId: 'app1');
       expect(pbApp1, same(pbApp1Again));
-      expect(await pbApp1.loadContent('global.txt'), 'hello global');
+      expect(pbApp1Again.virtualFiles?['a.txt'], 'v1');
 
       final pbApp2 = gingacc.getPrivateBase(applicationId: 'app2');
       expect(pbApp2, isNot(same(pbApp1)));
-      expect(await pbApp2.loadContent('global.txt'), 'hello global');
+      expect(pbApp2.virtualFiles, isNull);
+
+      gingacc.removePrivateBase('app1');
+      final pbApp1Recreated = gingacc.getPrivateBase(applicationId: 'app1');
+      expect(pbApp1Recreated, isNot(same(pbApp1)));
+      expect(pbApp1Recreated.virtualFiles, isNull);
     });
   });
 }

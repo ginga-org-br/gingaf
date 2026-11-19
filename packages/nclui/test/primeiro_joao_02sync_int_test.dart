@@ -274,14 +274,13 @@ void main() {
   testWidgets(
       'NclWidget updates widget sizes and positions in response to SET action from key selection',
       (WidgetTester tester) async {
-    final gingacc = GingaCC()
-      ..setVirtualFiles({'joao02syncInt.ncl': _joao02syncIntNcl});
+    final gingacc = GingaCC();
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: NclWidget(
-            src: 'joao02syncInt.ncl',
+          body: NclWidget.fromContent(
+            _joao02syncIntNcl,
             gingacc: gingacc,
           ),
         ),
@@ -293,31 +292,21 @@ void main() {
 
     final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
 
-    // Tick to 45s: mainVideo, background, ambientAudio, smallVideo, popupImg, btnIcon are running
     nclState.tick(45000);
     await tester.pump();
 
-    // Verify all active widgets are visible
     final posList =
         tester.widgetList<Positioned>(find.byType(Positioned)).toList();
     expect(posList.length, 6);
 
-    // Trigger key RED selection on btnIcon
     nclState.nclDocument?.triggerSelection('btnIcon', 'RED');
     nclState.tick(0);
     await tester.pump();
 
-    // After key selection: btnIcon is gone, promoVideo starts
     final posList2 =
         tester.widgetList<Positioned>(find.byType(Positioned)).toList();
     expect(posList2.length, 6);
 
-    // Find mainVideo Positioned widget
-    // Screen is 800x600. bounds is 5%,6.7%,45%,45%
-    // left: 5% of 800 = 40.0
-    // top: 6.7% of 600 = 40.2
-    // width: 45% of 800 = 360.0
-    // height: 45% of 600 = 270.0
     final mainVideoWidget = posList2.firstWhere((p) => p.width == 360.0);
     expect(mainVideoWidget.left, moreOrLessEquals(40.0));
     expect(mainVideoWidget.top, moreOrLessEquals(40.2));

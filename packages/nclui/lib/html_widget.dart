@@ -23,6 +23,17 @@ class HtmlWidget extends BaseWidget {
     this.javaScriptChannels,
   });
 
+  const HtmlWidget.fromContent(
+    String content, {
+    super.key,
+    super.src = 'index.html',
+    super.virtualFiles,
+    super.media,
+    super.document,
+    super.gingacc,
+    this.javaScriptChannels,
+  }) : super(content: content);
+
   @override
   State<HtmlWidget> createState() => HtmlWidgetState();
 }
@@ -98,7 +109,8 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
           ? widget.media!.uri
           : (widget.document?.baseUri?.toString() ?? widget.document?.docSrc);
       final uri = pb.resolveUri(widget.src, base);
-      final loadedContent = await pb.loadContent(widget.src, base);
+      final loadedContent =
+          widget.content ?? await pb.loadContent(widget.src, base);
       if (loadedContent != null && loadedContent.isNotEmpty) {
         final content = gingacc.ccws.injectCcwsFetch(loadedContent);
         await _controller!.loadHtmlString(content);

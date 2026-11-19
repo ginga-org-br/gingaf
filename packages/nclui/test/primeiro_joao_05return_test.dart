@@ -288,14 +288,13 @@ void main() {
 
   testWidgets('NclWidget updates layout in response to form ending',
       (WidgetTester tester) async {
-    final gingacc = GingaCC()
-      ..setVirtualFiles({'joao05return.ncl': _joao05returnNcl});
+    final gingacc = GingaCC();
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: NclWidget(
-            src: 'joao05return.ncl',
+          body: NclWidget.fromContent(
+            _joao05returnNcl,
             gingacc: gingacc,
           ),
         ),

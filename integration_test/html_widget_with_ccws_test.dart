@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingacc/gingacc.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:nclui/html_widget.dart';
 
 const _testCcwsHtml = '''
@@ -29,7 +29,7 @@ const _testCcwsHtml = '''
         }
 
         async function fetchService() {
-            const startPort = 44642; // default port of Ginga CC WebServices from NBR15606-11
+            const startPort = 44642;
             const maxPort = 65535;
             const batchSize = 64;
             const statusDiv = document.getElementById('status');
@@ -78,7 +78,7 @@ void main() {
     setUp(() async {
       gingacc = GingaCC(
         config: GingaConfig(startWithCCWS: true),
-      )..setVirtualFiles({'test_ccws.html': _testCcwsHtml});
+      );
       await gingacc.ccws.start();
     });
 
@@ -94,7 +94,8 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Material(
-            child: HtmlWidget(
+            child: HtmlWidget.fromContent(
+              _testCcwsHtml,
               src: 'test_ccws.html',
               gingacc: gingacc,
               javaScriptChannels: {
@@ -109,7 +110,6 @@ void main() {
         ),
       );
 
-      // Wait for the diagnostic logic to probe ports and resolve the service
       final result =
           await completer.future.timeout(const Duration(seconds: 15));
 

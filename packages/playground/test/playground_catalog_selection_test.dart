@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,6 +7,9 @@ import 'package:gingacc/gingacc.dart';
 import 'package:playground/playground.dart';
 
 void main() {
+  tearDown(() {
+    catalogExamplesBaseUrl = defaultCatalogExamplesBaseUrl;
+  });
   const sampleNcl = '<ncl><body/></ncl>';
 
   final testExamples = [
@@ -103,11 +108,19 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      final gingacc = GingaCC();
-      gingacc.setVirtualFiles({
-        'examples/video.ncl': '<ncl><body id="video_body"/></ncl>',
-        'examples/image.ncl': '<ncl><body id="image_body"/></ncl>',
+      final tempDir = Directory.systemTemp.createTempSync('ginga_pg_sel1_');
+      addTearDown(() {
+        if (tempDir.existsSync()) {
+          tempDir.deleteSync(recursive: true);
+        }
       });
+      File('${tempDir.path}/video.ncl')
+          .writeAsStringSync('<ncl><body id="video_body"/></ncl>');
+      File('${tempDir.path}/image.ncl')
+          .writeAsStringSync('<ncl><body id="image_body"/></ncl>');
+      catalogExamplesBaseUrl = tempDir.uri.toString();
+
+      final gingacc = GingaCC();
 
       String? lastChangedContent;
       String? lastSelectedExample;
@@ -183,13 +196,25 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      final gingacc = GingaCC();
-      gingacc.setVirtualFiles({
-        'examples/video360/main.ncl360': '<ncl id="v360"><body/></ncl>',
-        'examples/video.ncl': '<ncl id="vid"><body/></ncl>',
-        'examples/image.ncl': '<ncl id="img"><body/></ncl>',
-        'examples/lua/zip_list/main.ncl': '<ncl id="luazip"><body/></ncl>',
+      final tempDir = Directory.systemTemp.createTempSync('ginga_pg_sel2_');
+      addTearDown(() {
+        if (tempDir.existsSync()) {
+          tempDir.deleteSync(recursive: true);
+        }
       });
+      File('${tempDir.path}/video360/main.ncl360')
+        ..parent.createSync(recursive: true)
+        ..writeAsStringSync('<ncl id="v360"><body/></ncl>');
+      File('${tempDir.path}/video.ncl')
+          .writeAsStringSync('<ncl id="vid"><body/></ncl>');
+      File('${tempDir.path}/image.ncl')
+          .writeAsStringSync('<ncl id="img"><body/></ncl>');
+      File('${tempDir.path}/lua/zip_list/main.ncl')
+        ..parent.createSync(recursive: true)
+        ..writeAsStringSync('<ncl id="luazip"><body/></ncl>');
+      catalogExamplesBaseUrl = tempDir.uri.toString();
+
+      final gingacc = GingaCC();
 
       final categorizedExamples = [
         const CatalogExample(
@@ -403,11 +428,20 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      final gingacc = GingaCC();
-      gingacc.setVirtualFiles({
-        'examples/sbtvd/main.ncl': '<ncl><body id="sbtvd_body"/></ncl>',
-        'examples/sbtvd/ginga_config.json': '{"mainAvSrc": "test.mp4"}',
+      final tempDir = Directory.systemTemp.createTempSync('ginga_pg_sel3_');
+      addTearDown(() {
+        if (tempDir.existsSync()) {
+          tempDir.deleteSync(recursive: true);
+        }
       });
+      File('${tempDir.path}/sbtvd/main.ncl')
+        ..parent.createSync(recursive: true)
+        ..writeAsStringSync('<ncl><body id="sbtvd_body"/></ncl>');
+      File('${tempDir.path}/sbtvd/ginga_config.json')
+          .writeAsStringSync('{"mainAvSrc": "test.mp4"}');
+      catalogExamplesBaseUrl = tempDir.uri.toString();
+
+      final gingacc = GingaCC();
 
       final multiFileExamples = [
         const CatalogExample(
@@ -458,6 +492,57 @@ void main() {
       expect(state.allFileContents.containsKey('sbtvd/main.ncl'), isTrue);
       expect(
           state.allFileContents.containsKey('sbtvd/ginga_config.json'), isTrue);
+    });
+
+    testWidgets(
+        'reselecting a catalog item reloads fresh content instead of keeping local edits',
+        (WidgetTester tester) async {
+      final tempDir = Directory.systemTemp.createTempSync('ginga_pg_reselect_');
+      addTearDown(() {
+        if (tempDir.existsSync()) {
+          tempDir.deleteSync(recursive: true);
+        }
+      });
+      File('${tempDir.path}/dirA/main.ncl')
+        ..parent.createSync(recursive: true)
+        ..writeAsStringSync('<ncl id="origA"/>');
+      catalogExamplesBaseUrl = tempDir.uri.toString();
+
+      final gingacc = GingaCC(
+        config: GingaConfig(enablePlayground: true),
+      );
+      final examples = [
+        const CatalogExample(key: 'dirA', mainFile: 'dirA/main.ncl'),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PlaygroundEditor(
+              gingacc: gingacc,
+              catalogExamples: examples,
+              showCatalogSelector: true,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final state =
+          tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
+      await state.selectCatalogExample('dirA/main.ncl');
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const Key('monaco_editor_text_field')),
+        '<ncl id="editedA"/>',
+      );
+      await tester.pump();
+      expect(state.allFileContents['dirA/main.ncl'], equals('<ncl id="editedA"/>'));
+
+      await state.selectCatalogExample('dirA/main.ncl');
+      await tester.pumpAndSettle();
+      expect(state.effectiveContent, equals('<ncl id="origA"/>'));
     });
   });
 }

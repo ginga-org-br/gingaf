@@ -75,19 +75,17 @@ void main() {
     testWidgets(
         'full screen embedded ncl advances time and checks pixel dimensions',
         (WidgetTester tester) async {
-      final gingacc = GingaCC()
-        ..setVirtualFiles(
-          {
-            'main.ncl': embNclFullScreen,
-            'video.ncl': videoNcl,
-          },
-        );
+      final gingacc = GingaCC();
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: NclWidget(
+            body: NclWidget.fromContent(
+              embNclFullScreen,
               src: 'main.ncl',
+              virtualFiles: {
+                'video.ncl': videoNcl,
+              },
               gingacc: gingacc,
               bounds: const (left: 0.0, top: 0.0, width: 720.0, height: 480.0),
             ),
@@ -129,19 +127,17 @@ void main() {
     testWidgets(
         'non-full screen embedded ncl advances time and checks pixel dimensions',
         (WidgetTester tester) async {
-      final gingacc = GingaCC()
-        ..setVirtualFiles(
-          {
-            'main.ncl': embNclNotFullScreen,
-            'video.ncl': videoNcl,
-          },
-        );
+      final gingacc = GingaCC();
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: NclWidget(
+            body: NclWidget.fromContent(
+              embNclNotFullScreen,
               src: 'main.ncl',
+              virtualFiles: {
+                'video.ncl': videoNcl,
+              },
               gingacc: gingacc,
               bounds: const (left: 0.0, top: 0.0, width: 720.0, height: 480.0),
             ),

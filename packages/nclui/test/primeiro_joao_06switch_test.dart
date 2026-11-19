@@ -478,13 +478,13 @@ void main() {
       config: GingaConfig(
         systemVariables: {'system.language': 'eng'},
       ),
-    )..setVirtualFiles({'joao06switch.ncl': _joao06switchNcl});
+    );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: NclWidget(
-            src: 'joao06switch.ncl',
+          body: NclWidget.fromContent(
+            _joao06switchNcl,
             gingacc: gingacc,
           ),
         ),

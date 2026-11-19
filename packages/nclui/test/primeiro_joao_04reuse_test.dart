@@ -283,14 +283,13 @@ void main() {
 
   testWidgets('NclWidget updates layout in response to reused media SET action',
       (WidgetTester tester) async {
-    final gingacc = GingaCC()
-      ..setVirtualFiles({'joao04reuse.ncl': _joao04reuseNcl});
+    final gingacc = GingaCC();
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: NclWidget(
-            src: 'joao04reuse.ncl',
+          body: NclWidget.fromContent(
+            _joao04reuseNcl,
             gingacc: gingacc,
           ),
         ),

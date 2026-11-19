@@ -9,6 +9,8 @@ export 'color.dart';
 
 abstract class BaseWidget extends StatefulWidget {
   final String src;
+  final String? content;
+  final Map<String, String>? virtualFiles;
   final Media? media;
   final NclDocument? document;
   final GingaCC? _gingacc;
@@ -16,6 +18,8 @@ abstract class BaseWidget extends StatefulWidget {
   const BaseWidget({
     super.key,
     required this.src,
+    this.content,
+    this.virtualFiles,
     this.media,
     this.document,
     GingaCC? gingacc,
@@ -25,7 +29,10 @@ abstract class BaseWidget extends StatefulWidget {
 
   GingaAppPrivateBase get privateBase =>
       document?.privateBase ??
-      gingacc.getPrivateBase(applicationId: applicationId ?? src);
+      gingacc.getPrivateBase(
+        applicationId: applicationId ?? src,
+        virtualFiles: virtualFiles,
+      );
 
   GingaCC get gingacc => _gingacc ?? document?.gingacc ?? GingaCC();
 

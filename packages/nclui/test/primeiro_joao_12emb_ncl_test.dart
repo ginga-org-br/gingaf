@@ -81,17 +81,17 @@ void main() {
 
   testWidgets('NclWidget runs embedded NCL document successfully',
       (WidgetTester tester) async {
-    final gingacc = GingaCC()
-      ..setVirtualFiles({
-        'joao12embNCL.ncl': _joao12embNcl,
-        'advert.ncl': _advertNcl,
-      });
+    final gingacc = GingaCC();
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: NclWidget(
+          body: NclWidget.fromContent(
+            _joao12embNcl,
             src: 'joao12embNCL.ncl',
+            virtualFiles: {
+              'advert.ncl': _advertNcl,
+            },
             gingacc: gingacc,
           ),
         ),

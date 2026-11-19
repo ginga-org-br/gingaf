@@ -11,12 +11,8 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 
 import 'mock_video_player.dart';
 
-const testVirtualFiles = {
-  'test.ncl':
-      '<ncl><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>',
-  'test/user_data1.json': '[{"id": "u400", "name": "ConfUser"}]',
-  'test/user_data2.json': '[{"id": "uConfig", "name": "GingaConfigUser"}]',
-};
+const _testNclContent =
+    '<ncl><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>';
 
 void main() {
   group('Widget Tests', () {
@@ -101,15 +97,16 @@ void main() {
       final gingacc = GingaCC(
         config:
             GingaConfig(appSrc: 'examples/video.ncl', enablePlayground: true),
-      )..setVirtualFiles({
-          'examples/video.ncl': '''<ncl>
+      );
+      await tester.pumpWidget(Ginga.fromContent(
+        '''<ncl>
   <body>
     <port id="init" component="video"/>
     <media id="video" src="video.mp4"/>
   </body>
 </ncl>''',
-        });
-      await tester.pumpWidget(Ginga(gingacc: gingacc));
+        gingacc: gingacc,
+      ));
       await tester.pump(const Duration(seconds: 1));
 
       final runBtn = find.byKey(const Key('monaco_run_button'));
@@ -132,9 +129,10 @@ void main() {
 
     testWidgets('NclWidget pauses and resumes AVWidget media',
         (WidgetTester tester) async {
-      final gingacc = GingaCC()..setVirtualFiles(testVirtualFiles);
+      final gingacc = GingaCC();
       await tester.pumpWidget(MaterialApp(
-        home: NclWidget(
+        home: NclWidget.fromContent(
+          _testNclContent,
           src: 'test.ncl',
           gingacc: gingacc,
         ),
@@ -164,9 +162,10 @@ void main() {
       );
       final gingacc = GingaCC(
         config: config,
-      )..setVirtualFiles(testVirtualFiles);
+      );
       await tester.pumpWidget(MaterialApp(
-        home: NclWidget(
+        home: NclWidget.fromContent(
+          _testNclContent,
           src: 'test.ncl',
           gingacc: gingacc,
         ),
@@ -191,9 +190,10 @@ void main() {
       );
       final gingacc = GingaCC(
         config: config,
-      )..setVirtualFiles(testVirtualFiles);
+      );
       await tester.pumpWidget(MaterialApp(
-        home: NclWidget(
+        home: NclWidget.fromContent(
+          _testNclContent,
           src: 'test.ncl',
           gingacc: gingacc,
         ),
@@ -232,8 +232,11 @@ void main() {
       );
       final gingacc = GingaCC(
         config: config,
-      )..setVirtualFiles(testVirtualFiles);
-      await tester.pumpWidget(Ginga(gingacc: gingacc));
+      );
+      await tester.pumpWidget(Ginga.fromContent(
+        _testNclContent,
+        gingacc: gingacc,
+      ));
 
       await tester.pump(const Duration(seconds: 1));
 
@@ -253,8 +256,11 @@ void main() {
       );
       final gingacc = GingaCC(
         config: config,
-      )..setVirtualFiles(testVirtualFiles);
-      await tester.pumpWidget(Ginga(gingacc: gingacc));
+      );
+      await tester.pumpWidget(Ginga.fromContent(
+        _testNclContent,
+        gingacc: gingacc,
+      ));
       await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.byKey(const Key('floating_control_menu')), findsOneWidget);
@@ -504,9 +510,9 @@ void main() {
       );
       final gingacc = GingaCC(
         config: config,
-      )..setVirtualFiles(
-          {
-            'test_forward.ncl': '''
+      );
+      await tester.pumpWidget(Ginga.fromContent(
+        '''
 <ncl id="test_forward" >
   <head>
     <regionBase>
@@ -522,9 +528,8 @@ void main() {
   </body>
 </ncl>
 ''',
-          },
-        );
-      await tester.pumpWidget(Ginga(gingacc: gingacc));
+        gingacc: gingacc,
+      ));
       await tester.pump(const Duration(milliseconds: 500));
 
       final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
@@ -599,11 +604,10 @@ void main() {
       );
       final gingacc = GingaCC(
         config: config,
-      )..setVirtualFiles({
-          'playground.ncl': sampleNcl,
-        });
+      );
 
-      await tester.pumpWidget(Ginga(
+      await tester.pumpWidget(Ginga.fromContent(
+        sampleNcl,
         gingacc: gingacc,
       ));
       await tester.pump(const Duration(milliseconds: 500));
@@ -632,11 +636,10 @@ void main() {
       );
       final gingacc = GingaCC(
         config: config,
-      )..setVirtualFiles({
-          'normal.ncl': '<ncl id="normal"/>',
-        });
+      );
 
-      await tester.pumpWidget(Ginga(
+      await tester.pumpWidget(Ginga.fromContent(
+        '<ncl id="normal"/>',
         gingacc: gingacc,
       ));
       await tester.pump(const Duration(milliseconds: 300));
@@ -657,11 +660,10 @@ void main() {
       config = config.copyWith(enablePlayground: true);
       final gingacc = GingaCC(
         config: config,
-      )..setVirtualFiles({
-          'normal.ncl': '<ncl id="normal"/>',
-        });
+      );
 
-      await tester.pumpWidget(Ginga(
+      await tester.pumpWidget(Ginga.fromContent(
+        '<ncl id="normal"/>',
         gingacc: gingacc,
       ));
       await tester.pump(const Duration(milliseconds: 300));
@@ -687,11 +689,10 @@ void main() {
       );
       final gingacc = GingaCC(
         config: config,
-      )..setVirtualFiles({
-          'playground.ncl': sampleNcl,
-        });
+      );
 
-      await tester.pumpWidget(Ginga(
+      await tester.pumpWidget(Ginga.fromContent(
+        sampleNcl,
         gingacc: gingacc,
       ));
       await tester.pump(const Duration(milliseconds: 300));
@@ -724,11 +725,10 @@ void main() {
       );
       final gingacc = GingaCC(
         config: config,
-      )..setVirtualFiles({
-          'playground.ncl': sampleNcl,
-        });
+      );
 
-      await tester.pumpWidget(Ginga(
+      await tester.pumpWidget(Ginga.fromContent(
+        sampleNcl,
         gingacc: gingacc,
       ));
       await tester.pump(const Duration(milliseconds: 300));
@@ -760,11 +760,10 @@ void main() {
       );
       final gingacc = GingaCC(
         config: config,
-      )..setVirtualFiles({
-          'normal.ncl': sampleNcl,
-        });
+      );
 
-      await tester.pumpWidget(Ginga(
+      await tester.pumpWidget(Ginga.fromContent(
+        sampleNcl,
         gingacc: gingacc,
       ));
       await tester.pump(const Duration(milliseconds: 300));
@@ -782,7 +781,7 @@ void main() {
     });
 
     testWidgets(
-        'Ginga playground handles debug start, stop, and virtualFiles without unmodifiable map errors',
+        'Ginga playground handles debug start, continue, and stop cleanly',
         (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1280, 720);
       tester.view.devicePixelRatio = 1.0;
@@ -804,11 +803,10 @@ void main() {
       );
       final gingacc = GingaCC(
         config: config,
-      )..setVirtualFiles({
-          'dbg.ncl': sampleNcl,
-        });
+      );
 
-      await tester.pumpWidget(Ginga(
+      await tester.pumpWidget(Ginga.fromContent(
+        sampleNcl,
         gingacc: gingacc,
       ));
       await tester.pump();
@@ -859,11 +857,10 @@ void main() {
       );
       final gingacc = GingaCC(
         config: config,
-      )..setVirtualFiles({
-          'playground.ncl': sampleNcl,
-        });
+      );
 
-      await tester.pumpWidget(Ginga(
+      await tester.pumpWidget(Ginga.fromContent(
+        sampleNcl,
         gingacc: gingacc,
       ));
       await tester.pump(const Duration(milliseconds: 300));
@@ -888,11 +885,10 @@ void main() {
       );
       final gingacc = GingaCC(
         config: config,
-      )..setVirtualFiles({
-          'playground.ncl': sampleNcl,
-        });
+      );
 
-      await tester.pumpWidget(Ginga(
+      await tester.pumpWidget(Ginga.fromContent(
+        sampleNcl,
         gingacc: gingacc,
       ));
       await tester.pump(const Duration(milliseconds: 300));
@@ -913,6 +909,42 @@ void main() {
       expect(
           find.byKey(const Key('no_running_app_placeholder')), findsOneWidget);
       expect(find.text('No running application'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets(
+        'Ginga playground runs live edited buffer via NclWidget.fromContent',
+        (WidgetTester tester) async {
+      const initialNcl =
+          '<ncl id="initial"><body><port id="p1" component="m1"/><media id="m1" src="m1.mp4"/></body></ncl>';
+      const editedNcl =
+          '<ncl id="edited"><body><port id="p2" component="m2"/><media id="m2" src="m2.mp4"/></body></ncl>';
+      final gingacc = GingaCC(
+        config: GingaConfig(
+          enablePlayground: true,
+          appSrc: 'live.ncl',
+        ),
+      );
+
+      await tester.pumpWidget(Ginga.fromContent(
+        initialNcl,
+        gingacc: gingacc,
+      ));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.enterText(
+        find.byKey(const Key('monaco_editor_text_field')),
+        editedNcl,
+      );
+      await tester.pump();
+
+      await tester.tap(find.byKey(const Key('monaco_run_button')));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
+      expect(nclState.nclDocument?.getMediaById('m2'), isNotNull);
+      expect(nclState.nclDocument?.getMediaById('m1'), isNull);
 
       await tester.pumpWidget(const SizedBox());
     });
@@ -950,11 +982,10 @@ void main() {
       );
       final gingacc = GingaCC(
         config: config,
-      )..setVirtualFiles({
-          'video.ncl': sampleNcl,
-        });
+      );
 
-      await tester.pumpWidget(Ginga(
+      await tester.pumpWidget(Ginga.fromContent(
+        sampleNcl,
         gingacc: gingacc,
       ));
       await tester.pumpAndSettle();
@@ -1008,16 +1039,15 @@ void main() {
       final gingacc = GingaCC(
         config:
             GingaConfig(appSrc: 'examples/video.ncl', enablePlayground: true),
-      )..setVirtualFiles({
-          'examples/video.ncl': '''<ncl>
+      );
+
+      await tester.pumpWidget(Ginga.fromContent(
+        '''<ncl>
   <body>
     <port id="init" component="video"/>
     <media id="video" src="video.mp4"/>
   </body>
 </ncl>''',
-        });
-
-      await tester.pumpWidget(Ginga(
         gingacc: gingacc,
       ));
       await tester.pumpAndSettle();

@@ -119,17 +119,18 @@ event.register(function(evt)
 end)
 ''';
 
-      final gingacc = GingaCC()
-        ..setVirtualFiles({
-          'main.ncl': nclContent,
-          'script.lua': luaContent,
-        });
+      final gingacc = GingaCC();
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: NclWidget(
-              src: 'main.ncl',
+            body: NclWidget.fromContent(
+              nclContent,
+              src: 'app/main.ncl',
+              virtualFiles: {
+                'app/script.lua': luaContent,
+                'script.lua': luaContent,
+              },
               gingacc: gingacc,
             ),
           ),
@@ -199,17 +200,18 @@ end)
 </ncl>
 ''';
 
-      final gingacc = GingaCC()
-        ..setVirtualFiles({
-          'main.ncl': nclContent,
-          'lua_canvas.lua': luaCanvasContent,
-        });
+      final gingacc = GingaCC();
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: NclWidget(
-              src: 'main.ncl',
+            body: NclWidget.fromContent(
+              nclContent,
+              src: 'app/main.ncl',
+              virtualFiles: {
+                'app/lua_canvas.lua': luaCanvasContent,
+                'lua_canvas.lua': luaCanvasContent,
+              },
               gingacc: gingacc,
             ),
           ),
@@ -346,17 +348,18 @@ end)
 </ncl>
 ''';
 
-      final gingacc = GingaCC()
-        ..setVirtualFiles({
-          'main.ncl': nclContent,
-          'lua_canvas.lua': luaCanvasContent,
-        });
+      final gingacc = GingaCC();
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: NclWidget(
-              src: 'main.ncl',
+            body: NclWidget.fromContent(
+              nclContent,
+              src: 'app/main.ncl',
+              virtualFiles: {
+                'app/lua_canvas.lua': luaCanvasContent,
+                'lua_canvas.lua': luaCanvasContent,
+              },
               gingacc: gingacc,
             ),
           ),
@@ -433,17 +436,18 @@ end)
 </ncl>
 ''';
 
-      final gingacc = GingaCC()
-        ..setVirtualFiles({
-          'main.ncl': nclContent,
-          'lua_canvas.lua': luaCanvasContent,
-        });
+      final gingacc = GingaCC();
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: NclWidget(
-              src: 'main.ncl',
+            body: NclWidget.fromContent(
+              nclContent,
+              src: 'app/main.ncl',
+              virtualFiles: {
+                'app/lua_canvas.lua': luaCanvasContent,
+                'lua_canvas.lua': luaCanvasContent,
+              },
               gingacc: gingacc,
             ),
           ),

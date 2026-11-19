@@ -1500,14 +1500,18 @@ end)
             appSrc: 'current_user.ncl',
             users: Users(usersDataJson),
           ),
-        )..setVirtualFiles({
-            'current_user.ncl': currentUserNcl,
+        );
+
+        final doc = NclDocument.fromContent(
+          currentUserNcl,
+          appSrc: 'current_user.ncl',
+          virtualFiles: {
             'user_info.lua': userInfoLua,
             'users_data_with_adult_male.json': usersDataJson,
-          });
-
-        final doc =
-            await NclDocument.fromSrc('current_user.ncl', gingacc: gingacc);
+          },
+          gingacc: gingacc,
+        );
+        await doc.loadUserProfiles();
         doc.start();
 
         final uSettings = doc.getElementById('uSettings') as Media;
@@ -1685,11 +1689,15 @@ end)
           config: GingaConfig(
             users: Users(usersDataJson),
           ),
-        )..setVirtualFiles({
-            'adult_query.json': adultQueryJson,
-          });
+        );
 
-        final doc = NclDocument.fromContent(xml, gingacc: gingacc);
+        final doc = NclDocument.fromContent(
+          xml,
+          virtualFiles: {
+            'adult_query.json': adultQueryJson,
+          },
+          gingacc: gingacc,
+        );
         await doc.loadUserProfiles();
         doc.start();
         doc.tick(0);
@@ -1790,11 +1798,15 @@ end)
           config: GingaConfig(
             users: Users(usersDataJson),
           ),
-        )..setVirtualFiles({
-            'adult_query.json': adultQueryJson,
-          });
+        );
 
-        final doc = NclDocument.fromContent(xml, gingacc: gingacc);
+        final doc = NclDocument.fromContent(
+          xml,
+          virtualFiles: {
+            'adult_query.json': adultQueryJson,
+          },
+          gingacc: gingacc,
+        );
         await doc.loadUserProfiles();
         doc.start();
         doc.tick(0);

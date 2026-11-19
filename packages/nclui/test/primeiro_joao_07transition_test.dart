@@ -179,14 +179,13 @@ void main() {
 
   testWidgets('NclWidget runs transition example structure successfully',
       (WidgetTester tester) async {
-    final gingacc = GingaCC()
-      ..setVirtualFiles({'joao07transition.ncl': _joao07transitionNcl});
+    final gingacc = GingaCC();
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: NclWidget(
-            src: 'joao07transition.ncl',
+          body: NclWidget.fromContent(
+            _joao07transitionNcl,
             gingacc: gingacc,
           ),
         ),

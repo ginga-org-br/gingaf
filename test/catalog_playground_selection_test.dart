@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingacc/gingacc.dart';
@@ -16,6 +18,10 @@ void main() {
       VideoPlayerPlatform.instance = MockVideoPlayer();
     });
 
+    tearDown(() {
+      catalogExamplesBaseUrl = defaultCatalogExamplesBaseUrl;
+    });
+
     testWidgets(
         'shows catalog selector when playground is opened without app param',
         (WidgetTester tester) async {
@@ -24,40 +30,49 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
+      final tempDir = Directory.systemTemp.createTempSync('ginga_cat_sel1_');
+      addTearDown(() {
+        if (tempDir.existsSync()) {
+          tempDir.deleteSync(recursive: true);
+        }
+      });
+
+      File('${tempDir.path}/catalog.json').writeAsStringSync('''{
+        "examples": {
+          "video": {
+            "mainFile": "video.ncl",
+            "category": "general",
+            "description": "Video media presentation example"
+          },
+          "lua_demo": {
+            "mainFile": "lua_demo.ncl",
+            "category": "lua",
+            "description": "Lua demo application"
+          }
+        }
+      }''');
+      File('${tempDir.path}/video.ncl')
+          .writeAsStringSync('''<ncl id="my_test_video">
+        <body>
+          <port id="p1" component="v1"/>
+          <media id="v1" src="movie.mp4"/>
+        </body>
+      </ncl>''');
+      File('${tempDir.path}/lua_demo.ncl')
+          .writeAsStringSync('''<ncl id="my_lua_demo">
+        <body>
+          <port id="p1" component="v1"/>
+          <media id="v1" src="movie.mp4"/>
+        </body>
+      </ncl>''');
+      catalogExamplesBaseUrl = tempDir.uri.toString();
+
       final gingacc = GingaCC(
         config: GingaConfig(
           enablePlayground: true,
           appSrc: null,
         ),
       );
-      gingacc.setVirtualFiles({
-        'examples/catalog.json': '''{
-          "examples": {
-            "video": {
-              "mainFile": "video.ncl",
-              "category": "general",
-              "description": "Video media presentation example"
-            },
-            "lua_demo": {
-              "mainFile": "lua_demo.ncl",
-              "category": "lua",
-              "description": "Lua demo application"
-            }
-          }
-        }''',
-        'examples/video.ncl': '''<ncl id="my_test_video">
-          <body>
-            <port id="p1" component="v1"/>
-            <media id="v1" src="movie.mp4"/>
-          </body>
-        </ncl>''',
-        'examples/lua_demo.ncl': '''<ncl id="my_lua_demo">
-          <body>
-            <port id="p1" component="v1"/>
-            <media id="v1" src="movie.mp4"/>
-          </body>
-        </ncl>''',
-      });
 
       await tester.pumpWidget(Ginga(gingacc: gingacc));
       await tester.pump(const Duration(milliseconds: 100));
@@ -81,9 +96,7 @@ void main() {
       expect(editorState.effectiveContent, contains('my_lua_demo'));
       expect(
         gingacc.config.appSrc,
-        equals(
-          'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/lua_demo.ncl',
-        ),
+        equals(resolveCatalogExampleUrl('lua_demo.ncl')),
       );
 
       await tester.tap(find.byKey(const Key('monaco_run_button')));
@@ -108,11 +121,13 @@ void main() {
           appSrc: 'examples/video.ncl',
         ),
       );
-      gingacc.setVirtualFiles({
-        'examples/video.ncl': '<ncl id="with_app"><body/></ncl>',
-      });
 
-      await tester.pumpWidget(Ginga(gingacc: gingacc));
+      await tester.pumpWidget(
+        Ginga.fromContent(
+          '<ncl id="with_app"><body/></ncl>',
+          gingacc: gingacc,
+        ),
+      );
       await tester.pump(const Duration(milliseconds: 100));
 
       expect(find.byType(PlaygroundEditor), findsOneWidget);
@@ -130,34 +145,42 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      final gingacc = GingaCC(
-        config: GingaConfig(
-          enablePlayground: true,
-          appSrc: null,
-        ),
-      );
-      gingacc.setVirtualFiles({
-        'examples/catalog.json': '''{
-          "examples": {
-            "sbtvd": {
-              "mainFile": "sbtvd/main.ncl",
-              "category": "general",
-              "description": "SBTVD broadcast video example",
-              "otherEditbleFiles": ["ginga_config.json"]
-            }
+      final tempDir = Directory.systemTemp.createTempSync('ginga_cat_sel3_');
+      addTearDown(() {
+        if (tempDir.existsSync()) {
+          tempDir.deleteSync(recursive: true);
+        }
+      });
+      File('${tempDir.path}/catalog.json').writeAsStringSync('''{
+        "examples": {
+          "sbtvd": {
+            "mainFile": "sbtvd/main.ncl",
+            "category": "general",
+            "description": "SBTVD broadcast video example",
+            "otherEditbleFiles": ["ginga_config.json"]
           }
-        }''',
-        'examples/sbtvd/main.ncl': '''<ncl>
+        }
+      }''');
+      File('${tempDir.path}/sbtvd/main.ncl')
+        ..parent.createSync(recursive: true)
+        ..writeAsStringSync('''<ncl>
           <body>
             <port id="init" component="video"/>
             <media id="video" src="sbtvd://video">
               <property name="bounds" value="25%,25%,50%,50%"/>
             </media>
           </body>
-        </ncl>''',
-        'examples/sbtvd/ginga_config.json':
-            '{"mainAvSrc": "https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4"}',
-      });
+        </ncl>''');
+      File('${tempDir.path}/sbtvd/ginga_config.json').writeAsStringSync(
+          '{"mainAvSrc": "https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4"}');
+      catalogExamplesBaseUrl = tempDir.uri.toString();
+
+      final gingacc = GingaCC(
+        config: GingaConfig(
+          enablePlayground: true,
+          appSrc: null,
+        ),
+      );
 
       await tester.pumpWidget(Ginga(gingacc: gingacc));
       await tester.pump(const Duration(milliseconds: 200));

@@ -48,6 +48,20 @@ class NclWidget extends BaseWidget {
     this.onBreakpointHit,
   });
 
+  const NclWidget.fromContent(
+    String content, {
+    super.key,
+    super.src = 'main.ncl',
+    super.virtualFiles,
+    super.media,
+    super.document,
+    super.gingacc,
+    this.mainAvKey,
+    this.onRequestMainAv,
+    this.bounds,
+    this.onBreakpointHit,
+  }) : super(content: content);
+
   static NclWidgetState of(BuildContext context) {
     final state = maybeOf(context);
     if (state == null) {
@@ -372,12 +386,24 @@ class NclWidgetState extends MediaState<NclWidget> {
       final base = (widget.media?.uri.isNotEmpty == true)
           ? widget.media!.uri
           : (widget.document?.baseUri?.toString() ?? widget.document?.docSrc);
-      final doc = await NclDocument.fromSrc(
-        widget.src,
-        applicationId: widget.applicationId,
-        gingacc: gingacc,
-        baseDirSrc: base,
-      );
+      final doc = widget.content != null
+          ? NclDocument.fromContent(
+              widget.content!,
+              applicationId: widget.applicationId,
+              appSrc: widget.src,
+              virtualFiles: widget.virtualFiles,
+              gingacc: gingacc,
+              baseDirSrc: base,
+            )
+          : await NclDocument.fromSrc(
+              widget.src,
+              applicationId: widget.applicationId,
+              gingacc: gingacc,
+              baseDirSrc: base,
+            );
+      if (widget.content != null) {
+        await doc.loadUserProfiles();
+      }
       if (!mounted) return;
 
       nclDocument = doc;

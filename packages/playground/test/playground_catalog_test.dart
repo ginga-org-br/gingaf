@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingacc/gingacc.dart';
 import 'package:playground/playground.dart';
@@ -24,6 +26,10 @@ void main() {
         }
       }
     }''';
+
+    tearDown(() {
+      catalogExamplesBaseUrl = defaultCatalogExamplesBaseUrl;
+    });
 
     test('parseCatalog parses valid JSON into CatalogExample objects', () {
       final examples = parseCatalog(sampleCatalogJson);
@@ -69,28 +75,71 @@ void main() {
       expect(examples.first.description, equals('Test Example'));
     });
 
-    test('loadCatalogExamples loads from GingaCC virtualFiles', () async {
-      final gingacc = GingaCC();
-      gingacc.setVirtualFiles({
-        'examples/catalog.json': sampleCatalogJson,
+    test('loadCatalogExamples loads from temporary folder via GingaCC',
+        () async {
+      final tempDir = Directory.systemTemp.createTempSync('ginga_cat_test_');
+      addTearDown(() {
+        if (tempDir.existsSync()) {
+          tempDir.deleteSync(recursive: true);
+        }
       });
 
+      File('${tempDir.path}/catalog.json').writeAsStringSync(sampleCatalogJson);
+      catalogExamplesBaseUrl = tempDir.uri.toString();
+
+      final gingacc = GingaCC();
       final examples = await loadCatalogExamples(gingacc: gingacc);
       expect(examples.length, equals(3));
       expect(examples.map((e) => e.key),
           containsAll(['video', 'sbtvd', 'minimal']));
     });
 
-    test('loadExampleContent loads content from GingaCC virtualFiles',
+    test('loadExampleContent loads content from temporary folder via GingaCC',
         () async {
       const sampleContent = '<ncl><body/></ncl>';
-      final gingacc = GingaCC();
-      gingacc.setVirtualFiles({
-        'examples/video.ncl': sampleContent,
+      final tempDir = Directory.systemTemp.createTempSync('ginga_ex_test_');
+      addTearDown(() {
+        if (tempDir.existsSync()) {
+          tempDir.deleteSync(recursive: true);
+        }
       });
 
+      File('${tempDir.path}/video.ncl').writeAsStringSync(sampleContent);
+      catalogExamplesBaseUrl = tempDir.uri.toString();
+
+      final gingacc = GingaCC();
       final content = await loadExampleContent('video.ncl', gingacc: gingacc);
       expect(content, equals(sampleContent));
+    });
+
+    test('loadCatalogExamples and loadExampleContent fetch over HTTP',
+        () async {
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(() async {
+        await server.close(force: true);
+      });
+      server.listen((req) {
+        if (req.uri.path == '/examples/catalog.json') {
+          req.response
+            ..statusCode = 200
+            ..write(sampleCatalogJson);
+        } else if (req.uri.path == '/examples/video.ncl') {
+          req.response
+            ..statusCode = 200
+            ..write('<ncl id="http_video"/>');
+        } else {
+          req.response.statusCode = 404;
+        }
+        req.response.close();
+      });
+
+      catalogExamplesBaseUrl = 'http://127.0.0.1:${server.port}/examples';
+      final gingacc = GingaCC();
+      final examples = await loadCatalogExamples(gingacc: gingacc);
+      expect(examples.length, equals(3));
+
+      final content = await loadExampleContent('video.ncl', gingacc: gingacc);
+      expect(content, equals('<ncl id="http_video"/>'));
     });
 
     test('resolveCatalogExampleUrl resolves catalog entries to GitHub URL', () {

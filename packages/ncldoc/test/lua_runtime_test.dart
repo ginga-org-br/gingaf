@@ -14,6 +14,11 @@ void main() {
       runtime = NCLuaRuntime(document: doc);
     });
 
+    tearDown(() {
+      runtime.dispose();
+      doc.privateBase.dispose();
+    });
+
     test('Lua script event registration and posting', () {
       final script = '''
         local event = require 'event'
@@ -294,8 +299,18 @@ void main() {
         ..add(ArchiveFile.string('main.lua', 'return 42'))
         ..add(ArchiveFile.string('assets/info.txt', 'ginga zip'));
       final zipBytes = ZipEncoder().encodeBytes(initialArchive);
-      doc.privateBase.setVirtualFiles({
-        'test.zip': 'data:application/zip;base64,${base64.encode(zipBytes)}',
+
+      final zipDoc = NclDocument.fromContent(
+        '<ncl><head/><body/></ncl>',
+        applicationId: 'zip_virtual_test',
+        virtualFiles: {
+          'test.zip': 'data:application/zip;base64,${base64.encode(zipBytes)}',
+        },
+      );
+      final zipRuntime = NCLuaRuntime(document: zipDoc);
+      addTearDown(() {
+        zipRuntime.dispose();
+        zipDoc.privateBase.dispose();
       });
 
       final script = '''
@@ -326,63 +341,63 @@ void main() {
         local f = io.open("extracted_info.txt", "r")
         _G.test_zip_extracted_content = f and f:read("*a") or nil
       ''';
-      runtime.execute(script);
+      zipRuntime.execute(script);
 
-      runtime.luaState.getGlobal('test_zip_missing_is_nil');
-      expect(runtime.luaState.toBoolean(-1), isTrue);
-      runtime.luaState.pop(1);
+      zipRuntime.luaState.getGlobal('test_zip_missing_is_nil');
+      expect(zipRuntime.luaState.toBoolean(-1), isTrue);
+      zipRuntime.luaState.pop(1);
 
-      runtime.luaState.getGlobal('test_zip_missing_has_err');
-      expect(runtime.luaState.toBoolean(-1), isTrue);
-      runtime.luaState.pop(1);
+      zipRuntime.luaState.getGlobal('test_zip_missing_has_err');
+      expect(zipRuntime.luaState.toBoolean(-1), isTrue);
+      zipRuntime.luaState.pop(1);
 
-      runtime.luaState.getGlobal('test_zip_path');
-      expect(runtime.luaState.toStr(-1), 'test.zip');
-      runtime.luaState.pop(1);
+      zipRuntime.luaState.getGlobal('test_zip_path');
+      expect(zipRuntime.luaState.toStr(-1), 'test.zip');
+      zipRuntime.luaState.pop(1);
 
-      runtime.luaState.getGlobal('test_zip_exists_before');
-      expect(runtime.luaState.toBoolean(-1), true);
-      runtime.luaState.pop(1);
+      zipRuntime.luaState.getGlobal('test_zip_exists_before');
+      expect(zipRuntime.luaState.toBoolean(-1), true);
+      zipRuntime.luaState.pop(1);
 
-      runtime.luaState.getGlobal('test_zip_read_main');
-      expect(runtime.luaState.toStr(-1), 'return 42');
-      runtime.luaState.pop(1);
+      zipRuntime.luaState.getGlobal('test_zip_read_main');
+      expect(zipRuntime.luaState.toStr(-1), 'return 42');
+      zipRuntime.luaState.pop(1);
 
-      runtime.luaState.getGlobal('test_zip_exists_after');
-      expect(runtime.luaState.toBoolean(-1), true);
-      runtime.luaState.pop(1);
+      zipRuntime.luaState.getGlobal('test_zip_exists_after');
+      expect(zipRuntime.luaState.toBoolean(-1), true);
+      zipRuntime.luaState.pop(1);
 
-      runtime.luaState.getGlobal('test_zip_read_new');
-      expect(runtime.luaState.toStr(-1), 'data_payload');
-      runtime.luaState.pop(1);
+      zipRuntime.luaState.getGlobal('test_zip_read_new');
+      expect(zipRuntime.luaState.toStr(-1), 'data_payload');
+      zipRuntime.luaState.pop(1);
 
-      runtime.luaState.getGlobal('test_zip_remove_ok');
-      expect(runtime.luaState.toBoolean(-1), true);
-      runtime.luaState.pop(1);
+      zipRuntime.luaState.getGlobal('test_zip_remove_ok');
+      expect(zipRuntime.luaState.toBoolean(-1), true);
+      zipRuntime.luaState.pop(1);
 
-      runtime.luaState.getGlobal('test_zip_exists_after_remove');
-      expect(runtime.luaState.toBoolean(-1), false);
-      runtime.luaState.pop(1);
+      zipRuntime.luaState.getGlobal('test_zip_exists_after_remove');
+      expect(zipRuntime.luaState.toBoolean(-1), false);
+      zipRuntime.luaState.pop(1);
 
-      runtime.luaState.getGlobal('test_zip_extract_ok');
-      expect(runtime.luaState.toBoolean(-1), true);
-      runtime.luaState.pop(1);
+      zipRuntime.luaState.getGlobal('test_zip_extract_ok');
+      expect(zipRuntime.luaState.toBoolean(-1), true);
+      zipRuntime.luaState.pop(1);
 
-      runtime.luaState.getGlobal('test_zip_persisted_new');
-      expect(runtime.luaState.toBoolean(-1), true);
-      runtime.luaState.pop(1);
+      zipRuntime.luaState.getGlobal('test_zip_persisted_new');
+      expect(zipRuntime.luaState.toBoolean(-1), true);
+      zipRuntime.luaState.pop(1);
 
-      runtime.luaState.getGlobal('test_zip_persisted_removed');
-      expect(runtime.luaState.toBoolean(-1), false);
-      runtime.luaState.pop(1);
+      zipRuntime.luaState.getGlobal('test_zip_persisted_removed');
+      expect(zipRuntime.luaState.toBoolean(-1), false);
+      zipRuntime.luaState.pop(1);
 
-      runtime.luaState.getGlobal('test_zip_list_count');
-      expect(runtime.luaState.toInteger(-1), 2);
-      runtime.luaState.pop(1);
+      zipRuntime.luaState.getGlobal('test_zip_list_count');
+      expect(zipRuntime.luaState.toInteger(-1), 2);
+      zipRuntime.luaState.pop(1);
 
-      runtime.luaState.getGlobal('test_zip_extracted_content');
-      expect(runtime.luaState.toStr(-1), 'ginga zip');
-      runtime.luaState.pop(1);
+      zipRuntime.luaState.getGlobal('test_zip_extracted_content');
+      expect(zipRuntime.luaState.toStr(-1), 'ginga zip');
+      zipRuntime.luaState.pop(1);
     });
 
     test(

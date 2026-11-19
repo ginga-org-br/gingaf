@@ -5,14 +5,17 @@ import 'package:flutter/services.dart';
 import 'package:gingacc/gingacc.dart';
 import 'package:material_ui/material_ui.dart';
 
-const String catalogExamplesBaseUrl =
+const String defaultCatalogExamplesBaseUrl =
     'https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples';
+
+String catalogExamplesBaseUrl = defaultCatalogExamplesBaseUrl;
 
 String resolveCatalogExampleUrl(String pathOrUrl) {
   final trimmed = pathOrUrl.trim();
   if (trimmed.isEmpty ||
       isHttpUri(trimmed) ||
       isXmlString(trimmed) ||
+      trimmed.startsWith('file:') ||
       trimmed.startsWith('data:') ||
       trimmed.startsWith('blob:')) {
     return trimmed;
@@ -27,7 +30,10 @@ String resolveCatalogExampleUrl(String pathOrUrl) {
   if (clean.startsWith('examples/')) {
     clean = clean.substring('examples/'.length);
   }
-  return '$catalogExamplesBaseUrl/$clean';
+  final base = catalogExamplesBaseUrl.endsWith('/')
+      ? catalogExamplesBaseUrl.substring(0, catalogExamplesBaseUrl.length - 1)
+      : catalogExamplesBaseUrl;
+  return '$base/$clean';
 }
 
 class CatalogExample {

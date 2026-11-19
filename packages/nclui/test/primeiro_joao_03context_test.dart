@@ -300,14 +300,13 @@ void main() {
 
   testWidgets('NclWidget updates widget layouts for nested context selection',
       (WidgetTester tester) async {
-    final gingacc = GingaCC()
-      ..setVirtualFiles({'joao03context.ncl': _joao03contextNcl});
+    final gingacc = GingaCC();
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: NclWidget(
-            src: 'joao03context.ncl',
+          body: NclWidget.fromContent(
+            _joao03contextNcl,
             gingacc: gingacc,
           ),
         ),

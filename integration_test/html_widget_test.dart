@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingacc/gingacc.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:nclui/html_widget.dart';
 
 const _testStatusHtml = '''
@@ -27,14 +27,14 @@ void main() {
 
   testWidgets('Verify HtmlWidget run on real platform',
       (WidgetTester tester) async {
-    final gingacc = GingaCC()
-      ..setVirtualFiles({'test_status.html': _testStatusHtml});
+    final gingacc = GingaCC();
     final completer = Completer<String>();
 
     await tester.pumpWidget(
       MaterialApp(
         home: Material(
-          child: HtmlWidget(
+          child: HtmlWidget.fromContent(
+            _testStatusHtml,
             src: 'test_status.html',
             gingacc: gingacc,
             javaScriptChannels: {
@@ -49,7 +49,6 @@ void main() {
       ),
     );
 
-    // Wait for the message with a timeout
     final result = await completer.future.timeout(const Duration(seconds: 10));
 
     expect(result, equals("BRIDGE_READY"));

@@ -27,11 +27,15 @@ c:drawRect("fill", 110, 110, 20, 20)
 
   testWidgets('NCL Integration Mounting Verification',
       (WidgetTester tester) async {
-    final gingacc = GingaCC()..setVirtualFiles(sharedAssets);
+    final gingacc = GingaCC();
     await tester.pumpWidget(
       MaterialApp(
-        home: NclWidget(
+        home: NclWidget.fromContent(
+          sharedAssets['test.ncl']!,
           src: 'test.ncl',
+          virtualFiles: {
+            'test.lua': sharedAssets['test.lua']!,
+          },
           gingacc: gingacc,
         ),
       ),
@@ -45,10 +49,11 @@ c:drawRect("fill", 110, 110, 20, 20)
   group('LuaWidget Standalone Unit Tests', () {
     testWidgets('LuaWidget should process multiple drawing commands',
         (WidgetTester tester) async {
-      final gingacc = GingaCC()..setVirtualFiles(sharedAssets);
+      final gingacc = GingaCC();
       await tester.pumpWidget(
         MaterialApp(
-          home: LuaWidget(
+          home: LuaWidget.fromContent(
+            sharedAssets['test.lua']!,
             src: 'test.lua',
             gingacc: gingacc,
           ),
@@ -83,10 +88,16 @@ c:drawRect("fill", 110, 110, 20, 20)
           'AAAABwAAAAAAAAAAABCA7UEzAAAAaW1hZ2VzL1BLAQIUAwoDAAAAABVn6jo8P+uKKQAA'
           'ACkAAAAQAAAAAAAAAAAAIICkgVgAAABpbWFnZXMvc21pbGUuZ2lmUEsFBgAAAAADAAMA'
           'qgAAAK8AAAAAAA==';
-      final gingacc = GingaCC()
-        ..setVirtualFiles({
+      final gingacc = GingaCC();
+      gingacc.getPrivateBase(
+        applicationId: examplePath,
+        virtualFiles: {
           webZipUrl: 'data:application/zip;base64,$allZipBase64',
-        });
+        },
+      );
+      addTearDown(() {
+        gingacc.removePrivateBase(examplePath);
+      });
       final nclKey = GlobalKey<NclWidgetState>();
 
       await tester.pumpWidget(
