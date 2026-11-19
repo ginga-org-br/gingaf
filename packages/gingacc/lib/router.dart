@@ -32,8 +32,8 @@ class CCWSRouter {
       );
     }
 
-    router.get('/dtv/current-service', serviceHandler);
-    router.get('/dtv/current-service/', serviceHandler);
+    router.get('/<prefix|dtv|tv3>/current-service', serviceHandler);
+    router.get('/<prefix|dtv|tv3>/current-service/', serviceHandler);
 
     try {
       for (final plugin in GetIt.instance.getAll<CcwsRoutePlugin>()) {

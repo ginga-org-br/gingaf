@@ -51,7 +51,7 @@ class CCWS {
   });
 
   window.fetch = async function(resource, config) {
-    if (typeof resource === 'string' && resource.match(/(?:localhost|127\.0\.0\.1):[0-9]+\/dtv\/current-service/)) {
+    if (typeof resource === 'string' && resource.match(/(?:localhost|127\.0\.0\.1):[0-9]+\/(?:dtv|tv3)\/current-service/)) {
       console.log('Intercepted CCWS fetch: ' + resource);
       return new Promise((resolve, reject) => {
         const id = ++ccwsId;

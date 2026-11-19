@@ -9,7 +9,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
   
-  if (url.includes('/dtv/current-service')) {
+  if (url.includes('/dtv/current-service') || url.includes('/tv3/current-service')) {
     event.respondWith(new Promise((resolve, reject) => {
       self.clients.matchAll().then(clients => {
         if (clients.length === 0) {
