@@ -11,7 +11,6 @@ import 'package:video_player_media_kit/video_player_media_kit.dart';
 
 import 'args.dart';
 import 'ginga.dart';
-import 'web_utils_stub.dart' if (dart.library.js_interop) 'web_utils_web.dart';
 
 export 'args.dart';
 
