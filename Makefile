@@ -2,7 +2,7 @@ MAKEFLAGS += -s --no-print-directory
 .DEFAULT_GOAL := help
 $(if $(filter Windows_NT,$(OS)),$(if $(shell where printf 2>nul),,$(error coreutils is not installed. Please run: winget install coreutils)))
 
-.PHONY: help deps deps-host deps-android format build build-web build-android release release-web release-android publish test test-linux-distros dartdoc clean run-example run-playground-web run-playground-desktop run-examples-node deploy-folder integration_test
+.PHONY: help deps deps-host deps-android format build build-web build-android release release-web release-android publish test test-linux-distros dartdoc clean run-example run-playground-web run-playground-desktop deploy-folder integration_test
 
 BASE_HREF ?= /
 
@@ -52,7 +52,6 @@ help:
 		"  publish                                      Publish release to GitHub" \
 		"  run-playground-web                           Serve web player and playground" \
 		"  run-playground-desktop                       Run playground on current desktop OS" \
-		"  run-examples-node                            Serve Node express embedded player and playground" \
 		"  test                                         Run tests for Flutter workspace" \
 		"  test-linux-distros                           Test Linux release across Ubuntu 22.04, 24.04, 26.04" \
 		"  dartdoc                                      Generate Dart documentation" \
@@ -72,11 +71,18 @@ deps-host:
 deps-android:
 	$(DEPS_ANDROID_CMD)
 
+WEB_SOURCES = $(wildcard lib/*.dart lib/*/*.dart packages/*/lib/*.dart packages/*/lib/*/*.dart web/*)
+
+build/web/main.dart.js: .dart_tool/package_config.json $(WEB_SOURCES)
+	flutter build web --no-pub --release
+	@touch -c build/web/main.dart.js
+
 build: deps
 	flutter build $(CURRENT_OS) --no-pub --release
 
 build-web: deps
 	flutter build web --no-pub --release
+	@touch -c build/web/main.dart.js
 
 build-android: deps
 	flutter build apk --no-pub --release
@@ -126,15 +132,6 @@ run-playground-web: build-web
 run-playground-desktop: deps
 	flutter run --release --no-pub -d $(DEVICE) --dart-define="GINGA_PLAYGROUND=true" || true
 
-run-examples-node: build-web
-	npm --prefix node install --no-audit --no-fund
-	npm --prefix node/example-node-express install --no-audit --no-fund
-	npm --prefix node run build
-	mkdir -p node/playground/gingaf-web
-	cp -r build/web/* node/playground/gingaf-web/
-	npm --prefix node/example-node-express start &
-	node serve.js
-
 deploy-folder: build-web
 	$(if $(strip $(GINGA_ORG_DEPLOY)),,$(error GINGA_ORG_DEPLOY environment variable is not set))
 	mkdir -p $(GINGA_ORG_DEPLOY)/gingaf
@@ -143,7 +140,7 @@ deploy-folder: build-web
 
 clean:
 	flutter clean
-	rm -rf build/web dartdoc/api node/dist node/gingaf node/playground
+	rm -rf build/web dartdoc/api node/dist node/gingaf
 
 define check-app
 	$(if $(app),,$(error Please specify app (e.g. app=video.ncl)))

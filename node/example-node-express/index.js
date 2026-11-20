@@ -1,12 +1,6 @@
 const express = require('express');
 const path = require('path');
-let gingaNode;
-try {
-  gingaNode = require('../playground/index.js');
-} catch (_) {
-  gingaNode = require('ginga-node');
-}
-const { gingaMiddleware } = gingaNode;
+const { gingaMiddleware } = require('ginga-node');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
