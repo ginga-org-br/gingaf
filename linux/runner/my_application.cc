@@ -1,5 +1,6 @@
 #include "my_application.h"
 
+#include <epoxy/egl.h>
 #include <flutter_linux/flutter_linux.h>
 #ifdef GDK_WINDOWING_X11
 #include <gdk/gdkx.h>
@@ -80,6 +81,17 @@ static void window_method_call_cb(FlMethodChannel* channel,
     int w = playground ? ((sw >= 1920) ? 1920 : (sw - 60)) : (MIN(1280, sw - 60));
     int h = playground ? ((sh >= 1080) ? 800 : (sh - 100)) : (MIN(720, sh - 100));
     gtk_window_resize(window, w, h);
+    g_autoptr(FlMethodResponse) response =
+        FL_METHOD_RESPONSE(fl_method_success_response_new(nullptr));
+    fl_method_call_respond(method_call, response, nullptr);
+  } else if (g_strcmp0(name, "releaseMainThreadEgl") == 0) {
+    if (gdk_gl_context_get_current() == nullptr) {
+      EGLDisplay dpy = eglGetCurrentDisplay();
+      EGLContext ctx = eglGetCurrentContext();
+      if (dpy != EGL_NO_DISPLAY && ctx != EGL_NO_CONTEXT) {
+        eglMakeCurrent(dpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+      }
+    }
     g_autoptr(FlMethodResponse) response =
         FL_METHOD_RESPONSE(fl_method_success_response_new(nullptr));
     fl_method_call_respond(method_call, response, nullptr);

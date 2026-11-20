@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:ncldoc/elements.dart';
 import 'package:ncldoc/event.dart';
@@ -140,6 +141,17 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
     }
   }
 
+  Future<void> _releaseLinuxMainThreadEgl() async {
+    if (!kIsWeb &&
+        Platform.isLinux &&
+        !Platform.environment.containsKey('FLUTTER_TEST')) {
+      try {
+        await const MethodChannel('gingaf/window')
+            .invokeMethod('releaseMainThreadEgl');
+      } catch (_) {}
+    }
+  }
+
   Future<void> _safeDisposeController(VideoPlayerController c) async {
     if (_disposedControllers.contains(c)) return;
     _disposedControllers.add(c);
@@ -154,6 +166,7 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
     try {
       await c.dispose();
     } catch (_) {}
+    await _releaseLinuxMainThreadEgl();
   }
 
   Future<void> _switchToTargetVideo() async {
