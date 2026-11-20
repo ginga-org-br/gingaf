@@ -434,7 +434,7 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
       String? xmlText;
       String effectiveDocPath = widget.src;
 
-      final parsedUri = widget.privateBase.resolveUri(widget.src);
+      final parsedUri = widget.appContext.resolveUri(widget.src);
       final fileName = path
           .basename(parsedUri.path.isNotEmpty ? parsedUri.path : widget.src);
 
@@ -461,7 +461,7 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
         }
       }
 
-      xmlText ??= await widget.privateBase.loadContent(widget.src);
+      xmlText ??= await widget.appContext.loadContent(widget.src);
       if (kIsWeb && parsedUri.hasScheme) {
         effectiveDocPath = parsedUri.toString();
       }
@@ -567,8 +567,8 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
           String? preloadedText;
           if (resolvedSrc.toLowerCase().endsWith('.txt')) {
             preloadedText =
-                (await widget.privateBase.loadContent(resolvedSrc))?.trim() ??
-                    (await widget.privateBase
+                (await widget.appContext.loadContent(resolvedSrc))?.trim() ??
+                    (await widget.appContext
                             .loadContent(mediaSrc, effectiveDocPath))
                         ?.trim();
           }
@@ -640,7 +640,7 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
       if (fileName == 'pano.mp4') {
         return 'https://threejs.org/examples/textures/pano.mp4';
       }
-      return widget.privateBase.resolveUri(rawSrc, '$docDir/').toString();
+      return widget.appContext.resolveUri(rawSrc, '$docDir/').toString();
     }
 
     final ext = path.extension(fileName);
@@ -712,7 +712,7 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
     });
 
     try {
-      final parsedUri = widget.privateBase.resolveUri(videoSrc);
+      final parsedUri = widget.appContext.resolveUri(videoSrc);
       final VideoPlayerController controller;
 
       if (!kIsWeb && !isRemoteUrl && File(videoSrc).existsSync()) {
@@ -793,7 +793,7 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
     });
 
     try {
-      final parsedUri = widget.privateBase.resolveUri(imgSrc);
+      final parsedUri = widget.appContext.resolveUri(imgSrc);
 
       ImageProvider provider;
       if (!kIsWeb && File(imgSrc).existsSync()) {

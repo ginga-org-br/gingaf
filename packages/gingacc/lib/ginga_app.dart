@@ -4,17 +4,29 @@ class GingaApp {
   final String applicationId;
   final String appSrc;
   final GingaCC gingacc;
-  final GingaAppPrivateBase privateBase;
+  final GingaAppContext appContext;
+
+  String get appContextId => appContext.appContextId;
 
   GingaApp({
     String? applicationId,
-    required this.appSrc,
+    required String appSrc,
     GingaCC? gingacc,
     Uri? baseUri,
-  })  : applicationId = applicationId ?? appSrc,
-        gingacc = gingacc ?? GingaCC(),
-        privateBase = (gingacc ?? GingaCC()).getPrivateBase(
+  }) : this._(
           applicationId: applicationId ?? appSrc,
+          appSrc: appSrc,
+          gingacc: gingacc ?? GingaCC(),
+          baseUri: baseUri,
+        );
+
+  GingaApp._({
+    required this.applicationId,
+    required this.appSrc,
+    required this.gingacc,
+    Uri? baseUri,
+  }) : appContext = gingacc.getAppContext(
+          appContextId: applicationId,
           baseUri: baseUri,
         );
 }

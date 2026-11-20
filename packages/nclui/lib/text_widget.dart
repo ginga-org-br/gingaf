@@ -86,13 +86,13 @@ class TextWidgetState extends MediaState<TextWidget> {
       _content = '';
       return;
     }
-    final syncLoaded = widget.privateBase.loadContentSync(rawSrc);
+    final syncLoaded = widget.appContext.loadContentSync(rawSrc);
     if (syncLoaded != null) {
       _content = syncLoaded;
       return;
     }
     _content = rawSrc;
-    widget.privateBase.loadContent(rawSrc).then((loaded) {
+    widget.appContext.loadContent(rawSrc).then((loaded) {
       if (mounted && loaded != null && loaded != _content) {
         setState(() {
           _content = loaded;

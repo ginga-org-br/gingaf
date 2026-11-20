@@ -16,7 +16,7 @@ void main() {
 
     tearDown(() {
       runtime.dispose();
-      doc.privateBase.dispose();
+      doc.appContext.dispose();
     });
 
     test('Lua script event registration and posting', () {
@@ -310,7 +310,7 @@ void main() {
       final zipRuntime = NCLuaRuntime(document: zipDoc);
       addTearDown(() {
         zipRuntime.dispose();
-        zipDoc.privateBase.dispose();
+        zipDoc.appContext.dispose();
       });
 
       final script = '''

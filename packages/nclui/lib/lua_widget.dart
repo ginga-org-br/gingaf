@@ -728,19 +728,19 @@ class LuaWidgetState extends MediaState<LuaWidget> {
   }
 
   ImageProvider _resolveImageProvider(String path) {
-    final pb = widget.privateBase;
+    final ctx = widget.appContext;
     final base = (widget.media?.uri.isNotEmpty == true)
         ? widget.media!.uri
         : (widget.document?.baseUri?.toString() ?? widget.src);
-    final uri = pb.resolveUri(path, base);
+    final uri = ctx.resolveUri(path, base);
     final resolvedPath =
         uri.isScheme('file') ? uri.toFilePath() : uri.toString();
     if (uri.isScheme('http') || uri.isScheme('https') || uri.isScheme('blob')) {
       return NetworkImage(uri.toString());
     }
-    final bytes = pb.loadBytesSync(path, base) ??
-        pb.loadBytesSync(path.replaceAll('../', ''), base) ??
-        pb.loadBytesSync('../$path', base);
+    final bytes = ctx.loadBytesSync(path, base) ??
+        ctx.loadBytesSync(path.replaceAll('../', ''), base) ??
+        ctx.loadBytesSync('../$path', base);
     if (bytes != null) {
       return MemoryImage(bytes);
     }
@@ -804,16 +804,16 @@ class LuaWidgetState extends MediaState<LuaWidget> {
       if (cached != null) {
         return (cached.width.toDouble(), cached.height.toDouble());
       }
-      final pb = widget.privateBase;
+      final ctx = widget.appContext;
       final base = (widget.media?.uri.isNotEmpty == true)
           ? widget.media!.uri
           : (widget.document?.baseUri?.toString() ?? widget.src);
-      final uri = pb.resolveUri(path, base);
+      final uri = ctx.resolveUri(path, base);
       final resolvedPath =
           uri.isScheme('file') ? uri.toFilePath() : uri.toString();
-      final vBytes = pb.loadBytesSync(path, base) ??
-          pb.loadBytesSync(path.replaceAll('../', ''), base) ??
-          pb.loadBytesSync('../$path', base);
+      final vBytes = ctx.loadBytesSync(path, base) ??
+          ctx.loadBytesSync(path.replaceAll('../', ''), base) ??
+          ctx.loadBytesSync('../$path', base);
       if (vBytes != null) {
         final dims = parseImageDimensions(vBytes);
         if (dims != null) return dims;
@@ -855,7 +855,7 @@ class LuaWidgetState extends MediaState<LuaWidget> {
     canvasState.reset();
     try {
       final script =
-          widget.content ?? await widget.privateBase.loadContent(widget.src);
+          widget.content ?? await widget.appContext.loadContent(widget.src);
       if (script != null) {
         await _engine.execute(script);
         if (widget.media == null ||

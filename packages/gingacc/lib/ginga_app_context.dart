@@ -289,22 +289,27 @@ Future<Uint8List?> _fetchHttpBytes(Uri uri) async {
   return null;
 }
 
-class GingaAppPrivateBase {
-  final String applicationId;
+class GingaAppContext {
+  final String appContextId;
   final GingaCC? gingacc;
   final Map<String, String> _virtualFiles;
   Uri? baseUri;
 
-  GingaAppPrivateBase({
-    required this.applicationId,
+  String get applicationId => appContextId;
+
+  GingaAppContext({
+    String? appContextId,
+    String? applicationId,
     this.gingacc,
     Map<String, String>? virtualFiles,
     this.baseUri,
-  }) : _virtualFiles =
+  })  : assert(appContextId != null || applicationId != null),
+        appContextId = appContextId ?? applicationId!,
+        _virtualFiles =
             virtualFiles != null ? Map<String, String>.from(virtualFiles) : {};
 
-  GingaAppPrivateBase._scoped({
-    required this.applicationId,
+  GingaAppContext._scoped({
+    required this.appContextId,
     required this.gingacc,
     required this.baseUri,
     required Map<String, String> sharedVirtualFiles,
@@ -324,11 +329,11 @@ class GingaAppPrivateBase {
     _virtualFiles.clear();
   }
 
-  GingaAppPrivateBase scoped({String? baseDir, Uri? baseUri}) {
+  GingaAppContext scoped({String? baseDir, Uri? baseUri}) {
     final effectiveBaseUri =
         baseUri ?? (baseDir != null ? resolveUri(baseDir) : this.baseUri);
-    return GingaAppPrivateBase._scoped(
-      applicationId: applicationId,
+    return GingaAppContext._scoped(
+      appContextId: appContextId,
       gingacc: gingacc,
       baseUri: effectiveBaseUri,
       sharedVirtualFiles: _virtualFiles,
@@ -543,5 +548,162 @@ class GingaAppPrivateBase {
     } catch (_) {
       return false;
     }
+  }
+
+  bool existsSync(String src, [String? baseDirSrc]) {
+    if (hasVirtualFile(src, baseDirSrc)) return true;
+    return existsOnDiskSync(src, baseDirSrc);
+  }
+
+  String? _findVirtualFileKey(String targetSrc, [String? baseDirSrc]) {
+    if (_virtualFiles.isEmpty) return null;
+    final raw = targetSrc.trim();
+    if (raw.isEmpty) return null;
+    if (_virtualFiles.containsKey(raw)) return raw;
+    final cleanRaw = _normalizePath(raw);
+    if (_virtualFiles.containsKey(cleanRaw)) return cleanRaw;
+
+    final uri = resolveUri(raw, baseDirSrc);
+    final reqPath = _normalizePath(uri.toString());
+    if (reqPath.isEmpty) return null;
+
+    for (final key in _virtualFiles.keys) {
+      final keyPath = _normalizePath(key);
+      if (keyPath.isNotEmpty && (keyPath == cleanRaw || keyPath == reqPath)) {
+        return key;
+      }
+    }
+
+    String? bestKey;
+    int bestLen = -1;
+    for (final key in _virtualFiles.keys) {
+      final keyPath = _normalizePath(key);
+      if (keyPath.isEmpty ||
+          keyPath.startsWith('/') ||
+          RegExp(r'^[a-zA-Z]:/').hasMatch(keyPath)) {
+        continue;
+      }
+      if (reqPath.endsWith('/$keyPath') && keyPath.length > bestLen) {
+        bestLen = keyPath.length;
+        bestKey = key;
+      }
+    }
+    return bestKey;
+  }
+
+  bool removeEntrySync(String targetSrc, {String? baseDirSrc}) {
+    final cleanTarget = targetSrc.trim();
+    if (cleanTarget.isEmpty) return false;
+
+    final virtualKey = _findVirtualFileKey(cleanTarget, baseDirSrc);
+    if (virtualKey != null) {
+      _virtualFiles.remove(virtualKey);
+      return true;
+    }
+
+    if (_isWeb || isHttpUri(cleanTarget) || cleanTarget.startsWith('data:')) {
+      return false;
+    }
+
+    final uri = resolvePathUri(
+      cleanTarget,
+      baseDirSrc: baseDirSrc,
+      baseUri: baseUri,
+    );
+    if (!uri.isScheme('file') && uri.hasScheme) {
+      return false;
+    }
+    final filePath =
+        uri.isScheme('file') ? uri.toFilePath() : Uri.decodeComponent(uri.path);
+    try {
+      final file = File(filePath);
+      if (file.existsSync()) {
+        file.deleteSync();
+        return true;
+      }
+      final dir = Directory(filePath);
+      if (dir.existsSync()) {
+        dir.deleteSync(recursive: true);
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  List<String> listEntriesSync([String? subPath, String? baseDirSrc]) {
+    final entries = <String>{};
+    final rawSub = subPath?.trim() ?? '';
+    final normalizedSub = rawSub.isEmpty
+        ? ''
+        : _normalizePath(rawSub).replaceAll(RegExp(r'/+$'), '');
+
+    for (final key in _virtualFiles.keys) {
+      final normKey = _normalizePath(key);
+      if (normKey.isEmpty) continue;
+      if (normalizedSub.isEmpty) {
+        entries.add(normKey);
+      } else if (normKey == normalizedSub) {
+        entries.add(path.posix.basename(normKey));
+      } else if (normKey.startsWith('$normalizedSub/')) {
+        final remainder = normKey.substring(normalizedSub.length + 1);
+        if (remainder.isNotEmpty) {
+          entries.add(remainder);
+        }
+      }
+    }
+
+    if (!_isWeb) {
+      final baseOnDisk = (baseDirSrc != null &&
+              baseDirSrc.isNotEmpty &&
+              existsOnDiskSync(baseDirSrc)) ||
+          (baseUri != null && existsOnDiskSync(baseUri.toString()));
+      Directory? targetDir;
+      if (rawSub.isNotEmpty) {
+        if (baseOnDisk || _isExplicitFsPath(rawSub)) {
+          final uri = resolvePathUri(
+            rawSub,
+            baseDirSrc: baseDirSrc,
+            baseUri: baseUri,
+          );
+          if (uri.isScheme('file') || !uri.hasScheme) {
+            final fsPath = uri.isScheme('file')
+                ? uri.toFilePath()
+                : Uri.decodeComponent(uri.path);
+            final candidate = Directory(fsPath);
+            if (candidate.existsSync()) {
+              targetDir = candidate;
+            }
+          }
+        }
+      } else if (baseOnDisk) {
+        final uri = resolvePathUri(
+          '.',
+          baseDirSrc: baseDirSrc,
+          baseUri: baseUri,
+        );
+        if (uri.isScheme('file') || !uri.hasScheme) {
+          final fsPath = uri.isScheme('file')
+              ? uri.toFilePath()
+              : Uri.decodeComponent(uri.path);
+          final candidate = Directory(fsPath);
+          if (candidate.existsSync()) {
+            targetDir = candidate;
+          }
+        }
+      }
+
+      if (targetDir != null) {
+        try {
+          for (final entity in targetDir.listSync()) {
+            final name = path.basename(entity.path);
+            if (name.startsWith('.')) continue;
+            entries.add(name);
+          }
+        } catch (_) {}
+      }
+    }
+
+    final sorted = entries.toList()..sort();
+    return sorted;
   }
 }

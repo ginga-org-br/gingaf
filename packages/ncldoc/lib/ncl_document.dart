@@ -198,14 +198,14 @@ class NclDocument extends GingaApp {
     _logger.info('Loading NCL document from src: $appSrc');
     final effectiveId = applicationId ?? appSrc;
     final cc = gingacc ?? GingaCC();
-    final pb = cc.getPrivateBase(applicationId: effectiveId);
+    final ctx = cc.getAppContext(appContextId: effectiveId);
     final String? xml;
     if (isXmlString(appSrc)) {
       xml = appSrc;
     } else {
-      final docUri = pb.resolveUri(appSrc, baseDirSrc);
-      xml = (await pb.loadContent(docUri, baseDirSrc)) ??
-          (await pb.loadContent(appSrc, baseDirSrc));
+      final docUri = ctx.resolveUri(appSrc, baseDirSrc);
+      xml = (await ctx.loadContent(docUri, baseDirSrc)) ??
+          (await ctx.loadContent(appSrc, baseDirSrc));
     }
 
     final doc = NclDocument.fromContent(
@@ -234,15 +234,15 @@ class NclDocument extends GingaApp {
     final resolvedAppSrc = appSrc ?? docSrc ?? 'tmp.ncl';
     final effectiveId = applicationId ?? resolvedAppSrc;
     final cc = gingacc ?? GingaCC();
-    final pb = cc.getPrivateBase(
-      applicationId: effectiveId,
+    final ctx = cc.getAppContext(
+      appContextId: effectiveId,
       virtualFiles: virtualFiles,
     );
     final Uri? resolvedUri = (!isXmlString(resolvedAppSrc))
-        ? pb.resolveUri(resolvedAppSrc, baseDirSrc)
+        ? ctx.resolveUri(resolvedAppSrc, baseDirSrc)
         : null;
-    if (resolvedUri != null && pb.baseUri == null) {
-      pb.baseUri = resolvedUri;
+    if (resolvedUri != null && ctx.baseUri == null) {
+      ctx.baseUri = resolvedUri;
     }
     final doc = NclDocument._(
       applicationId: effectiveId,
@@ -346,10 +346,10 @@ class NclDocument extends GingaApp {
     if (src == null) return;
     try {
       _logger.fine('Loading user profile "$id" from src: $src');
-      String? jsonContent = privateBase.loadContentSync(src, docSrc);
+      String? jsonContent = appContext.loadContentSync(src, docSrc);
       if (jsonContent == null || jsonContent.isEmpty) {
-        final profileUri = privateBase.resolveUri(src, docSrc);
-        jsonContent = await privateBase.loadContent(profileUri);
+        final profileUri = appContext.resolveUri(src, docSrc);
+        jsonContent = await appContext.loadContent(profileUri);
       }
       if (jsonContent != null && jsonContent.isNotEmpty) {
         final query = json.decode(jsonContent);

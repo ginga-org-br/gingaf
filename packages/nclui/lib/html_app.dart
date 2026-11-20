@@ -3,7 +3,7 @@ import 'package:gingacc/gingacc.dart';
 class HtmlApp extends GingaApp {
   String get src => appSrc;
 
-  Uri? get baseUri => privateBase.baseUri;
+  Uri? get baseUri => appContext.baseUri;
 
   HtmlApp({
     super.applicationId = 'html_app',

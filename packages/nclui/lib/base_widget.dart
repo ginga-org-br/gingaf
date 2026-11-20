@@ -27,10 +27,10 @@ abstract class BaseWidget extends StatefulWidget {
 
   GingaApp? get app => document;
 
-  GingaAppPrivateBase get privateBase =>
-      document?.privateBase ??
-      gingacc.getPrivateBase(
-        applicationId: applicationId ?? src,
+  GingaAppContext get appContext =>
+      document?.appContext ??
+      gingacc.getAppContext(
+        appContextId: applicationId ?? src,
         virtualFiles: virtualFiles,
       );
 

@@ -135,7 +135,7 @@ class _SrtWidgetState extends MediaState<SrtWidget> {
   }
 
   Future<void> _loadSrt() async {
-    final content = await widget.privateBase.loadContent(widget.src);
+    final content = await widget.appContext.loadContent(widget.src);
     if (content != null && mounted) {
       setState(() {
         _cues = parseSrtContent(content);

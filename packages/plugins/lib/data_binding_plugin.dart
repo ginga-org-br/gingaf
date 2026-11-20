@@ -766,7 +766,7 @@ class _DataBindingWidgetState extends MediaState<DataBindingWidget> {
 
     ctrl.markExternalDataLoading(true);
     try {
-      final content = await widget.privateBase.loadContent(dataBindingPath);
+      final content = await widget.appContext.loadContent(dataBindingPath);
       if (content != null && content.trim().isNotEmpty) {
         ctrl.executeLua(content);
         ctrl.markExternalDataLoaded();

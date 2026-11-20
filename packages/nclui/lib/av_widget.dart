@@ -203,7 +203,7 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
   Future<void> _initVideoForSrc(String srcToLoad) async {
     if (srcToLoad.trim().isEmpty) return;
     try {
-      final parsedUri = widget.privateBase.resolveUri(srcToLoad);
+      final parsedUri = widget.appContext.resolveUri(srcToLoad);
       final VideoPlayerController controller;
 
       if (kIsWeb || (parsedUri.hasScheme && parsedUri.scheme != 'file')) {

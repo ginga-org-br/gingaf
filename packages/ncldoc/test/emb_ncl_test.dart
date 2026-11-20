@@ -76,7 +76,7 @@ void main() {
       );
       final embMedia = doc.getNodeById('embNcl') as Media;
       final videoDoc = NclDocument.fromContent(
-        doc.privateBase.loadContentSync(embMedia.src)!,
+        doc.appContext.loadContentSync(embMedia.src)!,
         gingacc: gingacc,
       );
 
@@ -143,7 +143,7 @@ void main() {
       );
       final embMedia = doc.getNodeById('embNcl') as Media;
       final videoDoc = NclDocument.fromContent(
-        doc.privateBase.loadContentSync(embMedia.src)!,
+        doc.appContext.loadContentSync(embMedia.src)!,
         gingacc: gingacc,
       );
 

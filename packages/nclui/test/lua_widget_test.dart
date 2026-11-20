@@ -89,14 +89,14 @@ c:drawRect("fill", 110, 110, 20, 20)
           'ACkAAAAQAAAAAAAAAAAAIICkgVgAAABpbWFnZXMvc21pbGUuZ2lmUEsFBgAAAAADAAMA'
           'qgAAAK8AAAAAAA==';
       final gingacc = GingaCC();
-      gingacc.getPrivateBase(
-        applicationId: examplePath,
+      gingacc.getAppContext(
+        appContextId: examplePath,
         virtualFiles: {
           webZipUrl: 'data:application/zip;base64,$allZipBase64',
         },
       );
       addTearDown(() {
-        gingacc.removePrivateBase(examplePath);
+        gingacc.removeAppContext(examplePath);
       });
       final nclKey = GlobalKey<NclWidgetState>();
 

@@ -29,13 +29,13 @@ class ImageWidgetState extends MediaState<ImageWidget> {
 
   void _initImage() {
     if (widget.src.trim().isEmpty) return;
-    _parsedUri = widget.privateBase.resolveUri(widget.src);
+    _parsedUri = widget.appContext.resolveUri(widget.src);
   }
 
   @override
   Widget buildWidgetContent(BuildContext context) {
-    if (widget.privateBase.hasVirtualFile(widget.src)) {
-      final bytes = widget.privateBase.loadBytesSync(widget.src);
+    if (widget.appContext.hasVirtualFile(widget.src)) {
+      final bytes = widget.appContext.loadBytesSync(widget.src);
       if (bytes != null && bytes.isNotEmpty) {
         return Image.memory(
           bytes,

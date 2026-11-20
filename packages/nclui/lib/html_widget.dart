@@ -101,16 +101,16 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
   Future<void> _loadHTML() async {
     if (_controller == null) return;
     try {
-      final pb = widget.privateBase;
+      final ctx = widget.appContext;
       final gingacc = widget.gingacc;
       await gingacc.ccws.start();
       assert(gingacc.ccws.isRunning);
       final base = (widget.media?.uri.isNotEmpty == true)
           ? widget.media!.uri
           : (widget.document?.baseUri?.toString() ?? widget.document?.docSrc);
-      final uri = pb.resolveUri(widget.src, base);
+      final uri = ctx.resolveUri(widget.src, base);
       final loadedContent =
-          widget.content ?? await pb.loadContent(widget.src, base);
+          widget.content ?? await ctx.loadContent(widget.src, base);
       if (loadedContent != null && loadedContent.isNotEmpty) {
         final content = gingacc.ccws.injectCcwsFetch(loadedContent);
         await _controller!.loadHtmlString(content);
@@ -128,7 +128,7 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
       } else if (uri.isScheme('http') || uri.isScheme('https')) {
         await _controller!.loadRequest(uri);
       } else {
-        var content = await pb.loadContent(widget.src, base) ?? '';
+        var content = await ctx.loadContent(widget.src, base) ?? '';
         content = gingacc.ccws.injectCcwsFetch(content);
         await _controller!.loadHtmlString(content);
       }

@@ -5,12 +5,12 @@ import 'package:logging/logging.dart';
 import 'package:path/path.dart' as path;
 
 import 'ccws.dart';
-import 'ginga_app_private_base.dart';
+import 'ginga_app_context.dart';
 import 'ginga_config.dart';
 
 export 'ccws.dart';
 export 'ginga_app.dart';
-export 'ginga_app_private_base.dart';
+export 'ginga_app_context.dart';
 export 'ginga_config.dart';
 export 'gingacc_plugins.dart';
 export 'tv3ws_client.dart';
@@ -38,7 +38,7 @@ bool isXmlString(String? src) {
 class GingaCC {
   GingaConfig config;
   late final CCWS ccws = CCWS();
-  final Map<String, GingaAppPrivateBase> _privateBases = {};
+  final Map<String, GingaAppContext> _appContexts = {};
 
   Uri resolveUri(String src, [String? baseDirSrc]) => resolvePathUri(
         src,
@@ -57,12 +57,17 @@ class GingaCC {
         baseDirSrc: baseDirSrc,
       );
 
-  GingaAppPrivateBase getPrivateBase({
-    required String applicationId,
+  GingaAppContext getAppContext({
+    String? appContextId,
+    String? applicationId,
     Uri? baseUri,
     Map<String, String>? virtualFiles,
   }) {
-    final existing = _privateBases[applicationId];
+    final id = appContextId ?? applicationId;
+    if (id == null) {
+      throw ArgumentError('Either appContextId or applicationId is required');
+    }
+    final existing = _appContexts[id];
     if (existing != null) {
       if (baseUri != null) {
         existing.baseUri = baseUri;
@@ -72,18 +77,26 @@ class GingaCC {
       }
       return existing;
     }
-    final pb = GingaAppPrivateBase(
-      applicationId: applicationId,
+    final ctx = GingaAppContext(
+      appContextId: id,
       gingacc: this,
       baseUri: baseUri,
       virtualFiles: virtualFiles,
     );
-    _privateBases[applicationId] = pb;
-    return pb;
+    _appContexts[id] = ctx;
+    return ctx;
   }
 
-  void removePrivateBase(String applicationId) {
-    final removed = _privateBases.remove(applicationId);
+  List<String> get appContextIds => List.unmodifiable(_appContexts.keys);
+
+  bool hasAppContext(String appContextId) =>
+      _appContexts.containsKey(appContextId);
+
+  GingaAppContext? findAppContext(String appContextId) =>
+      _appContexts[appContextId];
+
+  void removeAppContext(String appContextId) {
+    final removed = _appContexts.remove(appContextId);
     removed?.dispose();
   }
 

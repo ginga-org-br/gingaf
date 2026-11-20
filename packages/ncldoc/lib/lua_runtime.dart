@@ -296,7 +296,7 @@ class NCLuaRuntime {
       final effectiveBase = (src != null && src!.isNotEmpty)
           ? src
           : (document.docUri?.toString() ?? document.docSrc);
-      final content = document.privateBase.loadContentSync(path, effectiveBase);
+      final content = document.appContext.loadContentSync(path, effectiveBase);
       if (content != null) {
         ls.pushString(content);
         return 1;
@@ -567,7 +567,7 @@ class NCLuaRuntime {
           final zipRef = m.group(1);
           if (zipRef != null &&
               (_isWeb || isHttpUri(zipRef)) &&
-              document.privateBase.loadBytesSync(zipRef, effectiveBase) ==
+              document.appContext.loadBytesSync(zipRef, effectiveBase) ==
                   null) {
             (toFetch ??= <String>[]).add(zipRef);
           }
@@ -576,9 +576,9 @@ class NCLuaRuntime {
       if (toFetch != null) {
         for (final zipRef in toFetch) {
           final bytes =
-              await document.privateBase.loadBytes(zipRef, effectiveBase);
+              await document.appContext.loadBytes(zipRef, effectiveBase);
           if (bytes != null) {
-            document.privateBase.writeBytesSync(
+            document.appContext.writeBytesSync(
               zipRef,
               bytes,
               baseDirSrc: effectiveBase,
@@ -931,7 +931,7 @@ class NCLuaRuntime {
       }
     }
     final encoded = ZipEncoder().encodeBytes(archive);
-    return document.privateBase.writeBytesSync(
+    return document.appContext.writeBytesSync(
       handle.path,
       encoded,
       baseDirSrc: handle.baseDirSrc,
@@ -972,7 +972,7 @@ class NCLuaRuntime {
         return 1;
       }
 
-      final bytes = document.privateBase.loadBytesSync(rawPath, effectiveBase);
+      final bytes = document.appContext.loadBytesSync(rawPath, effectiveBase);
       if (bytes == null) {
         if (mode.contains('a')) {
           final handle = _LuaZipHandle(
@@ -1114,7 +1114,7 @@ class NCLuaRuntime {
         return 2;
       }
       final target = (dest != null && dest.trim().isNotEmpty) ? dest : name;
-      final ok = document.privateBase.writeBytesSync(
+      final ok = document.appContext.writeBytesSync(
         target,
         bytes,
         baseDirSrc: handle.baseDirSrc,
@@ -1146,7 +1146,7 @@ class NCLuaRuntime {
         final target = prefix.isEmpty
             ? name
             : (prefix.endsWith('/') ? '$prefix$name' : '$prefix/$name');
-        final ok = document.privateBase.writeBytesSync(
+        final ok = document.appContext.writeBytesSync(
           target,
           bytes,
           baseDirSrc: handle.baseDirSrc,
