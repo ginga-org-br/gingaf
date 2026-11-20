@@ -753,44 +753,48 @@ class GingaState extends State<Ginga> {
                       children: [
                         Expanded(
                           flex: 1,
-                          child: KeyedSubtree(
-                            key: const Key('flutter_monaco_widget'),
-                            child: PlaygroundEditor(
-                              key: _playgroundKey,
-                              content: _mainAppContent ?? '',
-                              filePath: _gingacc.config.appSrc,
-                              gingacc: _gingacc,
-                              isRunning: _isRunning,
-                              showCatalogSelector: _showCatalogSelector,
-                              onCatalogExampleSelected: (selectedFile) async {
-                                final appPath =
-                                    resolveCatalogExampleUrl(selectedFile);
-                                await _applyPlaygroundConfig(
-                                  appPath,
-                                  resetIfMissing: true,
-                                  fromCatalog: true,
-                                );
-                              },
-                              onContentChanged: (newText) {
-                                _mainAppContent = newText;
-                              },
-                              onRun: _runFromPlayground,
-                              onStop: _stopFromPlayground,
-                              onDebug: _runFromPlayground,
-                              onContinue: () {
-                                resume();
-                              },
-                              onReload: _runFromPlayground,
-                              initialBreakpoints: _gingacc.config.breakpoints,
-                              onBreakpointsChanged: (newBps) {
-                                setBreakpoints(newBps);
-                              },
+                          child: RepaintBoundary(
+                            child: KeyedSubtree(
+                              key: const Key('flutter_monaco_widget'),
+                              child: PlaygroundEditor(
+                                key: _playgroundKey,
+                                content: _mainAppContent ?? '',
+                                filePath: _gingacc.config.appSrc,
+                                gingacc: _gingacc,
+                                isRunning: _isRunning,
+                                showCatalogSelector: _showCatalogSelector,
+                                onCatalogExampleSelected: (selectedFile) async {
+                                  final appPath =
+                                      resolveCatalogExampleUrl(selectedFile);
+                                  await _applyPlaygroundConfig(
+                                    appPath,
+                                    resetIfMissing: true,
+                                    fromCatalog: true,
+                                  );
+                                },
+                                onContentChanged: (newText) {
+                                  _mainAppContent = newText;
+                                },
+                                onRun: _runFromPlayground,
+                                onStop: _stopFromPlayground,
+                                onDebug: _runFromPlayground,
+                                onContinue: () {
+                                  resume();
+                                },
+                                onReload: _runFromPlayground,
+                                initialBreakpoints: _gingacc.config.breakpoints,
+                                onBreakpointsChanged: (newBps) {
+                                  setBreakpoints(newBps);
+                                },
+                              ),
                             ),
                           ),
                         ),
                         Expanded(
                           flex: 1,
-                          child: _buildPlayer(context),
+                          child: RepaintBoundary(
+                            child: _buildPlayer(context),
+                          ),
                         ),
                       ],
                     )

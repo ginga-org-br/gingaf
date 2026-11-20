@@ -289,13 +289,15 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
           )
         : VideoPlayer(controller);
 
-    return Container(
-      color: Colors.black,
-      child: SizedBox.expand(
-        child: GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onTap: unmute,
-          child: player,
+    return RepaintBoundary(
+      child: Container(
+        color: Colors.black,
+        child: SizedBox.expand(
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: unmute,
+            child: player,
+          ),
         ),
       ),
     );
