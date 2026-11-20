@@ -68,7 +68,7 @@ class GingaState extends State<Ginga> {
   void Function()? _detachTv30Testbed;
 
   void _ensureMainAvMounted() {
-    if (mainAVWidget == null && !isTv30Mode()) {
+    if (mainAVWidget == null && !isTv30Testbed()) {
       setState(() {
         mainAVWidget = MainAVWidget(
           key: _mainAvKey,
@@ -89,7 +89,7 @@ class GingaState extends State<Ginga> {
         _gingacc.config.appSrc = 'main.ncl';
       }
     }
-    final isOverlay = isTv30Mode();
+    final isOverlay = isTv30Testbed();
     _showCatalogSelector = _gingacc.config.enablePlayground &&
         widget.content == null &&
         (_gingacc.config.appSrc == null ||
@@ -200,13 +200,12 @@ class GingaState extends State<Ginga> {
       final editorFiles = _gingacc.config.enablePlayground
           ? _playgroundKey.currentState?.allFileContents
           : null;
-      final virtualFiles =
-          (widget.virtualFiles != null || editorFiles != null)
-              ? <String, String>{
-                  ...?widget.virtualFiles,
-                  ...?editorFiles,
-                }
-              : null;
+      final virtualFiles = (widget.virtualFiles != null || editorFiles != null)
+          ? <String, String>{
+              ...?widget.virtualFiles,
+              ...?editorFiles,
+            }
+          : null;
       final content =
           (_gingacc.config.enablePlayground || widget.content != null)
               ? (_mainAppContent ?? widget.content)
@@ -505,7 +504,7 @@ class GingaState extends State<Ginga> {
           closeUsersOverlay();
           return true;
         }
-        if ((kIsWeb && !isTv30Mode()) || _gingacc.config.enablePlayground) {
+        if ((kIsWeb && !isTv30Testbed()) || _gingacc.config.enablePlayground) {
           return false;
         }
         _logger.info('Captured ESC in Window, stopping app and mainAV.');
@@ -651,7 +650,7 @@ class GingaState extends State<Ginga> {
       );
     }
 
-    final isOverlay = isTv30Mode();
+    final isOverlay = isTv30Testbed();
     final planeBounds = _gingacc.config.graphicPlaneBounds;
     final planeWidth = planeBounds.width > 0 ? planeBounds.width : 1280.0;
     final planeHeight = planeBounds.height > 0 ? planeBounds.height : 720.0;
@@ -671,13 +670,15 @@ class GingaState extends State<Ginga> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Center(
-            child: useNativeOverlayLayout
-                ? AspectRatio(
+          useNativeOverlayLayout
+              ? Center(
+                  child: AspectRatio(
                     aspectRatio: planeWidth / planeHeight,
                     child: playerStack,
-                  )
-                : FittedBox(
+                  ),
+                )
+              : SizedBox.expand(
+                  child: FittedBox(
                     fit: BoxFit.contain,
                     child: SizedBox(
                       width: planeWidth,
@@ -690,7 +691,7 @@ class GingaState extends State<Ginga> {
                       ),
                     ),
                   ),
-          ),
+                ),
           if (!_showUsersOverlay)
             SettingsMenu(
               key: _settingsMenuKey,
@@ -719,7 +720,7 @@ class GingaState extends State<Ginga> {
 
   @override
   Widget build(BuildContext context) {
-    final isOverlay = isTv30Mode();
+    final isOverlay = isTv30Testbed();
     return MaterialApp(
       title: 'gingaf',
       themeMode: ThemeMode.light,

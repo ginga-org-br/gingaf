@@ -1,12 +1,12 @@
-export 'tv30_keys.dart';
-
 String? getGingaApp() => null;
 
 bool? getGingaPlayground() => null;
 
 void notifyParentAppExited() {}
 
-bool isTv30Mode() => false;
+bool isTv30Testbed() => false;
+
+String? mapTv30TestbedKeyToNclKey(String rawKey) => null;
 
 Future<void Function()?> attachTv30Testbed({
   required void Function(String nclKey) onKey,

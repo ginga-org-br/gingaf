@@ -132,7 +132,7 @@ void notifyParentAppExited() {
   }
 }
 
-bool isTv30Mode() {
+bool isTv30Testbed() {
   try {
     final query = Uri.parse(web.window.location.href).queryParameters;
     if (query['tv30'] == 'true' ||
@@ -154,7 +154,7 @@ Future<void Function()?> attachTv30Testbed({
   void Function(double time)? onTime,
   void Function(String event)? onStreamEvent,
 }) async {
-  if (!isTv30Mode()) return null;
+  if (!isTv30Testbed()) return null;
   await tv30_testbed.loadLibrary();
   return tv30_testbed.subscribeTv30Testbed(
     onKey: onKey,

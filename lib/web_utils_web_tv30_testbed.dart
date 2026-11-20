@@ -5,9 +5,43 @@ import 'dart:js_interop';
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:web/web.dart' as web;
 
-import 'tv30_keys.dart';
-
-export 'tv30_keys.dart';
+String? mapTv30TestbedKeyToNclKey(String rawKey) {
+  final k = rawKey.trim();
+  final lower = k.toLowerCase();
+  if (lower == 'arrowup' || lower == 'up') return 'UP';
+  if (lower == 'arrowdown' || lower == 'down') return 'DOWN';
+  if (lower == 'arrowleft' || lower == 'left') return 'LEFT';
+  if (lower == 'arrowright' || lower == 'right') return 'RIGHT';
+  if (lower == 'enter' || lower == 'select' || lower == 'ok') return 'ENTER';
+  if (lower == 'f1' ||
+      lower == 'red' ||
+      lower == 'r' ||
+      lower == 'colorf0red') {
+    return 'RED';
+  }
+  if (lower == 'f2' ||
+      lower == 'green' ||
+      lower == 'g' ||
+      lower == 'colorf1green') {
+    return 'GREEN';
+  }
+  if (lower == 'f3' ||
+      lower == 'yellow' ||
+      lower == 'y' ||
+      lower == 'colorf2yellow') {
+    return 'YELLOW';
+  }
+  if (lower == 'f4' ||
+      lower == 'blue' ||
+      lower == 'b' ||
+      lower == 'colorf3blue') {
+    return 'BLUE';
+  }
+  if (lower == 'f5' || lower == 'info' || lower == 'i') return 'INFO';
+  if (lower == 'escape' || lower == 'back' || lower == 'exit') return 'ESCAPE';
+  if (RegExp(r'^[0-9]$').hasMatch(k)) return k;
+  return null;
+}
 
 final StreamController<String> _tv30KeyController =
     StreamController<String>.broadcast();
@@ -94,14 +128,15 @@ void Function() subscribeTv30Testbed({
   void Function(String event)? onStreamEvent,
 }) {
   final keySub = tv30KeyStream.listen((rawKey) {
-    final nclKey = mapTv30KeyToNclKey(rawKey);
+    final nclKey = mapTv30TestbedKeyToNclKey(rawKey);
     if (nclKey != null) {
       onKey(nclKey);
     }
   });
   final timeSub = onTime != null ? tv30TimeStream.listen(onTime) : null;
-  final eventSub =
-      onStreamEvent != null ? tv30StreamEventStream.listen(onStreamEvent) : null;
+  final eventSub = onStreamEvent != null
+      ? tv30StreamEventStream.listen(onStreamEvent)
+      : null;
   return () {
     keySub.cancel();
     timeSub?.cancel();
