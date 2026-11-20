@@ -297,13 +297,16 @@ void main() {
       );
     });
 
-    test('graphicPlaneBounds defaults to 0, 0, 720, 480', () {
+    test('graphicPlaneBounds defaults to 0, 0, 1280, 720', () {
       final config = GingaConfig();
       expect(config.graphicPlaneBounds, isA<Bounds>());
       expect(config.graphicPlaneBounds.left, equals(0.0));
       expect(config.graphicPlaneBounds.top, equals(0.0));
-      expect(config.graphicPlaneBounds.width, equals(720.0));
-      expect(config.graphicPlaneBounds.height, equals(480.0));
+      expect(config.graphicPlaneBounds.width, equals(1280.0));
+      expect(config.graphicPlaneBounds.height, equals(720.0));
+      expect(config.systemVariables['system.screenSize'], equals('1280,720'));
+      expect(
+          config.systemVariables['system.screenGraphicSize'], equals('1280,720'));
     });
 
     test('fromJson parses graphicPlaneBounds from map or list or legacy keys',

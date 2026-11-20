@@ -80,17 +80,20 @@ void main() {
       expect(find.byType(AVWidget), findsOneWidget);
       final initialRect = tester.getRect(find.byType(AVWidget));
 
-      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.physicalSize = const Size(2560, 1440);
       await tester.pump();
-      final resizedRect = tester.getRect(find.byType(AVWidget));
+      final maximizedRect = tester.getRect(find.byType(AVWidget));
+      final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
 
-      expect(initialRect.size, equals(const Size(800, 600)));
-      expect(resizedRect.size, equals(const Size(1200, 900)));
+      expect(initialRect.size, equals(const Size(800, 450)));
+      expect(maximizedRect.size, equals(const Size(2560, 1440)));
+      expect(nclState.bounds.width, equals(1280.0));
+      expect(nclState.bounds.height, equals(720.0));
     });
 
     testWidgets('Ginga playground resizes AVWidget to player area',
         (WidgetTester tester) async {
-      tester.view.physicalSize = const Size(1000, 600);
+      tester.view.physicalSize = const Size(1280, 720);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
 
@@ -117,14 +120,20 @@ void main() {
       final avFinder = find.byType(AVWidget);
       expect(avFinder, findsOneWidget);
       final playerRect = tester.getRect(avFinder);
-      expect(playerRect.width, equals(500.0));
+      expect(playerRect.width, equals(640.0));
+      expect(playerRect.height, equals(360.0));
+      expect(playerRect.left, equals(640.0));
+      expect(playerRect.top, equals(180.0));
 
-      tester.view.physicalSize = const Size(1400, 800);
+      tester.view.physicalSize = const Size(2560, 1440);
       await tester.pump();
       final resizedRect = tester.getRect(avFinder);
-      expect(resizedRect.width, equals(700.0));
-      expect(resizedRect.height, equals(800.0));
-      expect(resizedRect.left, equals(700.0));
+      final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
+      expect(resizedRect.width, equals(1280.0));
+      expect(resizedRect.height, equals(720.0));
+      expect(resizedRect.left, equals(1280.0));
+      expect(nclState.bounds.width, equals(1280.0));
+      expect(nclState.bounds.height, equals(720.0));
     });
 
     testWidgets('NclWidget pauses and resumes AVWidget media',

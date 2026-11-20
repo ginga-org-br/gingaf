@@ -652,14 +652,45 @@ class GingaState extends State<Ginga> {
     }
 
     final isOverlay = isTv30Mode();
+    final planeBounds = _gingacc.config.graphicPlaneBounds;
+    final planeWidth = planeBounds.width > 0 ? planeBounds.width : 1280.0;
+    final planeHeight = planeBounds.height > 0 ? planeBounds.height : 720.0;
+    final useNativeOverlayLayout = !kIsWeb &&
+        Platform.isLinux &&
+        !Platform.environment.containsKey('FLUTTER_TEST');
+    final Widget playerStack = Stack(
+      fit: StackFit.expand,
+      children: [
+        if (mainAVWidget != null) mainAVWidget!,
+        if (htmlApp != null) htmlApp!,
+        if (nclApp != null) nclApp!,
+      ],
+    );
     return Container(
       color: isOverlay ? Colors.transparent : Colors.black,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (mainAVWidget != null) mainAVWidget!,
-          if (htmlApp != null) htmlApp!,
-          if (nclApp != null) nclApp!,
+          Center(
+            child: useNativeOverlayLayout
+                ? AspectRatio(
+                    aspectRatio: planeWidth / planeHeight,
+                    child: playerStack,
+                  )
+                : FittedBox(
+                    fit: BoxFit.contain,
+                    child: SizedBox(
+                      width: planeWidth,
+                      height: planeHeight,
+                      child: MediaQuery(
+                        data: (MediaQuery.maybeOf(context) ??
+                                const MediaQueryData())
+                            .copyWith(size: Size(planeWidth, planeHeight)),
+                        child: playerStack,
+                      ),
+                    ),
+                  ),
+          ),
           if (!_showUsersOverlay)
             SettingsMenu(
               key: _settingsMenuKey,

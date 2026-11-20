@@ -251,34 +251,46 @@ abstract class MediaState<T extends BaseWidget> extends State<T> {
     }
   }
 
-  double resolveDim(String val, double parentDim) {
+  double resolveDim(String val, double parentDim, [double logicalDim = 0.0]) {
     final trimmed = val.trim();
     if (trimmed.endsWith('%')) {
       final pct =
           double.tryParse(trimmed.substring(0, trimmed.length - 1)) ?? 0.0;
       return parentDim * pct / 100.0;
     }
-    return double.tryParse(trimmed) ?? 0.0;
+    final px = double.tryParse(trimmed) ?? 0.0;
+    if (logicalDim > 0.0 && parentDim > 0.0) {
+      return px * (parentDim / logicalDim);
+    }
+    return px;
   }
 
   String get playerKey => id ?? '';
 
   @override
   Widget build(BuildContext context) {
-    final parentBounds = NclWidget.maybeOf(context)?.bounds;
+    final parentNcl = NclWidget.maybeOf(context);
+    final parentBounds = parentNcl?.bounds;
     final size = MediaQuery.maybeOf(context)?.size;
-    final planeWidth = parentBounds?.width ??
-        size?.width ??
-        (document?.config.graphicPlaneBounds.width ?? 720.0);
-    final planeHeight = parentBounds?.height ??
-        size?.height ??
-        (document?.config.graphicPlaneBounds.height ?? 480.0);
+    final configBounds = document?.config.graphicPlaneBounds;
+    final planeWidth =
+        parentBounds?.width ?? size?.width ?? (configBounds?.width ?? 1280.0);
+    final planeHeight =
+        parentBounds?.height ?? size?.height ?? (configBounds?.height ?? 720.0);
+    final logicalWidth = (parentNcl != null && parentNcl.widget.media == null)
+        ? (configBounds?.width ??
+            parentNcl.widget.gingacc.config.graphicPlaneBounds.width)
+        : 0.0;
+    final logicalHeight = (parentNcl != null && parentNcl.widget.media == null)
+        ? (configBounds?.height ??
+            parentNcl.widget.gingacc.config.graphicPlaneBounds.height)
+        : 0.0;
 
     double left, top, width, height;
-    left = resolveDim(leftStr, planeWidth);
-    top = resolveDim(topStr, planeHeight);
-    width = resolveDim(widthStr, planeWidth);
-    height = resolveDim(heightStr, planeHeight);
+    left = resolveDim(leftStr, planeWidth, logicalWidth);
+    top = resolveDim(topStr, planeHeight, logicalHeight);
+    width = resolveDim(widthStr, planeWidth, logicalWidth);
+    height = resolveDim(heightStr, planeHeight, logicalHeight);
     rect = Rect.fromLTWH(left, top, width, height);
 
     final isFocused = document?.currentFocusNodeId != null &&

@@ -110,8 +110,8 @@ bool _isImagePath(String path) {
 void initCanvasBindings(
   NCLuaRuntime engine,
   NclCanvasDelegate delegate, {
-  double canvasWidth = 1920.0,
-  double canvasHeight = 1080.0,
+  double canvasWidth = 1280.0,
+  double canvasHeight = 720.0,
   (double, double) Function()? rootSizeProvider,
   (double, double)? Function(String path)? imageSizeProvider,
 }) {
@@ -686,8 +686,8 @@ class LuaWidgetState extends MediaState<LuaWidget> {
     parseProperties(widget.media);
 
     final parentBounds = widget.document?.config.graphicPlaneBounds;
-    final planeW = parentBounds?.width ?? 1920.0;
-    final planeH = parentBounds?.height ?? 1080.0;
+    final planeW = parentBounds?.width ?? 1280.0;
+    final planeH = parentBounds?.height ?? 720.0;
     final resolvedW = resolveDim(widthStr, planeW);
     final resolvedH = resolveDim(heightStr, planeH);
     final initialW = resolvedW > 0 ? resolvedW : planeW;
@@ -714,9 +714,6 @@ class LuaWidgetState extends MediaState<LuaWidget> {
       canvasWidth: initialW,
       canvasHeight: initialH,
       rootSizeProvider: () {
-        if (rect.width > 0 && rect.height > 0) {
-          return (rect.width, rect.height);
-        }
         final curW = resolveDim(widthStr, planeW);
         final curH = resolveDim(heightStr, planeH);
         return (curW > 0 ? curW : initialW, curH > 0 ? curH : initialH);
@@ -882,11 +879,19 @@ class LuaWidgetState extends MediaState<LuaWidget> {
 
   @override
   Widget buildWidgetContent(BuildContext context) {
+    final configBounds = widget.document?.config.graphicPlaneBounds;
+    final planeW = configBounds?.width ?? 1280.0;
+    final planeH = configBounds?.height ?? 720.0;
+    final curW = resolveDim(widthStr, planeW);
+    final curH = resolveDim(heightStr, planeH);
+    final logicalW = curW > 0 ? curW : planeW;
+    final logicalH = curH > 0 ? curH : planeH;
+
     return ClipRect(
       child: SizedBox.expand(
         child: RepaintBoundary(
           child: CustomPaint(
-            painter: _LuaPainter(canvasState.commands),
+            painter: _LuaPainter(canvasState.commands, logicalW, logicalH),
             size: Size.infinite,
           ),
         ),
@@ -1271,13 +1276,22 @@ class CanvasState implements NclCanvasDelegate {
 
 class _LuaPainter extends CustomPainter {
   final List<DrawCommand> commands;
+  final double logicalWidth;
+  final double logicalHeight;
 
-  _LuaPainter(this.commands);
+  _LuaPainter(this.commands, this.logicalWidth, this.logicalHeight);
 
   @override
   void paint(Canvas canvas, Size size) {
     canvas.save();
     canvas.clipRect(Offset.zero & size);
+    if (logicalWidth > 0 &&
+        logicalHeight > 0 &&
+        size.width > 0 &&
+        size.height > 0 &&
+        (size.width != logicalWidth || size.height != logicalHeight)) {
+      canvas.scale(size.width / logicalWidth, size.height / logicalHeight);
+    }
     for (final command in commands) {
       command.draw(canvas);
     }

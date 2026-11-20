@@ -14,10 +14,12 @@ sudo apt-get install -y \
     libwebkit2gtk-4.1-dev \
     libmpv-dev \
     mpv \
+    adwaita-icon-theme \
+    mesa-utils \
     curl \
     git \
     unzip \
-    snapd
+    xz-utils
 
 if command -v snap >/dev/null 2>&1 && snap list flutter >/dev/null 2>&1; then
     echo "Removing Snap Flutter..."

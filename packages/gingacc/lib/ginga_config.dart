@@ -73,8 +73,8 @@ class GingaConfig {
     this.graphicPlaneBounds = const (
       left: 0.0,
       top: 0.0,
-      width: 720.0,
-      height: 480.0,
+      width: 1280.0,
+      height: 720.0,
     ),
     List<int>? breakpoints,
     Map<String, String>? systemVariables,
@@ -83,6 +83,10 @@ class GingaConfig {
             breakpoints != null ? List<int>.from(breakpoints) : <int>[],
         systemVariables = {
           'system.language': 'por',
+          'system.screenSize':
+              '${graphicPlaneBounds.width.toInt()},${graphicPlaneBounds.height.toInt()}',
+          'system.screenGraphicSize':
+              '${graphicPlaneBounds.width.toInt()},${graphicPlaneBounds.height.toInt()}',
           ...?systemVariables,
         },
         users = users ?? Users();
@@ -252,14 +256,14 @@ class GingaConfig {
     }
 
     Bounds planeBounds =
-        const (left: 0.0, top: 0.0, width: 720.0, height: 480.0);
+        const (left: 0.0, top: 0.0, width: 1280.0, height: 720.0);
     final rawBounds = decoded['graphicPlaneBounds'];
     if (rawBounds is Map) {
       planeBounds = (
         left: (rawBounds['left'] as num?)?.toDouble() ?? 0.0,
         top: (rawBounds['top'] as num?)?.toDouble() ?? 0.0,
-        width: (rawBounds['width'] as num?)?.toDouble() ?? 720.0,
-        height: (rawBounds['height'] as num?)?.toDouble() ?? 480.0,
+        width: (rawBounds['width'] as num?)?.toDouble() ?? 1280.0,
+        height: (rawBounds['height'] as num?)?.toDouble() ?? 720.0,
       );
     } else if (rawBounds is List && rawBounds.length >= 4) {
       planeBounds = (
@@ -273,11 +277,13 @@ class GingaConfig {
       final rawW = decoded['graphicPlaneWidth'];
       final w = rawW is num
           ? rawW.toDouble()
-          : (rawW != null ? double.tryParse(rawW.toString()) ?? 720.0 : 720.0);
+          : (rawW != null
+              ? double.tryParse(rawW.toString()) ?? 1280.0
+              : 1280.0);
       final rawH = decoded['graphicPlaneHeight'];
       final h = rawH is num
           ? rawH.toDouble()
-          : (rawH != null ? double.tryParse(rawH.toString()) ?? 480.0 : 480.0);
+          : (rawH != null ? double.tryParse(rawH.toString()) ?? 720.0 : 720.0);
       planeBounds = (left: 0.0, top: 0.0, width: w, height: h);
     }
 

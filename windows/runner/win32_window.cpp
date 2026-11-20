@@ -128,16 +128,32 @@ bool Win32Window::Create(const std::wstring& title,
   const wchar_t* window_class =
       WindowClassRegistrar::GetInstance()->GetWindowClass();
 
-  const POINT target_point = {static_cast<LONG>(origin.x),
-                              static_cast<LONG>(origin.y)};
+  POINT target_point = {static_cast<LONG>(origin.x),
+                        static_cast<LONG>(origin.y)};
+  GetCursorPos(&target_point);
   HMONITOR monitor = MonitorFromPoint(target_point, MONITOR_DEFAULTTONEAREST);
   UINT dpi = FlutterDesktopGetDpiForMonitor(monitor);
   double scale_factor = dpi / 96.0;
 
+  MONITORINFO mi{};
+  mi.cbSize = sizeof(mi);
+  GetMonitorInfo(monitor, &mi);
+  int work_w = mi.rcWork.right - mi.rcWork.left;
+  int work_h = mi.rcWork.bottom - mi.rcWork.top;
+
+  RECT window_rect = {0, 0, Scale(size.width, scale_factor),
+                      Scale(size.height, scale_factor)};
+  AdjustWindowRectEx(&window_rect, WS_OVERLAPPEDWINDOW, FALSE, 0);
+  int win_w = window_rect.right - window_rect.left;
+  int win_h = window_rect.bottom - window_rect.top;
+  if (win_w > work_w) win_w = work_w;
+  if (win_h > work_h) win_h = work_h;
+  int win_x = mi.rcWork.left + (work_w - win_w) / 2;
+  int win_y = mi.rcWork.top + (work_h - win_h) / 2;
+
   HWND window = CreateWindow(
       window_class, title.c_str(), WS_OVERLAPPEDWINDOW,
-      Scale(origin.x, scale_factor), Scale(origin.y, scale_factor),
-      Scale(size.width, scale_factor), Scale(size.height, scale_factor),
+      win_x, win_y, win_w, win_h,
       nullptr, nullptr, GetModuleHandle(nullptr), this);
 
   if (!window) {
@@ -150,6 +166,9 @@ bool Win32Window::Create(const std::wstring& title,
 }
 
 bool Win32Window::Show() {
+  if (IsZoomed(window_handle_)) {
+    return ShowWindow(window_handle_, SW_SHOWMAXIMIZED);
+  }
   return ShowWindow(window_handle_, SW_SHOWNORMAL);
 }
 
@@ -188,13 +207,14 @@ Win32Window::MessageHandler(HWND hwnd,
       return 0;
 
     case WM_DPICHANGED: {
-      auto newRectSize = reinterpret_cast<RECT*>(lparam);
-      LONG newWidth = newRectSize->right - newRectSize->left;
-      LONG newHeight = newRectSize->bottom - newRectSize->top;
+      if (!IsZoomed(hwnd)) {
+        auto newRectSize = reinterpret_cast<RECT*>(lparam);
+        LONG newWidth = newRectSize->right - newRectSize->left;
+        LONG newHeight = newRectSize->bottom - newRectSize->top;
 
-      SetWindowPos(hwnd, nullptr, newRectSize->left, newRectSize->top, newWidth,
-                   newHeight, SWP_NOZORDER | SWP_NOACTIVATE);
-
+        SetWindowPos(hwnd, nullptr, newRectSize->left, newRectSize->top,
+                     newWidth, newHeight, SWP_NOZORDER | SWP_NOACTIVATE);
+      }
       return 0;
     }
     case WM_SIZE: {

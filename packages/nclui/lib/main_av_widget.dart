@@ -49,11 +49,11 @@ class MainAVWidgetState extends AVWidgetState<MainAVWidget> {
         final double planeWidth =
             (constraints.hasBoundedWidth && constraints.maxWidth > 0)
                 ? constraints.maxWidth
-                : (MediaQuery.maybeOf(context)?.size.width ?? 720.0);
+                : (MediaQuery.maybeOf(context)?.size.width ?? 1280.0);
         final double planeHeight =
             (constraints.hasBoundedHeight && constraints.maxHeight > 0)
                 ? constraints.maxHeight
-                : (MediaQuery.maybeOf(context)?.size.height ?? 480.0);
+                : (MediaQuery.maybeOf(context)?.size.height ?? 720.0);
 
         rect = Rect.fromLTWH(0.0, 0.0, planeWidth, planeHeight);
 

@@ -40,28 +40,63 @@ bool FlutterWindow::OnCreate() {
             auto w_it = args->find(flutter::EncodableValue("width"));
             auto h_it = args->find(flutter::EncodableValue("height"));
             if (w_it != args->end() && h_it != args->end()) {
-              int w = std::get<int>(w_it->second);
-              int h = std::get<int>(h_it->second);
+              int logical_w = std::get<int>(w_it->second);
+              int logical_h = std::get<int>(h_it->second);
               HWND hwnd = GetHandle();
-              SetWindowPos(hwnd, nullptr, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
+              if (IsZoomed(hwnd)) {
+                ShowWindow(hwnd, SW_RESTORE);
+              }
+              HMONITOR monitor =
+                  MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+              UINT dpi = FlutterDesktopGetDpiForMonitor(monitor);
+              double scale = dpi / 96.0;
+              RECT rect = {0, 0, static_cast<LONG>(logical_w * scale),
+                           static_cast<LONG>(logical_h * scale)};
+              DWORD style =
+                  static_cast<DWORD>(GetWindowLongPtr(hwnd, GWL_STYLE));
+              DWORD ex_style =
+                  static_cast<DWORD>(GetWindowLongPtr(hwnd, GWL_EXSTYLE));
+              AdjustWindowRectEx(&rect, style, FALSE, ex_style);
+              SetWindowPos(hwnd, nullptr, 0, 0, rect.right - rect.left,
+                           rect.bottom - rect.top,
+                           SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
             }
           }
           result->Success();
         } else if (call.method_name() == "autoResize") {
-          const auto* args = std::get_if<flutter::EncodableMap>(call.arguments());
-          bool pg = false;
-          if (args) {
-            auto pg_it = args->find(flutter::EncodableValue("playground"));
-            if (pg_it != args->end()) {
-              pg = std::get<bool>(pg_it->second);
+          HWND hwnd = GetHandle();
+          if (!IsZoomed(hwnd)) {
+            HMONITOR monitor =
+                MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+            UINT dpi = FlutterDesktopGetDpiForMonitor(monitor);
+            double scale = dpi / 96.0;
+            MONITORINFO mi{};
+            mi.cbSize = sizeof(mi);
+            GetMonitorInfo(monitor, &mi);
+            int work_w = mi.rcWork.right - mi.rcWork.left;
+            int work_h = mi.rcWork.bottom - mi.rcWork.top;
+
+            int target_cw = static_cast<int>(1280 * scale);
+            int target_ch = static_cast<int>(720 * scale);
+            RECT rect = {0, 0, target_cw, target_ch};
+            DWORD style = static_cast<DWORD>(GetWindowLongPtr(hwnd, GWL_STYLE));
+            DWORD ex_style =
+                static_cast<DWORD>(GetWindowLongPtr(hwnd, GWL_EXSTYLE));
+            AdjustWindowRectEx(&rect, style, FALSE, ex_style);
+            int w = rect.right - rect.left;
+            int h = rect.bottom - rect.top;
+            if (w > work_w) w = work_w;
+            if (h > work_h) h = work_h;
+
+            RECT current_client = GetClientArea();
+            int cur_cw = current_client.right - current_client.left;
+            int cur_ch = current_client.bottom - current_client.top;
+            if ((cur_cw != target_cw || cur_ch != target_ch) &&
+                w < work_w && h < work_h) {
+              SetWindowPos(hwnd, nullptr, 0, 0, w, h,
+                           SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
             }
           }
-          int sw = GetSystemMetrics(SM_CXSCREEN);
-          int sh = GetSystemMetrics(SM_CYSCREEN);
-          int w = pg ? ((sw >= 1920) ? 1920 : (sw - 60)) : (sw < 1280 ? sw - 60 : 1280);
-          int h = pg ? ((sh >= 1080) ? 800 : (sh - 100)) : (sh < 720 ? sh - 100 : 720);
-          HWND hwnd = GetHandle();
-          SetWindowPos(hwnd, nullptr, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
           result->Success();
         } else {
           result->NotImplemented();

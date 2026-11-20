@@ -16,7 +16,6 @@ struct _MyApplication {
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
 
-// Called when first Flutter frame received.
 static void first_frame_cb(MyApplication* self, FlView* view) {
   GtkWindow* window = GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(view)));
   gtk_widget_show_all(GTK_WIDGET(window));
@@ -24,12 +23,35 @@ static void first_frame_cb(MyApplication* self, FlView* view) {
   gtk_window_present(window);
 }
 
+static gint get_window_monitor_index(GtkWindow* window) {
+  GdkDisplay* display = gtk_widget_get_display(GTK_WIDGET(window));
+  if (display == nullptr) return 0;
+  GdkWindow* gdk_win = gtk_widget_get_window(GTK_WIDGET(window));
+  GdkMonitor* current =
+      gdk_win != nullptr ? gdk_display_get_monitor_at_window(display, gdk_win)
+                         : nullptr;
+  int n = gdk_display_get_n_monitors(display);
+  for (int i = 0; i < n; ++i) {
+    if (gdk_display_get_monitor(display, i) == current) {
+      return i;
+    }
+  }
+  return 0;
+}
+
 static void get_screen_dimensions(GtkWindow* window, gint* out_w, gint* out_h) {
   gint w = 1920;
   gint h = 1080;
   GdkDisplay* display = gtk_widget_get_display(GTK_WIDGET(window));
   if (display != nullptr) {
-    GdkMonitor* monitor = gdk_display_get_primary_monitor(display);
+    GdkMonitor* monitor = nullptr;
+    GdkWindow* gdk_win = gtk_widget_get_window(GTK_WIDGET(window));
+    if (gdk_win != nullptr) {
+      monitor = gdk_display_get_monitor_at_window(display, gdk_win);
+    }
+    if (monitor == nullptr) {
+      monitor = gdk_display_get_primary_monitor(display);
+    }
     if (monitor == nullptr && gdk_display_get_n_monitors(display) > 0) {
       monitor = gdk_display_get_monitor(display, 0);
     }
@@ -44,6 +66,84 @@ static void get_screen_dimensions(GtkWindow* window, gint* out_w, gint* out_h) {
   }
   if (out_w) *out_w = w;
   if (out_h) *out_h = h;
+}
+
+static void wsl_toggle_maximize(GtkWindow* window) {
+  gboolean is_max = GPOINTER_TO_INT(
+      g_object_get_data(G_OBJECT(window), "wsl_maximized"));
+  GtkWidget* max_img = GTK_WIDGET(
+      g_object_get_data(G_OBJECT(window), "wsl_max_image"));
+  if (!is_max) {
+    gint mon_idx = get_window_monitor_index(window);
+    gtk_window_fullscreen_on_monitor(window, gtk_window_get_screen(window),
+                                     mon_idx);
+    g_object_set_data(G_OBJECT(window), "wsl_maximized", GINT_TO_POINTER(1));
+    if (max_img != nullptr && GTK_IS_IMAGE(max_img)) {
+      gtk_image_set_from_icon_name(GTK_IMAGE(max_img),
+                                   "window-restore-symbolic",
+                                   GTK_ICON_SIZE_MENU);
+    }
+  } else {
+    gtk_window_unfullscreen(window);
+    g_object_set_data(G_OBJECT(window), "wsl_maximized", GINT_TO_POINTER(0));
+    if (max_img != nullptr && GTK_IS_IMAGE(max_img)) {
+      gtk_image_set_from_icon_name(GTK_IMAGE(max_img),
+                                   "window-maximize-symbolic",
+                                   GTK_ICON_SIZE_MENU);
+    }
+  }
+}
+
+static void wsl_minimize_clicked_cb(GtkButton*, gpointer user_data) {
+  gtk_window_iconify(GTK_WINDOW(user_data));
+}
+
+static void wsl_maximize_clicked_cb(GtkButton*, gpointer user_data) {
+  wsl_toggle_maximize(GTK_WINDOW(user_data));
+}
+
+static void wsl_close_clicked_cb(GtkButton*, gpointer user_data) {
+  gtk_window_close(GTK_WINDOW(user_data));
+}
+
+static gboolean wsl_header_button_press_cb(GtkWidget*,
+                                           GdkEventButton* event,
+                                           gpointer user_data) {
+  GtkWindow* window = GTK_WINDOW(user_data);
+  if (event->button == 1) {
+    if (event->type == GDK_2BUTTON_PRESS) {
+      wsl_toggle_maximize(window);
+      return TRUE;
+    }
+    if (event->type == GDK_BUTTON_PRESS &&
+        !GPOINTER_TO_INT(
+            g_object_get_data(G_OBJECT(window), "wsl_maximized"))) {
+      gtk_window_begin_move_drag(window, event->button,
+                                 static_cast<gint>(event->x_root),
+                                 static_cast<gint>(event->y_root),
+                                 event->time);
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+static GtkWidget* create_wsl_titlebutton(const gchar* icon_name,
+                                         GCallback callback,
+                                         GtkWindow* window,
+                                         GtkWidget** out_image) {
+  GtkWidget* btn = gtk_button_new();
+  gtk_widget_set_can_focus(btn, FALSE);
+  GtkStyleContext* sc = gtk_widget_get_style_context(btn);
+  gtk_style_context_add_class(sc, "titlebutton");
+  gtk_style_context_add_class(sc, "flat");
+  GtkWidget* img = gtk_image_new_from_icon_name(icon_name, GTK_ICON_SIZE_MENU);
+  gtk_container_add(GTK_CONTAINER(btn), img);
+  g_signal_connect(btn, "clicked", callback, window);
+  if (out_image != nullptr) {
+    *out_image = img;
+  }
+  return btn;
 }
 
 static void window_method_call_cb(FlMethodChannel* channel,
@@ -67,20 +167,16 @@ static void window_method_call_cb(FlMethodChannel* channel,
         FL_METHOD_RESPONSE(fl_method_success_response_new(nullptr));
     fl_method_call_respond(method_call, response, nullptr);
   } else if (g_strcmp0(name, "autoResize") == 0) {
-    FlValue* args = fl_method_call_get_args(method_call);
-    gboolean playground = FALSE;
-    if (args != nullptr && fl_value_get_type(args) == FL_VALUE_TYPE_MAP) {
-      FlValue* pg_val = fl_value_lookup_string(args, "playground");
-      if (pg_val != nullptr) {
-        playground = fl_value_get_bool(pg_val);
-      }
+    gboolean wsl_max = GPOINTER_TO_INT(
+        g_object_get_data(G_OBJECT(window), "wsl_maximized"));
+    if (!gtk_window_is_maximized(window) && !wsl_max) {
+      gint sw = 1920;
+      gint sh = 1080;
+      get_screen_dimensions(window, &sw, &sh);
+      int w = MIN(1280, sw - 60);
+      int h = MIN(720, sh - 100);
+      gtk_window_resize(window, w, h);
     }
-    gint sw = 1920;
-    gint sh = 1080;
-    get_screen_dimensions(window, &sw, &sh);
-    int w = playground ? ((sw >= 1920) ? 1920 : (sw - 60)) : (MIN(1280, sw - 60));
-    int h = playground ? ((sh >= 1080) ? 800 : (sh - 100)) : (MIN(720, sh - 100));
-    gtk_window_resize(window, w, h);
     g_autoptr(FlMethodResponse) response =
         FL_METHOD_RESPONSE(fl_method_success_response_new(nullptr));
     fl_method_call_respond(method_call, response, nullptr);
@@ -108,10 +204,16 @@ static void my_application_activate(GApplication* application) {
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
 
-  gboolean use_header_bar = TRUE;
-  if (g_getenv("WSL_DISTRO_NAME") != nullptr || g_getenv("WSL_INTEROP") != nullptr) {
-    use_header_bar = FALSE;
+  gboolean is_wsl = (g_getenv("WSL_DISTRO_NAME") != nullptr ||
+                     g_getenv("WSL_INTEROP") != nullptr);
+
+  GtkSettings* settings = gtk_settings_get_default();
+  if (settings != nullptr) {
+    g_object_set(settings, "gtk-decoration-layout",
+                 ":minimize,maximize,close", nullptr);
   }
+
+  gboolean use_header_bar = TRUE;
 #ifdef GDK_WINDOWING_X11
   GdkScreen* screen = gtk_window_get_screen(window);
   if (GDK_IS_X11_SCREEN(screen)) {
@@ -121,49 +223,64 @@ static void my_application_activate(GApplication* application) {
     }
   }
 #endif
-  if (use_header_bar) {
+
+  GtkWidget* wsl_vbox = nullptr;
+  if (is_wsl) {
+    gtk_window_set_title(window, "gingaf");
+    gtk_window_set_decorated(window, FALSE);
+    wsl_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    GtkWidget* event_box = gtk_event_box_new();
+    gtk_event_box_set_above_child(GTK_EVENT_BOX(event_box), FALSE);
+    gtk_widget_add_events(event_box, GDK_BUTTON_PRESS_MASK);
+    g_signal_connect(event_box, "button-press-event",
+                     G_CALLBACK(wsl_header_button_press_cb), window);
+
+    GtkHeaderBar* header_bar = GTK_HEADER_BAR(gtk_header_bar_new());
+    gtk_header_bar_set_title(header_bar, "gingaf");
+    gtk_header_bar_set_show_close_button(header_bar, FALSE);
+
+    GtkWidget* btn_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+    GtkWidget* min_btn = create_wsl_titlebutton(
+        "window-minimize-symbolic", G_CALLBACK(wsl_minimize_clicked_cb),
+        window, nullptr);
+    GtkWidget* max_img = nullptr;
+    GtkWidget* max_btn = create_wsl_titlebutton(
+        "window-maximize-symbolic", G_CALLBACK(wsl_maximize_clicked_cb),
+        window, &max_img);
+    g_object_set_data(G_OBJECT(window), "wsl_max_image", max_img);
+    GtkWidget* close_btn = create_wsl_titlebutton(
+        "window-close-symbolic", G_CALLBACK(wsl_close_clicked_cb),
+        window, nullptr);
+    gtk_box_pack_start(GTK_BOX(btn_box), min_btn, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(btn_box), max_btn, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(btn_box), close_btn, FALSE, FALSE, 0);
+    gtk_header_bar_pack_end(header_bar, btn_box);
+
+    gtk_container_add(GTK_CONTAINER(event_box), GTK_WIDGET(header_bar));
+    gtk_box_pack_start(GTK_BOX(wsl_vbox), event_box, FALSE, FALSE, 0);
+    gtk_container_add(GTK_CONTAINER(window), wsl_vbox);
+  } else if (use_header_bar) {
     GtkHeaderBar* header_bar = GTK_HEADER_BAR(gtk_header_bar_new());
     gtk_widget_show(GTK_WIDGET(header_bar));
     gtk_header_bar_set_title(header_bar, "gingaf");
     gtk_header_bar_set_show_close_button(header_bar, TRUE);
+    gtk_header_bar_set_decoration_layout(header_bar,
+                                         ":minimize,maximize,close");
     gtk_window_set_titlebar(window, GTK_WIDGET(header_bar));
+    gtk_window_set_decorated(window, TRUE);
   } else {
     gtk_window_set_title(window, "gingaf");
-  }
-
-  gboolean is_playground = FALSE;
-  const gchar* pg_env = g_getenv("GINGA_PLAYGROUND");
-  if (pg_env != nullptr && (g_strcmp0(pg_env, "true") == 0 || g_strcmp0(pg_env, "1") == 0 || g_strcmp0(pg_env, "yes") == 0)) {
-    is_playground = TRUE;
-  }
-  const gchar* pg_env_lower = g_getenv("ginga_playground");
-  if (pg_env_lower != nullptr && (g_strcmp0(pg_env_lower, "true") == 0 || g_strcmp0(pg_env_lower, "1") == 0 || g_strcmp0(pg_env_lower, "yes") == 0)) {
-    is_playground = TRUE;
-  }
-  if (self->dart_entrypoint_arguments != nullptr) {
-    for (gchar** arg = self->dart_entrypoint_arguments; *arg != nullptr; ++arg) {
-      if (g_strcmp0(*arg, "--playground") == 0 || g_strcmp0(*arg, "-p") == 0 ||
-          g_str_has_prefix(*arg, "--playground=") || g_str_has_prefix(*arg, "-p=") ||
-          strstr(*arg, "GINGA_PLAYGROUND=true") != nullptr) {
-        is_playground = TRUE;
-        break;
-      }
-    }
-  }
-  const gchar* flutter_engine_env = g_getenv("FLUTTER_ENGINE_SWITCHES");
-  if (flutter_engine_env != nullptr && strstr(flutter_engine_env, "GINGA_PLAYGROUND=true") != nullptr) {
-    is_playground = TRUE;
+    gtk_window_set_decorated(window, TRUE);
   }
 
   gint sw = 1920;
   gint sh = 1080;
   get_screen_dimensions(window, &sw, &sh);
-  int default_w = is_playground ? ((sw >= 1920) ? 1920 : (sw - 60)) : (MIN(1280, sw - 60));
-  int default_h = is_playground ? ((sh >= 1080) ? 800 : (sh - 100)) : (MIN(720, sh - 100));
+  int default_w = MIN(1280, sw - 60);
+  int default_h = MIN(720, sh - 100);
 
   gtk_window_set_default_size(window, default_w, default_h);
-  gtk_window_set_position(window, GTK_WIN_POS_CENTER);
-  gtk_window_set_decorated(window, TRUE);
+  gtk_window_set_resizable(window, TRUE);
 
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(
@@ -174,7 +291,11 @@ static void my_application_activate(GApplication* application) {
   gdk_rgba_parse(&background_color, "#000000");
   fl_view_set_background_color(view, &background_color);
   gtk_widget_show(GTK_WIDGET(view));
-  gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(view));
+  if (wsl_vbox != nullptr) {
+    gtk_box_pack_start(GTK_BOX(wsl_vbox), GTK_WIDGET(view), TRUE, TRUE, 0);
+  } else {
+    gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(view));
+  }
 
   g_signal_connect_swapped(view, "first-frame", G_CALLBACK(first_frame_cb),
                            self);

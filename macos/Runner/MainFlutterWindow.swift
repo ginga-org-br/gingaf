@@ -24,13 +24,11 @@ class MainFlutterWindow: NSWindow {
         }
         result(nil)
       } else if call.method == "autoResize" {
-        if let args = call.arguments as? [String: Any],
-           let pg = args["playground"] as? Bool,
-           let screen = self.screen {
+        if !self.isZoomed, let screen = self.screen {
           let sw = screen.frame.width
           let sh = screen.frame.height
-          let w = pg ? (sw >= 1920 ? 1920 : sw - 60) : min(1280, sw - 60)
-          let h = pg ? (sh >= 1080 ? 800 : sh - 100) : min(720, sh - 100)
+          let w = min(1280, sw - 60)
+          let h = min(720, sh - 100)
           self.setContentSize(NSSize(width: w, height: h))
         }
         result(nil)
