@@ -114,9 +114,24 @@ Future<List<CatalogExample>> loadCatalogExamples({
   try {
     final content = await cc.loadContent(catalogUrl);
     if (content != null && content.isNotEmpty) {
-      return parseCatalog(content);
+      final parsed = parseCatalog(content);
+      if (parsed.isNotEmpty) {
+        return parsed;
+      }
     }
   } catch (_) {}
+
+  if (catalogExamplesBaseUrl != defaultCatalogExamplesBaseUrl &&
+      catalogExamplesBaseUrl.startsWith('http')) {
+    try {
+      final fallbackContent =
+          await cc.loadContent('$defaultCatalogExamplesBaseUrl/catalog.json');
+      if (fallbackContent != null && fallbackContent.isNotEmpty) {
+        catalogExamplesBaseUrl = defaultCatalogExamplesBaseUrl;
+        return parseCatalog(fallbackContent);
+      }
+    } catch (_) {}
+  }
 
   return [];
 }

@@ -6,12 +6,16 @@ const url = require('url');
 const PORT = parseInt(process.env.PORT || '5173', 10);
 const ROOT = __dirname;
 const BUILD_WEB = path.join(ROOT, 'build', 'web');
+const EXAMPLES_DIR = path.join(ROOT, 'examples');
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'application/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
   '.wasm': 'application/wasm',
+  '.ncl': 'application/xml; charset=utf-8',
+  '.ncl360': 'application/x-ncl360; charset=utf-8',
+  '.lua': 'text/plain; charset=utf-8',
   '.txt': 'text/plain; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.png': 'image/png',
@@ -23,6 +27,22 @@ const MIME_TYPES = {
   '.otf': 'font/otf',
   '.ttf': 'font/ttf',
 };
+
+function resolveExamplePath(relPath) {
+  const cleanRel = relPath.replace(/^\/+/, '');
+  if (!cleanRel) return null;
+  if (cleanRel.startsWith('examples/')) {
+    const candidate = path.join(ROOT, cleanRel);
+    if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+      return candidate;
+    }
+  }
+  const exCandidate = path.join(EXAMPLES_DIR, cleanRel);
+  if (fs.existsSync(exCandidate) && fs.statSync(exCandidate).isFile()) {
+    return exCandidate;
+  }
+  return null;
+}
 
 function resolveFilePath(reqPath) {
   const parsed = url.parse(reqPath);
@@ -42,6 +62,8 @@ function resolveFilePath(reqPath) {
     if (fs.existsSync(buildCandidate) && fs.statSync(buildCandidate).isFile()) {
       return buildCandidate;
     }
+    const exCandidate = resolveExamplePath(rel);
+    if (exCandidate) return exCandidate;
   }
 
   if (pathname.startsWith('/playground/')) {
@@ -53,6 +75,8 @@ function resolveFilePath(reqPath) {
     if (fs.existsSync(buildCandidate) && fs.statSync(buildCandidate).isFile()) {
       return buildCandidate;
     }
+    const exCandidate = resolveExamplePath(rel);
+    if (exCandidate) return exCandidate;
   }
 
   if (pathname === '/' || pathname === '/gingaf' || pathname === '/gingaf/' || pathname === '/gingaf/index.html') {
@@ -65,6 +89,8 @@ function resolveFilePath(reqPath) {
     if (fs.existsSync(buildCandidate) && fs.statSync(buildCandidate).isFile()) {
       return buildCandidate;
     }
+    const exCandidate = resolveExamplePath(rel);
+    if (exCandidate) return exCandidate;
   }
 
   const directPath = pathname.replace(/^\//, '');
@@ -72,6 +98,8 @@ function resolveFilePath(reqPath) {
   if (fs.existsSync(buildCandidate) && fs.statSync(buildCandidate).isFile()) {
     return buildCandidate;
   }
+  const exCandidate = resolveExamplePath(directPath);
+  if (exCandidate) return exCandidate;
 
   return null;
 }

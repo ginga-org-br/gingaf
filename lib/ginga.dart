@@ -5,10 +5,10 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:gingacc/gingacc.dart';
 import 'package:logging/logging.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:nclui/html_widget.dart' as html;
 import 'package:nclui/main_av_widget.dart';
 import 'package:nclui/ncl_widget.dart' as ncl;
@@ -90,6 +90,19 @@ class GingaState extends State<Ginga> {
       }
     }
     final isOverlay = isTv30Testbed();
+    if (catalogExamplesBaseUrl == defaultCatalogExamplesBaseUrl) {
+      if (kIsWeb) {
+        final host = Uri.base.host.toLowerCase();
+        if (host == 'localhost' || host == '127.0.0.1') {
+          catalogExamplesBaseUrl = '${Uri.base.origin}/examples';
+        }
+      } else if (!Platform.environment.containsKey('FLUTTER_TEST')) {
+        final localCatalog = File('examples/catalog.json').absolute;
+        if (localCatalog.existsSync()) {
+          catalogExamplesBaseUrl = localCatalog.parent.uri.toString();
+        }
+      }
+    }
     _showCatalogSelector = _gingacc.config.enablePlayground &&
         widget.content == null &&
         (_gingacc.config.appSrc == null ||
