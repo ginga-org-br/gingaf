@@ -8,13 +8,31 @@ BASE_HREF ?= /
 
 VERSION ?= $(firstword $(subst +, ,$(patsubst version:%,%,$(filter version:%,$(subst version: ,version:,$(file <pubspec.yaml))))))
 
+define package-zip
+	$(if $(wildcard $(2)/*),cd $(2) && tar -a -cf $(CURDIR)/$(1) *)
+endef
+
 ifeq ($(OS),Windows_NT)
 CURRENT_OS := windows
+DEPS_HOST_CMD := powershell -ExecutionPolicy Bypass -File windows/install-host-deps-windows.ps1
+DEPS_ANDROID_CMD := powershell -ExecutionPolicy Bypass -File android/install-host-deps-android.ps1
+RELEASE_DEPS := build
+RELEASE_CMD = $(call package-zip,gingaf-v$(VERSION)-windows-x64.zip,build/windows/x64/runner/Release)
 else ifneq ($(wildcard /System/Library),)
 CURRENT_OS := macos
+DEPS_HOST_CMD := bash macos/install-host-deps-macos.sh
+DEPS_ANDROID_CMD := bash android/install-host-deps-android.sh
+RELEASE_DEPS := build
+RELEASE_CMD = $(call package-zip,gingaf-v$(VERSION)-macos.zip,build/macos/Build/Products/Release)
 else
 CURRENT_OS := linux
+DEPS_HOST_CMD := bash linux/install-host-deps-ubuntu.sh
+DEPS_ANDROID_CMD := bash android/install-host-deps-android.sh
+RELEASE_DEPS := deps
+RELEASE_CMD = bash linux/release-linux-deb.sh $(VERSION)
 endif
+
+DEVICE = $(if $(d),$(d),$(CURRENT_OS))
 
 help:
 	@printf "%s\n" \
@@ -48,56 +66,23 @@ help:
 
 deps: .dart_tool/package_config.json
 
-ifeq ($(CURRENT_OS),windows)
 deps-host:
-	powershell -ExecutionPolicy Bypass -File windows/install-host-deps-windows.ps1
+	$(DEPS_HOST_CMD)
 
 deps-android:
-	powershell -ExecutionPolicy Bypass -File android/install-host-deps-android.ps1
-else ifeq ($(CURRENT_OS),macos)
-deps-host:
-	bash macos/install-host-deps-macos.sh
-
-deps-android:
-	bash android/install-host-deps-android.sh
-else
-deps-host:
-	bash linux/install-host-deps-ubuntu.sh
-
-deps-android:
-	bash android/install-host-deps-android.sh
-endif
-
-define package-zip
-	$(if $(wildcard $(2)/*),cd $(2) && tar -a -cf $(CURDIR)/$(1) *)
-endef
-
-WEB_SOURCES = $(wildcard lib/*.dart lib/*/*.dart packages/*/lib/*.dart packages/*/lib/*/*.dart web/*)
-
-build/web/main.dart.js: .dart_tool/package_config.json $(WEB_SOURCES)
-	flutter build web --no-pub --release
-	@touch -c build/web/main.dart.js
+	$(DEPS_ANDROID_CMD)
 
 build: deps
 	flutter build $(CURRENT_OS) --no-pub --release
 
 build-web: deps
 	flutter build web --no-pub --release
-	@touch -c build/web/main.dart.js
 
 build-android: deps
 	flutter build apk --no-pub --release
 
-ifeq ($(CURRENT_OS),windows)
-release: build
-	$(call package-zip,gingaf-v$(VERSION)-windows-x64.zip,build/windows/x64/runner/Release)
-else ifeq ($(CURRENT_OS),macos)
-release: build
-	$(call package-zip,gingaf-v$(VERSION)-macos.zip,build/macos/Build/Products/Release)
-else
-release: deps
-	bash linux/release-linux-deb.sh $(VERSION)
-endif
+release: $(RELEASE_DEPS)
+	$(RELEASE_CMD)
 
 release-web: build-web
 	$(call package-zip,gingaf-v$(VERSION)-web.zip,build/web)
@@ -115,7 +100,7 @@ format:
 	dart format .
 
 integration_test:
-	flutter test --no-pub integration_test -d $(if $(d),$(d),$(CURRENT_OS))
+	flutter test --no-pub integration_test -d $(DEVICE)
 
 dartdoc:
 	d2 dartdoc/architecture.d2 dartdoc/architecture.svg
@@ -132,16 +117,16 @@ publish:
 	$(if $(strip $(RELEASE_FILES)),,$(error No release artifacts found to publish for v$(VERSION)))
 	gh release upload v$(VERSION) $(strip $(RELEASE_FILES)) --clobber || gh release create v$(VERSION) $(strip $(RELEASE_FILES)) --generate-notes
 
-run-playground-web: build/web/main.dart.js
+run-playground-web: build-web
 	@printf "\n   playground alone:        http://localhost:5173/gingaf/playground/\n"
 	@printf "   playground with app:     http://localhost:5173/gingaf/playground/?app=https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/video.ncl\n"
 	@printf "   player with app:         http://localhost:5173/gingaf/?app=https://raw.githubusercontent.com/ginga-org-br/gingaf/refs/heads/main/examples/video.ncl\n\n"
 	node serve.js
 
 run-playground-desktop: deps
-	flutter run --no-pub -d $(if $(d),$(d),$(CURRENT_OS)) --dart-define="GINGA_PLAYGROUND=true" || true
+	flutter run --release --no-pub -d $(DEVICE) --dart-define="GINGA_PLAYGROUND=true" || true
 
-run-examples-node: build/web/main.dart.js
+run-examples-node: build-web
 	npm --prefix node install --no-audit --no-fund
 	npm --prefix node/example-node-express install --no-audit --no-fund
 	npm --prefix node run build
@@ -169,9 +154,9 @@ define check-app
 		$(eval APP_TARGET := examples/$(APP_EXAMPLE)))
 endef
 
-run-example:
+run-example: deps
 	$(call check-app)
 	$(info ======================================================================)
 	$(info Running Example: $(APP_TARGET))
 	$(info ======================================================================)
-	flutter run --no-pub -d $(if $(d),$(d),$(CURRENT_OS)) --dart-define="GINGA_APP=$(APP_TARGET)" --dart-define="GINGA_PLAYGROUND=false" || true
+	flutter run $(if $(filter linux windows macos,$(DEVICE)),--release,) --no-pub -d $(DEVICE) --dart-define="GINGA_APP=$(APP_TARGET)" --dart-define="GINGA_PLAYGROUND=false" || true
