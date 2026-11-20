@@ -53,7 +53,7 @@ Priority: optional
 Architecture: amd64
 Installed-Size: $INSTALLED_SIZE
 Maintainer: Ginga Team
-Depends: libc6 (>= 2.35), libgtk-3-0, libwebkit2gtk-4.1-0, libmpv2 | libmpv1 | mpv
+Depends: libc6 (>= 2.35), libepoxy0, libgtk-3-0 | libgtk-3-0t64, libwebkit2gtk-4.1-0, libmpv2 | libmpv1 | mpv
 Homepage: https://github.com/ginga-org-br/gingaf
 Description: Multi-platform Ginga player
  Gingaf is a multi-platform player for NCL/Ginga digital TV applications.

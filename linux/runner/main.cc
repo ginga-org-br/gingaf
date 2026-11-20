@@ -9,9 +9,10 @@
 
 #include "my_application.h"
 
-extern "C" MPV_EXPORT int mpv_set_option_string(mpv_handle* ctx,
-                                                const char* name,
-                                                const char* data) {
+extern "C" __attribute__((visibility("default"))) int mpv_set_option_string(
+    mpv_handle* ctx,
+    const char* name,
+    const char* data) {
   using MpvOptFn = int (*)(mpv_handle*, const char*, const char*);
   static MpvOptFn real_fn = reinterpret_cast<MpvOptFn>(
       dlsym(RTLD_NEXT, "mpv_set_option_string"));
@@ -25,7 +26,8 @@ extern "C" MPV_EXPORT int mpv_set_option_string(mpv_handle* ctx,
   return real_fn(ctx, name, data);
 }
 
-extern "C" MPV_EXPORT int mpv_render_context_render(
+extern "C" __attribute__((visibility("default"))) int
+mpv_render_context_render(
     mpv_render_context* ctx,
     mpv_render_param* params) {
   using MpvRenderFn = int (*)(mpv_render_context*, mpv_render_param*);

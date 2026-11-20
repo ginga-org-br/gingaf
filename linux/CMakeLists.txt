@@ -42,7 +42,7 @@ endif()
 # default. In most cases, you should add new options to specific targets instead
 # of modifying this function.
 function(APPLY_STANDARD_SETTINGS TARGET)
-  target_compile_features(${TARGET} PUBLIC cxx_std_14)
+  target_compile_features(${TARGET} PUBLIC cxx_std_17)
   target_compile_options(${TARGET} PRIVATE -Wall -Werror)
   target_compile_options(${TARGET} PRIVATE "$<$<NOT:$<CONFIG:Debug>>:-O3>")
   target_compile_definitions(${TARGET} PRIVATE "$<$<NOT:$<CONFIG:Debug>>:NDEBUG>")
@@ -62,6 +62,7 @@ add_subdirectory(${FLUTTER_MANAGED_DIR})
 
 # System-level dependencies.
 find_package(PkgConfig REQUIRED)
+pkg_check_modules(GLIB REQUIRED glib-2.0)
 pkg_check_modules(GTK REQUIRED IMPORTED_TARGET gtk+-3.0)
 pkg_check_modules(EPOXY REQUIRED IMPORTED_TARGET epoxy)
 pkg_check_modules(MPV REQUIRED mpv)
@@ -85,6 +86,14 @@ set_target_properties(${BINARY_NAME}
 # Generated plugin build rules, which manage building the plugins and adding
 # them to the application.
 include(flutter/generated_plugins.cmake)
+
+if(TARGET webview_all_linux_plugin AND GLIB_VERSION VERSION_LESS "2.74")
+  target_compile_definitions(webview_all_linux_plugin PRIVATE
+    "G_REGEX_DEFAULT=static_cast<GRegexCompileFlags>(0)"
+    "G_REGEX_MATCH_DEFAULT=static_cast<GRegexMatchFlags>(0)"
+    "G_CONNECT_DEFAULT=static_cast<GConnectFlags>(0)"
+  )
+endif()
 
 # Start with a clean build bundle directory every time.
 install(CODE "
