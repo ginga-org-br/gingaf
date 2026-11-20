@@ -9,23 +9,26 @@ import 'package:logging/logging.dart';
 
 import 'elements.dart';
 import 'event.dart';
+import 'ncl_pbds.dart';
 import 'ncl_scheduler.dart';
 import 'ncl_strings.dart';
-import 'parser.dart';
 import 'ncldoc_plugins.dart';
+import 'parser.dart';
 
 export 'package:gingacc/gingacc.dart';
 
 export 'elements.dart';
 export 'event.dart';
 export 'lua_runtime.dart';
+export 'ncl_pbds.dart';
 export 'ncl_scheduler.dart';
-export 'parser.dart';
 export 'ncldoc_plugins.dart';
+export 'parser.dart';
 
 final _logger = Logger('ncl_doc');
 
 class NclDocument extends GingaApp {
+  late final NclPBDS pbds;
   late final Head? _head;
   late final Context _body;
   Uri? docUri;
@@ -96,8 +99,13 @@ class NclDocument extends GingaApp {
   bool get isPaused => scheduler.isPaused;
   set isPaused(bool val) => scheduler.isPaused = val;
 
-  void pause() => scheduler.pause();
-  void resume() => scheduler.resume();
+  void pause() {
+    scheduler.pause();
+  }
+
+  void resume() {
+    scheduler.resume();
+  }
 
   String? getSystemVariable(String name) => _systemVariables[name];
 
@@ -269,6 +277,10 @@ class NclDocument extends GingaApp {
           applicationId: applicationId ?? appSrc,
           baseUri: docUri,
         ) {
+    pbds = NclPBDS(
+      id: this.applicationId,
+      baseUri: docUri,
+    );
     _systemVariables = {
       ...gingacc.config.systemVariables,
     };
@@ -277,6 +289,7 @@ class NclDocument extends GingaApp {
   void _init({Head? head, required Body body}) {
     _head = head;
     _body = body;
+    pbds.addDocument(applicationId, document: this);
     for (final s in body.descendants.whereType<Settings>()) {
       for (final p in s.children.whereType<Property>()) {
         if (p.name != null && p.value != null && p.value!.isNotEmpty) {
@@ -705,7 +718,9 @@ class NclDocument extends GingaApp {
     _initInitialFocus();
   }
 
-  void stop() => scheduler.stop();
+  void stop() {
+    scheduler.stop();
+  }
 
   Set<Media> tick([int incrementMs = 0, int stepMs = 100]) {
     final res = scheduler.tick(incrementMs, stepMs);

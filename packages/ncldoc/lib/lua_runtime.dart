@@ -190,7 +190,7 @@ class NCLuaRuntime {
         if (dst == "in") {
           _queueInEvent(evt);
         } else {
-          onPostNclEvent?.call(evt);
+          _handleOutgoingEvent(evt);
         }
       }
       return 0;
@@ -351,6 +351,7 @@ class NCLuaRuntime {
     });
 
     _registerZipBindings();
+    _registerPbdsBindings();
 
     _lua.register("_bit32_arshift", (LuaState ls) {
       int x = ls.toInteger(1) & 0xFFFFFFFF;
@@ -1168,6 +1169,439 @@ class NCLuaRuntime {
       return 1;
     });
   }
+
+  void _handleOutgoingEvent(Map<String, dynamic> evt) {
+    final cls = evt['class']?.toString();
+    if (cls == 'pbds' || cls == 'pds') {
+      final response = handlePbdsEvent(evt);
+      _queueInEvent(response);
+    }
+    onPostNclEvent?.call(evt);
+  }
+
+  void postPbdsEvent(Map<String, dynamic> evt) {
+    final normalized = Map<String, dynamic>.from(evt);
+    normalized.putIfAbsent('class', () => 'pbds');
+    final response = handlePbdsEvent(normalized);
+    _queueInEvent(response);
+  }
+
+  Map<String, dynamic> handlePbdsEvent(Map<String, dynamic> evt) {
+    final eventClass = evt['class']?.toString() == 'pds' ? 'pds' : 'pbds';
+    final rawType =
+        (evt['type'] ?? evt['action'] ?? evt['command'])?.toString().trim() ??
+            '';
+    final requestId = evt['requestId'];
+
+    Map<String, dynamic> buildResponse(Map<String, dynamic> fields) {
+      final res = <String, dynamic>{
+        'class': eventClass,
+        'type': rawType,
+        ...fields,
+      };
+      if (requestId != null) {
+        res['requestId'] = requestId;
+      }
+      return res;
+    }
+
+    if (rawType.isEmpty) {
+      return buildResponse({
+        'ok': false,
+        'error': 'missing pbds event type',
+      });
+    }
+
+    final pbds = document.pbds;
+    final requestedBaseId = evt['baseId']?.toString().trim();
+
+    switch (rawType) {
+      case 'open':
+      case 'openBase':
+        final rawBaseUri = evt['baseUri']?.toString().trim();
+        final parsedUri = (rawBaseUri != null && rawBaseUri.isNotEmpty)
+            ? Uri.tryParse(rawBaseUri)
+            : null;
+        final persistent = evt['persistent'] == true;
+        final pb = pbds.openBase(
+          baseId: requestedBaseId,
+          baseUri: parsedUri,
+          isPersistent: persistent,
+        );
+        return buildResponse({
+          'ok': true,
+          'baseId': pb.baseId,
+          'state': pb.state,
+          'persistent': pb.isPersistent,
+          'baseUri': pb.baseUri?.toString() ?? '',
+        });
+
+      case 'listBases':
+        return buildResponse({
+          'ok': true,
+          'bases': pbds.baseIds,
+        });
+
+      case 'edit':
+        final command = evt['command']?.toString().trim() ??
+            evt['cmd']?.toString().trim() ??
+            '';
+        if (command.isEmpty) {
+          return buildResponse({
+            'ok': false,
+            'error': 'missing edit command',
+          });
+        }
+        document.doNclEditingCommand(command);
+        return buildResponse({
+          'ok': true,
+          'baseId': pbds.id,
+          'command': command,
+        });
+    }
+
+    final pb = pbds.getBase(requestedBaseId);
+    if (pb == null) {
+      return buildResponse({
+        'ok': false,
+        'baseId': requestedBaseId ?? '',
+        'error': 'private base not found: $requestedBaseId',
+      });
+    }
+
+    if (pb.state == NclPBDS.stateClosed) {
+      return buildResponse({
+        'ok': false,
+        'baseId': pb.baseId,
+        'error': 'private base is closed: ${pb.baseId}',
+      });
+    }
+
+    final effectiveBase = pb.baseId == document.applicationId
+        ? _effectiveBase
+        : (pb.baseUri?.toString() ?? _effectiveBase);
+
+    switch (rawType) {
+      case 'activate':
+      case 'activateBase':
+        pb.activate();
+        return buildResponse({
+          'ok': true,
+          'baseId': pb.baseId,
+          'state': pb.state,
+          'persistent': pb.isPersistent,
+        });
+
+      case 'deactivate':
+      case 'deactivateBase':
+        pb.deactivate();
+        return buildResponse({
+          'ok': true,
+          'baseId': pb.baseId,
+          'state': pb.state,
+          'persistent': pb.isPersistent,
+        });
+
+      case 'save':
+      case 'saveBase':
+        pb.save();
+        return buildResponse({
+          'ok': true,
+          'baseId': pb.baseId,
+          'state': pb.state,
+          'persistent': pb.isPersistent,
+        });
+
+      case 'close':
+      case 'closeBase':
+        final baseId = pb.baseId;
+        final persistent = pb.isPersistent;
+        pbds.closeBase(baseId);
+        return buildResponse({
+          'ok': true,
+          'baseId': baseId,
+          'state': NclPBDS.stateClosed,
+          'persistent': persistent,
+        });
+
+      case 'info':
+      case 'status':
+        return buildResponse({
+          'ok': true,
+          ...pb.toMetadataMap(),
+          'entries': document.appContext.listEntriesSync(null, effectiveBase),
+        });
+
+      case 'addDocument':
+        final docId = (evt['docId'] ?? evt['id'])?.toString().trim() ?? '';
+        if (docId.isEmpty) {
+          return buildResponse({
+            'ok': false,
+            'baseId': pb.baseId,
+            'error': 'missing docId',
+          });
+        }
+        final docUri = (evt['uri'] ?? evt['location'])?.toString().trim();
+        String? content = evt['content']?.toString();
+        if (content == null && docUri != null && docUri.isNotEmpty) {
+          content = document.appContext.loadContentSync(docUri, effectiveBase);
+        }
+        final entry = pb.addDocument(
+          docId,
+          uri: docUri,
+          content: content,
+        );
+        return buildResponse({
+          'ok': true,
+          'baseId': pb.baseId,
+          'docId': entry.applicationId,
+          'uri': entry.docSrc,
+          'state': NclPBDS.documentState(entry),
+        });
+
+      case 'removeDocument':
+        final docId = (evt['docId'] ?? evt['id'])?.toString().trim() ?? '';
+        if (docId.isEmpty) {
+          return buildResponse({
+            'ok': false,
+            'baseId': pb.baseId,
+            'error': 'missing docId',
+          });
+        }
+        final removed = pb.removeDocument(docId);
+        return buildResponse({
+          'ok': removed,
+          'baseId': pb.baseId,
+          'docId': docId,
+          if (!removed) 'error': 'document not found: $docId',
+        });
+
+      case 'startDocument':
+      case 'stopDocument':
+      case 'pauseDocument':
+      case 'resumeDocument':
+        final docId = (evt['docId'] ?? evt['id'])?.toString().trim() ?? '';
+        if (docId.isEmpty) {
+          return buildResponse({
+            'ok': false,
+            'baseId': pb.baseId,
+            'error': 'missing docId',
+          });
+        }
+        final entry = pb.getDocument(docId);
+        if (entry == null) {
+          return buildResponse({
+            'ok': false,
+            'baseId': pb.baseId,
+            'docId': docId,
+            'error': 'document not found: $docId',
+          });
+        }
+        if (rawType == 'startDocument') {
+          if (NclPBDS.documentState(entry) != 'occurring') {
+            entry.start();
+          }
+        } else if (rawType == 'stopDocument') {
+          entry.stop();
+        } else if (rawType == 'pauseDocument') {
+          entry.pause();
+        } else if (rawType == 'resumeDocument') {
+          entry.resume();
+        }
+        return buildResponse({
+          'ok': true,
+          'baseId': pb.baseId,
+          'docId': docId,
+          'state': NclPBDS.documentState(entry),
+        });
+
+      case 'getDocument':
+        final docId = (evt['docId'] ?? evt['id'])?.toString().trim() ?? '';
+        if (docId.isEmpty) {
+          return buildResponse({
+            'ok': false,
+            'baseId': pb.baseId,
+            'error': 'missing docId',
+          });
+        }
+        final entry = pb.getDocument(docId);
+        if (entry == null) {
+          return buildResponse({
+            'ok': false,
+            'baseId': pb.baseId,
+            'docId': docId,
+            'error': 'document not found: $docId',
+          });
+        }
+        return buildResponse({
+          'ok': true,
+          'baseId': pb.baseId,
+          'docId': entry.applicationId,
+          'uri': entry.docSrc,
+          'state': NclPBDS.documentState(entry),
+        });
+
+      case 'listDocuments':
+        return buildResponse({
+          'ok': true,
+          'baseId': pb.baseId,
+          'documents': pb.documents.values.map(NclPBDS.documentToMap).toList(),
+        });
+
+      case 'read':
+      case 'get':
+        final targetPath =
+            (evt['path'] ?? evt['uri'] ?? evt['key'])?.toString().trim() ?? '';
+        if (targetPath.isEmpty) {
+          return buildResponse({
+            'ok': false,
+            'baseId': pb.baseId,
+            'error': 'missing path',
+          });
+        }
+        final content =
+            document.appContext.loadContentSync(targetPath, effectiveBase);
+        if (content == null) {
+          return buildResponse({
+            'ok': false,
+            'baseId': pb.baseId,
+            'path': targetPath,
+            'error': 'entry not found: $targetPath',
+          });
+        }
+        return buildResponse({
+          'ok': true,
+          'baseId': pb.baseId,
+          'path': targetPath,
+          'data': content,
+        });
+
+      case 'write':
+      case 'put':
+      case 'set':
+        final targetPath =
+            (evt['path'] ?? evt['uri'] ?? evt['key'])?.toString().trim() ?? '';
+        if (targetPath.isEmpty) {
+          return buildResponse({
+            'ok': false,
+            'baseId': pb.baseId,
+            'error': 'missing path',
+          });
+        }
+        final data =
+            (evt['data'] ?? evt['value'] ?? evt['content'])?.toString() ?? '';
+        final mimeType =
+            evt['mimeType']?.toString() ?? 'text/plain;charset=utf-8';
+        final ok = document.appContext.writeBytesSync(
+          targetPath,
+          utf8.encode(data),
+          baseDirSrc: effectiveBase,
+          mimeType: mimeType,
+        );
+        return buildResponse({
+          'ok': ok,
+          'baseId': pb.baseId,
+          'path': targetPath,
+          if (!ok) 'error': 'failed to write entry: $targetPath',
+        });
+
+      case 'remove':
+      case 'delete':
+        final targetPath =
+            (evt['path'] ?? evt['uri'] ?? evt['key'])?.toString().trim() ?? '';
+        if (targetPath.isEmpty) {
+          return buildResponse({
+            'ok': false,
+            'baseId': pb.baseId,
+            'error': 'missing path',
+          });
+        }
+        final ok = document.appContext.removeEntrySync(
+          targetPath,
+          baseDirSrc: effectiveBase,
+        );
+        return buildResponse({
+          'ok': ok,
+          'baseId': pb.baseId,
+          'path': targetPath,
+          if (!ok) 'error': 'entry not found: $targetPath',
+        });
+
+      case 'exists':
+        final targetPath =
+            (evt['path'] ?? evt['uri'] ?? evt['key'])?.toString().trim() ?? '';
+        if (targetPath.isEmpty) {
+          return buildResponse({
+            'ok': false,
+            'baseId': pb.baseId,
+            'exists': false,
+            'error': 'missing path',
+          });
+        }
+        final exists =
+            document.appContext.existsSync(targetPath, effectiveBase);
+        return buildResponse({
+          'ok': true,
+          'baseId': pb.baseId,
+          'path': targetPath,
+          'exists': exists,
+        });
+
+      case 'list':
+        final subPath = evt['path']?.toString();
+        final entries =
+            document.appContext.listEntriesSync(subPath, effectiveBase);
+        return buildResponse({
+          'ok': true,
+          'baseId': pb.baseId,
+          if (subPath != null && subPath.isNotEmpty) 'path': subPath,
+          'entries': entries,
+        });
+
+      case 'resolve':
+        final targetPath =
+            (evt['path'] ?? evt['uri'] ?? evt['key'])?.toString().trim() ?? '';
+        if (targetPath.isEmpty) {
+          return buildResponse({
+            'ok': false,
+            'baseId': pb.baseId,
+            'error': 'missing path',
+          });
+        }
+        final resolved =
+            document.appContext.resolveUri(targetPath, effectiveBase);
+        return buildResponse({
+          'ok': true,
+          'baseId': pb.baseId,
+          'path': targetPath,
+          'uri': resolved.toString(),
+        });
+
+      default:
+        return buildResponse({
+          'ok': false,
+          'baseId': pb.baseId,
+          'error': 'unknown pbds event type: $rawType',
+        });
+    }
+  }
+
+  void _registerPbdsBindings() {
+    _lua.register("_pbds_dispatch", (LuaState ls) {
+      if (!ls.isTable(1)) {
+        ls.newTable();
+        ls.pushBoolean(false);
+        ls.setField(-2, 'ok');
+        ls.pushString('expected table argument');
+        ls.setField(-2, 'error');
+        return 1;
+      }
+      final evt = _readTableToMap(ls, 1);
+      final response = handlePbdsEvent(evt);
+      _pushMapAsTable(ls, response);
+      return 1;
+    });
+  }
 }
 
 const String _ooWrapper = '''
@@ -1377,6 +1811,126 @@ package.preload["dir"] = function()
 end
 
 pbds = {}
+function pbds.post(evt)
+    local req = {}
+    if type(evt) == "table" then
+        for k, v in pairs(evt) do
+            req[k] = v
+        end
+    end
+    if req.class == nil then
+        req.class = "pbds"
+    end
+    event.post(req)
+end
+function pbds.open(baseId, baseUri, persistent)
+    local res = _pbds_dispatch({ class = "pbds", type = "open", baseId = baseId, baseUri = baseUri, persistent = persistent })
+    if res.ok then return true, res end
+    return false, res.error
+end
+function pbds.activate(baseId)
+    local res = _pbds_dispatch({ class = "pbds", type = "activate", baseId = baseId })
+    if res.ok then return true, res end
+    return false, res.error
+end
+function pbds.deactivate(baseId)
+    local res = _pbds_dispatch({ class = "pbds", type = "deactivate", baseId = baseId })
+    if res.ok then return true, res end
+    return false, res.error
+end
+function pbds.save(baseId)
+    local res = _pbds_dispatch({ class = "pbds", type = "save", baseId = baseId })
+    if res.ok then return true, res end
+    return false, res.error
+end
+function pbds.close(baseId)
+    local res = _pbds_dispatch({ class = "pbds", type = "close", baseId = baseId })
+    if res.ok then return true, res end
+    return false, res.error
+end
+function pbds.listBases()
+    local res = _pbds_dispatch({ class = "pbds", type = "listBases" })
+    return res.bases or {}
+end
+function pbds.info(baseId)
+    local res = _pbds_dispatch({ class = "pbds", type = "info", baseId = baseId })
+    if res.ok then return res end
+    return nil, res.error
+end
+function pbds.addDocument(docId, uri, content, baseId)
+    local res = _pbds_dispatch({ class = "pbds", type = "addDocument", docId = docId, uri = uri, content = content, baseId = baseId })
+    if res.ok then return true, res end
+    return false, res.error
+end
+function pbds.removeDocument(docId, baseId)
+    local res = _pbds_dispatch({ class = "pbds", type = "removeDocument", docId = docId, baseId = baseId })
+    if res.ok then return true, res end
+    return false, res.error
+end
+function pbds.startDocument(docId, baseId)
+    local res = _pbds_dispatch({ class = "pbds", type = "startDocument", docId = docId, baseId = baseId })
+    if res.ok then return true, res end
+    return false, res.error
+end
+function pbds.stopDocument(docId, baseId)
+    local res = _pbds_dispatch({ class = "pbds", type = "stopDocument", docId = docId, baseId = baseId })
+    if res.ok then return true, res end
+    return false, res.error
+end
+function pbds.pauseDocument(docId, baseId)
+    local res = _pbds_dispatch({ class = "pbds", type = "pauseDocument", docId = docId, baseId = baseId })
+    if res.ok then return true, res end
+    return false, res.error
+end
+function pbds.resumeDocument(docId, baseId)
+    local res = _pbds_dispatch({ class = "pbds", type = "resumeDocument", docId = docId, baseId = baseId })
+    if res.ok then return true, res end
+    return false, res.error
+end
+function pbds.getDocument(docId, baseId)
+    local res = _pbds_dispatch({ class = "pbds", type = "getDocument", docId = docId, baseId = baseId })
+    if res.ok then
+        return { id = res.docId, uri = res.uri, state = res.state, content = res.content }
+    end
+    return nil, res.error
+end
+function pbds.listDocuments(baseId)
+    local res = _pbds_dispatch({ class = "pbds", type = "listDocuments", baseId = baseId })
+    return res.documents or {}
+end
+function pbds.read(path, baseId)
+    local res = _pbds_dispatch({ class = "pbds", type = "read", path = path, baseId = baseId })
+    if res.ok then return res.data end
+    return nil, res.error
+end
+function pbds.write(path, data, baseId, mimeType)
+    local res = _pbds_dispatch({ class = "pbds", type = "write", path = path, data = data, baseId = baseId, mimeType = mimeType })
+    if res.ok then return true end
+    return false, res.error
+end
+function pbds.remove(path, baseId)
+    local res = _pbds_dispatch({ class = "pbds", type = "remove", path = path, baseId = baseId })
+    if res.ok then return true end
+    return false, res.error
+end
+function pbds.exists(path, baseId)
+    local res = _pbds_dispatch({ class = "pbds", type = "exists", path = path, baseId = baseId })
+    return res.exists == true
+end
+function pbds.list(path, baseId)
+    local res = _pbds_dispatch({ class = "pbds", type = "list", path = path, baseId = baseId })
+    return res.entries or {}
+end
+function pbds.resolve(path, baseId)
+    local res = _pbds_dispatch({ class = "pbds", type = "resolve", path = path, baseId = baseId })
+    if res.ok then return res.uri end
+    return nil, res.error
+end
+function pbds.edit(command)
+    local res = _pbds_dispatch({ class = "pbds", type = "edit", command = command })
+    if res.ok then return true end
+    return false, res.error
+end
 package.preload["pbds"] = function()
     return pbds
 end

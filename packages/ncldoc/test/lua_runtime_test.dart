@@ -17,6 +17,7 @@ void main() {
     tearDown(() {
       runtime.dispose();
       doc.appContext.dispose();
+      doc.pbds.dispose();
     });
 
     test('Lua script event registration and posting', () {
@@ -67,7 +68,7 @@ void main() {
         local classes = {
           'key', 'pointer', 'ncl', 'edit', 'tcp', 'udp', 'http', 'sms', 'si',
           'sectionfilter', 'pesfilter', 'tpfilter', 'zip', 'streambuf',
-          'broadcastfs', 'mediakeysession', 'user'
+          'broadcastfs', 'mediakeysession', 'pbds', 'pds', 'user'
         }
         _G.received_classes = {}
         for _, cls in ipairs(classes) do
@@ -95,6 +96,8 @@ void main() {
         'streambuf',
         'broadcastfs',
         'mediakeysession',
+        'pbds',
+        'pds',
         'user'
       ];
       for (int i = 0; i < classes.length; i++) {
@@ -244,12 +247,318 @@ void main() {
       final script = '''
         local pbds = require "pbds"
         _G.test_pbds_exists = (pbds ~= nil and type(pbds) == "table")
+
+        local okOpen = pbds.open()
+        local okAct = pbds.activate()
+        local okSave = pbds.save()
+        local okWrite = pbds.write("greeting.txt", "hello pbds")
+        local readVal = pbds.read("greeting.txt")
+        local existsBefore = pbds.exists("greeting.txt")
+        local entries = pbds.list()
+        local bases = pbds.listBases()
+        local okAddDoc = pbds.addDocument("doc_aux", "aux.ncl", "<ncl id='doc_aux'/>")
+        local okStartDoc = pbds.startDocument("doc_aux")
+        local docStarted = pbds.getDocument("doc_aux")
+        local okPauseDoc = pbds.pauseDocument("doc_aux")
+        local docPaused = pbds.getDocument("doc_aux")
+        local okResumeDoc = pbds.resumeDocument("doc_aux")
+        local docResumed = pbds.getDocument("doc_aux")
+        local okStopDoc = pbds.stopDocument("doc_aux")
+        local docStopped = pbds.getDocument("doc_aux")
+        local docs = pbds.listDocuments()
+        local info = pbds.info()
+        local okRemEntry = pbds.remove("greeting.txt")
+        local existsAfter = pbds.exists("greeting.txt")
+        local okRemDoc = pbds.removeDocument("doc_aux")
+        local okDeact = pbds.deactivate()
+        local okClose = pbds.close()
+
+        _G.pbds_ok = okOpen and okAct and okSave and okWrite and existsBefore
+          and okAddDoc and okStartDoc and okPauseDoc and okResumeDoc
+          and okStopDoc and okRemEntry and (not existsAfter) and okRemDoc
+          and okDeact and okClose
+        _G.pbds_read = readVal
+        _G.pbds_entries_count = #entries
+        _G.pbds_bases_count = #bases
+        _G.pbds_doc_state_started = docStarted and docStarted.state
+        _G.pbds_doc_state_paused = docPaused and docPaused.state
+        _G.pbds_doc_state_resumed = docResumed and docResumed.state
+        _G.pbds_doc_state_stopped = docStopped and docStopped.state
+        _G.pbds_docs_count = #docs
+        _G.pbds_info_persistent = info and info.persistent
       ''';
       runtime.execute(script);
 
       runtime.luaState.getGlobal('test_pbds_exists');
       expect(runtime.luaState.toBoolean(-1), true);
       runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('pbds_ok');
+      expect(runtime.luaState.toBoolean(-1), true);
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('pbds_read');
+      expect(runtime.luaState.toStr(-1), 'hello pbds');
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('pbds_entries_count');
+      expect(runtime.luaState.toInteger(-1), 1);
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('pbds_bases_count');
+      expect(runtime.luaState.toInteger(-1), 1);
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('pbds_doc_state_started');
+      expect(runtime.luaState.toStr(-1), 'occurring');
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('pbds_doc_state_paused');
+      expect(runtime.luaState.toStr(-1), 'paused');
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('pbds_doc_state_resumed');
+      expect(runtime.luaState.toStr(-1), 'occurring');
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('pbds_doc_state_stopped');
+      expect(runtime.luaState.toStr(-1), 'sleeping');
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('pbds_docs_count');
+      expect(runtime.luaState.toInteger(-1), 2);
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('pbds_info_persistent');
+      expect(runtime.luaState.toBoolean(-1), true);
+      runtime.luaState.pop(1);
+    });
+
+    test(
+        'Lua event class pbds and pds lifecycle, documents, storage, and errors',
+        () {
+      final script = '''
+        local event = require "event"
+        local received = {}
+        event.register(function(evt)
+          if evt.class == "pbds" or evt.class == "pds" then
+            table.insert(received, evt)
+          end
+        end)
+
+        event.post({ class = "pbds", type = "open", requestId = "r1" })
+        event.post({ class = "pbds", type = "activate", requestId = "r2" })
+        event.post({ class = "pbds", type = "write", path = "cfg/app.json", data = '{"v":1}', requestId = "r3" })
+        event.post({ class = "pbds", type = "read", path = "cfg/app.json", requestId = "r4" })
+        event.post({ class = "pbds", type = "exists", path = "cfg/app.json", requestId = "r5" })
+        event.post({ class = "pbds", type = "list", path = "cfg", requestId = "r6" })
+        event.post({ class = "pbds", type = "addDocument", docId = "d1", uri = "d1.ncl", requestId = "r7" })
+        event.post({ class = "pbds", type = "startDocument", docId = "d1", requestId = "r8" })
+        event.post({ class = "pbds", type = "getDocument", docId = "d1", requestId = "r9" })
+        event.post({ class = "pbds", type = "stopDocument", docId = "d1", requestId = "r10" })
+        event.post({ class = "pds", type = "info", requestId = "r11" })
+        event.post({ class = "pbds", type = "remove", path = "cfg/app.json", requestId = "r12" })
+        event.post({ class = "pbds", type = "close", requestId = "r13" })
+        event.post({ class = "pbds", type = "read", path = "cfg/app.json", requestId = "r14" })
+        event.post({ class = "pbds", type = "open", requestId = "r15" })
+        event.post({ class = "pbds", type = "unknownOp", requestId = "r16" })
+        event.post({ class = "pbds", type = "read", baseId = "other_base", path = "cfg/app.json", requestId = "r17" })
+
+        _G.pbds_count = #received
+        _G.r1_state = received[1] and received[1].state
+        _G.r1_req = received[1] and received[1].requestId
+        _G.r2_state = received[2] and received[2].state
+        _G.r4_data = received[4] and received[4].data
+        _G.r5_exists = received[5] and received[5].exists
+        _G.r6_first = received[6] and received[6].entries and received[6].entries[1]
+        _G.r8_state = received[8] and received[8].state
+        _G.r9_uri = received[9] and received[9].uri
+        _G.r10_state = received[10] and received[10].state
+        _G.r11_class = received[11] and received[11].class
+        _G.r11_ok = received[11] and received[11].ok
+        _G.r12_ok = received[12] and received[12].ok
+        _G.r13_state = received[13] and received[13].state
+        _G.r14_ok = received[14] and received[14].ok
+        _G.r14_err = received[14] and received[14].error
+        _G.r16_ok = received[16] and received[16].ok
+        _G.r16_err = received[16] and received[16].error
+        _G.r17_ok = received[17] and received[17].ok
+        _G.r17_err = received[17] and received[17].error
+      ''';
+      runtime.execute(script);
+
+      runtime.luaState.getGlobal('pbds_count');
+      expect(runtime.luaState.toInteger(-1), 17);
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('r1_state');
+      expect(runtime.luaState.toStr(-1), 'open');
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('r1_req');
+      expect(runtime.luaState.toStr(-1), 'r1');
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('r2_state');
+      expect(runtime.luaState.toStr(-1), 'active');
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('r4_data');
+      expect(runtime.luaState.toStr(-1), '{"v":1}');
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('r5_exists');
+      expect(runtime.luaState.toBoolean(-1), true);
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('r6_first');
+      expect(runtime.luaState.toStr(-1), 'app.json');
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('r8_state');
+      expect(runtime.luaState.toStr(-1), 'occurring');
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('r9_uri');
+      expect(runtime.luaState.toStr(-1), 'd1.ncl');
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('r10_state');
+      expect(runtime.luaState.toStr(-1), 'sleeping');
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('r11_class');
+      expect(runtime.luaState.toStr(-1), 'pds');
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('r11_ok');
+      expect(runtime.luaState.toBoolean(-1), true);
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('r12_ok');
+      expect(runtime.luaState.toBoolean(-1), true);
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('r13_state');
+      expect(runtime.luaState.toStr(-1), 'closed');
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('r14_ok');
+      expect(runtime.luaState.toBoolean(-1), false);
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('r14_err');
+      expect(runtime.luaState.toStr(-1), contains('private base is closed'));
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('r16_ok');
+      expect(runtime.luaState.toBoolean(-1), false);
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('r16_err');
+      expect(runtime.luaState.toStr(-1), contains('unknown pbds event type'));
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('r17_ok');
+      expect(runtime.luaState.toBoolean(-1), false);
+      runtime.luaState.pop(1);
+
+      runtime.luaState.getGlobal('r17_err');
+      expect(runtime.luaState.toStr(-1), contains('private base not found'));
+      runtime.luaState.pop(1);
+    });
+
+    test(
+        'Lua pbds events control active NclDocument, editing commands, and disk files',
+        () {
+      final tempDir = Directory.systemTemp.createTempSync('ginga_lua_pbds_');
+      try {
+        final nclFile = File('${tempDir.path}/main.ncl');
+        const nclXml = '''
+<ncl id="pbdsApp">
+  <head>
+    <regionBase id="rb1">
+      <region id="r1" width="100%" height="100%"/>
+    </regionBase>
+  </head>
+  <body id="body1">
+    <port id="p1" component="m1"/>
+    <media id="m1" type="text/plain"/>
+  </body>
+</ncl>
+''';
+        nclFile.writeAsStringSync(nclXml);
+
+        final doc = NclDocument.fromContent(
+          nclXml,
+          applicationId: 'pbdsApp',
+          appSrc: nclFile.path,
+        );
+        doc.start();
+        final diskRuntime = NCLuaRuntime(document: doc, src: nclFile.path);
+        addTearDown(diskRuntime.dispose);
+
+        diskRuntime.execute('''
+          local event = require "event"
+          local events = {}
+          event.register(function(evt)
+            if evt.class == "pbds" then
+              table.insert(events, evt)
+            end
+          end)
+
+          event.post({ class = "pbds", type = "write", path = "saved.txt", data = "disk-content" })
+          event.post({ class = "pbds", type = "read", path = "saved.txt" })
+          event.post({ class = "pbds", type = "resolve", path = "saved.txt" })
+          event.post({ class = "pbds", type = "pauseDocument", docId = "pbdsApp" })
+          event.post({ class = "pbds", type = "resumeDocument", docId = "pbdsApp" })
+          event.post({
+            class = "pbds",
+            type = "edit",
+            command = 'addNode(body1, <media id="m2" type="text/plain"/>)'
+          })
+
+          _G.disk_write_ok = events[1] and events[1].ok
+          _G.disk_read_data = events[2] and events[2].data
+          _G.disk_resolved = events[3] and events[3].uri
+          _G.doc_paused_state = events[4] and events[4].state
+          _G.doc_resumed_state = events[5] and events[5].state
+          _G.edit_ok = events[6] and events[6].ok
+        ''');
+
+        expect(File('${tempDir.path}/saved.txt').existsSync(), isTrue);
+        expect(File('${tempDir.path}/saved.txt').readAsStringSync(),
+            'disk-content');
+
+        diskRuntime.luaState.getGlobal('disk_write_ok');
+        expect(diskRuntime.luaState.toBoolean(-1), true);
+        diskRuntime.luaState.pop(1);
+
+        diskRuntime.luaState.getGlobal('disk_read_data');
+        expect(diskRuntime.luaState.toStr(-1), 'disk-content');
+        diskRuntime.luaState.pop(1);
+
+        diskRuntime.luaState.getGlobal('disk_resolved');
+        expect(diskRuntime.luaState.toStr(-1), endsWith('/saved.txt'));
+        diskRuntime.luaState.pop(1);
+
+        diskRuntime.luaState.getGlobal('doc_paused_state');
+        expect(diskRuntime.luaState.toStr(-1), 'paused');
+        diskRuntime.luaState.pop(1);
+
+        diskRuntime.luaState.getGlobal('doc_resumed_state');
+        expect(diskRuntime.luaState.toStr(-1), 'occurring');
+        diskRuntime.luaState.pop(1);
+
+        diskRuntime.luaState.getGlobal('edit_ok');
+        expect(diskRuntime.luaState.toBoolean(-1), true);
+        diskRuntime.luaState.pop(1);
+
+        expect(doc.getNodeById('m2'), isNotNull);
+        expect(doc.isPaused, isFalse);
+      } finally {
+        tempDir.deleteSync(recursive: true);
+      }
     });
 
     test('Lua helper module: charset', () {
