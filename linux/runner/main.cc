@@ -22,6 +22,11 @@ extern "C" __attribute__((visibility("default"))) int mpv_set_option_string(
   if (name != nullptr && std::strcmp(name, "video-sync") == 0) {
     real_fn(ctx, "profile", "fast");
     real_fn(ctx, "vd-lavc-threads", "4");
+    if (g_file_test("/usr/lib/wsl/lib/libnvcuvid.so.1", G_FILE_TEST_EXISTS)) {
+      real_fn(ctx, "hwdec", "nvdec-copy,auto-safe");
+    } else {
+      real_fn(ctx, "hwdec", "auto-safe");
+    }
   }
   return real_fn(ctx, name, data);
 }
@@ -58,6 +63,11 @@ int main(int argc, char** argv) {
     setenv("GALLIUM_DRIVER", "d3d12", 0);
     if (g_file_test("/usr/lib/wsl/lib/libcuda.so.1", G_FILE_TEST_EXISTS)) {
       setenv("MESA_D3D12_DEFAULT_ADAPTER_NAME", "NVIDIA", 0);
+    } else {
+      setenv("LIBVA_DRIVER_NAME", "d3d12", 0);
+    }
+    if (g_getenv("WAYLAND_DISPLAY") != nullptr) {
+      setenv("GDK_BACKEND", "wayland", 0);
     }
     if (g_file_test("/usr/share/icons/Adwaita/cursors", G_FILE_TEST_IS_DIR)) {
       setenv("XCURSOR_THEME", "Adwaita", 0);
