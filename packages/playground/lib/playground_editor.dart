@@ -479,6 +479,16 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
         final targetExample =
             _selectedExample ?? _catalogExamples.first.mainFile;
         selectCatalogExample(targetExample);
+      } else if (_editableFiles.length > 1) {
+        for (final other in List<String>.from(_editableFiles)) {
+          if (!_fileContents.containsKey(other)) {
+            final res =
+                await loadExampleContent(other, gingacc: widget.gingacc);
+            if (res != null && mounted) {
+              _fileContents[other] = res;
+            }
+          }
+        }
       }
     }
   }

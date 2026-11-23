@@ -11,11 +11,11 @@
     <connectorBase>
       <causalConnector id="onBeginStart">
         <simpleCondition role="onBegin"/>
-        <simpleAction role="start"/>
+        <simpleAction role="start" max="unbounded" qualifier="par"/>
       </causalConnector>
       <causalConnector id="onEndStart">
         <simpleCondition role="onEnd"/>
-        <simpleAction role="start"/>
+        <simpleAction role="start" max="unbounded" qualifier="par"/>
       </causalConnector>
       <causalConnector id="onBeginSet">
         <connectorParam name="var"/>
@@ -45,17 +45,13 @@
     </connectorBase>
   </head>
   <body>
-    <port id="p0" component="mainClock"/>
+    <port id="p0" component="luaGuide"/>
     <media id="settings" type="application/x-ginga-settings">
       <property name="ncl-360-vr.devNumber"/>
       <property name="accessibility.devNumber"/>
     </media>
-    <media id="bgVideo" src="https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4" descriptor="dBg">
-      <property name="loop" value="true"/>
-    </media>
-    <media id="mainClock" src="multidevice_guide.lua" descriptor="dGuide">
-      <area id="cue1" begin="0s" end="2s"/>
-      <area id="cue2" begin="2s" end="4s"/>
+    <media id="bgVideo" src="https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4" descriptor="dBg"/>
+    <media id="luaGuide" src="multidevice_guide.lua" descriptor="dGuide">
       <property name="vrDevNumber"/>
       <property name="accDevNumber"/>
     </media>
@@ -70,33 +66,36 @@
     <media id="infoOverlay" type="application/x-ginga-settings"/>
     <media id="tvAck" type="application/x-ginga-settings"/>
     <link xconnector="onBeginStart">
-      <bind role="onBegin" component="mainClock"/>
+      <bind role="onBegin" component="luaGuide"/>
       <bind role="start" component="bgVideo"/>
+    </link>
+    <link xconnector="onBeginStart">
+      <bind role="onBegin" component="bgVideo"/>
       <bind role="start" component="scene360"/>
       <bind role="start" component="vlibrasStream"/>
     </link>
+    <link xconnector="onBeginSet">
+      <bind role="onBegin" component="bgVideo"/>
+      <bind role="set" component="vlibrasStream" interface="librasGloss">
+        <bindParam name="var" value="BORBOLETA"/>
+      </bind>
+    </link>
     <link xconnector="onBeginOrAttributionSet">
-      <bind role="onBegin" component="mainClock"/>
+      <bind role="onBegin" component="luaGuide"/>
       <bind role="onEndAttribution" component="settings" interface="ncl-360-vr.devNumber"/>
       <bind role="onEndAttribution" component="settings" interface="accessibility.devNumber"/>
       <bind role="getVr" component="settings" interface="ncl-360-vr.devNumber"/>
       <bind role="getAcc" component="settings" interface="accessibility.devNumber"/>
-      <bind role="set" component="mainClock" interface="vrDevNumber">
+      <bind role="set" component="luaGuide" interface="vrDevNumber">
         <bindParam name="var" value="$getVr"/>
       </bind>
-      <bind role="set" component="mainClock" interface="accDevNumber">
+      <bind role="set" component="luaGuide" interface="accDevNumber">
         <bindParam name="var" value="$getAcc"/>
       </bind>
     </link>
     <link xconnector="onEndStart">
       <bind role="onEnd" component="bgVideo"/>
       <bind role="start" component="bgVideo"/>
-    </link>
-    <link xconnector="onBeginSet">
-      <bind role="onBegin" component="mainClock" interface="cue2"/>
-      <bind role="set" component="vlibrasStream" interface="librasGloss">
-        <bindParam name="var" value="BORBOLETA"/>
-      </bind>
     </link>
     <link xconnector="onBeginViewStart">
       <bind role="onBeginView" component="scene360" interface="hotspot1"/>

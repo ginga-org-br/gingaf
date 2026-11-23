@@ -131,7 +131,7 @@ void main() {
     expect(vlibrasRemote.activeNodeSrc, endsWith('vlibras_companion.html'));
     expect(
       vlibrasRemote.properties['librasGloss'],
-      'BEM-VINDO TELEJORNAL TV-3-0',
+      'BORBOLETA',
     );
 
     expect(
@@ -164,7 +164,7 @@ void main() {
     await tester.pump();
     expect(
       vlibrasRemote.properties['librasGloss'],
-      'INTERATIVIDADE GINGAF SINCRONIZAR',
+      'BORBOLETA',
     );
 
     const hotspotCoord = SphericalCoordinate(

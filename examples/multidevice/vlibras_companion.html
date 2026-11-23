@@ -62,7 +62,7 @@
       window.__vlibrasPlayedGlosses = playedGlosses;
 
       const FULLSCREEN_SHADOW_CSS = [
-        ':host { position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100vh !important; display: block !important; }',
+        ':host { position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100vh !important; display: block !important; opacity: 1 !important; visibility: visible !important; }',
         '#vlibras-app {',
         '  position: fixed !important;',
         '  inset: 0 !important;',
@@ -79,6 +79,9 @@
         '  margin: 0 !important;',
         '  border-radius: 0 !important;',
         '  border: none !important;',
+        '  opacity: 1 !important;',
+        '  visibility: visible !important;',
+        '  pointer-events: auto !important;',
         '  --player-height: calc(100dvh - 52px) !important;',
         '}',
         '#vlibras-app > div {',
@@ -109,6 +112,10 @@
           styleEl.id = 'gingaf-vlibras-fullscreen-style';
           styleEl.textContent = FULLSCREEN_SHADOW_CSS;
           sr.appendChild(styleEl);
+        }
+        const appEl = sr.getElementById('vlibras-app');
+        if (appEl && appEl.hasAttribute('inert')) {
+          appEl.removeAttribute('inert');
         }
       }
 
@@ -180,22 +187,27 @@
       }
 
       function openVlibrasFullScreen() {
-        if (window.VLibrasWidget && typeof window.VLibrasWidget.open === 'function') {
-          try {
-            window.VLibrasWidget.open();
-          } catch (_) {}
-        }
-        const accessWrapper = document.getElementById('vlibras-access-wrapper');
-        if (accessWrapper && accessWrapper.shadowRoot) {
-          const btn = accessWrapper.shadowRoot.getElementById('vlibras-button');
-          const rootEl = document.getElementById('vlibras-app-root');
-          if (btn && (!rootEl || rootEl.dataset.active !== 'true')) {
-            btn.click();
+        const hasAppScript = !!document.querySelector('script[src*="vlibras-plugin-app.js"]');
+        const rootEl = document.getElementById('vlibras-app-root');
+        if (!rootEl && !hasAppScript) {
+          if (window.VLibrasWidget && typeof window.VLibrasWidget.open === 'function') {
+            try {
+              window.VLibrasWidget.open();
+            } catch (_) {}
+          } else {
+            const accessWrapper = document.getElementById('vlibras-access-wrapper');
+            if (accessWrapper && accessWrapper.shadowRoot) {
+              const btn = accessWrapper.shadowRoot.getElementById('vlibras-button');
+              if (btn) {
+                btn.click();
+              }
+            }
           }
         }
-        const rootEl = document.getElementById('vlibras-app-root');
         if (rootEl) {
-          rootEl.dataset.active = 'true';
+          if (rootEl.dataset.active !== 'true') {
+            rootEl.dataset.active = 'true';
+          }
           injectShadowFullscreenStyle(rootEl);
         }
         const accessBtn = document.querySelector('[vw-access-button]');
@@ -305,7 +317,7 @@
         if (!msg || typeof msg !== 'object') return;
         if (msg.type === 'unity_event' || msg.type === 'unity') return;
 
-        if ('type' in msg && !('eventType' in msg)) {
+        if ('nodeId' in msg && 'type' in msg && !('eventType' in msg)) {
           activeNodeId = msg.nodeId || activeNodeId;
           activeAppId = msg.appId || activeAppId;
           if (Array.isArray(msg.properties)) {
@@ -313,23 +325,14 @@
               if (p && p.name) applyProperty(p.name, p.value);
             });
           }
-          sendTransition('preparation', 'stops');
           return;
         }
 
         if (msg.eventType === 'presentation') {
           activeNodeId = msg.nodeId || activeNodeId;
           activeAppId = msg.appId || activeAppId;
-          if (msg.action === 'start') {
-            sendTransition('presentation', 'starts');
-          } else if (msg.action === 'pause') {
-            sendTransition('presentation', 'pauses');
-          } else if (msg.action === 'resume') {
-            sendTransition('presentation', 'resumes');
-          } else if (msg.action === 'stop') {
-            sendTransition('presentation', 'stops');
-          } else if (msg.action === 'abort') {
-            sendTransition('presentation', 'aborts');
+          if (msg.action === 'start' && lastGloss) {
+            dispatchGlossToPlayer(lastGloss);
           }
         } else if (msg.eventType === 'attribution' && msg.label) {
           applyProperty(msg.label, msg.value);

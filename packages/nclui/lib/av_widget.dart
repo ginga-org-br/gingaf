@@ -37,6 +37,7 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
 
   VideoPlayerController? get controller => _controller;
   bool get initialized => _initialized;
+  bool get isCompleted => _isCompleted;
   bool get isPlaying => true;
   bool get isLooping {
     final m = media;
@@ -112,6 +113,23 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
     parseProperties(widget.media);
     _targetSrc = widget.src.trim();
     initVideo();
+  }
+
+  Future<void> restartPlayback() async {
+    _isCompleted = false;
+    final c = _controller;
+    if (c != null && c.value.isInitialized) {
+      await c.seekTo(Duration.zero);
+      if (isPlaying && !_isPaused) {
+        await c.play();
+      }
+      if (mounted) {
+        setState(() {});
+      }
+      return;
+    }
+    _activeSrc = '';
+    await initVideo();
   }
 
   @override

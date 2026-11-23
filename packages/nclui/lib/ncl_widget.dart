@@ -493,7 +493,13 @@ class NclWidgetState extends MediaState<NclWidget> {
     if (nclDocument != null) {
       final changedMedia = nclDocument!.tick(ms);
       for (var media in changedMedia) {
-        _mediaStateKeys[media.id ?? '']?.currentState?.syncProperties();
+        final state = _mediaStateKeys[media.id ?? '']?.currentState;
+        state?.syncProperties();
+        if (state is AVWidgetState &&
+            media.getMainState() == NclStateType.occurring &&
+            (state.isCompleted || media.time <= ms)) {
+          unawaited(state.restartPlayback());
+        }
       }
 
       final currentFocus = nclDocument!.currentFocusNodeId;

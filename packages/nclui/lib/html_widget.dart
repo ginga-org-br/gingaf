@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -44,6 +45,7 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
   bool _initialized = false;
   bool _loadStarted = false;
   bool _isPaused = false;
+  final List<Map<String, dynamic>> _pendingRemoteMetadata = [];
   bool get isPaused => _isPaused;
 
   @override
@@ -73,13 +75,27 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
   }
 
   Future<void> dispatchRemoteMetadata(Map<String, dynamic> message) async {
-    if (_controller == null) return;
+    if (_controller == null || !_initialized) {
+      _pendingRemoteMetadata.add(Map<String, dynamic>.from(message));
+      return;
+    }
     try {
       final encoded = jsonEncode(message);
       await _controller!.runJavaScript(
         'window.postMessage(${jsonEncode(encoded)}, "*");',
       );
     } catch (_) {}
+  }
+
+  Future<void> _flushPendingRemoteMetadata() async {
+    if (_controller == null || !_initialized || _pendingRemoteMetadata.isEmpty) {
+      return;
+    }
+    final pending = List<Map<String, dynamic>>.from(_pendingRemoteMetadata);
+    _pendingRemoteMetadata.clear();
+    for (final msg in pending) {
+      await dispatchRemoteMetadata(msg);
+    }
   }
 
   @override
@@ -145,6 +161,11 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
       }
       if (mounted) {
         setState(() => _initialized = true);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            unawaited(_flushPendingRemoteMetadata());
+          }
+        });
       }
     } catch (e) {
       _logger.severe("Error loading ${widget.src}: $e");
@@ -163,6 +184,11 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
       } catch (_) {}
       if (mounted) {
         setState(() => _initialized = true);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            unawaited(_flushPendingRemoteMetadata());
+          }
+        });
       }
     }
   }

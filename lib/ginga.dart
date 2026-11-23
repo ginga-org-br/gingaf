@@ -479,11 +479,22 @@ class GingaState extends State<Ginga> {
             'text/plain',
           ];
 
+    final editorFiles = _gingacc.config.enablePlayground
+        ? _playgroundKey.currentState?.allFileContents
+        : null;
+    final virtualFiles = (widget.virtualFiles != null || editorFiles != null)
+        ? <String, String>{
+            ...?widget.virtualFiles,
+            ...?editorFiles,
+          }
+        : null;
+
     final companionWidget = RemoteDevicePlayerWidget(
       key: playerKey,
       gingacc: _gingacc,
       deviceClass: deviceClass,
       supportedTypes: supportedTypes,
+      virtualFiles: virtualFiles,
     );
 
     if (!mounted) return;

@@ -141,12 +141,6 @@ class RemoteDevicePlayerWidgetState extends State<RemoteDevicePlayerWidget> {
       });
     }
 
-    _client.sendTransitionMetadata(
-      nodeId: nodeId,
-      appId: appId,
-      eventType: 'preparation',
-      transition: 'stops',
-    );
     _htmlKey.currentState?.dispatchRemoteMetadata(msg);
   }
 
@@ -155,7 +149,6 @@ class RemoteDevicePlayerWidgetState extends State<RemoteDevicePlayerWidget> {
     final eventType = msg['eventType']?.toString();
     final action = msg['action']?.toString();
     final nodeId = msg['nodeId']?.toString() ?? _activeNodeId;
-    final appId = msg['appId']?.toString() ?? _activeAppId;
 
     if (eventType == 'presentation' && nodeId != null) {
       if (action == 'start' || action == 'resume') {
@@ -164,12 +157,6 @@ class RemoteDevicePlayerWidgetState extends State<RemoteDevicePlayerWidget> {
             _isPlaying = true;
           });
         }
-        _client.sendTransitionMetadata(
-          nodeId: nodeId,
-          appId: appId,
-          eventType: 'presentation',
-          transition: action == 'start' ? 'starts' : 'resumes',
-        );
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _pushInitialPropertiesToHtml();
           _htmlKey.currentState?.dispatchRemoteMetadata(msg);
@@ -180,19 +167,8 @@ class RemoteDevicePlayerWidgetState extends State<RemoteDevicePlayerWidget> {
             _isPlaying = false;
           });
         }
-        _client.sendTransitionMetadata(
-          nodeId: nodeId,
-          appId: appId,
-          eventType: 'presentation',
-          transition: action == 'stop' ? 'stops' : 'aborts',
-        );
       } else if (action == 'pause') {
-        _client.sendTransitionMetadata(
-          nodeId: nodeId,
-          appId: appId,
-          eventType: 'presentation',
-          transition: 'pauses',
-        );
+        _htmlKey.currentState?.dispatchRemoteMetadata(msg);
       }
     } else if (eventType == 'attribution') {
       final label = msg['label']?.toString();
@@ -272,6 +248,38 @@ class RemoteDevicePlayerWidgetState extends State<RemoteDevicePlayerWidget> {
     super.dispose();
   }
 
+  String? _lookupVirtualContent(String src) {
+    final files = widget.virtualFiles;
+    if (files != null && files.isNotEmpty) {
+      if (files.containsKey(src)) return files[src];
+      final baseName = src.split('/').last;
+      for (final entry in files.entries) {
+        final key = entry.key.replaceAll('\\', '/');
+        if (key == src ||
+            src.endsWith('/$key') ||
+            key.endsWith('/$src') ||
+            key.split('/').last == baseName) {
+          return entry.value;
+        }
+      }
+    }
+    if (_activeAppId.isNotEmpty && widget.gingacc.hasAppContext(_activeAppId)) {
+      final appCtx = widget.gingacc.findAppContext(_activeAppId);
+      final loaded = appCtx?.loadContentSync(src);
+      if (loaded != null && loaded.isNotEmpty) {
+        return loaded;
+      }
+    }
+    for (final id in widget.gingacc.appContextIds) {
+      final appCtx = widget.gingacc.findAppContext(id);
+      final loaded = appCtx?.loadContentSync(src);
+      if (loaded != null && loaded.isNotEmpty) {
+        return loaded;
+      }
+    }
+    return null;
+  }
+
   Widget _buildActiveRenderer() {
     final src = _activeNodeSrc ?? '';
     final mime = (_activeNodeType ?? '').toLowerCase();
@@ -295,7 +303,7 @@ class RemoteDevicePlayerWidgetState extends State<RemoteDevicePlayerWidget> {
         mime == 'application/x-vlibras-gloss' ||
         lowerSrc.endsWith('.html') ||
         lowerSrc.endsWith('.htm')) {
-      final virtualContent = widget.virtualFiles?[src];
+      final virtualContent = _lookupVirtualContent(src);
       if (virtualContent != null && virtualContent.isNotEmpty) {
         return HtmlWidget.fromContent(
           virtualContent,

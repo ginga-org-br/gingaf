@@ -17,8 +17,26 @@ class RemoteDeviceChannel {
   final List<String> supportedTypes;
   final String screenSize;
   final String screenGraphicSize;
-  final StreamController<Map<String, dynamic>> _hostToDeviceController =
-      StreamController<Map<String, dynamic>>.broadcast();
+  final List<Map<String, dynamic>> _pendingHostMessages = [];
+  bool _hasHostListener = false;
+  late final StreamController<Map<String, dynamic>> _hostToDeviceController =
+      StreamController<Map<String, dynamic>>.broadcast(
+    onListen: () {
+      _hasHostListener = true;
+      if (_pendingHostMessages.isNotEmpty) {
+        final queued = List<Map<String, dynamic>>.from(_pendingHostMessages);
+        _pendingHostMessages.clear();
+        for (final msg in queued) {
+          if (!_isClosed) {
+            _hostToDeviceController.add(msg);
+          }
+        }
+      }
+    },
+    onCancel: () {
+      _hasHostListener = _hostToDeviceController.hasListener;
+    },
+  );
   final StreamController<Map<String, dynamic>> _deviceToHostController =
       StreamController<Map<String, dynamic>>.broadcast();
   final StreamController<void> _closeController =
@@ -53,8 +71,11 @@ class RemoteDeviceChannel {
   }
 
   void sendToDevice(Map<String, dynamic> message) {
-    if (!_isClosed) {
+    if (_isClosed) return;
+    if (_hasHostListener && _hostToDeviceController.hasListener) {
       _hostToDeviceController.add(message);
+    } else {
+      _pendingHostMessages.add(message);
     }
   }
 

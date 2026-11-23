@@ -198,7 +198,9 @@ class NclScheduler {
         }
         continue;
       }
-      if (actionItem.event.targetNode is Media &&
+      if (actionItem.action != NclActionType.stop &&
+          actionItem.action != NclActionType.abort &&
+          actionItem.event.targetNode is Media &&
           document.isRemoteNodeBlocked(actionItem.event.targetNode.id)) {
         continue;
       }

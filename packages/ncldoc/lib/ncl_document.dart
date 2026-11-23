@@ -114,7 +114,6 @@ class NclDocument extends GingaApp {
       _channelMsgSubs = {};
   final Map<RemoteDeviceChannel, StreamSubscription<void>> _channelCloseSubs = {};
   StreamSubscription<void>? _gingaccRemoteSub;
-  final Set<String> _unboundRemoteNodeIds = {};
   final Set<String> _disconnectedRemoteNodeIds = {};
   final Set<String> _declaredRemoteClasses = {};
   bool _multiDeviceReplicated = false;
@@ -137,8 +136,14 @@ class NclDocument extends GingaApp {
 
   bool isRemoteNodeBlocked(String? nodeId) {
     if (nodeId == null) return false;
-    return _unboundRemoteNodeIds.contains(nodeId) ||
-        _disconnectedRemoteNodeIds.contains(nodeId);
+    if (_disconnectedRemoteNodeIds.contains(nodeId)) {
+      return true;
+    }
+    final node = getNodeById(nodeId);
+    if (node is Media && getDeviceClassForMedia(node) != null) {
+      return !hasConnectedRemoteDeviceForMedia(node);
+    }
+    return false;
   }
 
   bool hasConnectedRemoteDeviceForMedia(Media media) {
@@ -241,6 +246,7 @@ class NclDocument extends GingaApp {
       return;
     }
     list.add(channel);
+    _disconnectedRemoteNodeIds.clear();
     _refreshClassVariables(baseClass);
 
     _channelMsgSubs[channel] = channel.onDeviceMessage.listen((msg) {
@@ -293,7 +299,6 @@ class NclDocument extends GingaApp {
     if (_multiDeviceReplicated) return;
     _multiDeviceReplicated = true;
     _syncGingaCcRemoteChannels();
-    _unboundRemoteNodeIds.clear();
 
     final contextsToScan = <Context>[
       _body,
@@ -309,18 +314,14 @@ class NclDocument extends GingaApp {
         if (devSpec == null || devSpec.isEmpty) continue;
 
         final parsed = parseRemoteDeviceSpec(devSpec);
+        if (parsed.deviceIndex != null) {
+          continue;
+        }
+
         final matching = _resolveTargetChannelsForSpec(
           parsed.classId,
           media.rawAttributes['type'],
         );
-
-        if (parsed.deviceIndex != null) {
-          if (parsed.deviceIndex! < 1 ||
-              parsed.deviceIndex! > matching.length) {
-            _unboundRemoteNodeIds.add(origId);
-          }
-          continue;
-        }
 
         if (matching.length <= 1) {
           continue;
@@ -513,20 +514,30 @@ class NclDocument extends GingaApp {
               ? node.getAreaNclEvent(label)
               : node.getMainNclEvent();
       if (transition == 'starts' || transition == 'start') {
-        scheduler.stackNclAction(targetEvt, NclActionType.start);
-        scheduler.tick(0);
+        if (targetEvt.state != NclStateType.occurring) {
+          scheduler.stackNclAction(targetEvt, NclActionType.start);
+          scheduler.tick(0);
+        }
       } else if (transition == 'stops' || transition == 'stop') {
-        scheduler.stackNclAction(targetEvt, NclActionType.stop);
-        scheduler.tick(0);
+        if (targetEvt.state != NclStateType.sleeping) {
+          scheduler.stackNclAction(targetEvt, NclActionType.stop);
+          scheduler.tick(0);
+        }
       } else if (transition == 'pauses' || transition == 'pause') {
-        scheduler.stackNclAction(targetEvt, NclActionType.pause);
-        scheduler.tick(0);
+        if (targetEvt.state != NclStateType.paused) {
+          scheduler.stackNclAction(targetEvt, NclActionType.pause);
+          scheduler.tick(0);
+        }
       } else if (transition == 'resumes' || transition == 'resume') {
-        scheduler.stackNclAction(targetEvt, NclActionType.resume);
-        scheduler.tick(0);
+        if (targetEvt.state == NclStateType.paused) {
+          scheduler.stackNclAction(targetEvt, NclActionType.resume);
+          scheduler.tick(0);
+        }
       } else if (transition == 'aborts' || transition == 'abort') {
-        scheduler.stackNclAction(targetEvt, NclActionType.abort);
-        scheduler.tick(0);
+        if (targetEvt.state != NclStateType.sleeping) {
+          scheduler.stackNclAction(targetEvt, NclActionType.abort);
+          scheduler.tick(0);
+        }
       }
     }
   }
