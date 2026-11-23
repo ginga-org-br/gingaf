@@ -1,5 +1,5 @@
 name: gingacc
-description: "Ginga common configuration and core package"
+description: "TV 3.0 Ginga Common Core (GingaCC), Web Services (CCWS), SSDP, Remote Devices, and Users package."
 version: 0.0.1
 
 environment:

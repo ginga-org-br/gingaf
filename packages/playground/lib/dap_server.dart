@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:ncldoc/ncl_document.dart';
+import 'package:ginga_app/ncl_document.dart';
 
 class DapBreakpoint {
   final int line;

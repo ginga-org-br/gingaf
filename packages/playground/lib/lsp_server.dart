@@ -1,4 +1,4 @@
-import 'package:ncldoc/schema.dart';
+import 'package:ginga_app/schema.dart';
 import 'package:xml/xml.dart';
 import 'json_rpc.dart';
 

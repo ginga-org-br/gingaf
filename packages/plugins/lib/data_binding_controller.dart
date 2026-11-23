@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
-import 'package:ncldoc/ncl_document.dart';
+import 'package:ginga_app/ncl_document.dart';
 
 enum ScrollDirectionMode {
   none,

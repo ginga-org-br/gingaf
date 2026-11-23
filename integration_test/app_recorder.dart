@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:gingacc/gingacc.dart';
 import 'package:gingaf/ginga.dart';
 import 'package:logging/logging.dart';
-import 'package:nclui/ncl_keys_flutter.dart';
+import 'package:ginga_appui/ncl_keys_flutter.dart';
 import 'package:video_player_media_kit/video_player_media_kit.dart';
 
 import 'app_recorder_config.dart';

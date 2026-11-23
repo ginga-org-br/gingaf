@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:ncldoc/ncl_document.dart';
+import 'package:ginga_app/ncl_document.dart';
 import 'lsp_server.dart';
 import 'dap_server.dart';
 import 'json_rpc.dart';

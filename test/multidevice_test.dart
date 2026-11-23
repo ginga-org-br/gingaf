@@ -4,7 +4,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingaf/args.dart';
-import 'package:ncldoc/ncl_document.dart';
+import 'package:ginga_app/ncl_document.dart';
 import 'package:plugins/ncl360_math.dart';
 
 void main() {

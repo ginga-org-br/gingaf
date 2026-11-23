@@ -11,7 +11,6 @@ import 'ginga_config.dart';
 import 'remote_device_client.dart';
 
 export 'ccws.dart';
-export 'ginga_app.dart';
 export 'ginga_app_context.dart';
 export 'ginga_config.dart';
 export 'gingacc_plugins.dart';

@@ -2,8 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:gingacc/ccws.dart';
-import 'package:gingacc/ssdp.dart';
+import 'package:gingacc/gingacc.dart';
 import 'package:http/http.dart' as http;
 import 'package:json5/json5.dart';
 import 'package:test/test.dart';

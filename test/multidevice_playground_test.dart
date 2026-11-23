@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gingaf/ginga.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:ncldoc/ncl_document.dart';
-import 'package:nclui/ncl_widget.dart';
+import 'package:ginga_app/ncl_document.dart';
+import 'package:ginga_appui/ncl_widget.dart';
 import 'package:plugins/ncl360_math.dart';
 import 'package:plugins/ncl360_plugin.dart';
 

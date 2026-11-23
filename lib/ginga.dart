@@ -9,9 +9,9 @@ import 'package:flutter/services.dart';
 import 'package:gingacc/gingacc.dart';
 import 'package:logging/logging.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:nclui/html_widget.dart' as html;
-import 'package:nclui/main_av_widget.dart';
-import 'package:nclui/ncl_widget.dart' as ncl;
+import 'package:ginga_appui/html_widget.dart' as html;
+import 'package:ginga_appui/main_av_widget.dart';
+import 'package:ginga_appui/ncl_widget.dart' as ncl;
 import 'package:playground/playground.dart';
 
 import 'menu/settings_menu.dart';

@@ -1,0 +1,22 @@
+name: ginga_app
+description: "Headless TV 3.0 application runtime (BaseGingaApp, NCL 4.0 and HTML5 application models)."
+version: 0.0.1
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+resolution: workspace
+
+dependencies:
+  archive: ^4.0.0
+  logging: ^1.3.0
+  lua_dardo_plus: ^0.3.0
+  xml: ^7.0.1
+  http: ^1.1.0
+  path: ^1.9.0
+  gingacc:
+  get_it: ^9.3.0
+
+dev_dependencies:
+  test: ^1.24.0
+  lints: ^6.0.0

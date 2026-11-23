@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:ncldoc/ncl_document.dart';
+import 'package:ginga_app/ncl_document.dart';
 
 import 'monaco_bridge.dart';
 import 'playground_catalog.dart';
@@ -102,11 +102,6 @@ class PlaygroundTextEditingController extends TextEditingController {
     return TextSpan(children: lineSpans, style: baseStyle);
   }
 }
-
-typedef FlutterMonaco = PlaygroundEditor;
-typedef FlutterMonacoState = PlaygroundEditorState;
-typedef FlutterMonacoWidget = PlaygroundEditor;
-typedef MonacoEditor = PlaygroundEditor;
 
 class PlaygroundEditor extends StatefulWidget {
   final String? content;

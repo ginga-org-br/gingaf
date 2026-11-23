@@ -14,7 +14,7 @@ dependencies:
   logging: ^1.3.0
   xml: ^7.0.1
   stream_channel: ^2.1.2
-  ncldoc:
+  ginga_app:
   gingacc:
   flutter_svg: ^2.3.2
 

@@ -1,4 +1,4 @@
-import 'package:ncldoc/ncl_document.dart';
+import 'package:ginga_app/ncl_document.dart';
 
 import 'plugin_base.dart';
 

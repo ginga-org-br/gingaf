@@ -2,11 +2,11 @@ import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart' hide Element;
 import 'package:flutter/services.dart';
-import 'package:ncldoc/ncl_document.dart';
-import 'package:nclui/av_widget.dart';
-import 'package:nclui/base_widget.dart';
-import 'package:nclui/nclui_plugins.dart';
-import 'package:nclui/text_widget.dart';
+import 'package:ginga_app/ncl_document.dart';
+import 'package:ginga_appui/av_widget.dart';
+import 'package:ginga_appui/base_widget.dart';
+import 'package:ginga_appui/nclui_plugins.dart';
+import 'package:ginga_appui/text_widget.dart';
 
 import 'data_binding_controller.dart';
 import 'plugin_base.dart';

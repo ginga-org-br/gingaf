@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-export 'package:ncldoc/ncl_strings.dart' show NclKeys;
+export 'package:ginga_app/ncl_strings.dart' show NclKeys;
 
 class AppRecoderConfig {
   final String appSrc;

@@ -8,9 +8,9 @@ environment:
   sdk: ">=3.5.0 <4.0.0"
 
 workspace:
-  - packages/ncldoc
-  - packages/nclui
   - packages/gingacc
+  - packages/ginga_app
+  - packages/ginga_appui
   - packages/plugins
   - packages/playground
 
@@ -30,9 +30,9 @@ dependencies:
   web: ^1.0.0
   shelf: ^1.4.1
   xml: ^7.0.1
-  ncldoc:
-  nclui:
   gingacc:
+  ginga_app:
+  ginga_appui:
   plugins:
   get_it: ^9.3.0
   playground:

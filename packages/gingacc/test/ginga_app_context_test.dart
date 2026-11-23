@@ -117,23 +117,6 @@ void main() {
       }
     });
 
-    test('GingaApp obtains appContext from gingacc and uses appSrc', () {
-      final gingacc = GingaCC();
-      final app = GingaApp(
-        appSrc: 'index.html',
-        gingacc: gingacc,
-      );
-
-      expect(app.appSrc, 'index.html');
-      expect(app.applicationId, 'index.html');
-      expect(app.appContextId, 'index.html');
-      expect(
-        app.appContext,
-        same(gingacc.getAppContext(appContextId: 'index.html')),
-      );
-      expect(app.appContext.appContextId, 'index.html');
-    });
-
     test('gingacc.getAppContext caches per appContextId and cleans up', () {
       final gingacc = GingaCC();
       final ctxApp1 = gingacc.getAppContext(

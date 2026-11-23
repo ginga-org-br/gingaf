@@ -100,7 +100,7 @@ test-linux-distros:
 	bash linux/test-linux-distros.sh
 
 test:
-	flutter test test packages/gingacc/test packages/ncldoc/test packages/nclui/test packages/plugins/test packages/playground/test --no-pub
+	flutter test test packages/gingacc/test packages/ginga_app/test packages/ginga_appui/test packages/plugins/test packages/playground/test --no-pub
 
 format:
 	dart format .

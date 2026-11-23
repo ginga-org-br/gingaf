@@ -11,8 +11,8 @@ dependencies:
   flutter:
     sdk: flutter
   material_ui: ^1.1.0
-  ncldoc:
-  nclui:
+  ginga_app:
+  ginga_appui:
   video_player: ^2.14.0
   get_it: ^9.3.0
   xml: ^7.0.1

@@ -1,6 +1,6 @@
 import 'package:get_it/get_it.dart';
-import 'package:ncldoc/ncldoc_plugins.dart';
-import 'package:nclui/nclui_plugins.dart';
+import 'package:ginga_app/ncldoc_plugins.dart';
+import 'package:ginga_appui/nclui_plugins.dart';
 
 import 'data_binding_plugin.dart';
 import 'ncl360_plugin.dart';
