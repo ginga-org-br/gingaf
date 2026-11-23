@@ -1,14 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
 import 'package:path/path.dart' as path;
 import 'package:shelf/shelf.dart' as shelf;
 
 import 'ccws.dart';
-import 'ginga_app_context.dart';
-import 'ginga_config.dart';
-import 'remote_device_client.dart';
 
 export 'ccws.dart';
 export 'ginga_app_context.dart';
@@ -37,16 +36,32 @@ bool isXmlString(String? src) {
   return src.trim().startsWith('<');
 }
 
+enum GingaCCMode {
+  primary,
+  mirror,
+}
+
 class GingaCC {
+  final GingaCCMode mode;
+  final String primaryCcwsUrl;
   GingaConfig config;
   late final CCWS ccws = CCWS(gingacc: this);
   final Map<String, GingaAppContext> _appContexts = {};
+  final Map<String, Map<String, dynamic>> _appSnapshots = {};
+  String? _activeAppContextId;
   final Map<String, Map<String, dynamic>> _remoteDevices = {};
   final Map<String, RemoteDeviceChannel> _remoteChannels = {};
   final StreamController<void> _remoteDevicesChangedController =
       StreamController<void>.broadcast();
   final List<Map<String, dynamic>> _forwardedMessages = [];
   int _nextRemoteDeviceIndex = 1;
+
+  Users get users => config.users;
+
+  Map<String, String> get systemVariables => config.systemVariables;
+
+  Stream<({String name, String value, String? userId})> get onVariableChanged =>
+      config.onVariableChanged;
 
   Stream<void> get onRemoteDevicesChanged =>
       _remoteDevicesChangedController.stream;
@@ -59,6 +74,169 @@ class GingaCC {
 
   List<Map<String, dynamic>> get forwardedMessages =>
       List.unmodifiable(_forwardedMessages);
+
+  Map<String, Map<String, dynamic>> get appSnapshots =>
+      Map.unmodifiable(_appSnapshots);
+
+  String? get activeAppContextId => _activeAppContextId;
+
+  Map<String, dynamic>? get activeAppSnapshot =>
+      _activeAppContextId != null ? _appSnapshots[_activeAppContextId] : null;
+
+  void saveAppContextSnapshot(
+    String appContextId,
+    Map<String, dynamic> snapshot,
+  ) {
+    _activeAppContextId = appContextId;
+    _appSnapshots[appContextId] = Map<String, dynamic>.from(snapshot);
+    if (mode == GingaCCMode.mirror) {
+      unawaited(pushPrimaryAppContextSnapshot(appContextId));
+    }
+  }
+
+  Map<String, dynamic>? getAppContextSnapshot([String? appContextId]) {
+    final targetId = appContextId ?? _activeAppContextId;
+    if (targetId == null) return null;
+    final snap = _appSnapshots[targetId];
+    return snap != null ? Map<String, dynamic>.from(snap) : null;
+  }
+
+  void clearAppContextSnapshots([String? appContextId]) {
+    if (appContextId != null) {
+      _appSnapshots.remove(appContextId);
+      if (_activeAppContextId == appContextId) {
+        _activeAppContextId =
+            _appSnapshots.keys.isNotEmpty ? _appSnapshots.keys.last : null;
+      }
+    } else {
+      _appSnapshots.clear();
+      _activeAppContextId = null;
+    }
+  }
+
+  Map<String, dynamic> toSnapshotJson() {
+    return {
+      'currentUserId': users.currentUserId,
+      'users': users.allUsers
+          .map(
+            (u) => {
+              'id': u.id,
+              'name': u.name,
+              'properties': u.properties,
+            },
+          )
+          .toList(),
+      'systemVariables': Map<String, String>.from(config.systemVariables),
+      'remoteDevices': _remoteDevices.values
+          .map((d) => Map<String, dynamic>.from(d))
+          .toList(),
+      'activeAppContextId': _activeAppContextId,
+      'appSnapshots': _appSnapshots.map(
+        (k, v) => MapEntry(k, Map<String, dynamic>.from(v)),
+      ),
+    };
+  }
+
+  void restoreFromSnapshotJson(Map<String, dynamic> json) {
+    final rawUsers = json['users'];
+    if (rawUsers is List) {
+      users.clear();
+      users.importUsers(rawUsers);
+    }
+    final currentUserId = json['currentUserId']?.toString();
+    if (currentUserId != null && currentUserId.isNotEmpty) {
+      users.setCurrentUser(currentUserId);
+    }
+    final rawVars = json['systemVariables'];
+    if (rawVars is Map) {
+      for (final entry in rawVars.entries) {
+        config.setVariable(entry.key.toString(), entry.value.toString());
+      }
+    }
+    final rawDevices = json['remoteDevices'];
+    if (rawDevices is List) {
+      for (final item in rawDevices.whereType<Map>()) {
+        final handle = item['handle']?.toString();
+        final deviceClass = item['deviceClass']?.toString() ?? '';
+        if (deviceClass.isEmpty) continue;
+        if (handle != null && _remoteDevices.containsKey(handle)) continue;
+        final supportedTypes = (item['supportedTypes'] is List)
+            ? (item['supportedTypes'] as List)
+                .map((e) => e.toString())
+                .toList()
+            : <String>['text/html'];
+        registerRemoteDevice(
+          deviceClass: deviceClass,
+          supportedTypes: supportedTypes,
+          screenSize: item['screenSize']?.toString() ?? '1280, 720',
+          screenGraphicSize:
+              item['screenGraphicSize']?.toString() ?? '1280, 720',
+        );
+      }
+    }
+    final rawSnaps = json['appSnapshots'];
+    if (rawSnaps is Map) {
+      _appSnapshots.clear();
+      for (final entry in rawSnaps.entries) {
+        if (entry.value is Map) {
+          _appSnapshots[entry.key.toString()] =
+              Map<String, dynamic>.from(entry.value as Map);
+        }
+      }
+    }
+    final activeId = json['activeAppContextId']?.toString();
+    if (activeId != null && activeId.isNotEmpty) {
+      _activeAppContextId = activeId;
+    }
+  }
+
+  Future<bool> pullPrimaryState([String? baseUrl]) async {
+    final base = (baseUrl ?? primaryCcwsUrl).replaceAll(RegExp(r'/+$'), '');
+    try {
+      final response = await http.get(Uri.parse('$base/tv3/gingacc'));
+      if (response.statusCode == 200 && response.body.isNotEmpty) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map) {
+          restoreFromSnapshotJson(Map<String, dynamic>.from(decoded));
+          return true;
+        }
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  Future<bool> pushPrimaryState([String? baseUrl]) async {
+    final base = (baseUrl ?? primaryCcwsUrl).replaceAll(RegExp(r'/+$'), '');
+    try {
+      final response = await http.put(
+        Uri.parse('$base/tv3/gingacc'),
+        headers: const {'content-type': 'application/json'},
+        body: jsonEncode(toSnapshotJson()),
+      );
+      return response.statusCode == 200;
+    } catch (_) {}
+    return false;
+  }
+
+  Future<bool> pushPrimaryAppContextSnapshot(
+    String appContextId, [
+    String? baseUrl,
+  ]) async {
+    final snap = _appSnapshots[appContextId];
+    if (snap == null) return false;
+    final base = (baseUrl ?? primaryCcwsUrl).replaceAll(RegExp(r'/+$'), '');
+    try {
+      final response = await http.put(
+        Uri.parse(
+          '$base/tv3/gingacc/app-context/${Uri.encodeComponent(appContextId)}',
+        ),
+        headers: const {'content-type': 'application/json'},
+        body: jsonEncode(snap),
+      );
+      return response.statusCode == 200;
+    } catch (_) {}
+    return false;
+  }
 
   Map<String, dynamic> registerRemoteDevice({
     required String deviceClass,
@@ -188,6 +366,9 @@ class GingaCC {
 
   void setSystemVariable(String name, String value, {String? userId}) {
     config.setVariable(name, value, userId: userId);
+    if (mode == GingaCCMode.mirror) {
+      unawaited(pushPrimaryState());
+    }
   }
 
   void switchCurrentUser(String userId) {
@@ -206,6 +387,9 @@ class GingaCC {
     }
     for (final entry in changes.entries) {
       config.setVariable(entry.key, entry.value, userId: 'currentUser');
+    }
+    if (mode == GingaCCMode.mirror) {
+      unawaited(pushPrimaryState());
     }
   }
 
@@ -271,6 +455,8 @@ class GingaCC {
 
   GingaCC({
     GingaConfig? config,
+    this.mode = GingaCCMode.primary,
+    this.primaryCcwsUrl = 'http://localhost:$ccwsDefaultPort',
   }) : config = config ?? GingaConfig();
 
   FutureOr<GingaConfig> loadConfig([dynamic configOrSrc, String? appSrc]) {

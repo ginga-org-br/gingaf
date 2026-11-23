@@ -33,6 +33,7 @@ class NclWidget extends BaseWidget {
   final GlobalKey<MainAVWidgetState>? mainAvKey;
   final VoidCallback? onRequestMainAv;
   final Bounds? bounds;
+  final bool recoverFromGingaCC;
   final void Function(Media media, NclActionType action, int line)?
       onBreakpointHit;
 
@@ -45,6 +46,7 @@ class NclWidget extends BaseWidget {
     this.mainAvKey,
     this.onRequestMainAv,
     this.bounds,
+    this.recoverFromGingaCC = false,
     this.onBreakpointHit,
   });
 
@@ -59,6 +61,7 @@ class NclWidget extends BaseWidget {
     this.mainAvKey,
     this.onRequestMainAv,
     this.bounds,
+    this.recoverFromGingaCC = false,
     this.onBreakpointHit,
   }) : super(content: content);
 
@@ -431,6 +434,9 @@ class NclWidgetState extends MediaState<NclWidget> {
         doc.setBreakpoints(gingacc.config.breakpoints);
       }
       doc.start();
+      if (widget.recoverFromGingaCC) {
+        doc.recoverFromGingaCC();
+      }
       if (doc.isPaused) {
         pause();
       }

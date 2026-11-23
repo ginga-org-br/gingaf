@@ -21,6 +21,68 @@ void main() {
     expect(app.appContext.appContextId, 'index.html');
   });
 
+  test('GingaCC checkpoints and recovers NclDocument state', () {
+    final gingacc = GingaCC();
+    gingacc.users.registerUser(
+      UserData(
+        id: 'u1',
+        name: 'Alice',
+        initialProperties: {'age': '28'},
+      ),
+    );
+    gingacc.switchCurrentUser('u1');
+
+    const nclXml = '''
+<ncl id="persistApp">
+  <head>
+    <connectorBase>
+      <causalConnector id="onBeginSet">
+        <connectorParam name="var"/>
+        <simpleCondition role="onBegin"/>
+        <simpleAction role="set" value="\$var"/>
+      </causalConnector>
+    </connectorBase>
+  </head>
+  <body>
+    <port id="p0" component="m1"/>
+    <media id="m1" src="video.mp4">
+      <area id="a1" begin="1s" end="3s"/>
+      <property name="caption" value="initial"/>
+    </media>
+    <link xconnector="onBeginSet">
+      <bind role="onBegin" component="m1" interface="a1"/>
+      <bind role="set" component="m1" interface="caption">
+        <bindParam name="var" value="updated"/>
+      </bind>
+    </link>
+  </body>
+</ncl>
+''';
+
+    final doc1 = NclDocument.fromContent(
+      nclXml,
+      applicationId: 'persistApp',
+      appSrc: 'persist.ncl',
+      gingacc: gingacc,
+    );
+    doc1.start();
+    doc1.tick(1200);
+    doc1.checkpointToGingaCC();
+
+    expect(doc1.getPropertyValue(doc1.getMediaById('m1')!, 'caption'), 'updated');
+    expect(gingacc.getAppContextSnapshot('persistApp'), isNotNull);
+
+    final doc2 = NclDocument.fromContent(
+      nclXml,
+      applicationId: 'persistApp',
+      appSrc: 'persist.ncl',
+      gingacc: gingacc,
+    );
+    expect(doc2.recoverFromGingaCC(), isTrue);
+    expect(doc2.virtualClock, 1200);
+    expect(doc2.getMediaById('m1')!.getMainState(), NclStateType.occurring);
+    expect(doc2.getPropertyValue(doc2.getMediaById('m1')!, 'caption'), 'updated');
+  });
   group('NclDocument from nodes Tests', () {
     test('tick increments virtual clock', () {
       final doc = NclDocument.fromContent('<ncl><body id="body"></body></ncl>');

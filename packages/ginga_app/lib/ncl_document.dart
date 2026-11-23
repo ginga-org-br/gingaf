@@ -3,8 +3,8 @@ library;
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:get_it/get_it.dart';
 import 'package:gingacc/gingacc.dart';
+import 'package:get_it/get_it.dart';
 import 'package:logging/logging.dart';
 
 import 'base_ginga_app.dart';
@@ -20,8 +20,8 @@ export 'package:gingacc/gingacc.dart';
 
 export 'base_ginga_app.dart';
 export 'elements.dart';
-export 'html_app.dart';
 export 'event.dart';
+export 'html_app.dart';
 export 'lua_runtime.dart';
 export 'ncl_pbds.dart';
 export 'ncl_scheduler.dart';
@@ -258,6 +258,7 @@ class NclDocument extends BaseGingaApp {
     _channelCloseSubs[channel] = channel.onClose.listen((_) {
       _handleRemoteDeviceDisconnected(channel, baseClass);
     });
+
   }
 
   void _handleRemoteDeviceDisconnected(
@@ -1266,6 +1267,7 @@ class NclDocument extends BaseGingaApp {
     replicateMultiDeviceNodes();
     scheduler.start();
     _initInitialFocus();
+    checkpointToGingaCC();
   }
 
   void stop() {
@@ -1283,12 +1285,121 @@ class NclDocument extends BaseGingaApp {
       sub.cancel();
     }
     _channelCloseSubs.clear();
+    checkpointToGingaCC();
   }
 
   Set<Media> tick([int incrementMs = 0, int stepMs = 100]) {
     final res = scheduler.tick(incrementMs, stepMs);
     _initInitialFocus();
+    if (res.isNotEmpty) {
+      checkpointToGingaCC();
+    }
     return res;
+  }
+
+  Map<String, dynamic> toSnapshotJson() {
+    final nodeStates = <String, dynamic>{};
+    final properties = <String, String>{};
+    void collect(Composition comp) {
+      for (final node in comp.getNodes()) {
+        final id = node.id;
+        if (id != null && id.isNotEmpty) {
+          nodeStates[id] = {
+            'state': NclEvent.getNclEventStateAsString(node.getMainState())
+                .toLowerCase(),
+            'timeMs': node.time,
+          };
+          for (final prop in node.children.whereType<Property>()) {
+            final name = prop.name;
+            final val = prop.value;
+            if (name != null && val != null) {
+              properties['$id.$name'] = val;
+            }
+          }
+        }
+        if (node is Composition) {
+          collect(node);
+        }
+      }
+    }
+
+    collect(_body);
+    return {
+      'applicationId': applicationId,
+      'appSrc': appSrc,
+      'virtualClock': virtualClock,
+      'isPlaying': isPlaying,
+      'isPaused': isPaused,
+      'currentFocusNodeId': _currentFocusNodeId,
+      'nodeStates': nodeStates,
+      'properties': properties,
+    };
+  }
+
+  void restoreFromSnapshotJson(Map<String, dynamic> snapshot) {
+    final clock = snapshot['virtualClock'];
+    if (clock is int) {
+      virtualClock = clock;
+    }
+    final playing = snapshot['isPlaying'];
+    if (playing is bool) {
+      isPlaying = playing;
+    }
+    final paused = snapshot['isPaused'];
+    if (paused is bool) {
+      isPaused = paused;
+    }
+    final focusId = snapshot['currentFocusNodeId']?.toString();
+    if (focusId != null && focusId.isNotEmpty) {
+      _currentFocusNodeId = focusId;
+    }
+    final rawNodeStates = snapshot['nodeStates'];
+    if (rawNodeStates is Map) {
+      for (final entry in rawNodeStates.entries) {
+        final node = getNodeById(entry.key.toString());
+        if (node != null && entry.value is Map) {
+          final stateMap = entry.value as Map;
+          final stateStr = stateMap['state']?.toString().toLowerCase();
+          final timeMs = stateMap['timeMs'];
+          if (timeMs is int) {
+            node.time = timeMs;
+          }
+          if (stateStr == 'occurring') {
+            node.getMainNclEvent().state = NclStateType.occurring;
+          } else if (stateStr == 'paused') {
+            node.getMainNclEvent().state = NclStateType.paused;
+          } else if (stateStr == 'sleeping') {
+            node.getMainNclEvent().state = NclStateType.sleeping;
+          }
+        }
+      }
+    }
+    final rawProps = snapshot['properties'];
+    if (rawProps is Map) {
+      for (final entry in rawProps.entries) {
+        final key = entry.key.toString();
+        final dotIdx = key.indexOf('.');
+        if (dotIdx <= 0) continue;
+        final nodeId = key.substring(0, dotIdx);
+        final propName = key.substring(dotIdx + 1);
+        final node = getNodeById(nodeId);
+        if (node != null) {
+          node.setPropertyValue(propName, entry.value.toString());
+        }
+      }
+    }
+    onStateChanged?.call();
+  }
+
+  void checkpointToGingaCC() {
+    gingacc.saveAppContextSnapshot(applicationId, toSnapshotJson());
+  }
+
+  bool recoverFromGingaCC([String? targetAppId]) {
+    final snap = gingacc.getAppContextSnapshot(targetAppId ?? applicationId);
+    if (snap == null) return false;
+    restoreFromSnapshotJson(snap);
+    return true;
   }
 
   void _initInitialFocus() {

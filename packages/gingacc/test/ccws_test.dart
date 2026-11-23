@@ -180,5 +180,54 @@ void main() {
 
       listener.close();
     });
+
+    test('GingaCCMode.mirror syncs state and app snapshots with GingaCCMode.primary',
+        () async {
+      final primaryCc = GingaCC(mode: GingaCCMode.primary);
+      await primaryCc.ccws.start();
+      try {
+        final mirrorCc = GingaCC(
+          mode: GingaCCMode.mirror,
+          primaryCcwsUrl: 'http://localhost:${primaryCc.ccws.port}',
+        );
+
+        mirrorCc.users.registerUser(
+          UserData(
+            id: 'u_mirror',
+            name: 'Carlos',
+            initialProperties: {'lang': 'pt'},
+          ),
+        );
+        mirrorCc.switchCurrentUser('u_mirror');
+        expect(await mirrorCc.pushPrimaryState(), isTrue);
+        expect(primaryCc.users.currentUserId, 'u_mirror');
+
+        mirrorCc.saveAppContextSnapshot('app_tv3', {
+          'applicationId': 'app_tv3',
+          'virtualClock': 2500,
+        });
+        expect(
+          await mirrorCc.pushPrimaryAppContextSnapshot('app_tv3'),
+          isTrue,
+        );
+        expect(
+          primaryCc.getAppContextSnapshot('app_tv3')?['virtualClock'],
+          2500,
+        );
+
+        final freshMirror = GingaCC(
+          mode: GingaCCMode.mirror,
+          primaryCcwsUrl: 'http://localhost:${primaryCc.ccws.port}',
+        );
+        expect(await freshMirror.pullPrimaryState(), isTrue);
+        expect(freshMirror.users.currentUserId, 'u_mirror');
+        expect(
+          freshMirror.getAppContextSnapshot('app_tv3')?['virtualClock'],
+          2500,
+        );
+      } finally {
+        await primaryCc.ccws.stop();
+      }
+    });
   });
 }

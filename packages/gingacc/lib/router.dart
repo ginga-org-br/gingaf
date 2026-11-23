@@ -185,6 +185,54 @@ class CCWSRouter {
       );
     });
 
+    router.get('/tv3/gingacc', (Request request) {
+      return Response.ok(
+        jsonEncode(cc.toSnapshotJson()),
+        headers: jsonHeaders,
+      );
+    });
+
+    router.put('/tv3/gingacc', (Request request) async {
+      final raw = await request.readAsString();
+      if (raw.isNotEmpty) {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map) {
+          cc.restoreFromSnapshotJson(Map<String, dynamic>.from(decoded));
+        }
+      }
+      return Response.ok(
+        jsonEncode(cc.toSnapshotJson()),
+        headers: jsonHeaders,
+      );
+    });
+
+    router.get('/tv3/gingacc/app-context', (Request request) {
+      final snap = cc.getAppContextSnapshot();
+      if (snap == null) {
+        return Response(404, body: jsonEncode({}), headers: jsonHeaders);
+      }
+      return Response.ok(jsonEncode(snap), headers: jsonHeaders);
+    });
+
+    router.get('/tv3/gingacc/app-context/<appId>',
+        (Request request, String appId) {
+      final snap = cc.getAppContextSnapshot(appId);
+      if (snap == null) {
+        return Response(404, body: jsonEncode({}), headers: jsonHeaders);
+      }
+      return Response.ok(jsonEncode(snap), headers: jsonHeaders);
+    });
+
+    router.put('/tv3/gingacc/app-context/<appId>',
+        (Request request, String appId) async {
+      final raw = await request.readAsString();
+      final decoded = raw.isNotEmpty
+          ? Map<String, dynamic>.from(jsonDecode(raw) as Map)
+          : <String, dynamic>{};
+      cc.saveAppContextSnapshot(appId, decoded);
+      return Response.ok(jsonEncode(decoded), headers: jsonHeaders);
+    });
+
     try {
       for (final plugin in GetIt.instance.getAll<CcwsRoutePlugin>()) {
         router.add(

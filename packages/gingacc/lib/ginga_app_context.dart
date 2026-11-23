@@ -295,6 +295,11 @@ class GingaAppContext {
   final Map<String, String> _virtualFiles;
   Uri? baseUri;
 
+  Users? get users => gingacc?.users;
+
+  Map<String, Map<String, dynamic>> get remoteDevices =>
+      gingacc?.remoteDevices ?? const {};
+
   String get applicationId => appContextId;
 
   GingaAppContext({
