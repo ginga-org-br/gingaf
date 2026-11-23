@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TV 3.0 VLibras Accessibility Companion</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    #vlibras-access-wrapper,
+    [vw-access-button] {
+      display: none !important;
+    }
+    #vlibras-app-root,
+    [vw].enabled,
+    [vw-plugin-wrapper] {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      margin: 0 !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      transform: none !important;
+      z-index: 9999 !important;
+    }
+    .vw-plugin-top-wrapper,
+    div[vp] {
+      width: 100% !important;
+      height: 100% !important;
+      flex: 1 1 auto !important;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    (function () {
+      if (typeof window === 'undefined') return;
+
+      const params = new URLSearchParams(window.location.search);
+      const deviceClass = 'accessibility';
+
+      let activeNodeId = null;
+      let activeAppId = 'default';
+      let vlibrasLoaded = false;
+      let welcomeSkipped = false;
+      let lastGloss = '';
+      const playedGlosses = [];
+      window.__vlibrasPlayedGlosses = playedGlosses;
+
+      const FULLSCREEN_SHADOW_CSS = [
+        ':host { position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100vh !important; display: block !important; }',
+        '#vlibras-app {',
+        '  position: fixed !important;',
+        '  inset: 0 !important;',
+        '  top: 0 !important;',
+        '  left: 0 !important;',
+        '  right: 0 !important;',
+        '  bottom: 0 !important;',
+        '  width: 100vw !important;',
+        '  max-width: 100vw !important;',
+        '  height: 100vh !important;',
+        '  max-height: 100vh !important;',
+        '  transform: none !important;',
+        '  translate: none !important;',
+        '  margin: 0 !important;',
+        '  border-radius: 0 !important;',
+        '  border: none !important;',
+        '  --player-height: calc(100dvh - 52px) !important;',
+        '}',
+        '#vlibras-app > div {',
+        '  width: 100vw !important;',
+        '  max-width: 100vw !important;',
+        '  height: 100vh !important;',
+        '  max-height: 100vh !important;',
+        '  border-radius: 0 !important;',
+        '  border: none !important;',
+        '}',
+        '#vlibras-app-content {',
+        '  width: 100% !important;',
+        '  height: 100% !important;',
+        '  max-height: 100vh !important;',
+        '}',
+        'iframe[title="vlibras-player"] {',
+        '  width: 100% !important;',
+        '  height: calc(100vh - 52px) !important;',
+        '  max-height: calc(100vh - 52px) !important;',
+        '}'
+      ].join('\n');
+
+      function injectShadowFullscreenStyle(rootEl) {
+        if (!rootEl || !rootEl.shadowRoot) return;
+        const sr = rootEl.shadowRoot;
+        if (!sr.getElementById('gingaf-vlibras-fullscreen-style')) {
+          const styleEl = document.createElement('style');
+          styleEl.id = 'gingaf-vlibras-fullscreen-style';
+          styleEl.textContent = FULLSCREEN_SHADOW_CSS;
+          sr.appendChild(styleEl);
+        }
+      }
+
+      function sendTransition(eventType, transition, extra) {
+        if (!activeNodeId) return;
+        const msg = Object.assign({
+          nodeId: activeNodeId,
+          appId: activeAppId,
+          deviceClass: deviceClass,
+          eventType: eventType,
+          transition: transition
+        }, extra || {});
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage(JSON.stringify(msg), '*');
+        }
+      }
+
+      function clickSkipButtonInShadowDom() {
+        const rootEl = document.getElementById('vlibras-app-root');
+        if (!rootEl || !rootEl.shadowRoot) return false;
+        let clicked = false;
+        const buttons = rootEl.shadowRoot.querySelectorAll('button');
+        buttons.forEach(function (btn) {
+          const txt = (btn.textContent || '').trim().toLowerCase();
+          if (txt === 'pular' || txt.indexOf('pular') !== -1) {
+            btn.click();
+            clicked = true;
+          }
+        });
+        return clicked;
+      }
+
+      function dispatchGlossToPlayer(cleaned) {
+        if (!cleaned) return false;
+        const api = window.vlibras || (window.plugin && window.plugin.player);
+        if (api && api.isLoaded) {
+          try {
+            if (!api.showSubtitles && typeof api.toggleSubtitles === 'function') {
+              api.toggleSubtitles(true);
+            }
+            if (typeof api.play === 'function') {
+              api.play(cleaned);
+              welcomeSkipped = true;
+              return true;
+            }
+          } catch (_) {}
+        }
+        if (window.vlibrasWidget && typeof window.vlibrasWidget.play === 'function') {
+          try {
+            window.vlibrasWidget.play(cleaned);
+            return true;
+          } catch (_) {}
+        }
+        if (window.VLibras && window.vlibrasWidget && typeof window.vlibrasWidget.translate === 'function') {
+          try {
+            window.vlibrasWidget.translate(cleaned);
+            return true;
+          } catch (_) {}
+        }
+        return false;
+      }
+
+      function playVlibrasGloss(gloss) {
+        const cleaned = String(gloss || '').trim();
+        if (!cleaned) return;
+        lastGloss = cleaned;
+        playedGlosses.push(cleaned);
+        dispatchGlossToPlayer(cleaned);
+      }
+
+      function openVlibrasFullScreen() {
+        if (window.VLibrasWidget && typeof window.VLibrasWidget.open === 'function') {
+          try {
+            window.VLibrasWidget.open();
+          } catch (_) {}
+        }
+        const accessWrapper = document.getElementById('vlibras-access-wrapper');
+        if (accessWrapper && accessWrapper.shadowRoot) {
+          const btn = accessWrapper.shadowRoot.getElementById('vlibras-button');
+          const rootEl = document.getElementById('vlibras-app-root');
+          if (btn && (!rootEl || rootEl.dataset.active !== 'true')) {
+            btn.click();
+          }
+        }
+        const rootEl = document.getElementById('vlibras-app-root');
+        if (rootEl) {
+          rootEl.dataset.active = 'true';
+          injectShadowFullscreenStyle(rootEl);
+        }
+        const accessBtn = document.querySelector('[vw-access-button]');
+        const wrapper = document.querySelector('[vw-plugin-wrapper]');
+        if (wrapper && !wrapper.classList.contains('active') && accessBtn) {
+          accessBtn.click();
+        }
+        if (wrapper) {
+          wrapper.classList.add('active');
+        }
+        const api = window.vlibras || (window.plugin && window.plugin.player);
+        if (api && api.isLoaded && api.isPlayingWelcome && !welcomeSkipped) {
+          if (clickSkipButtonInShadowDom()) {
+            welcomeSkipped = true;
+          }
+          if (lastGloss) {
+            dispatchGlossToPlayer(lastGloss);
+          }
+        }
+      }
+
+      function initVLibras() {
+        if (typeof window === 'undefined' || typeof document === 'undefined') return;
+        if (document.querySelector('[vw]')) return;
+
+        try {
+          window.localStorage.removeItem('@vlibras/player');
+          window.localStorage.setItem(
+            '@vlibras-widget',
+            JSON.stringify({ state: { isOpen: true, opacity: 1 }, version: 1 })
+          );
+          window.localStorage.setItem(
+            '@vlibras-consent',
+            JSON.stringify({ state: { status: 'accepted' }, version: 1 })
+          );
+        } catch (_) {}
+
+        const vwContainer = document.createElement('div');
+        vwContainer.setAttribute('vw', '');
+        vwContainer.className = 'enabled';
+
+        const vwAccessButton = document.createElement('div');
+        vwAccessButton.setAttribute('vw-access-button', '');
+        vwAccessButton.className = 'active';
+
+        const vwPluginWrapper = document.createElement('div');
+        vwPluginWrapper.setAttribute('vw-plugin-wrapper', '');
+
+        const vwPluginTopWrapper = document.createElement('div');
+        vwPluginTopWrapper.className = 'vw-plugin-top-wrapper';
+
+        vwPluginWrapper.appendChild(vwPluginTopWrapper);
+        vwContainer.appendChild(vwAccessButton);
+        vwContainer.appendChild(vwPluginWrapper);
+        document.body.appendChild(vwContainer);
+
+        if (vlibrasLoaded || params.get('vlibras') === 'offline') {
+          return;
+        }
+
+        const observer = new MutationObserver(function () {
+          const rootEl = document.getElementById('vlibras-app-root');
+          if (rootEl) {
+            rootEl.dataset.active = 'true';
+            injectShadowFullscreenStyle(rootEl);
+          }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        const script = document.createElement('script');
+        script.src = 'https://vlibras.gov.br/app/vlibras-plugin.js';
+        script.async = true;
+        script.onload = function () {
+          try {
+            window.vlibrasWidget = new window.VLibras.Widget('https://vlibras.gov.br/app');
+            vlibrasLoaded = true;
+            openVlibrasFullScreen();
+            let pollCount = 0;
+            const pollTimer = setInterval(function () {
+              pollCount++;
+              openVlibrasFullScreen();
+              if (welcomeSkipped || pollCount > 40) {
+                clearInterval(pollTimer);
+              }
+            }, 350);
+          } catch (_) {}
+        };
+        document.body.appendChild(script);
+      }
+
+      window.initVLibras = initVLibras;
+
+      function applyProperty(name, value) {
+        const strVal = String(value == null ? '' : value);
+        if (name === 'librasGloss') {
+          playVlibrasGloss(strVal);
+        }
+      }
+
+      function handleHostMessage(raw) {
+        let msg;
+        try {
+          msg = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        } catch (_) {
+          return;
+        }
+        if (!msg || typeof msg !== 'object') return;
+        if (msg.type === 'unity_event' || msg.type === 'unity') return;
+
+        if ('type' in msg && !('eventType' in msg)) {
+          activeNodeId = msg.nodeId || activeNodeId;
+          activeAppId = msg.appId || activeAppId;
+          if (Array.isArray(msg.properties)) {
+            msg.properties.forEach(function (p) {
+              if (p && p.name) applyProperty(p.name, p.value);
+            });
+          }
+          sendTransition('preparation', 'stops');
+          return;
+        }
+
+        if (msg.eventType === 'presentation') {
+          activeNodeId = msg.nodeId || activeNodeId;
+          activeAppId = msg.appId || activeAppId;
+          if (msg.action === 'start') {
+            sendTransition('presentation', 'starts');
+          } else if (msg.action === 'pause') {
+            sendTransition('presentation', 'pauses');
+          } else if (msg.action === 'resume') {
+            sendTransition('presentation', 'resumes');
+          } else if (msg.action === 'stop') {
+            sendTransition('presentation', 'stops');
+          } else if (msg.action === 'abort') {
+            sendTransition('presentation', 'aborts');
+          }
+        } else if (msg.eventType === 'attribution' && msg.label) {
+          applyProperty(msg.label, msg.value);
+        }
+      }
+
+      window.addEventListener('message', function (ev) {
+        handleHostMessage(ev.data);
+      });
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initVLibras);
+      } else {
+        initVLibras();
+      }
+    })();
+  </script>
+</body>
+</html>

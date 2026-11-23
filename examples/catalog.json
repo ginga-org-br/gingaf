@@ -219,6 +219,16 @@
                 "causalConnBase.ncl",
                 "advert.ncl"
             ]
+        },
+        "md_multidevice_vlibras_vr360": {
+            "mainFile": "multidevice/multidevice_vlibras_vr360.ncl",
+            "category": "multidevice",
+            "description": "TV 3.0 3-View Main Screen NCL (main screen + ncl-360-vr + accessibility VLibras)",
+            "otherEditbleFiles": [
+                "multidevice_guide.lua",
+                "vr360_companion.ncl360",
+                "vlibras_companion.html"
+            ]
         }
     }
 }

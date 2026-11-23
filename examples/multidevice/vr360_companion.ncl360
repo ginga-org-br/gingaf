@@ -1,0 +1,14 @@
+<ncl360>
+  <head>
+    <region id="rHotspot1" polar="0d" azimuthal="0d" width="1.5m" height="1.0m" radius="2.5m"
+      pin="environment" zIndex="3" />
+    <descriptor id="dPano" region="default.sky" volume="1" />
+    <descriptor id="dHotspot1" region="rHotspot1" />
+  </head>
+  <body>
+    <media id="mainVideo" src="https://threejs.org/examples/textures/pano.mp4" descriptor="dPano" />
+    <media id="hotspot1" src="../video360/lhc_info.txt" descriptor="dHotspot1">
+      <property name="background" value="gray" />
+    </media>
+  </body>
+</ncl360>
