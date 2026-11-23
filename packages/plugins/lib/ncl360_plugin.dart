@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -122,6 +123,7 @@ class Ncl360MediaPlugin implements NclMediaPlugin, PluginBase {
 class Scene360Widget extends BaseWidget {
   final String? mimeType;
   final FocusNode? focusNode;
+  final void Function(String hotspotId, bool inView)? onHotspotViewChanged;
 
   const Scene360Widget({
     super.key,
@@ -129,7 +131,9 @@ class Scene360Widget extends BaseWidget {
     this.mimeType,
     super.media,
     super.document,
+    super.gingacc,
     this.focusNode,
+    this.onHotspotViewChanged,
   });
 
   @override
@@ -350,6 +354,7 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
       if (!_isHotspotActive(hotspot)) {
         if (hotspot.inView) {
           hotspot.inView = false;
+          widget.onHotspotViewChanged?.call(hotspot.id, false);
           if (doc != null) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (!mounted) return;
@@ -372,6 +377,7 @@ class _Scene360WidgetState extends MediaState<Scene360Widget> {
 
       if (inViewNow != hotspot.inView) {
         hotspot.inView = inViewNow;
+        widget.onHotspotViewChanged?.call(hotspot.id, inViewNow);
         final doc = widget.document;
         if (doc != null) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1452,5 +1458,118 @@ class Ncl360ParserPlugin implements NclParserPlugin, PluginBase {
 
     body.children.add(sceneMedia);
     return (head, body);
+  }
+}
+
+class Ncl360RemoteCoordinator {
+  final NclDocument primaryTvDocument;
+  final RemoteDeviceChannel channel;
+  final List<Ncl360Hotspot> remoteHotspots = [];
+  double companionYaw = 0.0;
+  double companionPitch = 0.0;
+  double companionFov = 90.0;
+  String activeSceneNodeId = 'scene360';
+  StreamSubscription<Map<String, dynamic>>? _hostSub;
+  StreamSubscription<Map<String, dynamic>>? _deviceSub;
+
+  Ncl360RemoteCoordinator({
+    required this.primaryTvDocument,
+    required this.channel,
+  }) {
+    primaryTvDocument.attachRemoteDeviceChannel(channel);
+    _hostSub = channel.onHostMessage.listen(_onCompanionReceiveHostMsg);
+    _deviceSub = channel.onDeviceMessage.listen(_onPrimaryTvReceiveDeviceMsg);
+  }
+
+  void offloadScene({
+    required String sceneNodeId,
+    required String skyboxSrc,
+    required List<Ncl360Hotspot> hotspots,
+    Ncl360Projection projection = Ncl360Projection.equirectangular,
+  }) {
+    activeSceneNodeId = sceneNodeId;
+    channel.sendToDevice({
+      'type': 'ncl360_scene_init',
+      'sceneNodeId': sceneNodeId,
+      'skyboxSrc': skyboxSrc,
+      'projection': projection.name,
+      'hotspots': hotspots
+          .map(
+            (h) => {
+              'id': h.id,
+              'polar': h.coordinate.polar,
+              'azimuthal': h.coordinate.azimuthal,
+              'radius': h.coordinate.radius,
+              'label': h.label ?? h.id,
+            },
+          )
+          .toList(),
+    });
+  }
+
+  void _onCompanionReceiveHostMsg(Map<String, dynamic> msg) {
+    if (msg['type'] == 'ncl360_scene_init') {
+      activeSceneNodeId = msg['sceneNodeId']?.toString() ?? activeSceneNodeId;
+      remoteHotspots.clear();
+      final list = msg['hotspots'];
+      if (list is List) {
+        for (final item in list.whereType<Map>()) {
+          remoteHotspots.add(
+            Ncl360Hotspot(
+              id: item['id']?.toString() ?? '',
+              coordinate: SphericalCoordinate(
+                polar: (item['polar'] as num?)?.toDouble() ?? 0.0,
+                azimuthal: (item['azimuthal'] as num?)?.toDouble() ?? 0.0,
+                radius: (item['radius'] as num?)?.toDouble() ?? 1.0,
+              ),
+              label: item['label']?.toString(),
+            ),
+          );
+        }
+      }
+      updateCompanionGaze(
+        yaw: companionYaw,
+        pitch: companionPitch,
+        fov: companionFov,
+      );
+    }
+  }
+
+  void updateCompanionGaze({
+    required double yaw,
+    required double pitch,
+    double? fov,
+  }) {
+    companionYaw = SphericalCoordinate.normalizeDegrees(yaw);
+    companionPitch = pitch.clamp(-85.0, 85.0);
+    if (fov != null) {
+      companionFov = fov.clamp(30.0, 120.0);
+    }
+
+    for (final hotspot in remoteHotspots) {
+      final inViewNow = hotspot.coordinate.isInView(
+        cameraYaw: companionYaw,
+        cameraPitch: companionPitch,
+        fov: companionFov,
+      );
+      if (inViewNow != hotspot.inView) {
+        hotspot.inView = inViewNow;
+        channel.sendToHost({
+          'nodeId': activeSceneNodeId,
+          'label': hotspot.id,
+          'appId': primaryTvDocument.applicationId,
+          'eventType': 'view',
+          'transition': inViewNow ? 'starts' : 'stops',
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        });
+      }
+    }
+  }
+
+  void _onPrimaryTvReceiveDeviceMsg(Map<String, dynamic> msg) {}
+
+  Future<void> dispose() async {
+    await _hostSub?.cancel();
+    await _deviceSub?.cancel();
   }
 }

@@ -96,6 +96,12 @@ class Descriptor extends Element {
   Descriptor({super.rawAttributes});
 }
 
+class RegionBase extends Element {
+  String? get device => rawAttributes['device'];
+  List<Region> get regions => children.whereType<Region>().toList();
+  RegionBase({super.rawAttributes});
+}
+
 class Region extends Element {
   String? get title => rawAttributes['title'];
   String? get left => rawAttributes['left'];

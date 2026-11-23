@@ -6,7 +6,7 @@ import 'package:http/testing.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('Tv3wsClient Unit Tests', () {
+  group('RemoteDeviceClient Unit Tests', () {
     test('fetchCurrentUser parses TV 3.0 current user response', () async {
       final mockClient = MockClient((request) async {
         if (request.url.path == '/tv3/current-service/users/current-user') {
@@ -27,7 +27,7 @@ void main() {
         return http.Response('Not Found', 404);
       });
 
-      final client = Tv3wsClient(
+      final client = RemoteDeviceClient(
         baseUrl: 'http://localhost:44642',
         client: mockClient,
       );
@@ -53,7 +53,7 @@ void main() {
         return http.Response('Not Found', 404);
       });
 
-      final client = Tv3wsClient(
+      final client = RemoteDeviceClient(
         baseUrl: 'http://localhost:44642',
         client: mockClient,
       );
@@ -74,7 +74,7 @@ void main() {
         return http.Response('Not Found', 404);
       });
 
-      final client = Tv3wsClient(
+      final client = RemoteDeviceClient(
         baseUrl: 'http://localhost:44642',
         client: mockClient,
       );
@@ -104,7 +104,7 @@ void main() {
         return http.Response('Not Found', 404);
       });
 
-      final client = Tv3wsClient(
+      final client = RemoteDeviceClient(
         baseUrl: 'http://localhost:44642',
         client: mockClient,
       );
@@ -137,7 +137,7 @@ void main() {
         return http.Response('Not Found', 404);
       });
 
-      final client = Tv3wsClient(
+      final client = RemoteDeviceClient(
         baseUrl: 'http://localhost:44642',
         client: mockClient,
       );

@@ -3,17 +3,20 @@ import 'dart:io';
 
 import 'package:logging/logging.dart';
 import 'package:path/path.dart' as path;
+import 'package:shelf/shelf.dart' as shelf;
 
 import 'ccws.dart';
 import 'ginga_app_context.dart';
 import 'ginga_config.dart';
+import 'remote_device_client.dart';
 
 export 'ccws.dart';
 export 'ginga_app.dart';
 export 'ginga_app_context.dart';
 export 'ginga_config.dart';
 export 'gingacc_plugins.dart';
-export 'tv3ws_client.dart';
+export 'remote_device_client.dart';
+export 'ssdp.dart';
 export 'users.dart';
 
 final _logger = Logger('gingacc');
@@ -37,8 +40,175 @@ bool isXmlString(String? src) {
 
 class GingaCC {
   GingaConfig config;
-  late final CCWS ccws = CCWS();
+  late final CCWS ccws = CCWS(gingacc: this);
   final Map<String, GingaAppContext> _appContexts = {};
+  final Map<String, Map<String, dynamic>> _remoteDevices = {};
+  final Map<String, RemoteDeviceChannel> _remoteChannels = {};
+  final StreamController<void> _remoteDevicesChangedController =
+      StreamController<void>.broadcast();
+  final List<Map<String, dynamic>> _forwardedMessages = [];
+  int _nextRemoteDeviceIndex = 1;
+
+  Stream<void> get onRemoteDevicesChanged =>
+      _remoteDevicesChangedController.stream;
+
+  Map<String, Map<String, dynamic>> get remoteDevices =>
+      Map.unmodifiable(_remoteDevices);
+
+  List<RemoteDeviceChannel> get allRemoteDeviceChannels =>
+      List.unmodifiable(_remoteChannels.values);
+
+  List<Map<String, dynamic>> get forwardedMessages =>
+      List.unmodifiable(_forwardedMessages);
+
+  Map<String, dynamic> registerRemoteDevice({
+    required String deviceClass,
+    required List<String> supportedTypes,
+    String screenSize = '1280, 720',
+    String screenGraphicSize = '1280, 720',
+  }) {
+    final portIdx = _nextRemoteDeviceIndex++;
+    var classIdx = 1;
+    while (_remoteDevices.containsKey('rd-$deviceClass-$classIdx')) {
+      classIdx++;
+    }
+    final handle = 'rd-$deviceClass-$classIdx';
+    final wsPort = 45000 + ((portIdx - 1) % 200);
+    final wsUrl = 'ws://localhost:$wsPort';
+    final channel = RemoteDeviceChannel(
+      deviceClass: deviceClass,
+      deviceId: handle,
+      wsPort: wsPort,
+      wsUrl: wsUrl,
+      supportedTypes: List<String>.from(supportedTypes),
+      screenSize: screenSize,
+      screenGraphicSize: screenGraphicSize,
+    );
+    final device = {
+      'handle': handle,
+      'deviceClass': deviceClass,
+      'supportedTypes': List<String>.from(supportedTypes),
+      'url': wsUrl,
+      'wsPort': wsPort,
+      'screenSize': screenSize,
+      'screenGraphicSize': screenGraphicSize,
+    };
+    _remoteDevices[handle] = device;
+    _remoteChannels[handle] = channel;
+    channel.onClose.listen((_) {
+      if (_remoteDevices.remove(handle) != null) {
+        _remoteChannels.remove(handle);
+        if (!_remoteDevicesChangedController.isClosed) {
+          _remoteDevicesChangedController.add(null);
+        }
+      }
+    });
+    if (!_remoteDevicesChangedController.isClosed) {
+      _remoteDevicesChangedController.add(null);
+    }
+    return device;
+  }
+
+  RemoteDeviceChannel? getRemoteDeviceChannel(String handle) =>
+      _remoteChannels[handle];
+
+  List<RemoteDeviceChannel> getRemoteDeviceChannelsByClass(String classId) {
+    return _remoteChannels.values
+        .where((c) => !c.isClosed && c.deviceClass == classId)
+        .toList();
+  }
+
+  bool unregisterRemoteDevice(String handle) {
+    final removedDevice = _remoteDevices.remove(handle);
+    final channel = _remoteChannels.remove(handle);
+    if (channel != null && !channel.isClosed) {
+      unawaited(channel.close());
+    }
+    if (removedDevice != null && !_remoteDevicesChangedController.isClosed) {
+      _remoteDevicesChangedController.add(null);
+    }
+    return removedDevice != null;
+  }
+
+  List<Map<String, dynamic>> getRemoteDevicesByClass(String classId) {
+    return _remoteDevices.values
+        .where((d) => d['deviceClass'] == classId)
+        .map(
+          (d) => {
+            'handle': d['handle'],
+            'supportedTypes': d['supportedTypes'],
+            'url': d['url'],
+          },
+        )
+        .toList();
+  }
+
+  void recordForwardedMessage(Map<String, dynamic> payload) {
+    _forwardedMessages.add(payload);
+  }
+
+  Future<({int statusCode, Map<String, String> headers, String body})>
+      dispatchLocalCcwsRequest({
+    required String method,
+    required String path,
+    Map<String, String>? headers,
+    String? body,
+  }) async {
+    final normalizedPath = path.startsWith('/') ? path : '/$path';
+    final uri = Uri.parse('http://localhost:${ccws.port}$normalizedPath');
+    final request = shelf.Request(
+      method.toUpperCase(),
+      uri,
+      headers: headers,
+      body: body,
+    );
+    final response = await ccws.handler(request);
+    final responseBody = await response.readAsString();
+    return (
+      statusCode: response.statusCode,
+      headers: Map<String, String>.from(response.headers),
+      body: responseBody,
+    );
+  }
+
+  void clearRemoteDevices() {
+    final channels = List<RemoteDeviceChannel>.from(_remoteChannels.values);
+    _remoteDevices.clear();
+    _remoteChannels.clear();
+    _forwardedMessages.clear();
+    _nextRemoteDeviceIndex = 1;
+    for (final ch in channels) {
+      if (!ch.isClosed) {
+        unawaited(ch.close());
+      }
+    }
+    if (!_remoteDevicesChangedController.isClosed) {
+      _remoteDevicesChangedController.add(null);
+    }
+  }
+
+  void setSystemVariable(String name, String value, {String? userId}) {
+    config.setVariable(name, value, userId: userId);
+  }
+
+  void switchCurrentUser(String userId) {
+    final user = config.users.getUser(userId);
+    if (user == null) return;
+    final changes = config.users.diffNewCurrentUser(user);
+    config.users.setCurrentUser(userId);
+    config.setVariable('currentUser', user.id, userId: 'currentUser');
+    config.setVariable('system.user', user.id, userId: 'currentUser');
+    config.setVariable('user.id', user.id, userId: 'currentUser');
+    config.setVariable('user.name', user.name, userId: 'currentUser');
+    for (final entry in user.properties.entries) {
+      final valStr = entry.value.toString();
+      config.setVariable('user.${entry.key}', valStr, userId: 'currentUser');
+      config.setVariable(entry.key, valStr, userId: 'currentUser');
+    }
+    for (final entry in changes.entries) {
+      config.setVariable(entry.key, entry.value, userId: 'currentUser');
+    }
+  }
 
   Uri resolveUri(String src, [String? baseDirSrc]) => resolvePathUri(
         src,

@@ -198,6 +198,10 @@ class NclScheduler {
         }
         continue;
       }
+      if (actionItem.event.targetNode is Media &&
+          document.isRemoteNodeBlocked(actionItem.event.targetNode.id)) {
+        continue;
+      }
       if (actionItem.action == NclActionType.set) {
         if (actionItem.value.isNotEmpty &&
             actionItem.event.propertyName != null) {
@@ -205,6 +209,21 @@ class NclScheduler {
             actionItem.event.propertyName!,
             actionItem.value,
           );
+          if (actionItem.event.targetNode is Media) {
+            final media = actionItem.event.targetNode as Media;
+            final dev = document.getDeviceClassForMedia(media);
+            if (dev != null && media.id != null) {
+              document.notifyRemoteNodeAction(
+                deviceClass: dev,
+                nodeId: media.id!,
+                label: actionItem.event.propertyName!,
+                eventType: 'attribution',
+                action: 'set',
+                value: actionItem.value,
+                mimeType: media.rawAttributes['type'],
+              );
+            }
+          }
           if (actionItem.event.targetNode is NCLua) {
             final luaNode = actionItem.event.targetNode as NCLua;
             luaNode.runtime.postNclEvent({
@@ -262,6 +281,27 @@ class NclScheduler {
         _logger.info(
           '[Clock: ${(virtualClock / 1000).toStringAsFixed(3)}s] Node "$nodeId"${interfaceId != null ? ' (area $interfaceId)' : ''} changed state: ${NclEvent.getNclEventStateAsString(prevState)} -> ${NclEvent.getNclEventStateAsString(newState)}',
         );
+        if (nodeId != null &&
+            nodeId.isNotEmpty &&
+            actionItem.event.targetNode is Media) {
+          final media = actionItem.event.targetNode as Media;
+          final dev = document.getDeviceClassForMedia(media);
+          if (dev != null && dev.isNotEmpty) {
+            if (newState == NclStateType.occurring &&
+                prevState == NclStateType.sleeping &&
+                interfaceId == null) {
+              document.notifyRemoteNodePreparation(media);
+            }
+            document.notifyRemoteNodeAction(
+              deviceClass: dev,
+              nodeId: nodeId,
+              label: interfaceId,
+              eventType: 'presentation',
+              action: actionItem.action.name,
+              mimeType: media.rawAttributes['type'],
+            );
+          }
+        }
 
         _triggerLinks(nodeId, newState, interfaceId);
         changedNodes.add(actionItem.event.targetNode);
@@ -342,7 +382,7 @@ class NclScheduler {
                 _stackMainEvtNclAction(activeNode, NclActionType.start);
               }
             }
-            if (actionItem.event.targetNode is NCLua) {
+            if (actionItem.event.targetNode is NCLua && interfaceId == null) {
               final luaNode = actionItem.event.targetNode as NCLua;
               if (prevState == NclStateType.paused) {
                 luaNode.runtime.resume();
@@ -351,7 +391,7 @@ class NclScheduler {
               }
             }
           } else if (newState == NclStateType.sleeping) {
-            if (actionItem.event.targetNode is NCLua) {
+            if (actionItem.event.targetNode is NCLua && interfaceId == null) {
               final luaNode = actionItem.event.targetNode as NCLua;
               luaNode.runtime.stop();
             }

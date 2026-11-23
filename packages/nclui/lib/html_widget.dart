@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -71,6 +72,16 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
     }
   }
 
+  Future<void> dispatchRemoteMetadata(Map<String, dynamic> message) async {
+    if (_controller == null) return;
+    try {
+      final encoded = jsonEncode(message);
+      await _controller!.runJavaScript(
+        'window.postMessage(${jsonEncode(encoded)}, "*");',
+      );
+    } catch (_) {}
+  }
+
   @override
   void initState() {
     super.initState();
@@ -103,7 +114,7 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
     try {
       final ctx = widget.appContext;
       final gingacc = widget.gingacc;
-      await gingacc.ccws.start();
+      await gingacc.ccws.start(enableSsdp: !gingacc.config.enablePlayground);
       assert(gingacc.ccws.isRunning);
       final base = (widget.media?.uri.isNotEmpty == true)
           ? widget.media!.uri

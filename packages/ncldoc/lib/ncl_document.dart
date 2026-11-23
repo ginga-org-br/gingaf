@@ -109,11 +109,95 @@ class NclDocument extends GingaApp {
 
   String? getSystemVariable(String name) => _systemVariables[name];
 
+  final Map<String, List<RemoteDeviceChannel>> _remoteChannelsByClass = {};
+  final Map<RemoteDeviceChannel, StreamSubscription<Map<String, dynamic>>>
+      _channelMsgSubs = {};
+  final Map<RemoteDeviceChannel, StreamSubscription<void>> _channelCloseSubs = {};
+  StreamSubscription<void>? _gingaccRemoteSub;
+  final Set<String> _unboundRemoteNodeIds = {};
+  final Set<String> _disconnectedRemoteNodeIds = {};
+  final Set<String> _declaredRemoteClasses = {};
+  bool _multiDeviceReplicated = false;
+
+  static ({String classId, int? deviceIndex}) parseRemoteDeviceSpec(
+    String raw,
+  ) {
+    final trimmed = raw.trim();
+    final match = RegExp(r'^([^()]+?)(?:\((\d+)\))?$').firstMatch(trimmed);
+    if (match == null) {
+      return (classId: trimmed, deviceIndex: null);
+    }
+    final classId = match.group(1)!.trim();
+    final idxStr = match.group(2);
+    return (
+      classId: classId,
+      deviceIndex: idxStr != null ? int.tryParse(idxStr) : null,
+    );
+  }
+
+  bool isRemoteNodeBlocked(String? nodeId) {
+    if (nodeId == null) return false;
+    return _unboundRemoteNodeIds.contains(nodeId) ||
+        _disconnectedRemoteNodeIds.contains(nodeId);
+  }
+
+  bool hasConnectedRemoteDeviceForMedia(Media media) {
+    final devClass = getDeviceClassForMedia(media);
+    if (devClass == null || devClass.isEmpty) return false;
+    return _resolveTargetChannelsForSpec(
+      devClass,
+      media.rawAttributes['type'],
+    ).isNotEmpty;
+  }
+
+  List<RemoteDeviceChannel> _resolveTargetChannelsForSpec(
+    String deviceSpec, [
+    String? mimeType,
+  ]) {
+    final parsed = parseRemoteDeviceSpec(deviceSpec);
+    final rawList = _remoteChannelsByClass[parsed.classId];
+    if (rawList == null || rawList.isEmpty) return const [];
+    final openMatching = rawList
+        .where((ch) => !ch.isClosed && ch.supportsType(mimeType))
+        .toList();
+    if (parsed.deviceIndex != null) {
+      final idx = parsed.deviceIndex! - 1;
+      if (idx < 0 || idx >= openMatching.length) return const [];
+      return [openMatching[idx]];
+    }
+    return openMatching;
+  }
+
+  void _refreshClassVariables(String classId) {
+    final open = (_remoteChannelsByClass[classId] ?? const [])
+        .where((ch) => !ch.isClosed)
+        .toList();
+    final devNumStr = open.length.toString();
+    _systemVariables['$classId.devNumber'] = devNumStr;
+    for (int i = 0; i < open.length; i++) {
+      final idx = i + 1;
+      _systemVariables['$classId.screenSize($idx)'] = open[i].screenSize;
+      _systemVariables['$classId.screenGraphicSize($idx)'] =
+          open[i].screenGraphicSize;
+    }
+    dispatchSettingsUpdate('$classId.devNumber', devNumStr);
+  }
+
+  void _syncGingaCcRemoteChannels() {
+    if (_declaredRemoteClasses.isEmpty) return;
+    for (final ch in gingacc.allRemoteDeviceChannels) {
+      if (!ch.isClosed && _declaredRemoteClasses.contains(ch.deviceClass)) {
+        attachRemoteDeviceChannel(ch);
+      }
+    }
+  }
+
   void dispatchPropertyUpdate(
     Node targetNode,
     String propertyName,
     String value,
   ) {
+    if (isRemoteNodeBlocked(targetNode.id)) return;
     targetNode.setPropertyValue(propertyName, value);
     if (targetNode is Media) {
       scheduler.stackNclAction(
@@ -121,6 +205,18 @@ class NclDocument extends GingaApp {
         NclActionType.set,
         value: value,
       );
+      final devClass = getDeviceClassForMedia(targetNode);
+      if (devClass != null && targetNode.id != null) {
+        notifyRemoteNodeAction(
+          deviceClass: devClass,
+          nodeId: targetNode.id!,
+          label: propertyName,
+          eventType: 'attribution',
+          action: 'set',
+          value: value,
+          mimeType: targetNode.rawAttributes['type'],
+        );
+      }
     }
     if (targetNode is NCLua) {
       targetNode.runtime.postNclEvent({
@@ -130,6 +226,389 @@ class NclDocument extends GingaApp {
         'name': propertyName,
         'value': value,
       });
+    }
+  }
+
+  void attachRemoteDeviceChannel(RemoteDeviceChannel channel) {
+    final parsed = parseRemoteDeviceSpec(channel.deviceClass);
+    final baseClass = parsed.classId;
+    final list = _remoteChannelsByClass.putIfAbsent(
+      baseClass,
+      () => <RemoteDeviceChannel>[],
+    );
+    if (list.contains(channel)) {
+      _refreshClassVariables(baseClass);
+      return;
+    }
+    list.add(channel);
+    _refreshClassVariables(baseClass);
+
+    _channelMsgSubs[channel] = channel.onDeviceMessage.listen((msg) {
+      handleRemoteTransitionMetadata(msg);
+    });
+    _channelCloseSubs[channel] = channel.onClose.listen((_) {
+      _handleRemoteDeviceDisconnected(channel, baseClass);
+    });
+  }
+
+  void _handleRemoteDeviceDisconnected(
+    RemoteDeviceChannel channel,
+    String baseClass,
+  ) {
+    final list = _remoteChannelsByClass[baseClass];
+    final channelIndex = list != null ? list.indexOf(channel) + 1 : -1;
+
+    final affectedMedia = <Media>[];
+    for (final media in _body.descendants.whereType<Media>()) {
+      final devSpec = getDeviceClassForMedia(media);
+      if (devSpec == null || media.id == null) continue;
+      final parsed = parseRemoteDeviceSpec(devSpec);
+      if (parsed.classId != baseClass) continue;
+      if (parsed.deviceIndex == null || parsed.deviceIndex == channelIndex) {
+        affectedMedia.add(media);
+      }
+    }
+
+    for (final media in affectedMedia) {
+      final mainEvt = media.getMainNclEvent();
+      if (mainEvt.state == NclStateType.occurring ||
+          mainEvt.state == NclStateType.paused) {
+        scheduler.stackNclAction(mainEvt, NclActionType.abort);
+      }
+    }
+    if (affectedMedia.isNotEmpty) {
+      scheduler.tick(0);
+      for (final media in affectedMedia) {
+        _disconnectedRemoteNodeIds.add(media.id!);
+      }
+    }
+
+    list?.remove(channel);
+    _channelMsgSubs.remove(channel)?.cancel();
+    _channelCloseSubs.remove(channel)?.cancel();
+    _refreshClassVariables(baseClass);
+  }
+
+  void replicateMultiDeviceNodes() {
+    if (_multiDeviceReplicated) return;
+    _multiDeviceReplicated = true;
+    _syncGingaCcRemoteChannels();
+    _unboundRemoteNodeIds.clear();
+
+    final contextsToScan = <Context>[
+      _body,
+      ..._body.descendants.whereType<Context>(),
+    ];
+
+    for (final ctx in contextsToScan) {
+      final mediaList = ctx.children.whereType<Media>().toList();
+      for (final media in mediaList) {
+        final origId = media.id;
+        if (origId == null || origId.isEmpty) continue;
+        final devSpec = getDeviceClassForMedia(media);
+        if (devSpec == null || devSpec.isEmpty) continue;
+
+        final parsed = parseRemoteDeviceSpec(devSpec);
+        final matching = _resolveTargetChannelsForSpec(
+          parsed.classId,
+          media.rawAttributes['type'],
+        );
+
+        if (parsed.deviceIndex != null) {
+          if (parsed.deviceIndex! < 1 ||
+              parsed.deviceIndex! > matching.length) {
+            _unboundRemoteNodeIds.add(origId);
+          }
+          continue;
+        }
+
+        if (matching.length <= 1) {
+          continue;
+        }
+
+        final replicatedMedia = <Media>[];
+        final replicatedAreaIds = <String>{};
+        for (final area in media.children.whereType<Area>()) {
+          if (area.id != null && area.id!.isNotEmpty) {
+            replicatedAreaIds.add(area.id!);
+          }
+        }
+
+        for (int k = 0; k < matching.length; k++) {
+          final suffix = 'RD${k.toString().padLeft(2, '0')}';
+          final newMediaId = '$origId$suffix';
+          final attrs = Map<String, String>.from(media.rawAttributes);
+          attrs['id'] = newMediaId;
+          final clone = Media(rawAttributes: attrs)
+            ..xmlTagName = media.xmlTagName
+            ..line = media.line
+            ..parent = ctx;
+
+          bool setDeviceProp = false;
+          for (final child in media.children) {
+            if (child is Property) {
+              final pAttrs = Map<String, String>.from(child.rawAttributes);
+              if (child.name == 'device') {
+                pAttrs['value'] = '${parsed.classId}(${k + 1})';
+                setDeviceProp = true;
+              }
+              final pClone = Property(rawAttributes: pAttrs)
+                ..xmlTagName = child.xmlTagName
+                ..line = child.line
+                ..parent = clone;
+              clone.children.add(pClone);
+            } else if (child is Area) {
+              final aAttrs = Map<String, String>.from(child.rawAttributes);
+              if (child.id != null && child.id!.isNotEmpty) {
+                aAttrs['id'] = '${child.id}$suffix';
+              }
+              final aClone = Area(rawAttributes: aAttrs)
+                ..xmlTagName = child.xmlTagName
+                ..line = child.line
+                ..parent = clone;
+              clone.children.add(aClone);
+            }
+          }
+          if (!setDeviceProp) {
+            final devProp = Property(
+              rawAttributes: {
+                'name': 'device',
+                'value': '${parsed.classId}(${k + 1})',
+              },
+            )
+              ..xmlTagName = 'property'
+              ..parent = clone;
+            clone.children.add(devProp);
+          }
+          replicatedMedia.add(clone);
+        }
+
+        final mediaIdx = ctx.children.indexOf(media);
+        if (mediaIdx != -1) {
+          ctx.children.removeAt(mediaIdx);
+          ctx.children.insertAll(mediaIdx, replicatedMedia);
+        }
+
+        final ports = ctx.children
+            .whereType<Port>()
+            .where((p) => p.component == origId)
+            .toList();
+        for (final port in ports) {
+          final portIdx = ctx.children.indexOf(port);
+          final clonedPorts = <Port>[];
+          for (int k = 0; k < matching.length; k++) {
+            final suffix = 'RD${k.toString().padLeft(2, '0')}';
+            final pAttrs = Map<String, String>.from(port.rawAttributes);
+            if (port.id != null && port.id!.isNotEmpty) {
+              pAttrs['id'] = '${port.id}$suffix';
+            }
+            pAttrs['component'] = '$origId$suffix';
+            final iface = port.interface;
+            if (iface != null && replicatedAreaIds.contains(iface)) {
+              pAttrs['interface'] = '$iface$suffix';
+            }
+            clonedPorts.add(
+              Port(rawAttributes: pAttrs)
+                ..xmlTagName = port.xmlTagName
+                ..line = port.line
+                ..parent = ctx,
+            );
+          }
+          if (portIdx != -1) {
+            ctx.children.removeAt(portIdx);
+            ctx.children.insertAll(portIdx, clonedPorts);
+          }
+        }
+
+        final links = ctx.children
+            .whereType<Link>()
+            .where((l) => l.binds.any((b) => b.component == origId))
+            .toList();
+        for (final link in links) {
+          final linkIdx = ctx.children.indexOf(link);
+          final clonedLinks = <Link>[];
+          for (int k = 0; k < matching.length; k++) {
+            final suffix = 'RD${k.toString().padLeft(2, '0')}';
+            final lAttrs = Map<String, String>.from(link.rawAttributes);
+            if (link.id != null && link.id!.isNotEmpty) {
+              lAttrs['id'] = '${link.id}$suffix';
+            }
+            final lClone = Link(rawAttributes: lAttrs)
+              ..xmlTagName = link.xmlTagName
+              ..line = link.line
+              ..parent = ctx;
+            for (final child in link.children) {
+              if (child is Bind) {
+                final bAttrs = Map<String, String>.from(child.rawAttributes);
+                if (child.component == origId) {
+                  bAttrs['component'] = '$origId$suffix';
+                  final iface = child.interface;
+                  if (iface != null && replicatedAreaIds.contains(iface)) {
+                    bAttrs['interface'] = '$iface$suffix';
+                  }
+                }
+                final bClone = Bind(rawAttributes: bAttrs)
+                  ..xmlTagName = child.xmlTagName
+                  ..line = child.line
+                  ..parent = lClone;
+                for (final bp in child.children.whereType<BindParam>()) {
+                  bClone.children.add(
+                    BindParam(
+                      rawAttributes: Map<String, String>.from(bp.rawAttributes),
+                    )
+                      ..xmlTagName = bp.xmlTagName
+                      ..line = bp.line
+                      ..parent = bClone,
+                  );
+                }
+                lClone.children.add(bClone);
+              }
+            }
+            clonedLinks.add(lClone);
+          }
+          if (linkIdx != -1) {
+            ctx.children.removeAt(linkIdx);
+            ctx.children.insertAll(linkIdx, clonedLinks);
+          }
+        }
+      }
+    }
+  }
+
+  void handleRemoteTransitionMetadata(Map<String, dynamic> msg) {
+    final nodeId = (msg['nodeId'] ?? msg['sceneNodeId'])?.toString();
+    if (nodeId == null || nodeId.isEmpty) return;
+    final node = getNodeById(nodeId);
+    if (node == null) return;
+    final label = (msg['label'] ?? msg['hotspotId'] ?? msg['interfaceId'])
+        ?.toString();
+    final eventType = msg['eventType']?.toString() ??
+        (msg['type'] == 'ncl360_view_event' ? 'view' : 'presentation');
+    final transition = msg['transition']?.toString() ??
+        msg['action']?.toString() ??
+        (msg['inView'] == true ? 'starts' : 'stops');
+
+    if (eventType == 'view') {
+      final inView =
+          transition == 'starts' || transition == 'start' || msg['inView'] == true;
+      handleViewTransition(nodeId, inView, label);
+    } else if (eventType == 'selection') {
+      if (transition == 'starts' || transition == 'start') {
+        handleSelection(nodeId);
+      }
+    } else if (eventType == 'attribution') {
+      if (label != null && label.isNotEmpty) {
+        final val = msg['value']?.toString() ?? '';
+        node.setPropertyValue(label, val);
+        scheduler.stackNclAction(
+          node.getPropertyNclEvent(label),
+          NclActionType.set,
+          value: val,
+        );
+        scheduler.tick(0);
+      }
+    } else if (eventType == 'presentation') {
+      final targetEvt =
+          (label != null && label.isNotEmpty && label != 'main')
+              ? node.getAreaNclEvent(label)
+              : node.getMainNclEvent();
+      if (transition == 'starts' || transition == 'start') {
+        scheduler.stackNclAction(targetEvt, NclActionType.start);
+        scheduler.tick(0);
+      } else if (transition == 'stops' || transition == 'stop') {
+        scheduler.stackNclAction(targetEvt, NclActionType.stop);
+        scheduler.tick(0);
+      } else if (transition == 'pauses' || transition == 'pause') {
+        scheduler.stackNclAction(targetEvt, NclActionType.pause);
+        scheduler.tick(0);
+      } else if (transition == 'resumes' || transition == 'resume') {
+        scheduler.stackNclAction(targetEvt, NclActionType.resume);
+        scheduler.tick(0);
+      } else if (transition == 'aborts' || transition == 'abort') {
+        scheduler.stackNclAction(targetEvt, NclActionType.abort);
+        scheduler.tick(0);
+      }
+    }
+  }
+
+  void notifyRemoteNodePreparation(Media media) {
+    final devClass = getDeviceClassForMedia(media);
+    final nodeId = media.id;
+    if (devClass == null || nodeId == null || isRemoteNodeBlocked(nodeId)) {
+      return;
+    }
+    final channels = _resolveTargetChannelsForSpec(
+      devClass,
+      media.rawAttributes['type'],
+    );
+    if (channels.isEmpty) return;
+
+    final props = <Map<String, String>>[];
+    for (final p in media.getProperties()) {
+      if (p.name != null && p.name != 'src') {
+        props.add({'name': p.name!, 'value': p.value ?? ''});
+      }
+    }
+    String? resolvedNodeSrc = media.src;
+    if (resolvedNodeSrc != null &&
+        resolvedNodeSrc.isNotEmpty &&
+        !isHttpUri(resolvedNodeSrc) &&
+        !resolvedNodeSrc.startsWith('file:')) {
+      final resolvedUri = appContext.resolveUri(
+        resolvedNodeSrc,
+        baseUri?.toString() ?? docSrc,
+      );
+      if (resolvedUri.isScheme('http') || resolvedUri.isScheme('https')) {
+        resolvedNodeSrc = resolvedUri.toString();
+      } else if (docSrc.isNotEmpty && !docSrc.trim().startsWith('<')) {
+        final normDoc = docSrc.replaceAll('\\', '/');
+        final slashIdx = normDoc.lastIndexOf('/');
+        if (slashIdx != -1) {
+          resolvedNodeSrc =
+              '${normDoc.substring(0, slashIdx + 1)}$resolvedNodeSrc';
+        }
+      }
+    }
+    final nodeMetadata = <String, dynamic>{
+      'nodeId': nodeId,
+      if (resolvedNodeSrc != null) 'nodeSrc': resolvedNodeSrc,
+      if (media.src != null) 'rawNodeSrc': media.src,
+      'appId': applicationId,
+      'type': media.rawAttributes['type'] ??
+          ((media.src?.endsWith('.ncl360') ?? false)
+              ? 'application/x-ncl360'
+              : 'application/octet-stream'),
+      if (props.isNotEmpty) 'properties': props,
+    };
+    for (final ch in channels) {
+      ch.sendToDevice(nodeMetadata);
+    }
+  }
+
+  void notifyRemoteNodeAction({
+    required String deviceClass,
+    required String nodeId,
+    String? label,
+    required String eventType,
+    required String action,
+    String? value,
+    String? mimeType,
+    int delay = 0,
+  }) {
+    if (isRemoteNodeBlocked(nodeId)) return;
+    final channels = _resolveTargetChannelsForSpec(deviceClass, mimeType);
+    if (channels.isEmpty) return;
+    final actionMetadata = <String, dynamic>{
+      'nodeId': nodeId,
+      if (label != null && label.isNotEmpty) 'label': label,
+      'appId': applicationId,
+      'eventType': eventType,
+      'action': action,
+      if (value != null) 'value': value,
+      if (delay > 0) 'delay': delay,
+    };
+    for (final ch in channels) {
+      ch.sendToDevice(actionMetadata);
     }
   }
 
@@ -284,6 +763,34 @@ class NclDocument extends GingaApp {
     _systemVariables = {
       ...gingacc.config.systemVariables,
     };
+    gingacc.config.onVariableChanged.listen(
+      (evt) => _onConfigVariableChanged(evt.name, evt.value, evt.userId),
+    );
+  }
+
+  void _onConfigVariableChanged(String name, String value, String? userId) {
+    dispatchSettingsUpdate(name, value, userId: userId);
+    for (final sw in _body.descendants.whereType<Switch>()) {
+      if (sw.getMainState() == NclStateType.occurring) {
+        final desired = resolveSwitch(sw);
+        for (final child in sw.children.whereType<Node>()) {
+          if (child == desired &&
+              child.getMainState() != NclStateType.occurring) {
+            scheduler.stackNclAction(
+              child.getMainNclEvent(),
+              NclActionType.start,
+            );
+          } else if (child != desired &&
+              child.getMainState() == NclStateType.occurring) {
+            scheduler.stackNclAction(
+              child.getMainNclEvent(),
+              NclActionType.stop,
+            );
+          }
+        }
+        scheduler.tick(0);
+      }
+    }
   }
 
   void _init({Head? head, required Body body}) {
@@ -297,7 +804,35 @@ class NclDocument extends GingaApp {
         }
       }
     }
+    _initMultiDeviceVariables();
+    _syncGingaCcRemoteChannels();
+    _gingaccRemoteSub = gingacc.onRemoteDevicesChanged.listen((_) {
+      _syncGingaCcRemoteChannels();
+    });
     loadUserProfiles();
+  }
+
+  void _initMultiDeviceVariables() {
+    _declaredRemoteClasses.clear();
+    for (final rb in headChildren.whereType<RegionBase>()) {
+      final dev = rb.device;
+      if (dev != null && dev.isNotEmpty) {
+        _declaredRemoteClasses.add(parseRemoteDeviceSpec(dev).classId);
+      }
+    }
+    for (final media in _body.descendants.whereType<Media>()) {
+      final dev = getDeviceClassForMedia(media);
+      if (dev != null && dev.isNotEmpty) {
+        _declaredRemoteClasses.add(parseRemoteDeviceSpec(dev).classId);
+      }
+    }
+    final allClasses = <String>{
+      ..._declaredRemoteClasses,
+      ..._remoteChannelsByClass.keys,
+    };
+    for (final classId in allClasses) {
+      _refreshClassVariables(classId);
+    }
   }
 
   Future<void> loadUserProfiles() async {
@@ -714,12 +1249,26 @@ class NclDocument extends GingaApp {
   List<NclAction> get uiQueue => scheduler.uiQueue;
 
   void start() {
+    replicateMultiDeviceNodes();
     scheduler.start();
     _initInitialFocus();
   }
 
   void stop() {
     scheduler.stop();
+    for (final lua in _body.descendants.whereType<NCLua>()) {
+      lua.runtime.dispose();
+    }
+    _gingaccRemoteSub?.cancel();
+    _gingaccRemoteSub = null;
+    for (final sub in _channelMsgSubs.values) {
+      sub.cancel();
+    }
+    _channelMsgSubs.clear();
+    for (final sub in _channelCloseSubs.values) {
+      sub.cancel();
+    }
+    _channelCloseSubs.clear();
   }
 
   Set<Media> tick([int incrementMs = 0, int stepMs = 100]) {
@@ -769,6 +1318,38 @@ class NclDocument extends GingaApp {
     if (descId == null) return null;
     final descEl = getElementById(descId);
     return descEl is Descriptor ? descEl : null;
+  }
+
+  RegionBase? getRegionBaseForMedia(Media media) {
+    final desc = getDescriptorForMedia(media);
+    final regionId = desc?.region;
+    if (regionId == null || regionId.isEmpty) return null;
+    Element? current = getElementById(regionId);
+    while (current != null) {
+      if (current is RegionBase) return current;
+      if (current.xmlTagName == 'regionBase') {
+        return RegionBase(rawAttributes: current.rawAttributes);
+      }
+      current = current.parent;
+    }
+    return null;
+  }
+
+  String? getDeviceClassForMedia(Media media) {
+    final propDevice = getPropertyValue(media, 'device');
+    if (propDevice != null && propDevice.isNotEmpty) {
+      if (propDevice.trim().toLowerCase() == 'local') return null;
+      return propDevice;
+    }
+    final propClass = getPropertyValue(media, 'deviceClass');
+    if (propClass != null && propClass.isNotEmpty) {
+      return propClass;
+    }
+    final rb = getRegionBaseForMedia(media);
+    if (rb?.device != null && rb!.device!.isNotEmpty) {
+      return rb.device;
+    }
+    return null;
   }
 
   String? getFocusIndexForMedia(Media media) {

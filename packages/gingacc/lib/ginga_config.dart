@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:json5/json5.dart';
@@ -63,6 +64,19 @@ class GingaConfig {
   final List<int> breakpoints;
   final Map<String, String> systemVariables;
   final Users users;
+  final StreamController<({String name, String value, String? userId})>
+      _variableController =
+      StreamController<({String name, String value, String? userId})>.broadcast(
+    sync: true,
+  );
+
+  Stream<({String name, String value, String? userId})> get onVariableChanged =>
+      _variableController.stream;
+
+  void setVariable(String name, String value, {String? userId}) {
+    systemVariables[name] = value;
+    _variableController.add((name: name, value: value, userId: userId));
+  }
 
   GingaConfig({
     this.appSrc,

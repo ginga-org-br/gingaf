@@ -325,6 +325,9 @@ class NclWidgetState extends MediaState<NclWidget> {
 
     for (var media in activeMedia) {
       final id = media.id ?? '';
+      if (nclDocument?.getDeviceClassForMedia(media) != null) {
+        continue;
+      }
       final isSbtvd = media.src?.startsWith('sbtvd://') == true ||
           media.uri.startsWith('sbtvd://');
       if (isSbtvd && widget.mainAvKey != null) {

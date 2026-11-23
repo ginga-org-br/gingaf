@@ -294,8 +294,10 @@ class NclParser {
       case 'userProfile':
         element = UserProfile(rawAttributes: attrs);
         break;
-      case 'head':
       case 'regionBase':
+        element = RegionBase(rawAttributes: attrs);
+        break;
+      case 'head':
       case 'descriptorBase':
       case 'connectorBase':
       case 'ruleBase':

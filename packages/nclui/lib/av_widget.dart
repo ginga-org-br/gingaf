@@ -38,8 +38,22 @@ class AVWidgetState<T extends AVWidget> extends MediaState<T> {
   VideoPlayerController? get controller => _controller;
   bool get initialized => _initialized;
   bool get isPlaying => true;
-  bool get isLooping => false;
-  bool get notifyCompletion => true;
+  bool get isLooping {
+    final m = media;
+    if (m != null) {
+      for (final prop in m.getProperties()) {
+        if (prop.name == 'loop' || prop.name == 'isLooping') {
+          final v = prop.value?.trim().toLowerCase();
+          return v == 'true' || v == '1';
+        }
+      }
+      final attr =
+          (m.rawAttributes['loop'] ?? m.rawAttributes['isLooping'])?.trim().toLowerCase();
+      if (attr == 'true' || attr == '1') return true;
+    }
+    return false;
+  }
+  bool get notifyCompletion => !isLooping;
   bool get isPaused => _isPaused;
 
   void unmute() {
