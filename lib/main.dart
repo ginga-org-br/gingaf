@@ -52,6 +52,69 @@ void main(List<String> args) async {
   final appSrc = parsedArgs.app;
   final configSrc = parsedArgs.config;
 
+  if (parsedArgs.remoteDevice != null && parsedArgs.remoteDevice!.isNotEmpty) {
+    final gingacc = GingaCC();
+    final deviceClass = parsedArgs.remoteDevice!;
+    final remoteKey = GlobalKey<RemoteDevicePlayerWidgetState>();
+    runApp(
+      MaterialApp(
+        title: 'gingaf-remote',
+        home: Scaffold(
+          backgroundColor: const Color(0xFF1E1E1E),
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                height: 28,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF252526),
+                  border: Border(
+                    bottom: BorderSide(color: Color(0xFF2D2D2D), width: 1),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Remote Device class_id=$deviceClass',
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFFCCCCCC),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      key: const Key('standalone_remote_restart_button'),
+                      tooltip: 'Restart Companion',
+                      icon: const Icon(Icons.restart_alt_rounded, size: 14),
+                      color: const Color(0xFF9E9E9E),
+                      padding: EdgeInsets.zero,
+                      constraints:
+                          const BoxConstraints(minWidth: 22, minHeight: 22),
+                      onPressed: () => remoteKey.currentState?.restart(),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: RemoteDevicePlayerWidget(
+                  key: remoteKey,
+                  gingacc: gingacc,
+                  deviceClass: deviceClass,
+                  useSsdpDiscovery: true,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    return;
+  }
+
   if (!kIsWeb &&
       parsedArgs.playground != true &&
       appSrc == null &&

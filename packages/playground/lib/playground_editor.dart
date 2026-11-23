@@ -116,6 +116,7 @@ class PlaygroundEditor extends StatefulWidget {
   final ValueChanged<String>? onContentChanged;
   final VoidCallback? onReload;
   final VoidCallback? onRun;
+  final ValueChanged<String>? onAddRemoteDevice;
   final VoidCallback? onStop;
   final VoidCallback? onNext;
   final VoidCallback? onContinue;
@@ -129,6 +130,8 @@ class PlaygroundEditor extends StatefulWidget {
   final bool? showCatalogSelector;
   final List<CatalogExample>? catalogExamples;
   final ValueChanged<String>? onCatalogExampleSelected;
+  final ValueChanged<bool>? onCatalogOpenChanged;
+  final bool showTopBar;
 
   const PlaygroundEditor({
     super.key,
@@ -139,6 +142,7 @@ class PlaygroundEditor extends StatefulWidget {
     this.onContentChanged,
     this.onReload,
     this.onRun,
+    this.onAddRemoteDevice,
     this.onStop,
     this.onNext,
     this.onContinue,
@@ -152,6 +156,8 @@ class PlaygroundEditor extends StatefulWidget {
     this.showCatalogSelector,
     this.catalogExamples,
     this.onCatalogExampleSelected,
+    this.onCatalogOpenChanged,
+    this.showTopBar = true,
   });
 
   @override
@@ -287,6 +293,7 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
   bool get canDebug =>
       widget.enableDebugging &&
       !isHtmlApplication &&
+      _breakpoints.isNotEmpty &&
       !effectiveIsRunning &&
       !_isDebugging;
   bool get canStop => effectiveIsRunning || _isDebugging;
@@ -547,6 +554,7 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
       _fileBreakpoints.clear();
       _breakpoints.clear();
     });
+    widget.onCatalogOpenChanged?.call(false);
 
     final loaded = await loadExampleContent(mainFile, gingacc: widget.gingacc);
     if (loaded != null) {
@@ -763,6 +771,12 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
     if (mounted) setState(() {});
   }
 
+  void run() => _handleRun();
+
+  void startDebugSession() => _handleDebug();
+
+  void stopSession() => _handleStop();
+
   void _handleRun() {
     setState(() {
       _internalRunning = true;
@@ -773,6 +787,10 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
     } else if (widget.onReload != null) {
       widget.onReload!();
     }
+  }
+
+  void _handleAddRemoteDevice(String deviceClass) {
+    widget.onAddRemoteDevice?.call(deviceClass);
   }
 
   void _handleDebug() {
@@ -861,6 +879,7 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
       setState(() {
         _isCatalogOpen = false;
       });
+      widget.onCatalogOpenChanged?.call(false);
       return;
     }
     if (_catalogExamples.isEmpty) {
@@ -876,22 +895,10 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
     setState(() {
       _isCatalogOpen = true;
     });
+    widget.onCatalogOpenChanged?.call(true);
   }
 
   Widget _buildCatalogSelector() {
-    CatalogExample? selectedItem;
-    if (_selectedExample != null) {
-      for (final item in _catalogExamples) {
-        if (item.mainFile == _selectedExample ||
-            'examples/${item.mainFile}' == _selectedExample ||
-            resolveCatalogExampleUrl(item.mainFile) == _selectedExample ||
-            item.key == _selectedExample) {
-          selectedItem = item;
-          break;
-        }
-      }
-    }
-
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -916,16 +923,16 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
                   width: 1,
                 ),
               ),
-              child: Row(
+              child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.grid_view_rounded,
                     size: 14,
                     color: Color(0xFFCCCCCC),
                   ),
-                  const SizedBox(width: 6),
-                  const Text(
+                  SizedBox(width: 6),
+                  Text(
                     'Catalog',
                     style: TextStyle(
                       color: Color(0xFFE5E5E5),
@@ -933,25 +940,6 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  if (selectedItem != null) ...[
-                    Container(
-                      height: 12,
-                      width: 1,
-                      margin: const EdgeInsets.symmetric(horizontal: 8),
-                      color: const Color(0xFF555555),
-                    ),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 160),
-                      child: Text(
-                        selectedItem.key,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFF9E9E9E),
-                          fontSize: 11.5,
-                        ),
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -969,6 +957,79 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildAddRemoteDeviceButton() {
+    return PopupMenuButton<String>(
+      key: const Key('monaco_add_remote_device_button'),
+      tooltip: 'Add Remote Device',
+      enabled: canRun,
+      padding: EdgeInsets.zero,
+      color: const Color(0xFF252526),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(4),
+        side: const BorderSide(
+          color: Color(0xFF454545),
+          width: 1,
+        ),
+      ),
+      onSelected: _handleAddRemoteDevice,
+      itemBuilder: (context) => const [
+        PopupMenuItem<String>(
+          key: Key('add_remote_device_ncl_360_vr'),
+          value: 'ncl-360-vr',
+          child: Text(
+            'Remote Device: ncl-360-vr (NCL360)',
+            style: TextStyle(
+              color: Color(0xFFD4D4D4),
+              fontSize: 12,
+            ),
+          ),
+        ),
+        PopupMenuItem<String>(
+          key: Key('add_remote_device_accessibility'),
+          value: 'accessibility',
+          child: Text(
+            'Remote Device: accessibility (HTML5)',
+            style: TextStyle(
+              color: Color(0xFFD4D4D4),
+              fontSize: 12,
+            ),
+          ),
+        ),
+      ],
+      child: Container(
+        height: 26,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF2D2D2D),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(
+            color: const Color(0xFF454545),
+            width: 1,
+          ),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.devices,
+              size: 14,
+              color: Color(0xFFCCCCCC),
+            ),
+            SizedBox(width: 6),
+            Text(
+              'Add Remote Device',
+              style: TextStyle(
+                color: Color(0xFFE5E5E5),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1045,7 +1106,7 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
     );
   }
 
-  Widget _buildTabBarWithActions() {
+  Widget _buildTabBar() {
     return Container(
       key: const Key('playground_file_tabs_bar'),
       height: 34,
@@ -1067,146 +1128,143 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
               ),
             ),
           ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExecutionControls() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          key: const Key('monaco_run_button'),
+          tooltip: 'Run',
+          icon: const Icon(Icons.play_arrow, size: 18),
+          color: const Color(0xFF4CAF50),
+          disabledColor: const Color(0xFF555555),
+          onPressed: canRun ? _handleRun : null,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+          style: IconButton.styleFrom(
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            minimumSize: const Size(26, 26),
+            padding: EdgeInsets.zero,
+          ),
+        ),
+        if (widget.enableDebugging)
+          IconButton(
+            key: const Key('monaco_debug_start_button'),
+            tooltip: isHtmlApplication
+                ? 'Debugging not supported for HTML'
+                : (_breakpoints.isEmpty
+                    ? 'Add a breakpoint to start debugging'
+                    : 'Start Debugging'),
+            icon: const Icon(Icons.bug_report, size: 16),
+            color: const Color(0xFF007ACC),
+            disabledColor: const Color(0xFF555555),
+            onPressed: canDebug ? _handleDebug : null,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+            style: IconButton.styleFrom(
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              minimumSize: const Size(26, 26),
+              padding: EdgeInsets.zero,
+            ),
+          ),
+        if (_isDebugging) ...[
+          const SizedBox(width: 6),
+          Container(
+            key: const Key('monaco_debug_controls_box'),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2D2D2D),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(
+                color: const Color(0xFF454545),
+                width: 1,
+              ),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black45,
+                  blurRadius: 4,
+                  offset: Offset(0, 1),
+                ),
+              ],
+            ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  key: const Key('monaco_run_button'),
-                  tooltip: 'Run',
-                  icon: const Icon(Icons.play_arrow, size: 18),
-                  color: const Color(0xFF4CAF50),
-                  disabledColor: const Color(0xFF555555),
-                  onPressed: canRun ? _handleRun : null,
+                  key: const Key('monaco_debug_continue_button'),
+                  tooltip: 'Continue',
+                  icon: SvgPicture.string(
+                    _debugContinueSvg,
+                    width: 16,
+                    height: 16,
+                    colorFilter: ColorFilter.mode(
+                      _isPaused
+                          ? const Color(0xFF75BEFF)
+                          : const Color(0xFF666666),
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                  color: const Color(0xFF75BEFF),
+                  disabledColor: const Color(0xFF666666),
+                  onPressed: _isPaused ? continueExecution : null,
                   padding: EdgeInsets.zero,
                   constraints:
-                      const BoxConstraints(minWidth: 26, minHeight: 26),
+                      const BoxConstraints(minWidth: 24, minHeight: 24),
                   style: IconButton.styleFrom(
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    minimumSize: const Size(26, 26),
+                    minimumSize: const Size(24, 24),
                     padding: EdgeInsets.zero,
                   ),
                 ),
-                if (widget.enableDebugging)
-                  IconButton(
-                    key: const Key('monaco_debug_start_button'),
-                    tooltip: isHtmlApplication
-                        ? 'Debugging not supported for HTML'
-                        : 'Start Debugging',
-                    icon: const Icon(Icons.bug_report, size: 16),
-                    color: const Color(0xFF007ACC),
-                    disabledColor: const Color(0xFF555555),
-                    onPressed: canDebug ? _handleDebug : null,
+                Container(
+                  height: 14,
+                  width: 1,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  color: const Color(0xFF454545),
+                ),
+                IconButton(
+                  key: const Key('monaco_stop_button'),
+                  tooltip: 'Stop',
+                  icon: const Icon(Icons.stop, size: 16),
+                  color: Colors.redAccent,
+                  disabledColor: const Color(0xFF666666),
+                  onPressed: canStop ? _handleStop : null,
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 24, minHeight: 24),
+                  style: IconButton.styleFrom(
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    minimumSize: const Size(24, 24),
                     padding: EdgeInsets.zero,
-                    constraints:
-                        const BoxConstraints(minWidth: 26, minHeight: 26),
-                    style: IconButton.styleFrom(
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      minimumSize: const Size(26, 26),
-                      padding: EdgeInsets.zero,
-                    ),
                   ),
-                if (_isDebugging) ...[
-                  const SizedBox(width: 6),
-                  Container(
-                    key: const Key('monaco_debug_controls_box'),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2D2D2D),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                        color: const Color(0xFF454545),
-                        width: 1,
-                      ),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black45,
-                          blurRadius: 4,
-                          offset: Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          key: const Key('monaco_debug_continue_button'),
-                          tooltip: 'Continue',
-                          icon: SvgPicture.string(
-                            _debugContinueSvg,
-                            width: 16,
-                            height: 16,
-                            colorFilter: ColorFilter.mode(
-                              _isPaused
-                                  ? const Color(0xFF75BEFF)
-                                  : const Color(0xFF666666),
-                              BlendMode.srcIn,
-                            ),
-                          ),
-                          color: const Color(0xFF75BEFF),
-                          disabledColor: const Color(0xFF666666),
-                          onPressed: _isPaused ? continueExecution : null,
-                          padding: EdgeInsets.zero,
-                          constraints:
-                              const BoxConstraints(minWidth: 24, minHeight: 24),
-                          style: IconButton.styleFrom(
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            minimumSize: const Size(24, 24),
-                            padding: EdgeInsets.zero,
-                          ),
-                        ),
-                        Container(
-                          height: 14,
-                          width: 1,
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          color: const Color(0xFF454545),
-                        ),
-                        IconButton(
-                          key: const Key('monaco_stop_button'),
-                          tooltip: 'Stop',
-                          icon: const Icon(Icons.stop, size: 16),
-                          color: Colors.redAccent,
-                          disabledColor: const Color(0xFF666666),
-                          onPressed: canStop ? _handleStop : null,
-                          padding: EdgeInsets.zero,
-                          constraints:
-                              const BoxConstraints(minWidth: 24, minHeight: 24),
-                          style: IconButton.styleFrom(
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            minimumSize: const Size(24, 24),
-                            padding: EdgeInsets.zero,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ] else if (canStop) ...[
-                  const SizedBox(width: 6),
-                  IconButton(
-                    key: const Key('monaco_stop_button'),
-                    tooltip: 'Stop',
-                    icon: const Icon(Icons.stop, size: 18),
-                    color: Colors.redAccent,
-                    disabledColor: const Color(0xFF555555),
-                    onPressed: canStop ? _handleStop : null,
-                    padding: EdgeInsets.zero,
-                    constraints:
-                        const BoxConstraints(minWidth: 26, minHeight: 26),
-                    style: IconButton.styleFrom(
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      minimumSize: const Size(26, 26),
-                      padding: EdgeInsets.zero,
-                    ),
-                  ),
-                ],
-                const SizedBox(width: 6),
+                ),
               ],
             ),
           ),
+        ] else if (canStop) ...[
+          const SizedBox(width: 6),
+          IconButton(
+            key: const Key('monaco_stop_button'),
+            tooltip: 'Stop',
+            icon: const Icon(Icons.stop, size: 18),
+            color: Colors.redAccent,
+            disabledColor: const Color(0xFF555555),
+            onPressed: canStop ? _handleStop : null,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+            style: IconButton.styleFrom(
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              minimumSize: const Size(26, 26),
+              padding: EdgeInsets.zero,
+            ),
+          ),
         ],
-      ),
+      ],
     );
   }
 
@@ -1220,53 +1278,60 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            key: const Key('playground_branding_banner'),
-            height: 36,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            color: const Color(0xFF181818),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Image.asset(
-                    'assets/favicon.png',
-                    width: 18,
-                    height: 18,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => Image.asset(
-                      'packages/playground/assets/favicon.png',
+          if (widget.showTopBar)
+            Container(
+              key: const Key('playground_branding_banner'),
+              height: 36,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              color: const Color(0xFF181818),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      'assets/favicon.png',
                       width: 18,
                       height: 18,
                       fit: BoxFit.contain,
-                      errorBuilder: (context, error2, stackTrace2) =>
-                          const Icon(
-                        Icons.play_circle_filled,
-                        size: 18,
-                        color: Color(0xFF38BDF8),
+                      errorBuilder: (context, error, stackTrace) => Image.asset(
+                        'packages/playground/assets/favicon.png',
+                        width: 18,
+                        height: 18,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error2, stackTrace2) =>
+                            const Icon(
+                          Icons.play_circle_filled,
+                          size: 18,
+                          color: Color(0xFF38BDF8),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'GingaPlayground (powered by gingaf)',
-                    key: Key('playground_branding_title'),
-                    style: TextStyle(
-                      color: Color(0xFFCCCCCC),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.3,
+                    const SizedBox(width: 8),
+                    const Text(
+                      'GingaPlayground',
+                      key: Key('playground_branding_title'),
+                      style: TextStyle(
+                        color: Color(0xFFCCCCCC),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3,
+                      ),
                     ),
-                  ),
-                  if (effectiveShowCatalogSelector) ...[
-                    const SizedBox(width: 14),
-                    _buildCatalogSelector(),
+                    if (effectiveShowCatalogSelector) ...[
+                      const SizedBox(width: 14),
+                      _buildCatalogSelector(),
+                    ],
+                    const SizedBox(width: 12),
+                    _buildExecutionControls(),
+                    if (widget.onAddRemoteDevice != null) ...[
+                      const SizedBox(width: 8),
+                      _buildAddRemoteDeviceButton(),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
-          ),
           if (_isCatalogOpen)
             Expanded(
               child: CatalogGridView(
@@ -1280,11 +1345,12 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
                   setState(() {
                     _isCatalogOpen = false;
                   });
+                  widget.onCatalogOpenChanged?.call(false);
                 },
               ),
             )
           else ...[
-            _buildTabBarWithActions(),
+            _buildTabBar(),
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {

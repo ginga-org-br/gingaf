@@ -7,8 +7,13 @@ import 'web_utils_stub.dart' if (dart.library.js_interop) 'web_utils_web.dart';
 
 final _logger = Logger('ginga.args');
 
-({String? app, String? config, List<int>? breakpoints, bool? playground})
-    parseArgsCliAndEnv(
+({
+  String? app,
+  String? config,
+  List<int>? breakpoints,
+  bool? playground,
+  String? remoteDevice,
+}) parseArgsCliAndEnv(
   List<String> args, [
   Map<String, String>? environment,
 ]) {
@@ -16,6 +21,7 @@ final _logger = Logger('ginga.args');
   String? configArg;
   String? breakpointsArg;
   bool? playgroundArg;
+  String? remoteDeviceArg;
 
   for (var i = 0; i < args.length; i++) {
     final arg = args[i];
@@ -53,6 +59,12 @@ final _logger = Logger('ginga.args');
     } else if (arg.startsWith('-p=')) {
       final val = arg.substring('-p='.length).toLowerCase();
       playgroundArg = val != 'false' && val != '0' && val != 'no';
+    } else if (arg == '--remote-device') {
+      if (i + 1 < args.length) {
+        remoteDeviceArg = args[++i];
+      }
+    } else if (arg.startsWith('--remote-device=')) {
+      remoteDeviceArg = arg.substring('--remote-device='.length);
     } else if (!arg.startsWith('-')) {
       if (appArg == null) {
         appArg = arg;
@@ -70,10 +82,13 @@ final _logger = Logger('ginga.args');
   String? appEnv;
   String? configEnv;
   bool? playgroundEnv;
+  String? remoteDeviceEnv;
 
   if (environment != null) {
     appEnv = environment['GINGA_APP'] ?? environment['ginga_app'];
     configEnv = environment['GINGA_CONFIG'] ?? environment['ginga_config'];
+    remoteDeviceEnv = environment['GINGA_REMOTE_DEVICE'] ??
+        environment['ginga_remote_device'];
     final rawPg =
         environment['GINGA_PLAYGROUND'] ?? environment['ginga_playground'];
     if (rawPg != null) {
@@ -162,6 +177,13 @@ final _logger = Logger('ginga.args');
         }
       }
     }
+    if (const String.fromEnvironment('GINGA_REMOTE_DEVICE').isNotEmpty) {
+      remoteDeviceEnv = const String.fromEnvironment('GINGA_REMOTE_DEVICE');
+    }
+    if ((remoteDeviceEnv == null || remoteDeviceEnv.isEmpty) && !kIsWeb) {
+      remoteDeviceEnv = Platform.environment['GINGA_REMOTE_DEVICE'] ??
+          Platform.environment['ginga_remote_device'];
+    }
   }
 
   String? breakpointsEnv;
@@ -211,11 +233,18 @@ final _logger = Logger('ginga.args');
           ? configEnv.trim()
           : null);
   final playground = playgroundArg ?? playgroundEnv;
+  final remoteDevice =
+      (remoteDeviceArg != null && remoteDeviceArg.trim().isNotEmpty)
+          ? remoteDeviceArg.trim()
+          : ((remoteDeviceEnv != null && remoteDeviceEnv.trim().isNotEmpty)
+              ? remoteDeviceEnv.trim()
+              : null);
 
   return (
     app: appSrc,
     config: configSrc,
     breakpoints: breakpoints,
     playground: playground,
+    remoteDevice: remoteDevice,
   );
 }

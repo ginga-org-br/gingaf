@@ -16,7 +16,10 @@ import 'package:playground/playground.dart';
 
 import 'menu/settings_menu.dart';
 import 'menu/users_menu.dart';
+import 'remote_device_player_widget.dart';
 import 'web_utils_stub.dart' if (dart.library.js_interop) 'web_utils_web.dart';
+
+export 'remote_device_player_widget.dart';
 
 final _logger = Logger('ginga');
 
@@ -43,6 +46,22 @@ class Ginga extends StatefulWidget {
   State<Ginga> createState() => GingaState();
 }
 
+class _PlaygroundCompanionInstance {
+  final String id;
+  final String label;
+  final String deviceClass;
+  final GlobalKey<RemoteDevicePlayerWidgetState> playerKey;
+  final Widget widget;
+
+  const _PlaygroundCompanionInstance({
+    required this.id,
+    required this.label,
+    required this.deviceClass,
+    required this.playerKey,
+    required this.widget,
+  });
+}
+
 /// @nodoc
 class GingaState extends State<Ginga> {
   late final GingaCC _gingacc;
@@ -50,6 +69,11 @@ class GingaState extends State<Ginga> {
   Widget? htmlApp;
   Widget? nclApp;
   String? _mainAppContent;
+  final List<_PlaygroundCompanionInstance> _companions = [];
+  final List<Process> _spawnedCompanionProcesses = [];
+  int _nextCompanionSeq = 1;
+  int get runningCompanionCount =>
+      _companions.length + _spawnedCompanionProcesses.length;
   bool _isExiting = false;
   bool get isExiting => _isExiting;
   bool _isRunning = true;
@@ -57,7 +81,13 @@ class GingaState extends State<Ginga> {
   bool _initialized = false;
   bool _isPaused = false;
   bool _showUsersOverlay = false;
+  bool _isTopSettingsOpen = false;
   late final bool _showCatalogSelector;
+  String? _lastAppliedConfigJson;
+  String? _lastAppliedAppPath;
+  bool _isPlayerCatalogOpen = false;
+  List<CatalogExample> _playerCatalogExamples = [];
+  String? _selectedPlayerCatalogExample;
 
   GlobalKey<ncl.NclWidgetState> _nclAppKey = GlobalKey<ncl.NclWidgetState>();
   GlobalKey<MainAVWidgetState> _mainAvKey = GlobalKey<MainAVWidgetState>();
@@ -103,8 +133,7 @@ class GingaState extends State<Ginga> {
         }
       }
     }
-    _showCatalogSelector = _gingacc.config.enablePlayground &&
-        widget.content == null &&
+    _showCatalogSelector = widget.content == null &&
         (_gingacc.config.appSrc == null ||
             _gingacc.config.appSrc!.trim().isEmpty);
     if (_gingacc.config.enablePlayground) {
@@ -120,7 +149,10 @@ class GingaState extends State<Ginga> {
     }
 
     if (_gingacc.config.startWithCCWS) {
-      _gingacc.ccws.start();
+      _gingacc.ccws.start(
+        enableSsdp:
+            !kIsWeb && !Platform.environment.containsKey('FLUTTER_TEST'),
+      );
     }
     HardwareKeyboard.instance.addHandler(_handleKeyPress);
 
@@ -284,7 +316,10 @@ class GingaState extends State<Ginga> {
     });
     _stopServices();
     if (_gingacc.config.startWithCCWS) {
-      _gingacc.ccws.start();
+      _gingacc.ccws.start(
+        enableSsdp:
+            !kIsWeb && !Platform.environment.containsKey('FLUTTER_TEST'),
+      );
     }
     _nclAppKey = GlobalKey<ncl.NclWidgetState>();
     _mainAvKey = GlobalKey<MainAVWidgetState>();
@@ -348,12 +383,22 @@ class GingaState extends State<Ginga> {
     }
 
     if (configJson != null && configJson.trim().isNotEmpty) {
+      if (!resetIfMissing &&
+          _lastAppliedConfigJson == configJson &&
+          _lastAppliedAppPath == appPath) {
+        if (appPath != null && _gingacc.config.appSrc != appPath) {
+          _gingacc.config = _gingacc.config.copyWith(appSrc: appPath);
+        }
+        return;
+      }
       try {
         final loadedCfg = await GingaConfig.fromJson(
           configJson,
           appPath,
           _gingacc,
         );
+        _lastAppliedConfigJson = configJson;
+        _lastAppliedAppPath = appPath;
         _gingacc.config = loadedCfg.copyWith(
           appSrc: appPath ?? loadedCfg.appSrc,
           enablePlayground: enablePlayground,
@@ -367,6 +412,8 @@ class GingaState extends State<Ginga> {
     }
 
     if (resetIfMissing) {
+      _lastAppliedConfigJson = null;
+      _lastAppliedAppPath = appPath;
       _gingacc.config = GingaConfig(
         appSrc: appPath,
         startWithCCWS: true,
@@ -374,6 +421,7 @@ class GingaState extends State<Ginga> {
         breakpoints: currentBps,
       );
     } else if (appPath != null && _gingacc.config.appSrc != appPath) {
+      _lastAppliedAppPath = appPath;
       _gingacc.config = _gingacc.config.copyWith(
         appSrc: appPath,
       );
@@ -391,6 +439,75 @@ class GingaState extends State<Ginga> {
     _restart();
   }
 
+  Future<void> _addRemoteDeviceFromPlayground(String deviceClass) async {
+    if (!kIsWeb &&
+        !Platform.environment.containsKey('FLUTTER_TEST') &&
+        (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) {
+      try {
+        await _gingacc.ccws.start(enableSsdp: true);
+        final proc = await Process.start(
+          Platform.resolvedExecutable,
+          ['--remote-device=$deviceClass'],
+          workingDirectory: Directory.current.path,
+        );
+        _spawnedCompanionProcesses.add(proc);
+        unawaited(
+          proc.exitCode.then((_) {
+            _spawnedCompanionProcesses.remove(proc);
+          }),
+        );
+        return;
+      } catch (e) {
+        _logger.warning('Failed to spawn standalone remote device window: $e');
+      }
+    }
+
+    final companionId = 'companion_${_nextCompanionSeq++}';
+    final playerKey = GlobalKey<RemoteDevicePlayerWidgetState>();
+    final supportedTypes = deviceClass == 'ncl-360-vr'
+        ? const [
+            'application/x-ncl360',
+            'application/x-ncl-360',
+          ]
+        : const [
+            'text/html',
+            'application/x-vlibras-gloss',
+            'application/ttml+xml',
+            'text/srt',
+            'audio/mpeg',
+            'application/x-ginga-NCL',
+            'text/plain',
+          ];
+
+    final companionWidget = RemoteDevicePlayerWidget(
+      key: playerKey,
+      gingacc: _gingacc,
+      deviceClass: deviceClass,
+      supportedTypes: supportedTypes,
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _companions.add(
+        _PlaygroundCompanionInstance(
+          id: companionId,
+          label: 'Remote Device class_id=$deviceClass',
+          deviceClass: deviceClass,
+          playerKey: playerKey,
+          widget: companionWidget,
+        ),
+      );
+    });
+  }
+
+  void _stopCompanion(String companionId) {
+    final idx = _companions.indexWhere((c) => c.id == companionId);
+    if (idx == -1) return;
+    setState(() {
+      _companions.removeAt(idx);
+    });
+  }
+
   void _stopFromPlayground() {
     _logger.info('Stopping Ginga application from playground');
     setState(() {
@@ -401,7 +518,9 @@ class GingaState extends State<Ginga> {
       nclApp = null;
       mainAVWidget = null;
     });
-    _stopServices();
+    if (_companions.isEmpty) {
+      _stopServices();
+    }
   }
 
   void pause() {
@@ -469,14 +588,23 @@ class GingaState extends State<Ginga> {
   }
 
   void openSettingsMenu() {
+    setState(() {
+      _isTopSettingsOpen = true;
+    });
     _settingsMenuKey.currentState?.open();
   }
 
   void closeSettingsMenu() {
+    setState(() {
+      _isTopSettingsOpen = false;
+    });
     _settingsMenuKey.currentState?.close();
   }
 
   void toggleSettingsMenu() {
+    setState(() {
+      _isTopSettingsOpen = !_isTopSettingsOpen;
+    });
     _settingsMenuKey.currentState?.toggle();
   }
 
@@ -601,6 +729,15 @@ class GingaState extends State<Ginga> {
     _gingacc.ccws.stop();
   }
 
+  void _stopSpawnedCompanionProcesses() {
+    for (final proc in _spawnedCompanionProcesses) {
+      try {
+        proc.kill();
+      } catch (_) {}
+    }
+    _spawnedCompanionProcesses.clear();
+  }
+
   Future<void> _cleanup() async {
     if (_isExiting) return;
     setState(() {
@@ -609,7 +746,10 @@ class GingaState extends State<Ginga> {
       htmlApp = null;
       nclApp = null;
       mainAVWidget = null;
+      _companions.clear();
     });
+    _stopSpawnedCompanionProcesses();
+    _gingacc.clearRemoteDevices();
     _stopServices();
     if (!kIsWeb && !Platform.environment.containsKey('FLUTTER_TEST')) {
       Future.delayed(const Duration(milliseconds: 200), () => exit(0));
@@ -622,43 +762,587 @@ class GingaState extends State<Ginga> {
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_handleKeyPress);
     _detachTv30Testbed?.call();
+    _stopSpawnedCompanionProcesses();
+    _gingacc.clearRemoteDevices();
     _stopServices();
     super.dispose();
   }
 
-  Widget _buildPlayer(BuildContext context) {
-    if (!_isRunning) {
-      return Container(
-        key: const Key('no_running_app_placeholder'),
-        color: Colors.black,
-        child: const Center(
-          child: Column(
+  Future<void> _toggleTopBarCatalog() async {
+    if (_gingacc.config.enablePlayground) {
+      await _playgroundKey.currentState?.toggleCatalog();
+      if (mounted) {
+        setState(() {});
+      }
+      return;
+    }
+    if (_isPlayerCatalogOpen) {
+      setState(() {
+        _isPlayerCatalogOpen = false;
+      });
+      return;
+    }
+    if (_playerCatalogExamples.isEmpty) {
+      final loaded = await loadCatalogExamples(gingacc: _gingacc);
+      if (mounted && loaded.isNotEmpty) {
+        _playerCatalogExamples = loaded;
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _isPlayerCatalogOpen = true;
+    });
+  }
+
+  Future<void> _selectPlayerCatalogExample(String mainFile) async {
+    setState(() {
+      _isPlayerCatalogOpen = false;
+      _selectedPlayerCatalogExample = mainFile;
+    });
+    final loaded = await loadExampleContent(mainFile, gingacc: _gingacc);
+    if (loaded != null) {
+      _mainAppContent = loaded;
+    }
+    final appPath = resolveCatalogExampleUrl(mainFile);
+    await _applyPlaygroundConfig(
+      appPath,
+      resetIfMissing: true,
+      fromCatalog: true,
+    );
+    if (!mounted) return;
+    _restart();
+  }
+
+  Widget _buildTopBarButton({
+    required Key key,
+    required IconData icon,
+    required String label,
+    required VoidCallback? onPressed,
+    Color iconColor = const Color(0xFFCCCCCC),
+    bool isActive = false,
+  }) {
+    final enabled = onPressed != null;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: key,
+        borderRadius: BorderRadius.circular(4),
+        onTap: onPressed,
+        child: Container(
+          height: 26,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: isActive
+                ? const Color(0xFF3C3C3C)
+                : const Color(0xFF2D2D2D),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(
+              color: isActive
+                  ? const Color(0xFF858585)
+                  : const Color(0xFF454545),
+              width: 1,
+            ),
+          ),
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.play_circle_outline,
-                size: 64,
-                color: Colors.white54,
+                icon,
+                size: 14,
+                color: enabled ? iconColor : const Color(0xFF666666),
               ),
-              SizedBox(height: 16),
+              const SizedBox(width: 6),
               Text(
-                'No running application',
+                label,
                 style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Click Run or Start Debugging to begin',
-                style: TextStyle(
-                  color: Colors.white38,
-                  fontSize: 13,
+                  color: enabled
+                      ? const Color(0xFFE5E5E5)
+                      : const Color(0xFF666666),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopMenuBar(BuildContext context) {
+    final editorState = _playgroundKey.currentState;
+    final isPlayground = _gingacc.config.enablePlayground;
+    final isCatalogOpen = isPlayground
+        ? (editorState?.isCatalogOpen == true)
+        : _isPlayerCatalogOpen;
+    final isDebugging = editorState?.isDebugging == true;
+    final isDebugPaused = editorState?.isPaused == true;
+    final isHtmlApp = isPlayground
+        ? (editorState != null
+            ? editorState.isHtmlApplication
+            : (_gingacc.config.appSrc?.toLowerCase().endsWith('.html') ==
+                    true ||
+                _gingacc.config.appSrc?.toLowerCase().endsWith('.htm') ==
+                    true ||
+                _gingacc.config.appSrc?.toLowerCase().endsWith('.xhtml') ==
+                    true))
+        : (_gingacc.config.appSrc?.toLowerCase().endsWith('.html') == true ||
+            _gingacc.config.appSrc?.toLowerCase().endsWith('.htm') == true ||
+            _gingacc.config.appSrc?.toLowerCase().endsWith('.xhtml') == true);
+    final currentPaused =
+        _isPaused || (_nclAppKey.currentState?.isPaused ?? false);
+    final hasBreakpoints = editorState != null
+        ? editorState.breakpoints.isNotEmpty
+        : _gingacc.config.breakpoints.isNotEmpty;
+    final canRun = !_isRunning && !isDebugging;
+    final canDebug = isPlayground &&
+        !isHtmlApp &&
+        hasBreakpoints &&
+        !_isRunning &&
+        !isDebugging;
+    final canStop = _isRunning || isDebugging;
+
+    return Container(
+      key: const Key('playground_branding_banner'),
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: const BoxDecoration(
+        color: Color(0xFF181818),
+        border: Border(
+          bottom: BorderSide(color: Color(0xFF2D2D2D), width: 1),
+        ),
+      ),
+      child: Row(
+        key: const Key('floating_control_menu'),
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/favicon.png',
+                    width: 18,
+                    height: 18,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => Image.asset(
+                      'packages/playground/assets/favicon.png',
+                      width: 18,
+                      height: 18,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error2, stackTrace2) =>
+                          const Icon(
+                        Icons.play_circle_filled,
+                        size: 18,
+                        color: Color(0xFF38BDF8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    isPlayground ? 'GingaPlayground' : 'Ginga',
+                    key: const Key('playground_branding_title'),
+                    style: const TextStyle(
+                      color: Color(0xFFCCCCCC),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                  if (_showCatalogSelector) ...[
+                    const SizedBox(width: 14),
+                    _buildTopBarButton(
+                      key: const Key('catalog_select'),
+                      icon: Icons.grid_view_rounded,
+                      label: 'Catalog',
+                      isActive: isCatalogOpen,
+                      onPressed: _toggleTopBarCatalog,
+                    ),
+                  ],
+                  const SizedBox(width: 12),
+                  IconButton(
+                    key: const Key('monaco_run_button'),
+                    tooltip: 'Start',
+                    icon: const Icon(Icons.play_arrow, size: 18),
+                    color: const Color(0xFF4CAF50),
+                    disabledColor: const Color(0xFF555555),
+                    onPressed: canRun
+                        ? () {
+                            final st = _playgroundKey.currentState;
+                            if (st != null) {
+                              st.run();
+                            } else {
+                              _runFromPlayground();
+                            }
+                          }
+                        : null,
+                    padding: EdgeInsets.zero,
+                    constraints:
+                        const BoxConstraints(minWidth: 26, minHeight: 26),
+                    style: IconButton.styleFrom(
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      minimumSize: const Size(26, 26),
+                      padding: EdgeInsets.zero,
+                    ),
+                  ),
+                  if (isPlayground)
+                    IconButton(
+                      key: const Key('monaco_debug_start_button'),
+                      tooltip: isHtmlApp
+                          ? 'Debugging not supported for HTML'
+                          : (!hasBreakpoints
+                              ? 'Add a breakpoint to start debugging'
+                              : 'Start Debugging'),
+                      icon: const Icon(Icons.bug_report, size: 16),
+                      color: const Color(0xFF007ACC),
+                      disabledColor: const Color(0xFF555555),
+                      onPressed: canDebug
+                          ? () {
+                              final st = _playgroundKey.currentState;
+                              if (st != null) {
+                                st.startDebugSession();
+                              } else {
+                                _runFromPlayground();
+                              }
+                            }
+                          : null,
+                      padding: EdgeInsets.zero,
+                      constraints:
+                          const BoxConstraints(minWidth: 26, minHeight: 26),
+                      style: IconButton.styleFrom(
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        minimumSize: const Size(26, 26),
+                        padding: EdgeInsets.zero,
+                      ),
+                    ),
+                  if (isDebugging) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      key: const Key('monaco_debug_controls_box'),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2D2D2D),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: const Color(0xFF454545),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            key: const Key('monaco_debug_continue_button'),
+                            tooltip: 'Continue',
+                            icon: const Icon(Icons.fast_forward, size: 16),
+                            color: const Color(0xFF75BEFF),
+                            disabledColor: const Color(0xFF666666),
+                            onPressed: isDebugPaused
+                                ? () {
+                                    _playgroundKey.currentState
+                                        ?.continueExecution();
+                                  }
+                                : null,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                                minWidth: 24, minHeight: 24),
+                            style: IconButton.styleFrom(
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              minimumSize: const Size(24, 24),
+                              padding: EdgeInsets.zero,
+                            ),
+                          ),
+                          Container(
+                            height: 14,
+                            width: 1,
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            color: const Color(0xFF454545),
+                          ),
+                          IconButton(
+                            key: const Key('monaco_stop_button'),
+                            tooltip: 'Stop',
+                            icon: const Icon(Icons.stop, size: 16),
+                            color: Colors.redAccent,
+                            disabledColor: const Color(0xFF666666),
+                            onPressed: canStop
+                                ? () {
+                                    final st = _playgroundKey.currentState;
+                                    if (st != null) {
+                                      st.stopSession();
+                                    } else {
+                                      _stopFromPlayground();
+                                    }
+                                  }
+                                : null,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                                minWidth: 24, minHeight: 24),
+                            style: IconButton.styleFrom(
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              minimumSize: const Size(24, 24),
+                              padding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else if (canStop) ...[
+                    const SizedBox(width: 4),
+                    IconButton(
+                      key: const Key('monaco_stop_button'),
+                      tooltip: 'Stop',
+                      icon: const Icon(Icons.stop, size: 18),
+                      color: Colors.redAccent,
+                      disabledColor: const Color(0xFF555555),
+                      onPressed: () {
+                        final st = _playgroundKey.currentState;
+                        if (st != null) {
+                          st.stopSession();
+                        } else {
+                          _stopFromPlayground();
+                        }
+                      },
+                      padding: EdgeInsets.zero,
+                      constraints:
+                          const BoxConstraints(minWidth: 26, minHeight: 26),
+                      style: IconButton.styleFrom(
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        minimumSize: const Size(26, 26),
+                        padding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ],
+                  if (_isRunning) ...[
+                    const SizedBox(width: 4),
+                    IconButton(
+                      key: const Key('floating_pause_button'),
+                      tooltip: currentPaused ? 'Resume' : 'Pause',
+                      icon: Icon(
+                        currentPaused
+                            ? Icons.play_arrow_rounded
+                            : Icons.pause_rounded,
+                        size: 18,
+                      ),
+                      color: currentPaused
+                          ? const Color(0xFF4CAF50)
+                          : const Color(0xFFFFB74D),
+                      onPressed: togglePause,
+                      padding: EdgeInsets.zero,
+                      constraints:
+                          const BoxConstraints(minWidth: 26, minHeight: 26),
+                      style: IconButton.styleFrom(
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        minimumSize: const Size(26, 26),
+                        padding: EdgeInsets.zero,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    IconButton(
+                      key: const Key('floating_restart_button'),
+                      tooltip: 'Restart',
+                      icon: const Icon(Icons.restart_alt_rounded, size: 18),
+                      color: const Color(0xFF64B5F6),
+                      onPressed: _restart,
+                      padding: EdgeInsets.zero,
+                      constraints:
+                          const BoxConstraints(minWidth: 26, minHeight: 26),
+                      style: IconButton.styleFrom(
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        minimumSize: const Size(26, 26),
+                        padding: EdgeInsets.zero,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    IconButton(
+                      key: const Key('floating_forward_2s_button'),
+                      tooltip: 'Forward +2s',
+                      icon: const Icon(Icons.fast_forward_rounded, size: 18),
+                      color: const Color(0xFFCCCCCC),
+                      onPressed: forward2s,
+                      padding: EdgeInsets.zero,
+                      constraints:
+                          const BoxConstraints(minWidth: 26, minHeight: 26),
+                      style: IconButton.styleFrom(
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        minimumSize: const Size(26, 26),
+                        padding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_isTopSettingsOpen) ...[
+                _buildTopBarButton(
+                  key: const Key('floating_users_button'),
+                  icon: Icons.people,
+                  label: 'Users',
+                  isActive: _showUsersOverlay,
+                  onPressed: () {
+                    if (_showUsersOverlay) {
+                      closeUsersOverlay();
+                    } else {
+                      openUsersOverlay();
+                    }
+                  },
+                ),
+                const SizedBox(width: 6),
+                PopupMenuButton<String>(
+                  key: const Key('monaco_add_remote_device_button'),
+                  tooltip: 'Add Remote Device',
+                  padding: EdgeInsets.zero,
+                  color: const Color(0xFF252526),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    side: const BorderSide(
+                      color: Color(0xFF454545),
+                      width: 1,
+                    ),
+                  ),
+                  onSelected: _addRemoteDeviceFromPlayground,
+                  itemBuilder: (context) => const [
+                    PopupMenuItem<String>(
+                      key: Key('add_remote_device_ncl_360_vr'),
+                      value: 'ncl-360-vr',
+                      child: Text(
+                        'Remote Device: ncl-360-vr (NCL360)',
+                        style: TextStyle(
+                          color: Color(0xFFD4D4D4),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    PopupMenuItem<String>(
+                      key: Key('add_remote_device_accessibility'),
+                      value: 'accessibility',
+                      child: Text(
+                        'Remote Device: accessibility (HTML5)',
+                        style: TextStyle(
+                          color: Color(0xFFD4D4D4),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                  child: Container(
+                    height: 26,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2D2D2D),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: const Color(0xFF454545),
+                        width: 1,
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.devices,
+                          size: 14,
+                          color: Color(0xFFCCCCCC),
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'Add Remote Device',
+                          style: TextStyle(
+                            color: Color(0xFFE5E5E5),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+              ],
+              IconButton(
+                key: const Key('floating_menu_toggle_button'),
+                tooltip: 'Settings',
+                icon: Icon(
+                  _isTopSettingsOpen ? Icons.close : Icons.settings,
+                  size: 18,
+                ),
+                color: _isTopSettingsOpen
+                    ? Colors.white
+                    : const Color(0xFFCCCCCC),
+                onPressed: toggleSettingsMenu,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+                style: IconButton.styleFrom(
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  minimumSize: const Size(26, 26),
+                  padding: EdgeInsets.zero,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlayer(BuildContext context) {
+    final usersOverlay = _showUsersOverlay
+        ? UsersMenu(
+            users: _gingacc.config.users,
+            onClose: closeUsersOverlay,
+            onUserSelected: (_) => closeUsersOverlay(),
+            dispatchCurrentUserUpdate: (name, value) {
+              _gingacc.config.systemVariables[name] = value;
+              _nclAppKey.currentState?.nclDocument?.dispatchSettingsUpdate(
+                  name, value,
+                  userId: 'currentUser');
+            },
+          )
+        : null;
+
+    if (!_isRunning) {
+      return Container(
+        key: const Key('no_running_app_placeholder'),
+        color: Colors.black,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.play_circle_outline,
+                    size: 64,
+                    color: Colors.white54,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'No running application',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Click Run or Start Debugging to begin',
+                    style: TextStyle(
+                      color: Colors.white38,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (usersOverlay != null) usersOverlay,
+          ],
         ),
       );
     }
@@ -705,29 +1389,102 @@ class GingaState extends State<Ginga> {
                     ),
                   ),
                 ),
-          if (!_showUsersOverlay)
-            SettingsMenu(
-              key: _settingsMenuKey,
-              isPaused: _isPaused,
-              onReload: _restart,
-              onTogglePause: togglePause,
-              onForward2s: forward2s,
-              onOpenUsers: openUsersOverlay,
-            ),
-          if (_showUsersOverlay)
-            UsersMenu(
-              users: _gingacc.config.users,
-              onClose: closeUsersOverlay,
-              onUserSelected: (_) => closeUsersOverlay(),
-              dispatchCurrentUserUpdate: (name, value) {
-                _gingacc.config.systemVariables[name] = value;
-                _nclAppKey.currentState?.nclDocument?.dispatchSettingsUpdate(
-                    name, value,
-                    userId: 'currentUser');
-              },
-            ),
+          if (usersOverlay != null) usersOverlay,
         ],
       ),
+    );
+  }
+
+  Widget _buildCompanionTile(_PlaygroundCompanionInstance companion) {
+    return Container(
+      key: Key('playground_companion_tile_${companion.id}'),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        border: Border.all(color: const Color(0xFF2D2D2D), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            height: 28,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            color: const Color(0xFF252526),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    companion.label,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFFCCCCCC),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  key: Key('playground_companion_restart_${companion.id}'),
+                  tooltip: 'Restart Companion',
+                  icon: const Icon(Icons.restart_alt_rounded, size: 14),
+                  color: const Color(0xFF9E9E9E),
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 22, minHeight: 22),
+                  onPressed: () => companion.playerKey.currentState?.restart(),
+                ),
+                const SizedBox(width: 2),
+                IconButton(
+                  key: Key('playground_companion_close_${companion.id}'),
+                  tooltip: 'Stop Companion',
+                  icon: const Icon(Icons.close, size: 14),
+                  color: const Color(0xFF9E9E9E),
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 22, minHeight: 22),
+                  onPressed: () => _stopCompanion(companion.id),
+                ),
+              ],
+            ),
+          ),
+          Expanded(child: companion.widget),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlayerArea(BuildContext context) {
+    if (_companions.isEmpty) {
+      return _buildPlayer(context);
+    }
+    return Column(
+      key: const Key('playground_multidevice_column'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          flex: 3,
+          child: KeyedSubtree(
+            key: const Key('playground_main_player_pane'),
+            child: _buildPlayer(context),
+          ),
+        ),
+        Container(
+          height: 2,
+          color: const Color(0xFF2D2D2D),
+        ),
+        Expanded(
+          flex: 2,
+          child: Container(
+            key: const Key('playground_companions_pane'),
+            color: const Color(0xFF1E1E1E),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: _companions
+                  .map((c) => Expanded(child: _buildCompanionTile(c)))
+                  .toList(),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -761,58 +1518,98 @@ class GingaState extends State<Ginga> {
           backgroundColor: isOverlay ? Colors.transparent : null,
           body: _isExiting
               ? const SizedBox.shrink()
-              : _gingacc.config.enablePlayground
-                  ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(
-                          flex: 1,
-                          child: RepaintBoundary(
-                            child: KeyedSubtree(
-                              key: const Key('flutter_monaco_widget'),
-                              child: PlaygroundEditor(
-                                key: _playgroundKey,
-                                content: _mainAppContent ?? '',
-                                filePath: _gingacc.config.appSrc,
-                                gingacc: _gingacc,
-                                isRunning: _isRunning,
-                                showCatalogSelector: _showCatalogSelector,
-                                onCatalogExampleSelected: (selectedFile) async {
-                                  final appPath =
-                                      resolveCatalogExampleUrl(selectedFile);
-                                  await _applyPlaygroundConfig(
-                                    appPath,
-                                    resetIfMissing: true,
-                                    fromCatalog: true,
-                                  );
-                                },
-                                onContentChanged: (newText) {
-                                  _mainAppContent = newText;
-                                },
-                                onRun: _runFromPlayground,
-                                onStop: _stopFromPlayground,
-                                onDebug: _runFromPlayground,
-                                onContinue: () {
-                                  resume();
-                                },
-                                onReload: _runFromPlayground,
-                                initialBreakpoints: _gingacc.config.breakpoints,
-                                onBreakpointsChanged: (newBps) {
-                                  setBreakpoints(newBps);
-                                },
-                              ),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 1,
-                          child: RepaintBoundary(
-                            child: _buildPlayer(context),
-                          ),
-                        ),
-                      ],
-                    )
-                  : _buildPlayer(context),
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (!isOverlay) _buildTopMenuBar(context),
+                    Expanded(
+                      child: _gingacc.config.enablePlayground
+                          ? Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  flex: 1,
+                                  child: RepaintBoundary(
+                                    child: KeyedSubtree(
+                                      key: const Key('flutter_monaco_widget'),
+                                      child: PlaygroundEditor(
+                                        key: _playgroundKey,
+                                        showTopBar: false,
+                                        content: _mainAppContent ?? '',
+                                        filePath: _gingacc.config.appSrc,
+                                        gingacc: _gingacc,
+                                        isRunning: _isRunning,
+                                        showCatalogSelector:
+                                            _showCatalogSelector,
+                                        onCatalogExampleSelected:
+                                            (selectedFile) async {
+                                          final appPath =
+                                              resolveCatalogExampleUrl(
+                                                  selectedFile);
+                                          await _applyPlaygroundConfig(
+                                            appPath,
+                                            resetIfMissing: true,
+                                            fromCatalog: true,
+                                          );
+                                        },
+                                        onCatalogOpenChanged: (_) {
+                                          setState(() {});
+                                        },
+                                        onContentChanged: (newText) {
+                                          _mainAppContent = newText;
+                                          if (mounted) {
+                                            setState(() {});
+                                          }
+                                        },
+                                        onRun: _runFromPlayground,
+                                        onAddRemoteDevice:
+                                            _addRemoteDeviceFromPlayground,
+                                        onStop: _stopFromPlayground,
+                                        onDebug: _runFromPlayground,
+                                        onContinue: () {
+                                          resume();
+                                        },
+                                        onReload: _runFromPlayground,
+                                        initialBreakpoints:
+                                            _gingacc.config.breakpoints,
+                                        onBreakpointsChanged: (newBps) {
+                                          setBreakpoints(newBps);
+                                          if (mounted) {
+                                            setState(() {});
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                if (_playgroundKey
+                                        .currentState?.isCatalogOpen !=
+                                    true)
+                                  Expanded(
+                                    flex: 1,
+                                    child: RepaintBoundary(
+                                      child: _buildPlayerArea(context),
+                                    ),
+                                  ),
+                              ],
+                            )
+                          : (_isPlayerCatalogOpen
+                              ? CatalogGridView(
+                                  key: const Key('catalog_grid_dialog'),
+                                  examples: _playerCatalogExamples,
+                                  selectedExample:
+                                      _selectedPlayerCatalogExample,
+                                  onSelected: _selectPlayerCatalogExample,
+                                  onClose: () {
+                                    setState(() {
+                                      _isPlayerCatalogOpen = false;
+                                    });
+                                  },
+                                )
+                              : _buildPlayerArea(context)),
+                    ),
+                  ],
+                ),
         ),
       ),
     );

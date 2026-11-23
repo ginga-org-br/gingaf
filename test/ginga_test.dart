@@ -86,7 +86,7 @@ void main() {
       final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
 
       expect(initialRect.size, equals(const Size(800, 450)));
-      expect(maximizedRect.size, equals(const Size(2560, 1440)));
+      expect(maximizedRect.size, equals(const Size(2496, 1404)));
       expect(nclState.bounds.width, equals(1280.0));
       expect(nclState.bounds.height, equals(720.0));
     });
@@ -123,7 +123,7 @@ void main() {
       expect(playerRect.width, equals(640.0));
       expect(playerRect.height, equals(360.0));
       expect(playerRect.left, equals(640.0));
-      expect(playerRect.top, equals(180.0));
+      expect(playerRect.top, equals(198.0));
 
       tester.view.physicalSize = const Size(2560, 1440);
       await tester.pump();
@@ -275,16 +275,11 @@ void main() {
       expect(find.byKey(const Key('floating_control_menu')), findsOneWidget);
       expect(
           find.byKey(const Key('floating_menu_toggle_button')), findsOneWidget);
-
-      await tester.tap(find.byKey(const Key('floating_menu_toggle_button')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
       expect(find.byKey(const Key('floating_restart_button')), findsOneWidget);
       expect(find.byKey(const Key('floating_pause_button')), findsOneWidget);
       expect(
           find.byKey(const Key('floating_forward_2s_button')), findsOneWidget);
-      expect(find.byKey(const Key('floating_users_button')), findsOneWidget);
+      expect(find.byKey(const Key('floating_users_button')), findsNothing);
 
       await tester.tap(find.byKey(const Key('floating_pause_button')));
       await tester.pump();
@@ -305,7 +300,7 @@ void main() {
 
       await tester.tap(find.byKey(const Key('floating_menu_toggle_button')));
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byKey(const Key('floating_users_button')), findsOneWidget);
       await tester.tap(find.byKey(const Key('floating_users_button')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -544,10 +539,6 @@ void main() {
       final nclState = tester.state<NclWidgetState>(find.byType(NclWidget));
       expect(nclState.isPaused, isFalse);
 
-      await tester.tap(find.byKey(const Key('floating_menu_toggle_button')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
       final forwardButtonFinder =
           find.byKey(const Key('floating_forward_2s_button'));
       final pauseButtonFinder = find.byKey(const Key('floating_pause_button'));
@@ -557,8 +548,8 @@ void main() {
 
       final forwardOffset = tester.getTopLeft(forwardButtonFinder);
       final pauseOffset = tester.getTopLeft(pauseButtonFinder);
-      expect(forwardOffset.dy, lessThan(pauseOffset.dy));
-      expect(forwardOffset.dx, equals(pauseOffset.dx));
+      expect(forwardOffset.dy, equals(pauseOffset.dy));
+      expect(pauseOffset.dx, lessThan(forwardOffset.dx));
 
       final initialClock = nclState.nclDocument!.scheduler.virtualClock;
 
@@ -569,7 +560,10 @@ void main() {
       expect(nclState.isPaused, isTrue);
       expect(nclState.nclDocument!.scheduler.virtualClock,
           equals(initialClock + 2000));
-      expect(find.text('Resume'), findsOneWidget);
+      expect(
+        tester.widget<IconButton>(pauseButtonFinder).tooltip,
+        equals('Resume'),
+      );
 
       await tester.tap(forwardButtonFinder);
       await tester.pump();
@@ -578,14 +572,20 @@ void main() {
       expect(nclState.isPaused, isTrue);
       expect(nclState.nclDocument!.scheduler.virtualClock,
           equals(initialClock + 4000));
-      expect(find.text('Resume'), findsOneWidget);
+      expect(
+        tester.widget<IconButton>(pauseButtonFinder).tooltip,
+        equals('Resume'),
+      );
 
       await tester.tap(pauseButtonFinder);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(nclState.isPaused, isFalse);
-      expect(find.text('Pause'), findsOneWidget);
+      expect(
+        tester.widget<IconButton>(pauseButtonFinder).tooltip,
+        equals('Pause'),
+      );
     });
 
     test('GingaConfig parses enablePlayground from JSON and constructor',

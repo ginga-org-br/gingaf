@@ -293,7 +293,7 @@ void main() {
           tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
       expect(state.selectedExample, equals('image.ncl'));
       expect(state.effectiveContent, contains('id="img"'));
-      expect(find.text('image'), findsOneWidget);
+      expect(find.text('image.ncl'), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('catalog_select')));
       await tester.pumpAndSettle();
@@ -337,7 +337,7 @@ void main() {
     });
 
     testWidgets(
-        'displays GingaPlayground (powered by gingaf) banner for standalone app and catalog mode',
+        'displays GingaPlayground banner for standalone app and catalog mode',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
@@ -351,7 +351,7 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.text('GingaPlayground (powered by gingaf)'), findsOneWidget);
+      expect(find.text('GingaPlayground'), findsOneWidget);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -364,7 +364,7 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.text('GingaPlayground (powered by gingaf)'), findsOneWidget);
+      expect(find.text('GingaPlayground'), findsOneWidget);
     });
 
     testWidgets('disables debug icon for HTML application',

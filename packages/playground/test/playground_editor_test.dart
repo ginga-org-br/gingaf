@@ -386,7 +386,7 @@ void main() {
           tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
       expect(state.breakpoints, isEmpty);
 
-      await tester.tap(find.byKey(const Key('monaco_debug_start_button')));
+      state.startDebugging();
       await tester.pump();
 
       expect(state.isDebugging, isTrue);
@@ -427,10 +427,15 @@ void main() {
 
       final runBtnIdle =
           tester.widget<IconButton>(find.byKey(const Key('monaco_run_button')));
-      final debugBtnIdle = tester.widget<IconButton>(
+      final debugBtnIdleNoBp = tester.widget<IconButton>(
           find.byKey(const Key('monaco_debug_start_button')));
 
       expect(runBtnIdle.onPressed, isNotNull);
+      expect(debugBtnIdleNoBp.onPressed, isNull);
+      await tester.tap(find.byKey(const Key('monaco_gutter_line_4')));
+      await tester.pump();
+      final debugBtnIdle = tester.widget<IconButton>(
+          find.byKey(const Key('monaco_debug_start_button')));
       expect(debugBtnIdle.onPressed, isNotNull);
       expect(find.byKey(const Key('monaco_stop_button')), findsNothing);
       expect(
