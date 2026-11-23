@@ -94,6 +94,9 @@ int main(int argc, char** argv) {
         }
       }
     }
+    g_message(
+        "[ginga] WSL2/WSLg: libEGL/MESA warnings are normal; falling back to "
+        "WSLg OpenGL ES (d3d12) driver.");
   }
 
   g_autoptr(MyApplication) app = my_application_new();
