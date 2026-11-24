@@ -1100,6 +1100,114 @@ class GingaState extends State<Ginga> {
                         padding: EdgeInsets.zero,
                       ),
                     ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    key: const Key('floating_menu_toggle_button'),
+                    tooltip: 'More Options',
+                    icon: const Icon(
+                      Icons.more_vert,
+                      size: 18,
+                    ),
+                    color: _isTopSettingsOpen
+                        ? Colors.white
+                        : const Color(0xFFCCCCCC),
+                    onPressed: toggleSettingsMenu,
+                    padding: EdgeInsets.zero,
+                    constraints:
+                        const BoxConstraints(minWidth: 26, minHeight: 26),
+                    style: IconButton.styleFrom(
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      minimumSize: const Size(26, 26),
+                      padding: EdgeInsets.zero,
+                    ),
+                  ),
+                  if (_isTopSettingsOpen) ...[
+                    const SizedBox(width: 6),
+                    _buildTopBarButton(
+                      key: const Key('floating_users_button'),
+                      icon: Icons.people,
+                      label: 'Users',
+                      isActive: _showUsersOverlay,
+                      onPressed: () {
+                        if (_showUsersOverlay) {
+                          closeUsersOverlay();
+                        } else {
+                          openUsersOverlay();
+                        }
+                      },
+                    ),
+                    const SizedBox(width: 6),
+                    PopupMenuButton<String>(
+                      key: const Key('monaco_add_remote_device_button'),
+                      tooltip: 'Add Remote Device',
+                      padding: EdgeInsets.zero,
+                      color: const Color(0xFF252526),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        side: const BorderSide(
+                          color: Color(0xFF454545),
+                          width: 1,
+                        ),
+                      ),
+                      onSelected: _addRemoteDeviceFromPlayground,
+                      itemBuilder: (context) => const [
+                        PopupMenuItem<String>(
+                          key: Key('add_remote_device_ncl_360_vr'),
+                          value: 'ncl-360-vr',
+                          child: Text(
+                            'Remote Device: ncl-360-vr (NCL360)',
+                            style: TextStyle(
+                              color: Color(0xFFD4D4D4),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        PopupMenuItem<String>(
+                          key: Key('add_remote_device_accessibility'),
+                          value: 'accessibility',
+                          child: Text(
+                            'Remote Device: accessibility (HTML5)',
+                            style: TextStyle(
+                              color: Color(0xFFD4D4D4),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                      child: Container(
+                        height: 26,
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2D2D2D),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: const Color(0xFF454545),
+                            width: 1,
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.devices,
+                              size: 14,
+                              color: Color(0xFFCCCCCC),
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              'Add Remote Device',
+                              style: TextStyle(
+                                color: Color(0xFFE5E5E5),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                  ],
                   if (isDebugging) ...[
                     const SizedBox(width: 6),
                     Container(
@@ -1258,116 +1366,6 @@ class GingaState extends State<Ginga> {
                 ],
               ),
             ),
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_isTopSettingsOpen) ...[
-                _buildTopBarButton(
-                  key: const Key('floating_users_button'),
-                  icon: Icons.people,
-                  label: 'Users',
-                  isActive: _showUsersOverlay,
-                  onPressed: () {
-                    if (_showUsersOverlay) {
-                      closeUsersOverlay();
-                    } else {
-                      openUsersOverlay();
-                    }
-                  },
-                ),
-                const SizedBox(width: 6),
-                PopupMenuButton<String>(
-                  key: const Key('monaco_add_remote_device_button'),
-                  tooltip: 'Add Remote Device',
-                  padding: EdgeInsets.zero,
-                  color: const Color(0xFF252526),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
-                    side: const BorderSide(
-                      color: Color(0xFF454545),
-                      width: 1,
-                    ),
-                  ),
-                  onSelected: _addRemoteDeviceFromPlayground,
-                  itemBuilder: (context) => const [
-                    PopupMenuItem<String>(
-                      key: Key('add_remote_device_ncl_360_vr'),
-                      value: 'ncl-360-vr',
-                      child: Text(
-                        'Remote Device: ncl-360-vr (NCL360)',
-                        style: TextStyle(
-                          color: Color(0xFFD4D4D4),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                    PopupMenuItem<String>(
-                      key: Key('add_remote_device_accessibility'),
-                      value: 'accessibility',
-                      child: Text(
-                        'Remote Device: accessibility (HTML5)',
-                        style: TextStyle(
-                          color: Color(0xFFD4D4D4),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ],
-                  child: Container(
-                    height: 26,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2D2D2D),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                        color: const Color(0xFF454545),
-                        width: 1,
-                      ),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.devices,
-                          size: 14,
-                          color: Color(0xFFCCCCCC),
-                        ),
-                        SizedBox(width: 6),
-                        Text(
-                          'Add Remote Device',
-                          style: TextStyle(
-                            color: Color(0xFFE5E5E5),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-              ],
-              IconButton(
-                key: const Key('floating_menu_toggle_button'),
-                tooltip: 'Settings',
-                icon: Icon(
-                  _isTopSettingsOpen ? Icons.close : Icons.settings,
-                  size: 18,
-                ),
-                color: _isTopSettingsOpen
-                    ? Colors.white
-                    : const Color(0xFFCCCCCC),
-                onPressed: toggleSettingsMenu,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
-                style: IconButton.styleFrom(
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  minimumSize: const Size(26, 26),
-                  padding: EdgeInsets.zero,
-                ),
-              ),
-            ],
           ),
         ],
       ),
