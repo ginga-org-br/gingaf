@@ -47,6 +47,7 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
   bool _isPaused = false;
   final List<Map<String, dynamic>> _pendingRemoteMetadata = [];
   bool get isPaused => _isPaused;
+  WebViewController? get controller => _controller;
 
   @override
   void pause() {
@@ -88,7 +89,9 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
   }
 
   Future<void> _flushPendingRemoteMetadata() async {
-    if (_controller == null || !_initialized || _pendingRemoteMetadata.isEmpty) {
+    if (_controller == null ||
+        !_initialized ||
+        _pendingRemoteMetadata.isEmpty) {
       return;
     }
     final pending = List<Map<String, dynamic>>.from(_pendingRemoteMetadata);
@@ -138,26 +141,32 @@ class HtmlWidgetState extends MediaState<HtmlWidget> {
       final uri = ctx.resolveUri(widget.src, base);
       final loadedContent =
           widget.content ?? await ctx.loadContent(widget.src, base);
-      if (loadedContent != null && loadedContent.isNotEmpty) {
-        final content = gingacc.ccws.injectCcwsFetch(loadedContent);
-        await _controller!.loadHtmlString(content);
-      } else if (!kIsWeb && (uri.isScheme('file') || !uri.hasScheme)) {
+      var loadedFromFile = false;
+      if (!kIsWeb && (uri.isScheme('file') || !uri.hasScheme)) {
         final filePath = uri.isScheme('file')
             ? uri.toFilePath()
             : Uri.decodeComponent(uri.path);
         final file = File(filePath).absolute;
         if (file.existsSync()) {
-          await _controller!.loadFile(file.path);
+          final rawContent = await file.readAsString();
+          final targetContent = loadedContent ?? rawContent;
+          final injectedContent = gingacc.ccws.injectCcwsFetch(targetContent);
+          if (injectedContent == rawContent) {
+            await _controller!.loadFile(file.path);
+            loadedFromFile = true;
+          }
+        }
+      }
+      if (!loadedFromFile) {
+        if (loadedContent != null && loadedContent.isNotEmpty) {
+          final content = gingacc.ccws.injectCcwsFetch(loadedContent);
+          await _controller!.loadHtmlString(content);
+        } else if (uri.isScheme('http') || uri.isScheme('https')) {
+          await _controller!.loadRequest(uri);
         } else {
           final content = gingacc.ccws.injectCcwsFetch('');
           await _controller!.loadHtmlString(content);
         }
-      } else if (uri.isScheme('http') || uri.isScheme('https')) {
-        await _controller!.loadRequest(uri);
-      } else {
-        var content = await ctx.loadContent(widget.src, base) ?? '';
-        content = gingacc.ccws.injectCcwsFetch(content);
-        await _controller!.loadHtmlString(content);
       }
       if (mounted) {
         setState(() => _initialized = true);
