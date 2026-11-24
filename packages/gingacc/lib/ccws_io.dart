@@ -44,6 +44,7 @@ class CCWS {
         gingacc = gingacc ?? GingaCC();
 
   Future<void> _openRemoteDeviceWsServer(Map<String, dynamic> device) async {
+    if (!_running) return;
     final handle = device['handle']?.toString();
     final wsPort = device['wsPort'] as int?;
     if (handle == null || wsPort == null) return;
@@ -58,6 +59,7 @@ class CCWS {
           InternetAddress.loopbackIPv4,
           candidatePort,
         );
+        wsServer.idleTimeout = null;
         device['wsPort'] = wsServer.port;
         device['url'] = 'ws://localhost:${wsServer.port}';
         break;
@@ -156,6 +158,7 @@ class CCWS {
       try {
         _server =
             await io.serve(handler, InternetAddress.loopbackIPv4, currentPort);
+        _server!.idleTimeout = null;
         _logger.info(
             'Server running on http://${_server!.address.address}:${_server!.port}');
         _running = true;
@@ -176,6 +179,7 @@ class CCWS {
 
     try {
       _server = await io.serve(handler, InternetAddress.loopbackIPv4, 0);
+      _server!.idleTimeout = null;
       _logger.info(
           'Server running on dynamic port http://${_server!.address.address}:${_server!.port}');
       _running = true;

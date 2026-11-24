@@ -124,6 +124,108 @@ bool? getGingaPlayground() {
   return null;
 }
 
+List<String>? getGingaRemoteDevices() {
+  String? raw;
+  try {
+    final uri = Uri.parse(web.window.location.href);
+    final query = uri.queryParameters;
+    raw = query['remote-devices'] ??
+        query['remote_devices'] ??
+        query['remoteDevices'] ??
+        query['GINGA_REMOTE_DEVICES'] ??
+        query['ginga_remote_devices'];
+    if ((raw == null || raw.isEmpty) &&
+        uri.hasFragment &&
+        uri.fragment.contains('=')) {
+      final fragUri = Uri.parse('http://dummy/?${uri.fragment}');
+      final fQuery = fragUri.queryParameters;
+      raw = fQuery['remote-devices'] ??
+          fQuery['remote_devices'] ??
+          fQuery['remoteDevices'] ??
+          fQuery['GINGA_REMOTE_DEVICES'] ??
+          fQuery['ginga_remote_devices'];
+    }
+  } catch (_) {}
+  if (raw == null || raw.isEmpty) {
+    try {
+      raw = _getSessionStorageItem('GINGA_REMOTE_DEVICES');
+    } catch (_) {}
+  }
+  if (raw == null || raw.trim().isEmpty) return null;
+  final devices = raw
+      .split(',')
+      .map((s) => s.trim())
+      .where((s) => s.isNotEmpty)
+      .map((s) => s == 'acessibility' ? 'accessibility' : s)
+      .toList();
+  return devices.isNotEmpty ? devices : null;
+}
+
+String? lastSyncedBrowserUrl;
+
+String buildGingaBrowserUrl(
+  String currentHref,
+  String selectedFile, {
+  String? resolvedAppUrl,
+}) {
+  final current = Uri.parse(currentHref);
+  final qIdx = selectedFile.indexOf('?');
+  final rawPath = qIdx != -1 ? selectedFile.substring(0, qIdx) : selectedFile;
+  final appValue = (resolvedAppUrl != null && resolvedAppUrl.isNotEmpty)
+      ? resolvedAppUrl.split('?').first
+      : rawPath;
+  final nextParams = Map<String, String>.from(current.queryParameters);
+  nextParams.remove('ginga_app');
+  nextParams.remove('src');
+  nextParams.remove('appSrc');
+  nextParams['app'] = appValue;
+
+  nextParams.remove('remote-devices');
+  nextParams.remove('remote_devices');
+  nextParams.remove('remoteDevices');
+  nextParams.remove('GINGA_REMOTE_DEVICES');
+  nextParams.remove('ginga_remote_devices');
+
+  if (qIdx != -1) {
+    final extraQuery = selectedFile.substring(qIdx + 1).split('#').first;
+    final extraParams = Uri.splitQueryString(extraQuery);
+    for (final entry in extraParams.entries) {
+      nextParams[entry.key] = entry.value;
+    }
+  }
+
+  final rawQuery = nextParams.entries.map((e) {
+    final encodedKey = Uri.encodeQueryComponent(e.key);
+    final encodedVal = Uri.encodeQueryComponent(e.value)
+        .replaceAll('%3A', ':')
+        .replaceAll('%3a', ':')
+        .replaceAll('%2F', '/')
+        .replaceAll('%2f', '/')
+        .replaceAll('%2C', ',')
+        .replaceAll('%2c', ',');
+    return '$encodedKey=$encodedVal';
+  }).join('&');
+
+  return current.replace(query: rawQuery).toString();
+}
+
+void updateGingaBrowserUrl(
+  String selectedFile, {
+  String? resolvedAppUrl,
+}) {
+  try {
+    final newUrl = buildGingaBrowserUrl(
+      web.window.location.href,
+      selectedFile,
+      resolvedAppUrl: resolvedAppUrl,
+    );
+    lastSyncedBrowserUrl = newUrl;
+    web.window.history.replaceState(null, '', newUrl);
+  } catch (e) {
+    debugPrint('Failed to update browser URL: $e');
+  }
+}
+
 void notifyParentAppExited() {
   try {
     web.window.parent?.postMessage('ginga_app_exited'.toJS, '*'.toJS);

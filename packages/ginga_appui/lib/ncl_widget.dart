@@ -105,7 +105,8 @@ class NclWidget extends BaseWidget {
       }
     } catch (_) {}
 
-    if (src.endsWith('.ncl') ||
+    final lowerSrc = src.split('?').first;
+    if (lowerSrc.endsWith('.ncl') ||
         mimeType == 'application/x-ncl-NCL' ||
         mimeType == 'application/x-ncl-ncl') {
       return NclWidget(
@@ -115,8 +116,8 @@ class NclWidget extends BaseWidget {
         document: document,
       );
     }
-    if (src.endsWith('.html') ||
-        src.endsWith('.htm') ||
+    if (lowerSrc.endsWith('.html') ||
+        lowerSrc.endsWith('.htm') ||
         mimeType == 'text/html') {
       return HtmlWidget(
         key: key,

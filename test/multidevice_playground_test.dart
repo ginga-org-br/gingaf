@@ -225,4 +225,39 @@ void main() {
     expect(cc.getRemoteDevicesByClass('ncl-360-vr'), isEmpty);
     expect(cc.getRemoteDevicesByClass('accessibility'), isEmpty);
   });
+
+  testWidgets(
+      'initialRemoteDevices (?remote-devices=ncl-360-vr,acessibility) opens remote devices first before starting main application',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1440, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final cc = GingaCC();
+    cc.config = GingaConfig(
+      appSrc: 'examples/multidevice/multidevice_vlibras_vr360.ncl',
+      enablePlayground: false,
+      startWithCCWS: true,
+    );
+    addTearDown(() async {
+      cc.clearRemoteDevices();
+      await cc.ccws.stop();
+    });
+
+    await tester.pumpWidget(
+      Ginga(
+        gingacc: cc,
+        initialRemoteDevices: const ['ncl-360-vr', 'acessibility'],
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+
+    expect(cc.getRemoteDevicesByClass('ncl-360-vr').length, 1);
+    expect(cc.getRemoteDevicesByClass('accessibility').length, 1);
+    expect(find.byType(NclWidget), findsOneWidget);
+    expect(find.byType(Scene360Widget), findsOneWidget);
+    expect(find.byType(HtmlWidget), findsOneWidget);
+  });
 }

@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gingacc/gingacc.dart';
 import 'package:gingaf/args.dart';
 import 'package:gingaf/ginga.dart';
+import 'package:gingaf/web_utils_stub.dart'
+    if (dart.library.js_interop) 'package:gingaf/web_utils_web.dart';
 import 'package:ginga_appui/main_av_widget.dart';
 import 'package:ginga_appui/ncl_widget.dart' as ncl;
 import 'package:playground/playground.dart';
@@ -97,6 +99,10 @@ void main() {
       expect(
         gingacc.config.appSrc,
         equals(resolveCatalogExampleUrl('lua_demo.ncl')),
+      );
+      expect(
+        lastSyncedBrowserUrl,
+        contains('app=${resolveCatalogExampleUrl('lua_demo.ncl')}'),
       );
 
       await tester.tap(find.byKey(const Key('monaco_run_button')));
@@ -224,6 +230,28 @@ void main() {
           parseArgsCliAndEnv(['--playground', '--app=examples/video.ncl']);
       expect(parsed.playground, isTrue);
       expect(parsed.app, equals('examples/video.ncl'));
+    });
+
+    test('buildGingaBrowserUrl updates app and remote-devices query params', () {
+      final updated = buildGingaBrowserUrl(
+        'http://localhost:8080/playground',
+        'multidevice/multidevice_vlibras_vr360.ncl?remote-devices=ncl-360-vr,acessibility',
+        resolvedAppUrl:
+            'http://localhost:8080/examples/multidevice/multidevice_vlibras_vr360.ncl?remote-devices=ncl-360-vr,acessibility',
+      );
+      expect(
+        updated,
+        'http://localhost:8080/playground?app=http://localhost:8080/examples/multidevice/multidevice_vlibras_vr360.ncl&remote-devices=ncl-360-vr,acessibility',
+      );
+      final uri = Uri.parse(updated);
+      expect(
+        uri.queryParameters['app'],
+        'http://localhost:8080/examples/multidevice/multidevice_vlibras_vr360.ncl',
+      );
+      expect(
+        uri.queryParameters['remote-devices'],
+        'ncl-360-vr,acessibility',
+      );
     });
   });
 }

@@ -21,7 +21,7 @@ void main() {
         ['--remote-device=ncl-360-vr'],
         {},
       );
-      expect(parsed.remoteDevice, 'ncl-360-vr');
+      expect(parsed.remoteDevices, ['ncl-360-vr']);
 
       final parsedEnv = parseArgsCliAndEnv(
         [],
@@ -29,7 +29,21 @@ void main() {
           'GINGA_REMOTE_DEVICE': 'accessibility',
         },
       );
-      expect(parsedEnv.remoteDevice, 'accessibility');
+      expect(parsedEnv.remoteDevices, ['accessibility']);
+
+      final parsedMulti = parseArgsCliAndEnv(
+        ['--remote-devices=ncl-360-vr,acessibility'],
+        {},
+      );
+      expect(parsedMulti.remoteDevices, ['ncl-360-vr', 'accessibility']);
+
+      final parsedMultiUrlEnv = parseArgsCliAndEnv(
+        [],
+        {
+          'remote-devices': 'ncl-360-vr,acessibility',
+        },
+      );
+      expect(parsedMultiUrlEnv.remoteDevices, ['ncl-360-vr', 'accessibility']);
     });
 
     test(

@@ -295,8 +295,9 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
 
   List<String> _computeEditableFiles(String mainFile, List<String> otherFiles) {
     final files = <String>[mainFile];
-    final slashIdx = mainFile.lastIndexOf('/');
-    final dir = slashIdx != -1 ? mainFile.substring(0, slashIdx) : '';
+    final cleanMain = mainFile.split('?').first;
+    final slashIdx = cleanMain.lastIndexOf('/');
+    final dir = slashIdx != -1 ? cleanMain.substring(0, slashIdx) : '';
     for (final other in otherFiles) {
       final trimmed = other.trim();
       if (trimmed.isEmpty) continue;
@@ -594,7 +595,7 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
 
     final previousFile = effectiveActiveFilePath;
     _fileContents[previousFile] = _controller.text;
-    if (previousFile.endsWith('.ncl')) {
+    if (previousFile.split('?').first.endsWith('.ncl')) {
       _fileBreakpoints[previousFile] = Set<int>.from(_breakpoints);
     }
 

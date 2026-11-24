@@ -52,9 +52,14 @@ void main(List<String> args) async {
   final appSrc = parsedArgs.app;
   final configSrc = parsedArgs.config;
 
-  if (parsedArgs.remoteDevice != null && parsedArgs.remoteDevice!.isNotEmpty) {
+  if (!kIsWeb &&
+      parsedArgs.playground != true &&
+      appSrc == null &&
+      configSrc == null &&
+      parsedArgs.remoteDevices != null &&
+      parsedArgs.remoteDevices!.length == 1) {
     final gingacc = GingaCC();
-    final deviceClass = parsedArgs.remoteDevice!;
+    final deviceClass = parsedArgs.remoteDevices!.first;
     final remoteKey = GlobalKey<RemoteDevicePlayerWidgetState>();
     runApp(
       MaterialApp(
@@ -180,5 +185,6 @@ void main(List<String> args) async {
   runApp(Ginga(
     key: gingaKey,
     gingacc: gingacc,
+    initialRemoteDevices: parsedArgs.remoteDevices,
   ));
 }

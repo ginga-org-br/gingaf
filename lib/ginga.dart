@@ -28,10 +28,12 @@ class Ginga extends StatefulWidget {
   final GingaCC? gingacc;
   final String? content;
   final Map<String, String>? virtualFiles;
+  final List<String>? initialRemoteDevices;
 
   const Ginga({
     super.key,
     this.gingacc,
+    this.initialRemoteDevices,
   })  : content = null,
         virtualFiles = null;
 
@@ -40,6 +42,7 @@ class Ginga extends StatefulWidget {
     super.key,
     this.virtualFiles,
     this.gingacc,
+    this.initialRemoteDevices,
   });
 
   @override
@@ -195,16 +198,77 @@ class GingaState extends State<Ginga> {
     }
   }
 
+  static List<String> _extractRemoteDevicesFromSrc(String? src) {
+    if (src == null || !src.contains('?')) return const [];
+    final qIdx = src.indexOf('?');
+    final queryPart = src.substring(qIdx + 1).split('#').first;
+    try {
+      final params = Uri.splitQueryString(queryPart);
+      final raw = params['remote-devices'] ??
+          params['remote_devices'] ??
+          params['remoteDevices'] ??
+          params['GINGA_REMOTE_DEVICES'] ??
+          params['ginga_remote_devices'];
+      if (raw != null && raw.trim().isNotEmpty) {
+        return raw
+            .split(',')
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .map((s) => s == 'acessibility' ? 'accessibility' : s)
+            .toList();
+      }
+    } catch (_) {}
+    return const [];
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_initialized) {
       _initialized = true;
       _autoResizeWindow();
-      if (_gingacc.config.enablePlayground) {
+      final requestedRemoteDevices = widget.initialRemoteDevices ??
+          (kIsWeb ? getGingaRemoteDevices() : null) ??
+          _extractRemoteDevicesFromSrc(_gingacc.config.appSrc);
+      if (requestedRemoteDevices.isNotEmpty) {
+        unawaited(_initializeStartup(requestedRemoteDevices));
+      } else if (_gingacc.config.enablePlayground) {
         _loadMainAppContent();
       } else {
         _setupApp();
+      }
+    }
+  }
+
+  Future<void> _ensureRemoteDevicesOpened(List<String> requestedDevices) async {
+    for (final rawClass in requestedDevices) {
+      final trimmed = rawClass.trim();
+      if (trimmed.isEmpty) continue;
+      final normalizedClass =
+          trimmed == 'acessibility' ? 'accessibility' : trimmed;
+      final alreadyOpen =
+          _companions.any((c) => c.deviceClass == normalizedClass);
+      if (!alreadyOpen) {
+        await _addRemoteDeviceFromPlayground(normalizedClass);
+      }
+    }
+  }
+
+  Future<void> _initializeStartup(List<String> requestedRemoteDevices) async {
+    for (final rawClass in requestedRemoteDevices) {
+      final trimmed = rawClass.trim();
+      if (trimmed.isEmpty) continue;
+      final normalizedClass =
+          trimmed == 'acessibility' ? 'accessibility' : trimmed;
+      await _addRemoteDeviceFromPlayground(normalizedClass);
+    }
+    if (!mounted) return;
+    if (_gingacc.config.enablePlayground) {
+      await _loadMainAppContent();
+    } else {
+      _setupApp();
+      if (mounted) {
+        setState(() {});
       }
     }
   }
@@ -265,7 +329,7 @@ class GingaState extends State<Ginga> {
         _playgroundKey.currentState?.pauseAtLine(line);
       }
 
-      final lowerSrc = appSrc.toLowerCase();
+      final lowerSrc = appSrc.toLowerCase().split('?').first;
       if (lowerSrc.endsWith('.html') ||
           lowerSrc.endsWith('.htm') ||
           lowerSrc.endsWith('.xhtml')) {
@@ -431,6 +495,10 @@ class GingaState extends State<Ginga> {
   Future<void> _runFromPlayground() async {
     final appSrc =
         _gingacc.config.appSrc ?? _playgroundKey.currentState?.activeFilePath;
+    final srcDevices = _extractRemoteDevicesFromSrc(appSrc);
+    if (srcDevices.isNotEmpty) {
+      await _ensureRemoteDevicesOpened(srcDevices);
+    }
     await _applyPlaygroundConfig(
       appSrc,
       resetIfMissing: false,
@@ -810,11 +878,16 @@ class GingaState extends State<Ginga> {
       _isPlayerCatalogOpen = false;
       _selectedPlayerCatalogExample = mainFile;
     });
+    final srcDevices = _extractRemoteDevicesFromSrc(mainFile);
+    if (srcDevices.isNotEmpty) {
+      await _ensureRemoteDevicesOpened(srcDevices);
+    }
     final loaded = await loadExampleContent(mainFile, gingacc: _gingacc);
     if (loaded != null) {
       _mainAppContent = loaded;
     }
     final appPath = resolveCatalogExampleUrl(mainFile);
+    updateGingaBrowserUrl(mainFile, resolvedAppUrl: appPath);
     await _applyPlaygroundConfig(
       appPath,
       resetIfMissing: true,
@@ -1554,9 +1627,20 @@ class GingaState extends State<Ginga> {
                                             _showCatalogSelector,
                                         onCatalogExampleSelected:
                                             (selectedFile) async {
+                                          final srcDevices =
+                                              _extractRemoteDevicesFromSrc(
+                                                  selectedFile);
+                                          if (srcDevices.isNotEmpty) {
+                                            await _ensureRemoteDevicesOpened(
+                                                srcDevices);
+                                          }
                                           final appPath =
                                               resolveCatalogExampleUrl(
                                                   selectedFile);
+                                          updateGingaBrowserUrl(
+                                            selectedFile,
+                                            resolvedAppUrl: appPath,
+                                          );
                                           await _applyPlaygroundConfig(
                                             appPath,
                                             resetIfMissing: true,

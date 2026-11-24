@@ -12,7 +12,7 @@ final _logger = Logger('ginga.args');
   String? config,
   List<int>? breakpoints,
   bool? playground,
-  String? remoteDevice,
+  List<String>? remoteDevices,
 }) parseArgsCliAndEnv(
   List<String> args, [
   Map<String, String>? environment,
@@ -21,7 +21,7 @@ final _logger = Logger('ginga.args');
   String? configArg;
   String? breakpointsArg;
   bool? playgroundArg;
-  String? remoteDeviceArg;
+  String? remoteDevicesArg;
 
   for (var i = 0; i < args.length; i++) {
     final arg = args[i];
@@ -59,12 +59,14 @@ final _logger = Logger('ginga.args');
     } else if (arg.startsWith('-p=')) {
       final val = arg.substring('-p='.length).toLowerCase();
       playgroundArg = val != 'false' && val != '0' && val != 'no';
-    } else if (arg == '--remote-device') {
+    } else if (arg == '--remote-device' || arg == '--remote-devices') {
       if (i + 1 < args.length) {
-        remoteDeviceArg = args[++i];
+        remoteDevicesArg = args[++i];
       }
     } else if (arg.startsWith('--remote-device=')) {
-      remoteDeviceArg = arg.substring('--remote-device='.length);
+      remoteDevicesArg = arg.substring('--remote-device='.length);
+    } else if (arg.startsWith('--remote-devices=')) {
+      remoteDevicesArg = arg.substring('--remote-devices='.length);
     } else if (!arg.startsWith('-')) {
       if (appArg == null) {
         appArg = arg;
@@ -82,13 +84,17 @@ final _logger = Logger('ginga.args');
   String? appEnv;
   String? configEnv;
   bool? playgroundEnv;
-  String? remoteDeviceEnv;
+  String? remoteDevicesEnv;
 
   if (environment != null) {
     appEnv = environment['GINGA_APP'] ?? environment['ginga_app'];
     configEnv = environment['GINGA_CONFIG'] ?? environment['ginga_config'];
-    remoteDeviceEnv = environment['GINGA_REMOTE_DEVICE'] ??
-        environment['ginga_remote_device'];
+    remoteDevicesEnv = environment['GINGA_REMOTE_DEVICES'] ??
+        environment['ginga_remote_devices'] ??
+        environment['GINGA_REMOTE_DEVICE'] ??
+        environment['ginga_remote_device'] ??
+        environment['remote-devices'] ??
+        environment['remote_devices'];
     final rawPg =
         environment['GINGA_PLAYGROUND'] ?? environment['ginga_playground'];
     if (rawPg != null) {
@@ -177,12 +183,32 @@ final _logger = Logger('ginga.args');
         }
       }
     }
-    if (const String.fromEnvironment('GINGA_REMOTE_DEVICE').isNotEmpty) {
-      remoteDeviceEnv = const String.fromEnvironment('GINGA_REMOTE_DEVICE');
+    if (const String.fromEnvironment('GINGA_REMOTE_DEVICES').isNotEmpty) {
+      remoteDevicesEnv = const String.fromEnvironment('GINGA_REMOTE_DEVICES');
+    } else if (const String.fromEnvironment('GINGA_REMOTE_DEVICE').isNotEmpty) {
+      remoteDevicesEnv = const String.fromEnvironment('GINGA_REMOTE_DEVICE');
     }
-    if ((remoteDeviceEnv == null || remoteDeviceEnv.isEmpty) && !kIsWeb) {
-      remoteDeviceEnv = Platform.environment['GINGA_REMOTE_DEVICE'] ??
+    if ((remoteDevicesEnv == null || remoteDevicesEnv.isEmpty) && !kIsWeb) {
+      remoteDevicesEnv = Platform.environment['GINGA_REMOTE_DEVICES'] ??
+          Platform.environment['ginga_remote_devices'] ??
+          Platform.environment['GINGA_REMOTE_DEVICE'] ??
           Platform.environment['ginga_remote_device'];
+    }
+    if ((remoteDevicesEnv == null || remoteDevicesEnv.isEmpty) && kIsWeb) {
+      try {
+        final webDevices = getGingaRemoteDevices();
+        if (webDevices != null && webDevices.isNotEmpty) {
+          remoteDevicesEnv = webDevices.join(',');
+        } else {
+          remoteDevicesEnv = Uri.base.queryParameters['remote-devices'] ??
+              Uri.base.queryParameters['remote_devices'] ??
+              Uri.base.queryParameters['remoteDevices'] ??
+              Uri.base.queryParameters['GINGA_REMOTE_DEVICES'] ??
+              Uri.base.queryParameters['ginga_remote_devices'];
+        }
+      } catch (e) {
+        _logger.warning('Failed to read remote-devices on web: $e');
+      }
     }
   }
 
@@ -233,18 +259,32 @@ final _logger = Logger('ginga.args');
           ? configEnv.trim()
           : null);
   final playground = playgroundArg ?? playgroundEnv;
-  final remoteDevice =
-      (remoteDeviceArg != null && remoteDeviceArg.trim().isNotEmpty)
-          ? remoteDeviceArg.trim()
-          : ((remoteDeviceEnv != null && remoteDeviceEnv.trim().isNotEmpty)
-              ? remoteDeviceEnv.trim()
+
+  final effectiveRemoteDevicesRaw =
+      (remoteDevicesArg != null && remoteDevicesArg.trim().isNotEmpty)
+          ? remoteDevicesArg.trim()
+          : ((remoteDevicesEnv != null && remoteDevicesEnv.trim().isNotEmpty)
+              ? remoteDevicesEnv.trim()
               : null);
+  List<String>? remoteDevices;
+  if (effectiveRemoteDevicesRaw != null &&
+      effectiveRemoteDevicesRaw.isNotEmpty) {
+    final parsed = effectiveRemoteDevicesRaw
+        .split(',')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .map((s) => s == 'acessibility' ? 'accessibility' : s)
+        .toList();
+    if (parsed.isNotEmpty) {
+      remoteDevices = parsed;
+    }
+  }
 
   return (
     app: appSrc,
     config: configSrc,
     breakpoints: breakpoints,
     playground: playground,
-    remoteDevice: remoteDevice,
+    remoteDevices: remoteDevices,
   );
 }
