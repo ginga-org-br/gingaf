@@ -53,7 +53,7 @@ The repository is organized as a monorepo: the root directory contains the Flutt
         NCL with embedded HTML document (<a href="https://ginga.org.br/gingaf/playground/?app=emb_html.ncl">emb_html.ncl</a>)
       </td>
       <td align="center" width="50%">
-        <img src="https://alanlivio.github.io/paper-webmedia26-gingaf/slides/assets/gifs/multiuser_profile.gif" /><br />
+        <img src="https://raw.githubusercontent.com/alanlivio/paper-webmedia26-gingaf/main/slides/assets/gifs/multiuser_profile.gif" /><br />
         NCL with multi-user profile switching and targeted advertising (<a href="https://ginga.org.br/gingaf/playground/?app=multiuser_profile/main.ncl">multiuser_profile/main.ncl</a>)
       </td>
     </tr>
@@ -82,6 +82,16 @@ The repository is organized as a monorepo: the root directory contains the Flutt
       <td align="center" width="50%">
         <img src="https://alanlivio.github.io/paper-webmedia26-gingaf/assets/gifs/cli.gif" /><br />
         CLI (headless execution)
+      </td>
+    </tr>
+    <tr>
+      <td align="center" width="50%">
+        <img src="https://alanlivio.github.io/paper-webmedia26-ecosystem/assets/gifs/playground-desktop.gif" /><br />
+        Playground (Desktop)
+      </td>
+      <td align="center" width="50%">
+        <img src="https://alanlivio.github.io/paper-webmedia26-ecosystem/assets/gifs/playground-web.gif" /><br />
+        Playground (Web)
       </td>
     </tr>
   </tbody>
