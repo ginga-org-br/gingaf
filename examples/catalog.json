@@ -303,15 +303,6 @@
                 "bindRule"
             ]
         },
-        "ncl_body": {
-            "mainFile": "ginga.org.br/body.ncl",
-            "type": "NCL",
-            "category": "ginga.org.br",
-            "description": "Minimal <body> example",
-            "ginga.org.br": [
-                "body"
-            ]
-        },
         "ncl_causalConnector": {
             "mainFile": "ginga.org.br/causalConnector.ncl",
             "type": "NCL",
@@ -582,15 +573,6 @@
                 "metadata"
             ]
         },
-        "ncl_ncl": {
-            "mainFile": "ginga.org.br/ncl.ncl",
-            "type": "NCL",
-            "category": "ginga.org.br",
-            "description": "Minimal <ncl> example",
-            "ginga.org.br": [
-                "ncl"
-            ]
-        },
         "ncl_port": {
             "mainFile": "ginga.org.br/port.ncl",
             "type": "NCL",
@@ -712,13 +694,19 @@
             "mainFile": "image.html",
             "type": "HTML",
             "category": "general",
-            "description": "HTML layout image example"
+            "description": "HTML layout image example",
+            "ginga.org.br": [
+                "html"
+            ]
         },
         "current_service": {
             "mainFile": "current_service.html",
             "type": "HTML",
             "category": "general",
-            "description": "Current service HTML integration example"
+            "description": "Current service HTML integration example",
+            "ginga.org.br": [
+                "html"
+            ]
         }
     }
 }
