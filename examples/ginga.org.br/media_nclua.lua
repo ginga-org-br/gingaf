@@ -1,0 +1,6 @@
+canvas:attrColor('blue')
+canvas:drawRect('fill', 80, 80, 360, 160)
+canvas:attrColor('white')
+canvas:attrFont('default', 22, 'normal', 'bold')
+canvas:drawTextRect('Hello from NCLua!', 80, 80, 360, 160, 'center', 'center')
+canvas:flush()
