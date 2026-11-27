@@ -898,14 +898,11 @@ class GingaState extends State<Ginga> {
           height: 26,
           padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
-            color: isActive
-                ? const Color(0xFF3C3C3C)
-                : const Color(0xFF2D2D2D),
+            color: isActive ? const Color(0xFF3C3C3C) : const Color(0xFF2D2D2D),
             borderRadius: BorderRadius.circular(4),
             border: Border.all(
-              color: isActive
-                  ? const Color(0xFF858585)
-                  : const Color(0xFF454545),
+              color:
+                  isActive ? const Color(0xFF858585) : const Color(0xFF454545),
               width: 1,
             ),
           ),
@@ -946,7 +943,9 @@ class GingaState extends State<Ginga> {
     final isHtmlApp = isPlayground
         ? (editorState != null
             ? editorState.isHtmlApplication
-            : (_gingacc.config.appSrc?.toLowerCase().endsWith('.html') ==
+            : (_gingacc.config.appSrc
+                        ?.toLowerCase()
+                        .endsWith('.html') ==
                     true ||
                 _gingacc.config.appSrc?.toLowerCase().endsWith('.htm') ==
                     true ||
@@ -1020,7 +1019,7 @@ class GingaState extends State<Ginga> {
                     const SizedBox(width: 14),
                     _buildTopBarButton(
                       key: const Key('catalog_select'),
-                      icon: Icons.grid_view_rounded,
+                      icon: Icons.view_list_rounded,
                       label: 'Catalog',
                       isActive: isCatalogOpen,
                       onPressed: _toggleTopBarCatalog,
@@ -1362,9 +1361,8 @@ class GingaState extends State<Ginga> {
             onUserSelected: (_) => closeUsersOverlay(),
             dispatchCurrentUserUpdate: (name, value) {
               _gingacc.config.systemVariables[name] = value;
-              _nclAppKey.currentState?.nclDocument?.dispatchSettingsUpdate(
-                  name, value,
-                  userId: 'currentUser');
+              _nclAppKey.currentState?.nclDocument
+                  ?.dispatchSettingsUpdate(name, value, userId: 'currentUser');
             },
           )
         : null;
@@ -1657,31 +1655,48 @@ class GingaState extends State<Ginga> {
                                     ),
                                   ),
                                 ),
-                                if (_playgroundKey
-                                        .currentState?.isCatalogOpen !=
-                                    true)
-                                  Expanded(
-                                    flex: 1,
-                                    child: RepaintBoundary(
-                                      child: _buildPlayerArea(context),
-                                    ),
+                                Expanded(
+                                  flex: 1,
+                                  child: RepaintBoundary(
+                                    child: _buildPlayerArea(context),
                                   ),
+                                ),
                               ],
                             )
-                          : (_isPlayerCatalogOpen
-                              ? CatalogGridView(
-                                  key: const Key('catalog_grid_dialog'),
-                                  examples: _playerCatalogExamples,
-                                  selectedExample:
-                                      _selectedPlayerCatalogExample,
-                                  onSelected: _selectPlayerCatalogExample,
-                                  onClose: () {
-                                    setState(() {
-                                      _isPlayerCatalogOpen = false;
-                                    });
-                                  },
-                                )
-                              : _buildPlayerArea(context)),
+                          : LayoutBuilder(
+                              builder: (context, constraints) {
+                                final sidebarWidth = constraints.maxWidth >= 600
+                                    ? 270.0
+                                    : (constraints.maxWidth * 0.42)
+                                        .clamp(160.0, 270.0);
+                                return Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    if (_isPlayerCatalogOpen)
+                                      SizedBox(
+                                        width: sidebarWidth,
+                                        child: AppCatalogView(
+                                          key: const Key('catalog_grid_dialog'),
+                                          examples: _playerCatalogExamples,
+                                          selectedExample:
+                                              _selectedPlayerCatalogExample,
+                                          onSelected:
+                                              _selectPlayerCatalogExample,
+                                          onClose: () {
+                                            setState(() {
+                                              _isPlayerCatalogOpen = false;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    Expanded(
+                                      child: _buildPlayerArea(context),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
                     ),
                   ],
                 ),

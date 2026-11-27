@@ -189,7 +189,7 @@ void main() {
     });
 
     testWidgets(
-        'opens catalog grid dialog organized by category and supports card click, category filtering, and keyboard grid navigation',
+        'opens catalog left sidebar list organized by category and supports item click, category filtering, and keyboard navigation',
         (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1280, 800);
       tester.view.devicePixelRatio = 1.0;
@@ -263,12 +263,21 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('catalog_grid_dialog')), findsOneWidget);
-      expect(find.byKey(const Key('monaco_editor_text_field')), findsNothing);
+      expect(find.byKey(const Key('monaco_editor_text_field')), findsOneWidget);
       final editorRect = tester.getRect(find.byType(PlaygroundEditor));
       final catalogRect =
           tester.getRect(find.byKey(const Key('catalog_grid_dialog')));
+      final textFieldRect =
+          tester.getRect(find.byKey(const Key('monaco_editor_text_field')));
       expect(catalogRect.left, equals(editorRect.left));
-      expect(catalogRect.right, equals(editorRect.right));
+      expect(catalogRect.right, lessThan(editorRect.right));
+      expect(textFieldRect.left, greaterThanOrEqualTo(catalogRect.right));
+      final videoItemRect =
+          tester.getRect(find.byKey(const Key('catalog_option_video')));
+      final imageItemRect =
+          tester.getRect(find.byKey(const Key('catalog_option_image')));
+      expect(videoItemRect.left, equals(imageItemRect.left));
+      expect(imageItemRect.top, greaterThan(videoItemRect.top));
       expect(find.text('Application Catalog'), findsOneWidget);
       expect(find.text('VIDEO 360'), findsOneWidget);
       expect(find.text('GENERAL'), findsOneWidget);
@@ -538,7 +547,8 @@ void main() {
         '<ncl id="editedA"/>',
       );
       await tester.pump();
-      expect(state.allFileContents['dirA/main.ncl'], equals('<ncl id="editedA"/>'));
+      expect(state.allFileContents['dirA/main.ncl'],
+          equals('<ncl id="editedA"/>'));
 
       await state.selectCatalogExample('dirA/main.ncl');
       await tester.pumpAndSettle();

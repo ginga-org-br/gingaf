@@ -89,6 +89,14 @@ void main() {
       await tester.tap(find.byKey(const Key('catalog_select')));
       await tester.pump(const Duration(milliseconds: 200));
       expect(find.byKey(const Key('catalog_grid_dialog')), findsOneWidget);
+      expect(
+          find.byKey(const Key('no_running_app_placeholder')), findsOneWidget);
+      final catalogRect =
+          tester.getRect(find.byKey(const Key('catalog_grid_dialog')));
+      final playerPlaceholderRect =
+          tester.getRect(find.byKey(const Key('no_running_app_placeholder')));
+      expect(catalogRect.left, equals(0.0));
+      expect(catalogRect.right, lessThan(playerPlaceholderRect.left));
 
       await tester.tap(find.byKey(const Key('catalog_option_lua_demo')));
       await tester.pump(const Duration(milliseconds: 200));
@@ -232,7 +240,8 @@ void main() {
       expect(parsed.app, equals('examples/video.ncl'));
     });
 
-    test('buildGingaBrowserUrl updates app and remote-devices query params', () {
+    test('buildGingaBrowserUrl updates app and remote-devices query params',
+        () {
       final updated = buildGingaBrowserUrl(
         'http://localhost:8080/playground',
         'multidevice/multidevice_vlibras_vr360.ncl?remote-devices=ncl-360-vr,acessibility',
@@ -252,6 +261,55 @@ void main() {
         uri.queryParameters['remote-devices'],
         'ncl-360-vr,acessibility',
       );
+    });
+
+    testWidgets(
+        'shows catalog left sidebar alongside player in player-only mode',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1280, 720);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final tempDir = Directory.systemTemp.createTempSync('ginga_cat_player_');
+      addTearDown(() {
+        if (tempDir.existsSync()) {
+          tempDir.deleteSync(recursive: true);
+        }
+      });
+      File('${tempDir.path}/catalog.json').writeAsStringSync('''{
+        "examples": {
+          "video": {
+            "mainFile": "video.ncl",
+            "category": "general",
+            "description": "Video example"
+          }
+        }
+      }''');
+      File('${tempDir.path}/video.ncl')
+          .writeAsStringSync('<ncl id="v"><body/></ncl>');
+      catalogExamplesBaseUrl = tempDir.uri.toString();
+
+      final gingacc = GingaCC(
+        config: GingaConfig(
+          enablePlayground: false,
+          appSrc: null,
+        ),
+      );
+
+      await tester.pumpWidget(Ginga(gingacc: gingacc));
+      await tester.pump(const Duration(milliseconds: 150));
+
+      await tester.tap(find.byKey(const Key('catalog_select')));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(find.byKey(const Key('catalog_grid_dialog')), findsOneWidget);
+      final catalogRect =
+          tester.getRect(find.byKey(const Key('catalog_grid_dialog')));
+      expect(catalogRect.left, equals(0.0));
+      expect(catalogRect.width, lessThan(400.0));
+
+      await tester.pumpWidget(const SizedBox());
     });
   });
 }

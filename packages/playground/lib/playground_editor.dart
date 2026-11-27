@@ -933,7 +933,7 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    Icons.grid_view_rounded,
+                    Icons.view_list_rounded,
                     size: 14,
                     color: Color(0xFFCCCCCC),
                   ),
@@ -1338,234 +1338,291 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
                 ),
               ),
             ),
-          if (_isCatalogOpen)
-            Expanded(
-              child: CatalogGridView(
-                key: const Key('catalog_grid_dialog'),
-                examples: _catalogExamples,
-                selectedExample: _selectedExample,
-                onSelected: (selected) async {
-                  await selectCatalogExample(selected);
-                },
-                onClose: () {
-                  setState(() {
-                    _isCatalogOpen = false;
-                  });
-                  widget.onCatalogOpenChanged?.call(false);
-                },
-              ),
-            )
-          else ...[
-            _buildTabBar(),
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final lines = _controller.text.split('\n');
-                  final availableTextWidth =
-                      (constraints.maxWidth - 64 - 22 - 2)
-                          .clamp(100.0, double.infinity);
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Container(
-                        width: 64,
-                        padding: const EdgeInsets.only(
-                          top: _editorTopPadding,
-                          right: 6,
-                        ),
-                        color: const Color(0xFF1E1E1E),
-                        child: ListView.builder(
-                          controller: _gutterScrollController,
-                          itemCount: lineCount,
-                          padding: EdgeInsets.zero,
-                          itemBuilder: (context, index) {
-                            final lineNum = index + 1;
-                            final isBp = isNclApplication &&
-                                _breakpoints.contains(lineNum);
-                            final isCurrentLine = _currentDebugLine == lineNum;
-                            final isMediaLine =
-                                _highlightedMediaLines.contains(lineNum);
-                            final lineText =
-                                index < lines.length ? lines[index] : '';
-                            final visualLines = _computeVisualLines(
-                                lineText, availableTextWidth);
-                            final itemHeight = visualLines * _editorLineHeight;
-                            return InkWell(
-                              key: Key('monaco_gutter_line_$lineNum'),
-                              onTap: isNclApplication
-                                  ? () => toggleBreakpoint(lineNum)
-                                  : null,
-                              child: Container(
-                                height: itemHeight,
-                                color: isCurrentLine
-                                    ? const Color(0x44FFC107)
-                                    : (isMediaLine
-                                        ? const Color(0x22FFC107)
-                                        : null),
-                                child: Align(
-                                  alignment: Alignment.topRight,
-                                  child: SizedBox(
-                                    height: _editorLineHeight,
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        if (isBp)
-                                          Container(
-                                            width: 8,
-                                            height: 8,
-                                            margin:
-                                                const EdgeInsets.only(right: 2),
-                                            decoration: const BoxDecoration(
-                                              color: Colors.redAccent,
-                                              shape: BoxShape.circle,
-                                            ),
-                                          ),
-                                        if (isCurrentLine)
-                                          const Icon(
-                                            Icons.arrow_right,
-                                            size: 14,
-                                            color: Colors.amberAccent,
-                                          ),
-                                        SizedBox(
-                                          width: 24,
-                                          child: Text(
-                                            '$lineNum',
-                                            textAlign: TextAlign.right,
-                                            style: TextStyle(
-                                              fontFamily: 'monospace',
-                                              fontSize: 12,
-                                              height: _editorLineHeight / 12.0,
-                                              color: isCurrentLine
-                                                  ? Colors.amberAccent
-                                                  : (isMediaLine
-                                                      ? Colors.amberAccent
-                                                      : (isBp
-                                                          ? Colors.redAccent
-                                                          : const Color(
-                                                              0xFF858585))),
-                                              fontWeight:
-                                                  (isCurrentLine || isMediaLine)
-                                                      ? FontWeight.bold
-                                                      : FontWeight.normal,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, outerConstraints) {
+                final sidebarWidth = outerConstraints.maxWidth >= 560
+                    ? 260.0
+                    : (outerConstraints.maxWidth * 0.42).clamp(160.0, 260.0);
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_isCatalogOpen)
+                      SizedBox(
+                        width: sidebarWidth,
+                        child: AppCatalogView(
+                          key: const Key('catalog_grid_dialog'),
+                          examples: _catalogExamples,
+                          selectedExample: _selectedExample,
+                          onSelected: (selected) async {
+                            await selectCatalogExample(selected);
+                          },
+                          onClose: () {
+                            setState(() {
+                              _isCatalogOpen = false;
+                            });
+                            widget.onCatalogOpenChanged?.call(false);
                           },
                         ),
                       ),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(
-                            top: _editorTopPadding,
-                            left: 6,
-                            right: 16,
-                          ),
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              TextField(
-                                key: const Key('monaco_editor_text_field'),
-                                controller: _controller,
-                                scrollController: _editorScrollController,
-                                readOnly: widget.readOnly,
-                                maxLines: null,
-                                expands: true,
-                                keyboardType: TextInputType.multiline,
-                                style: const TextStyle(
-                                  fontFamily: 'monospace',
-                                  fontSize: 13,
-                                  height: _editorLineHeight / 13.0,
-                                  color: Color(0xFFD4D4D4),
-                                ),
-                                strutStyle: const StrutStyle(
-                                  fontFamily: 'monospace',
-                                  fontSize: 13,
-                                  height: _editorLineHeight / 13.0,
-                                  forceStrutHeight: true,
-                                ),
-                                decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                              ),
-                              if (_controller.text.isEmpty &&
-                                  effectiveShowCatalogSelector &&
-                                  _selectedExample == null)
-                                const IgnorePointer(
-                                  child: Center(
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.menu_book,
-                                          color: Color(0xFF444444),
-                                          size: 48,
-                                        ),
-                                        SizedBox(height: 12),
-                                        Text(
-                                          'Select an example from the catalog above to view and run code',
-                                          style: TextStyle(
-                                            color: Color(0xFF777777),
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildTabBar(),
+                          Expanded(
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                final lines = _controller.text.split('\n');
+                                final availableTextWidth =
+                                    (constraints.maxWidth - 64 - 22 - 2)
+                                        .clamp(100.0, double.infinity);
+                                return Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Container(
+                                      width: 64,
+                                      padding: const EdgeInsets.only(
+                                        top: _editorTopPadding,
+                                        right: 6,
+                                      ),
+                                      color: const Color(0xFF1E1E1E),
+                                      child: ListView.builder(
+                                        controller: _gutterScrollController,
+                                        itemCount: lineCount,
+                                        padding: EdgeInsets.zero,
+                                        itemBuilder: (context, index) {
+                                          final lineNum = index + 1;
+                                          final isBp = isNclApplication &&
+                                              _breakpoints.contains(lineNum);
+                                          final isCurrentLine =
+                                              _currentDebugLine == lineNum;
+                                          final isMediaLine =
+                                              _highlightedMediaLines
+                                                  .contains(lineNum);
+                                          final lineText = index < lines.length
+                                              ? lines[index]
+                                              : '';
+                                          final visualLines =
+                                              _computeVisualLines(
+                                                  lineText, availableTextWidth);
+                                          final itemHeight =
+                                              visualLines * _editorLineHeight;
+                                          return InkWell(
+                                            key: Key(
+                                                'monaco_gutter_line_$lineNum'),
+                                            onTap: isNclApplication
+                                                ? () =>
+                                                    toggleBreakpoint(lineNum)
+                                                : null,
+                                            child: Container(
+                                              height: itemHeight,
+                                              color: isCurrentLine
+                                                  ? const Color(0x44FFC107)
+                                                  : (isMediaLine
+                                                      ? const Color(0x22FFC107)
+                                                      : null),
+                                              child: Align(
+                                                alignment: Alignment.topRight,
+                                                child: SizedBox(
+                                                  height: _editorLineHeight,
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.end,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      if (isBp)
+                                                        Container(
+                                                          width: 8,
+                                                          height: 8,
+                                                          margin:
+                                                              const EdgeInsets
+                                                                  .only(
+                                                                  right: 2),
+                                                          decoration:
+                                                              const BoxDecoration(
+                                                            color: Colors
+                                                                .redAccent,
+                                                            shape:
+                                                                BoxShape.circle,
+                                                          ),
+                                                        ),
+                                                      if (isCurrentLine)
+                                                        const Icon(
+                                                          Icons.arrow_right,
+                                                          size: 14,
+                                                          color: Colors
+                                                              .amberAccent,
+                                                        ),
+                                                      SizedBox(
+                                                        width: 24,
+                                                        child: Text(
+                                                          '$lineNum',
+                                                          textAlign:
+                                                              TextAlign.right,
+                                                          style: TextStyle(
+                                                            fontFamily:
+                                                                'monospace',
+                                                            fontSize: 12,
+                                                            height:
+                                                                _editorLineHeight /
+                                                                    12.0,
+                                                            color: isCurrentLine
+                                                                ? Colors
+                                                                    .amberAccent
+                                                                : (isMediaLine
+                                                                    ? Colors
+                                                                        .amberAccent
+                                                                    : (isBp
+                                                                        ? Colors
+                                                                            .redAccent
+                                                                        : const Color(
+                                                                            0xFF858585))),
+                                                            fontWeight:
+                                                                (isCurrentLine ||
+                                                                        isMediaLine)
+                                                                    ? FontWeight
+                                                                        .bold
+                                                                    : FontWeight
+                                                                        .normal,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
                                     ),
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(
+                                          top: _editorTopPadding,
+                                          left: 6,
+                                          right: 16,
+                                        ),
+                                        child: Stack(
+                                          fit: StackFit.expand,
+                                          children: [
+                                            TextField(
+                                              key: const Key(
+                                                  'monaco_editor_text_field'),
+                                              controller: _controller,
+                                              scrollController:
+                                                  _editorScrollController,
+                                              readOnly: widget.readOnly,
+                                              maxLines: null,
+                                              expands: true,
+                                              keyboardType:
+                                                  TextInputType.multiline,
+                                              style: const TextStyle(
+                                                fontFamily: 'monospace',
+                                                fontSize: 13,
+                                                height:
+                                                    _editorLineHeight / 13.0,
+                                                color: Color(0xFFD4D4D4),
+                                              ),
+                                              strutStyle: const StrutStyle(
+                                                fontFamily: 'monospace',
+                                                fontSize: 13,
+                                                height:
+                                                    _editorLineHeight / 13.0,
+                                                forceStrutHeight: true,
+                                              ),
+                                              decoration: const InputDecoration(
+                                                border: InputBorder.none,
+                                                isDense: true,
+                                                contentPadding: EdgeInsets.zero,
+                                              ),
+                                            ),
+                                            if (_controller.text.isEmpty &&
+                                                effectiveShowCatalogSelector &&
+                                                _selectedExample == null)
+                                              const IgnorePointer(
+                                                child: Center(
+                                                  child: Column(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Icon(
+                                                        Icons.menu_book,
+                                                        color:
+                                                            Color(0xFF444444),
+                                                        size: 48,
+                                                      ),
+                                                      SizedBox(height: 12),
+                                                      Text(
+                                                        'Select an example from the catalog above to view and run code',
+                                                        style: TextStyle(
+                                                          color:
+                                                              Color(0xFF777777),
+                                                          fontSize: 13,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                          ),
+                          Container(
+                            height: 22,
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            color: const Color(0xFF007ACC),
+                            child: Row(
+                              children: [
+                                const Flexible(
+                                  child: Text(
+                                    'Monaco Editor',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        color: Colors.white, fontSize: 11),
                                   ),
                                 ),
-                            ],
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Ln $_cursorLine, Col $_cursorColumn',
+                                  style: const TextStyle(
+                                      color: Colors.white, fontSize: 11),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'UTF-8',
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 11),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  languageDisplayName,
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
-                  );
-                },
-              ),
-            ),
-            Container(
-              height: 22,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              color: const Color(0xFF007ACC),
-              child: Row(
-                children: [
-                  const Flexible(
-                    child: Text(
-                      'Monaco Editor',
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: Colors.white, fontSize: 11),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Ln $_cursorLine, Col $_cursorColumn',
-                    style: const TextStyle(color: Colors.white, fontSize: 11),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'UTF-8',
-                    style: TextStyle(color: Colors.white, fontSize: 11),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    languageDisplayName,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
+                  ],
+                );
+              },
             ),
-          ],
+          ),
         ],
       ),
     );
