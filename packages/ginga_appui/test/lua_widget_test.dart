@@ -71,6 +71,71 @@ c:drawRect("fill", 110, 110, 20, 20)
     });
 
     testWidgets(
+        'LuaWidget supports strict ABNT color names and rejects non-ABNT names',
+        (WidgetTester tester) async {
+      const luaScript = '''
+local colors = {
+  "white", "black", "silver", "gray",
+  "red", "maroon", "fuchsia", "purple",
+  "lime", "green", "yellow", "olive",
+  "blue", "navy", "aqua", "teal", "clear"
+}
+for i, name in ipairs(colors) do
+  canvas:attrColor(name)
+  canvas:drawRect("fill", i * 5, 0, 4, 4)
+end
+
+local invalid = {"orange", "pink", "magenta", "cyan", "grey", "lightGray", "darkGray", "TEAL"}
+for _, bad in ipairs(invalid) do
+  assert(not pcall(canvas.attrColor, canvas, bad), "expected rejection for " .. bad)
+end
+
+canvas:flush()
+''';
+      await tester.pumpWidget(
+        MaterialApp(
+          home: LuaWidget.fromContent(
+            luaScript,
+            src: 'colors.lua',
+            gingacc: GingaCC(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final state = tester.state<LuaWidgetState>(find.byType(LuaWidget));
+      final rects =
+          state.canvasState.commands.whereType<DrawRectCommand>().toList();
+      expect(rects.length, equals(17));
+      const expected = <int>[
+        0xFFFFFFFF,
+        0xFF000000,
+        0xFFC0C0C0,
+        0xFF808080,
+        0xFFFF0000,
+        0xFF800000,
+        0xFFFF00FF,
+        0xFF800080,
+        0xFF00FF00,
+        0xFF008000,
+        0xFFFFFF00,
+        0xFF808000,
+        0xFF0000FF,
+        0xFF000080,
+        0xFF00FFFF,
+        0xFF008080,
+        0x00000000,
+      ];
+      for (var i = 0; i < expected.length; i++) {
+        expect(
+          rects[i].paint.color.toARGB32(),
+          equals(expected[i]),
+          reason: 'index $i',
+        );
+      }
+    });
+
+    testWidgets(
         'examples/lua/zip_list/main.ncl opens web zip and navigates entries',
         (WidgetTester tester) async {
       final candidateRoot = File('examples/lua/zip_list/main.ncl');

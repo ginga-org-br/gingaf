@@ -52,15 +52,39 @@ void main() {
       );
     });
 
-    test('parses standard W3C/NCL named colors', () {
-      expect(parseNclColor('transparent'), equals(Colors.transparent));
-      expect(parseNclColor('red'), equals(Colors.red));
+    test('parses strict ABNT named colors and rejects non-ABNT names',
+        () {
+      expect(parseNclColor('transparent'), equals(const Color(0x00000000)));
+      expect(parseNclColor('white'), equals(const Color(0xFFFFFFFF)));
+      expect(parseNclColor('black'), equals(const Color(0xFF000000)));
       expect(parseNclColor('silver'), equals(const Color(0xFFC0C0C0)));
+      expect(parseNclColor('gray'), equals(const Color(0xFF808080)));
+      expect(parseNclColor('red'), equals(const Color(0xFFFF0000)));
       expect(parseNclColor('maroon'), equals(const Color(0xFF800000)));
       expect(parseNclColor('fuchsia'), equals(const Color(0xFFFF00FF)));
-      expect(parseNclColor('navy'), equals(const Color(0xFF000080)));
+      expect(parseNclColor('purple'), equals(const Color(0xFF800080)));
+      expect(parseNclColor('lime'), equals(const Color(0xFF00FF00)));
+      expect(parseNclColor('green'), equals(const Color(0xFF008000)));
+      expect(parseNclColor('yellow'), equals(const Color(0xFFFFFF00)));
       expect(parseNclColor('olive'), equals(const Color(0xFF808000)));
-      expect(parseNclColor('gold'), equals(const Color(0xFFFFD700)));
+      expect(parseNclColor('blue'), equals(const Color(0xFF0000FF)));
+      expect(parseNclColor('navy'), equals(const Color(0xFF000080)));
+      expect(parseNclColor('aqua'), equals(const Color(0xFF00FFFF)));
+      expect(parseNclColor('teal'), equals(const Color(0xFF008080)));
+
+      for (final invalid in [
+        'orange',
+        'pink',
+        'magenta',
+        'cyan',
+        'grey',
+        'brown',
+        'gold',
+        'lightGray',
+        'darkGray',
+      ]) {
+        expect(tryParseNclColor(invalid), isNull, reason: invalid);
+      }
     });
 
     test('parses transparency and alpha values', () {

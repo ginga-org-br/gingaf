@@ -387,11 +387,23 @@ canvas.__newindex = function(t, k, v)
 end
 
 local color_names = {
-  red = {255, 0, 0, 255},
-  black = {0, 0, 0, 255},
   white = {255, 255, 255, 255},
+  black = {0, 0, 0, 255},
+  silver = {192, 192, 192, 255},
+  gray = {128, 128, 128, 255},
+  red = {255, 0, 0, 255},
+  maroon = {128, 0, 0, 255},
+  fuchsia = {255, 0, 255, 255},
+  purple = {128, 0, 128, 255},
+  lime = {0, 255, 0, 255},
+  green = {0, 128, 0, 255},
+  yellow = {255, 255, 0, 255},
+  olive = {128, 128, 0, 255},
   blue = {0, 0, 255, 255},
-  green = {0, 255, 0, 255}
+  navy = {0, 0, 128, 255},
+  aqua = {0, 255, 255, 255},
+  teal = {0, 128, 128, 255},
+  clear = {0, 0, 0, 0}
 }
 
 function canvas.new(first, second, third)
@@ -452,10 +464,11 @@ function canvas:attrColor(...)
     end
     if type(args[1]) == "string" then
         local c = color_names[args[1]]
-        if c then
-            self._color_r, self._color_g, self._color_b, self._color_a = c[1], c[2], c[3], c[4]
-            _canvas_attrColor(c[1], c[2], c[3], c[4])
+        if not c then
+            error("bad argument #1 to 'attrColor' (invalid option '" .. tostring(args[1]) .. "')", 2)
         end
+        self._color_r, self._color_g, self._color_b, self._color_a = c[1], c[2], c[3], c[4]
+        _canvas_attrColor(c[1], c[2], c[3], c[4])
     elseif type(args[1]) == "number" then
         local r = args[1]
         local g = args[2]

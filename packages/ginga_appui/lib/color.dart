@@ -65,50 +65,39 @@ Color? tryParseNclColor(String? raw) {
 
   switch (lower) {
     case 'transparent':
-      return Colors.transparent;
-    case 'red':
-      return Colors.red;
-    case 'green':
-      return Colors.green;
-    case 'blue':
-      return Colors.blue;
-    case 'yellow':
-      return Colors.yellow;
-    case 'black':
-      return Colors.black;
+      return const Color(0x00000000);
     case 'white':
-      return Colors.white;
-    case 'gray':
-    case 'grey':
-      return Colors.grey;
+      return const Color(0xFFFFFFFF);
+    case 'black':
+      return const Color(0xFF000000);
     case 'silver':
       return const Color(0xFFC0C0C0);
+    case 'gray':
+      return const Color(0xFF808080);
+    case 'red':
+      return const Color(0xFFFF0000);
     case 'maroon':
       return const Color(0xFF800000);
-    case 'purple':
-      return Colors.purple;
     case 'fuchsia':
-    case 'magenta':
       return const Color(0xFFFF00FF);
-    case 'navy':
-      return const Color(0xFF000080);
-    case 'teal':
-      return Colors.teal;
-    case 'aqua':
-    case 'cyan':
-      return Colors.cyan;
+    case 'purple':
+      return const Color(0xFF800080);
     case 'lime':
-      return Colors.lime;
+      return const Color(0xFF00FF00);
+    case 'green':
+      return const Color(0xFF008000);
+    case 'yellow':
+      return const Color(0xFFFFFF00);
     case 'olive':
       return const Color(0xFF808000);
-    case 'orange':
-      return Colors.orange;
-    case 'brown':
-      return Colors.brown;
-    case 'pink':
-      return Colors.pink;
-    case 'gold':
-      return const Color(0xFFFFD700);
+    case 'blue':
+      return const Color(0xFF0000FF);
+    case 'navy':
+      return const Color(0xFF000080);
+    case 'aqua':
+      return const Color(0xFF00FFFF);
+    case 'teal':
+      return const Color(0xFF008080);
     default:
       return null;
   }

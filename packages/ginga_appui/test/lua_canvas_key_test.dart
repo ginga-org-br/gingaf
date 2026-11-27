@@ -152,7 +152,7 @@ end)
       final firstRect =
           luaState.canvasState.commands.whereType<DrawRectCommand>().first;
       expect(firstRect.rect, equals(const Rect.fromLTWH(10, 20, 100, 200)));
-      expect(firstRect.paint.color, equals(const Color(0xFFFF0000)));
+      expect(firstRect.paint.color.toARGB32(), equals(0xFFFF0000));
 
       nclState.handleKeyPress('CURSOR_UP');
       await tester.pump();
@@ -162,7 +162,7 @@ end)
       final blueRect = luaState.canvasState.commands
           .whereType<DrawRectCommand>()
           .firstWhere((r) => r.rect == const Rect.fromLTWH(50, 50, 80, 80));
-      expect(blueRect.paint.color, equals(const Color(0xFF0000FF)));
+      expect(blueRect.paint.color.toARGB32(), equals(0xFF0000FF));
 
       final countBeforeRelease = luaState.canvasState.commands.length;
       nclState.handleKeyRelease('CURSOR_UP');
@@ -173,7 +173,7 @@ end)
       final greenRect = luaState.canvasState.commands
           .whereType<DrawRectCommand>()
           .firstWhere((r) => r.rect == const Rect.fromLTWH(100, 100, 40, 40));
-      expect(greenRect.paint.color, equals(const Color(0xFF00FF00)));
+      expect(greenRect.paint.color.toARGB32(), equals(0xFF008000));
     });
 
     testWidgets('NCL and Lua react to keys and repaint canvas',

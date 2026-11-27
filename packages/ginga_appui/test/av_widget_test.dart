@@ -131,9 +131,9 @@ void main() {
     expect(positioned.height, 250.0);
 
     final state = tester.state<AVWidgetState>(find.byType(AVWidget));
-    expect(state.background, Colors.blue);
-    expect(state.focusBorderColor, Colors.red);
-    expect(state.selBorderColor, Colors.green);
+    expect(state.background, const Color(0xFF0000FF));
+    expect(state.focusBorderColor, const Color(0xFFFF0000));
+    expect(state.selBorderColor, const Color(0xFF008000));
   });
 
   testWidgets('NCLMediaState default visual attributes when omitted',
@@ -206,7 +206,7 @@ void main() {
     expect(positioned.height, 250.0);
 
     final state = tester.state<AVWidgetState>(find.byType(AVWidget));
-    expect(state.background, Colors.blue);
+    expect(state.background, const Color(0xFF0000FF));
   });
 
   testWidgets('ImageWidget rendering without source URI',
@@ -242,6 +242,6 @@ void main() {
     expect(find.byIcon(Icons.error), findsNothing);
 
     final state = tester.state<ImageWidgetState>(find.byType(ImageWidget));
-    expect(state.background, Colors.green);
+    expect(state.background, const Color(0xFF008000));
   });
 }
