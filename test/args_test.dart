@@ -199,5 +199,75 @@ void main() {
           .copyWith(enablePlayground: res1.playground);
       expect(config.enablePlayground, isFalse);
     });
+
+    test('GingaArgs parses breakpoints, remote devices, and webUri fallbacks',
+        () {
+      final parsed = GingaArgs.parse(
+        ['--breakpoints=10, 25', '--remote-devices=ncl-360-vr,acessibility'],
+        environment: {},
+      );
+      expect(parsed.breakpoints, equals([10, 25]));
+      expect(parsed.remoteDevices, equals(['ncl-360-vr', 'accessibility']));
+
+      final fromWebUri = GingaArgs.parse(
+        [],
+        environment: {},
+        webUri: Uri.parse(
+          'http://localhost:8080/playground?app=video.ncl&config=ginga_config.json&breakpoints=4,12&remote-devices=acessibility',
+        ),
+      );
+      expect(fromWebUri.playground, isTrue);
+      expect(fromWebUri.app, equals('video.ncl'));
+      expect(fromWebUri.config, equals('ginga_config.json'));
+      expect(fromWebUri.breakpoints, equals([4, 12]));
+      expect(fromWebUri.remoteDevices, equals(['accessibility']));
+    });
+
+    test('GingaArgs helpers applyToConfig, flags, and toCliArgs round-trip',
+        () {
+      const standalone = GingaArgs(remoteDevices: ['ncl-360-vr']);
+      expect(standalone.isStandaloneRemoteDevice, isTrue);
+      expect(standalone.hasNoLaunchTarget, isTrue);
+
+      const multi = GingaArgs(
+        app: 'examples/video.ncl',
+        config: 'ginga_config.json',
+        playground: true,
+        breakpoints: [5, 12],
+        remoteDevices: ['ncl-360-vr', 'accessibility'],
+      );
+      expect(multi.isStandaloneRemoteDevice, isFalse);
+      expect(multi.hasNoLaunchTarget, isFalse);
+
+      final updated = multi.applyToConfig(GingaConfig(breakpoints: [5]));
+      expect(updated.enablePlayground, isTrue);
+      expect(updated.breakpoints, equals([5, 12]));
+
+      final roundTripped = GingaArgs.parse(multi.toCliArgs(), environment: {});
+      expect(roundTripped.app, equals('examples/video.ncl'));
+      expect(roundTripped.config, equals('ginga_config.json'));
+      expect(roundTripped.playground, isTrue);
+      expect(roundTripped.breakpoints, equals([5, 12]));
+      expect(
+          roundTripped.remoteDevices, equals(['ncl-360-vr', 'accessibility']));
+    });
+
+    test('shared arg parser helpers normalize booleans and remote devices', () {
+      expect(parseBoolFlag('true'), isTrue);
+      expect(parseBoolFlag('1'), isTrue);
+      expect(parseBoolFlag('yes'), isTrue);
+      expect(parseBoolFlag('false'), isFalse);
+      expect(parseBoolFlag('0'), isFalse);
+      expect(parseBoolFlag('no'), isFalse);
+      expect(parseBoolFlag('invalid'), isNull);
+
+      expect(
+        extractRemoteDevicesFromSrc(
+          'multidevice/main.ncl?remote-devices=ncl-360-vr,acessibility',
+        ),
+        equals(['ncl-360-vr', 'accessibility']),
+      );
+      expect(extractRemoteDevicesFromSrc('video.ncl'), isEmpty);
+    });
   });
 }

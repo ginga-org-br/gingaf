@@ -14,6 +14,7 @@ import 'package:ginga_appui/main_av_widget.dart';
 import 'package:ginga_appui/ncl_widget.dart' as ncl;
 import 'package:playground/playground.dart';
 
+import 'args.dart';
 import 'menu/settings_menu.dart';
 import 'menu/users_menu.dart';
 import 'remote_device_player_widget.dart';
@@ -28,11 +29,13 @@ class Ginga extends StatefulWidget {
   final GingaCC? gingacc;
   final String? content;
   final Map<String, String>? virtualFiles;
+  final GingaArgs? args;
   final List<String>? initialRemoteDevices;
 
   const Ginga({
     super.key,
     this.gingacc,
+    this.args,
     this.initialRemoteDevices,
   })  : content = null,
         virtualFiles = null;
@@ -42,8 +45,12 @@ class Ginga extends StatefulWidget {
     super.key,
     this.virtualFiles,
     this.gingacc,
+    this.args,
     this.initialRemoteDevices,
   });
+
+  List<String>? get effectiveRemoteDevices =>
+      initialRemoteDevices ?? args?.remoteDevices;
 
   @override
   State<Ginga> createState() => GingaState();
@@ -198,38 +205,15 @@ class GingaState extends State<Ginga> {
     }
   }
 
-  static List<String> _extractRemoteDevicesFromSrc(String? src) {
-    if (src == null || !src.contains('?')) return const [];
-    final qIdx = src.indexOf('?');
-    final queryPart = src.substring(qIdx + 1).split('#').first;
-    try {
-      final params = Uri.splitQueryString(queryPart);
-      final raw = params['remote-devices'] ??
-          params['remote_devices'] ??
-          params['remoteDevices'] ??
-          params['GINGA_REMOTE_DEVICES'] ??
-          params['ginga_remote_devices'];
-      if (raw != null && raw.trim().isNotEmpty) {
-        return raw
-            .split(',')
-            .map((s) => s.trim())
-            .where((s) => s.isNotEmpty)
-            .map((s) => s == 'acessibility' ? 'accessibility' : s)
-            .toList();
-      }
-    } catch (_) {}
-    return const [];
-  }
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_initialized) {
       _initialized = true;
       _autoResizeWindow();
-      final requestedRemoteDevices = widget.initialRemoteDevices ??
+      final requestedRemoteDevices = widget.effectiveRemoteDevices ??
           (kIsWeb ? getGingaRemoteDevices() : null) ??
-          _extractRemoteDevicesFromSrc(_gingacc.config.appSrc);
+          extractRemoteDevicesFromSrc(_gingacc.config.appSrc);
       if (requestedRemoteDevices.isNotEmpty) {
         unawaited(_initializeStartup(requestedRemoteDevices));
       } else if (_gingacc.config.enablePlayground) {
@@ -242,10 +226,8 @@ class GingaState extends State<Ginga> {
 
   Future<void> _ensureRemoteDevicesOpened(List<String> requestedDevices) async {
     for (final rawClass in requestedDevices) {
-      final trimmed = rawClass.trim();
-      if (trimmed.isEmpty) continue;
-      final normalizedClass =
-          trimmed == 'acessibility' ? 'accessibility' : trimmed;
+      final normalizedClass = normalizeRemoteDeviceClass(rawClass);
+      if (normalizedClass.isEmpty) continue;
       final alreadyOpen =
           _companions.any((c) => c.deviceClass == normalizedClass);
       if (!alreadyOpen) {
@@ -495,7 +477,7 @@ class GingaState extends State<Ginga> {
   Future<void> _runFromPlayground() async {
     final appSrc =
         _gingacc.config.appSrc ?? _playgroundKey.currentState?.activeFilePath;
-    final srcDevices = _extractRemoteDevicesFromSrc(appSrc);
+    final srcDevices = extractRemoteDevicesFromSrc(appSrc);
     if (srcDevices.isNotEmpty) {
       await _ensureRemoteDevicesOpened(srcDevices);
     }
@@ -878,7 +860,7 @@ class GingaState extends State<Ginga> {
       _isPlayerCatalogOpen = false;
       _selectedPlayerCatalogExample = mainFile;
     });
-    final srcDevices = _extractRemoteDevicesFromSrc(mainFile);
+    final srcDevices = extractRemoteDevicesFromSrc(mainFile);
     if (srcDevices.isNotEmpty) {
       await _ensureRemoteDevicesOpened(srcDevices);
     }
@@ -1626,7 +1608,7 @@ class GingaState extends State<Ginga> {
                                         onCatalogExampleSelected:
                                             (selectedFile) async {
                                           final srcDevices =
-                                              _extractRemoteDevicesFromSrc(
+                                              extractRemoteDevicesFromSrc(
                                                   selectedFile);
                                           if (srcDevices.isNotEmpty) {
                                             await _ensureRemoteDevicesOpened(

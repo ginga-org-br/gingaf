@@ -48,16 +48,9 @@ void main(List<String> args) async {
     registerAllPlugins(GetIt.instance);
   } catch (_) {}
 
-  final parsedArgs = parseArgsCliAndEnv(args);
-  final appSrc = parsedArgs.app;
-  final configSrc = parsedArgs.config;
+  final parsedArgs = GingaArgs.parse(args);
 
-  if (!kIsWeb &&
-      parsedArgs.playground != true &&
-      appSrc == null &&
-      configSrc == null &&
-      parsedArgs.remoteDevices != null &&
-      parsedArgs.remoteDevices!.length == 1) {
+  if (!kIsWeb && parsedArgs.isStandaloneRemoteDevice) {
     final gingacc = GingaCC();
     final deviceClass = parsedArgs.remoteDevices!.first;
     final remoteKey = GlobalKey<RemoteDevicePlayerWidgetState>();
@@ -120,28 +113,14 @@ void main(List<String> args) async {
     return;
   }
 
-  if (!kIsWeb &&
-      parsedArgs.playground != true &&
-      appSrc == null &&
-      configSrc == null) {
+  if (!kIsWeb && parsedArgs.hasNoLaunchTarget) {
     _logger.severe('both APP and CONFIG are empty, exiting');
     exit(1);
   }
 
   final gingacc = GingaCC();
-  await gingacc.loadConfig(configSrc, appSrc);
-  if (parsedArgs.playground != null) {
-    gingacc.config = gingacc.config.copyWith(
-      enablePlayground: parsedArgs.playground!,
-    );
-  }
-  if (parsedArgs.breakpoints != null && parsedArgs.breakpoints!.isNotEmpty) {
-    for (final bp in parsedArgs.breakpoints!) {
-      if (!gingacc.config.breakpoints.contains(bp)) {
-        gingacc.config.breakpoints.add(bp);
-      }
-    }
-  }
+  await gingacc.loadConfig(parsedArgs.config, parsedArgs.app);
+  gingacc.config = parsedArgs.applyToConfig(gingacc.config);
 
   _logger.info(gingacc.config.toString());
 
@@ -185,6 +164,6 @@ void main(List<String> args) async {
   runApp(Ginga(
     key: gingaKey,
     gingacc: gingacc,
-    initialRemoteDevices: parsedArgs.remoteDevices,
+    args: parsedArgs,
   ));
 }

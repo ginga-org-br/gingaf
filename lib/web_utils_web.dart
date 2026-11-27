@@ -4,7 +4,10 @@ import 'dart:js_interop_unsafe';
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:web/web.dart' as web;
 
+import 'arg_parsers.dart';
 import 'web_utils_web_tv30_testbed.dart' deferred as tv30_testbed;
+
+export 'arg_parsers.dart' show buildGingaBrowserUrl;
 
 String? _getSessionStorageItem(String key) {
   try {
@@ -23,64 +26,50 @@ String? _getSessionStorageItem(String key) {
 
 String? _extractAppFromObject(JSObject? obj) {
   if (obj == null) return null;
-  if (obj.hasProperty('app'.toJS).toDart) {
-    final val = obj.getProperty<JSAny?>('app'.toJS)?.dartify()?.toString();
-    if (val != null && val.isNotEmpty) return val;
-  }
-  if (obj.hasProperty('currentApp'.toJS).toDart) {
-    final val =
-        obj.getProperty<JSAny?>('currentApp'.toJS)?.dartify()?.toString();
-    if (val != null && val.isNotEmpty) return val;
-  }
-  if (obj.hasProperty('appPath'.toJS).toDart) {
-    final val = obj.getProperty<JSAny?>('appPath'.toJS)?.dartify()?.toString();
-    if (val != null && val.isNotEmpty) return val;
+  for (final prop in const ['app', 'currentApp', 'appPath']) {
+    if (obj.hasProperty(prop.toJS).toDart) {
+      final val = obj.getProperty<JSAny?>(prop.toJS)?.dartify()?.toString();
+      if (val != null && val.isNotEmpty) return val;
+    }
   }
   return null;
 }
 
+Map<String, String> _fragmentParams(Uri uri) {
+  if (!uri.hasFragment || !uri.fragment.contains('=')) return const {};
+  try {
+    return Uri.parse('http://dummy/?${uri.fragment}').queryParameters;
+  } catch (_) {
+    return const {};
+  }
+}
+
 String? getGingaApp() {
+  const appKeys = ['ginga_app', 'app', 'src', 'appSrc'];
   try {
     final uri = Uri.parse(web.window.location.href);
-    final query = uri.queryParameters;
-    var queryApp =
-        query['ginga_app'] ?? query['app'] ?? query['src'] ?? query['appSrc'];
-    if (queryApp == null || queryApp.isEmpty) {
-      if (uri.hasFragment && uri.fragment.contains('=')) {
-        final fragUri = Uri.parse('http://dummy/?${uri.fragment}');
-        queryApp = fragUri.queryParameters['ginga_app'] ??
-            fragUri.queryParameters['app'] ??
-            fragUri.queryParameters['src'];
-      }
-    }
-    if (queryApp != null && queryApp.isNotEmpty) {
-      return queryApp;
-    }
+    final queryApp = lookupQueryParam(uri.queryParameters, appKeys) ??
+        lookupQueryParam(_fragmentParams(uri), appKeys);
+    if (queryApp != null) return queryApp;
   } catch (_) {}
   try {
-    if (web.window.hasProperty('Ginga'.toJS).toDart) {
-      final val = _extractAppFromObject(
-          web.window.getProperty<JSObject?>('Ginga'.toJS));
-      if (val != null && val.isNotEmpty) return val;
-    }
-    if (web.window.hasProperty('GingaApp'.toJS).toDart) {
-      final val = _extractAppFromObject(
-          web.window.getProperty<JSObject?>('GingaApp'.toJS));
-      if (val != null && val.isNotEmpty) return val;
+    for (final name in const ['Ginga', 'GingaApp']) {
+      if (web.window.hasProperty(name.toJS).toDart) {
+        final val =
+            _extractAppFromObject(web.window.getProperty<JSObject?>(name.toJS));
+        if (val != null && val.isNotEmpty) return val;
+      }
     }
   } catch (_) {}
   try {
     final parent = web.window.parent;
     if (parent != null && parent != web.window) {
-      if (parent.hasProperty('Ginga'.toJS).toDart) {
-        final val =
-            _extractAppFromObject(parent.getProperty<JSObject?>('Ginga'.toJS));
-        if (val != null && val.isNotEmpty) return val;
-      }
-      if (parent.hasProperty('GingaApp'.toJS).toDart) {
-        final val = _extractAppFromObject(
-            parent.getProperty<JSObject?>('GingaApp'.toJS));
-        if (val != null && val.isNotEmpty) return val;
+      for (final name in const ['Ginga', 'GingaApp']) {
+        if (parent.hasProperty(name.toJS).toDart) {
+          final val =
+              _extractAppFromObject(parent.getProperty<JSObject?>(name.toJS));
+          if (val != null && val.isNotEmpty) return val;
+        }
       }
       final parentSessionVal = parent.sessionStorage.getItem('GINGA_APP');
       if (parentSessionVal != null && parentSessionVal.isNotEmpty) {
@@ -100,10 +89,8 @@ bool? getGingaPlayground() {
     final query = uri.queryParameters;
     if (query.containsKey('playground') ||
         query.containsKey('ginga_playground')) {
-      final val = (query['playground'] ?? query['ginga_playground'] ?? '')
-          .toLowerCase();
-      if (val == 'false' || val == '0' || val == 'no') return false;
-      return true;
+      final val = query['playground'] ?? query['ginga_playground'];
+      return parseBoolFlag(val) ?? true;
     }
     final cleanPath = uri.path.replaceAll(RegExp(r'/index\.html$'), '');
     if (cleanPath.endsWith('/gingaf') ||
@@ -114,12 +101,7 @@ bool? getGingaPlayground() {
     }
   } catch (_) {}
   try {
-    final val = _getSessionStorageItem('GINGA_PLAYGROUND');
-    if (val != null) {
-      final lower = val.toLowerCase();
-      if (lower == 'true' || lower == '1' || lower == 'yes') return true;
-      if (lower == 'false' || lower == '0' || lower == 'no') return false;
-    }
+    return parseBoolFlag(_getSessionStorageItem('GINGA_PLAYGROUND'));
   } catch (_) {}
   return null;
 }
@@ -128,86 +110,18 @@ List<String>? getGingaRemoteDevices() {
   String? raw;
   try {
     final uri = Uri.parse(web.window.location.href);
-    final query = uri.queryParameters;
-    raw = query['remote-devices'] ??
-        query['remote_devices'] ??
-        query['remoteDevices'] ??
-        query['GINGA_REMOTE_DEVICES'] ??
-        query['ginga_remote_devices'];
-    if ((raw == null || raw.isEmpty) &&
-        uri.hasFragment &&
-        uri.fragment.contains('=')) {
-      final fragUri = Uri.parse('http://dummy/?${uri.fragment}');
-      final fQuery = fragUri.queryParameters;
-      raw = fQuery['remote-devices'] ??
-          fQuery['remote_devices'] ??
-          fQuery['remoteDevices'] ??
-          fQuery['GINGA_REMOTE_DEVICES'] ??
-          fQuery['ginga_remote_devices'];
-    }
+    raw = lookupQueryParam(uri.queryParameters, remoteDeviceParamKeys) ??
+        lookupQueryParam(_fragmentParams(uri), remoteDeviceParamKeys);
   } catch (_) {}
   if (raw == null || raw.isEmpty) {
     try {
       raw = _getSessionStorageItem('GINGA_REMOTE_DEVICES');
     } catch (_) {}
   }
-  if (raw == null || raw.trim().isEmpty) return null;
-  final devices = raw
-      .split(',')
-      .map((s) => s.trim())
-      .where((s) => s.isNotEmpty)
-      .map((s) => s == 'acessibility' ? 'accessibility' : s)
-      .toList();
-  return devices.isNotEmpty ? devices : null;
+  return parseRemoteDevices(raw);
 }
 
 String? lastSyncedBrowserUrl;
-
-String buildGingaBrowserUrl(
-  String currentHref,
-  String selectedFile, {
-  String? resolvedAppUrl,
-}) {
-  final current = Uri.parse(currentHref);
-  final qIdx = selectedFile.indexOf('?');
-  final rawPath = qIdx != -1 ? selectedFile.substring(0, qIdx) : selectedFile;
-  final appValue = (resolvedAppUrl != null && resolvedAppUrl.isNotEmpty)
-      ? resolvedAppUrl.split('?').first
-      : rawPath;
-  final nextParams = Map<String, String>.from(current.queryParameters);
-  nextParams.remove('ginga_app');
-  nextParams.remove('src');
-  nextParams.remove('appSrc');
-  nextParams['app'] = appValue;
-
-  nextParams.remove('remote-devices');
-  nextParams.remove('remote_devices');
-  nextParams.remove('remoteDevices');
-  nextParams.remove('GINGA_REMOTE_DEVICES');
-  nextParams.remove('ginga_remote_devices');
-
-  if (qIdx != -1) {
-    final extraQuery = selectedFile.substring(qIdx + 1).split('#').first;
-    final extraParams = Uri.splitQueryString(extraQuery);
-    for (final entry in extraParams.entries) {
-      nextParams[entry.key] = entry.value;
-    }
-  }
-
-  final rawQuery = nextParams.entries.map((e) {
-    final encodedKey = Uri.encodeQueryComponent(e.key);
-    final encodedVal = Uri.encodeQueryComponent(e.value)
-        .replaceAll('%3A', ':')
-        .replaceAll('%3a', ':')
-        .replaceAll('%2F', '/')
-        .replaceAll('%2f', '/')
-        .replaceAll('%2C', ',')
-        .replaceAll('%2c', ',');
-    return '$encodedKey=$encodedVal';
-  }).join('&');
-
-  return current.replace(query: rawQuery).toString();
-}
 
 void updateGingaBrowserUrl(
   String selectedFile, {
@@ -237,10 +151,9 @@ void notifyParentAppExited() {
 bool isTv30Testbed() {
   try {
     final query = Uri.parse(web.window.location.href).queryParameters;
-    if (query['tv30'] == 'true' ||
-        query['tv30'] == '1' ||
-        query['overlay'] == 'true' ||
-        query['transparent'] == 'true') {
+    if (parseBoolFlag(query['tv30']) == true ||
+        parseBoolFlag(query['overlay']) == true ||
+        parseBoolFlag(query['transparent']) == true) {
       return true;
     }
     final parent = web.window.parent;
