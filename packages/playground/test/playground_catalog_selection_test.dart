@@ -614,5 +614,52 @@ void main() {
       await tester.pumpAndSettle();
       expect(state.effectiveContent, equals('<ncl id="origA"/>'));
     });
+
+    testWidgets(
+        'defaults to first catalog entry when opening playground without preselected app',
+        (WidgetTester tester) async {
+      final tempDir = Directory.systemTemp.createTempSync('ginga_pg_defvid_');
+      addTearDown(() {
+        if (tempDir.existsSync()) {
+          tempDir.deleteSync(recursive: true);
+        }
+      });
+      File('${tempDir.path}/catalog.json').writeAsStringSync('''{
+        "examples": {
+          "video": {
+            "mainFile": "video.ncl",
+            "type": "NCL",
+            "category": "general"
+          },
+          "image": {
+            "mainFile": "image.ncl",
+            "type": "NCL",
+            "category": "general"
+          }
+        }
+      }''');
+      File('${tempDir.path}/video.ncl')
+          .writeAsStringSync('<ncl id="default_video_doc"/>');
+      File('${tempDir.path}/image.ncl')
+          .writeAsStringSync('<ncl id="img_doc"/>');
+      catalogExamplesBaseUrl = tempDir.uri.toString();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PlaygroundEditor(
+              gingacc: GingaCC(),
+              showCatalogSelector: true,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final state =
+          tester.state<PlaygroundEditorState>(find.byType(PlaygroundEditor));
+      expect(state.selectedExample, equals('video.ncl'));
+      expect(state.effectiveContent, contains('default_video_doc'));
+    });
   });
 }

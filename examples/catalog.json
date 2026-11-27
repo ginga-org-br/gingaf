@@ -1,16 +1,16 @@
 {
     "examples": {
-        "image": {
-            "mainFile": "image.ncl",
-            "type": "NCL",
-            "category": "general",
-            "description": "Image presentation example"
-        },
         "video": {
             "mainFile": "video.ncl",
             "type": "NCL",
             "category": "general",
             "description": "Video media presentation example"
+        },
+        "image": {
+            "mainFile": "image.ncl",
+            "type": "NCL",
+            "category": "general",
+            "description": "Image presentation example"
         },
         "video_grid": {
             "mainFile": "video_grid.ncl",
