@@ -10,16 +10,24 @@ void main() {
       "examples": {
         "video": {
           "mainFile": "video.ncl",
+          "type": "NCL",
           "category": "general",
           "description": "Video media presentation example"
         },
         "sbtvd": {
           "mainFile": "sbtvd/main.ncl",
+          "type": "NCL",
           "category": "general",
           "description": "SBTVD broadcast video example",
           "otherEditbleFiles": [
             "ginga_config.json"
           ]
+        },
+        "html_demo": {
+          "mainFile": "image.html",
+          "type": "HTML",
+          "category": "general",
+          "description": "HTML demo"
         },
         "minimal": {
           "mainFile": "minimal.ncl"
@@ -33,22 +41,42 @@ void main() {
 
     test('parseCatalog parses valid JSON into CatalogExample objects', () {
       final examples = parseCatalog(sampleCatalogJson);
-      expect(examples.length, equals(3));
+      expect(examples.length, equals(4));
 
       final video = examples.firstWhere((e) => e.key == 'video');
       expect(video.mainFile, equals('video.ncl'));
+      expect(video.type, equals('NCL'));
       expect(video.category, equals('general'));
       expect(video.description, equals('Video media presentation example'));
       expect(video.otherEditableFiles, isEmpty);
 
       final sbtvd = examples.firstWhere((e) => e.key == 'sbtvd');
       expect(sbtvd.mainFile, equals('sbtvd/main.ncl'));
+      expect(sbtvd.type, equals('NCL'));
       expect(sbtvd.otherEditableFiles, contains('ginga_config.json'));
+
+      final htmlDemo = examples.firstWhere((e) => e.key == 'html_demo');
+      expect(htmlDemo.mainFile, equals('image.html'));
+      expect(htmlDemo.type, equals('HTML'));
+      expect(htmlDemo.category, equals('general'));
 
       final minimal = examples.firstWhere((e) => e.key == 'minimal');
       expect(minimal.mainFile, equals('minimal.ncl'));
+      expect(minimal.type, equals('NCL'));
       expect(minimal.category, equals('general'));
       expect(minimal.description, isEmpty);
+    });
+
+    test(
+        'loadCatalogExamples fetches default catalog URL with NCL and HTML types',
+        () async {
+      final parsed = await loadCatalogExamples();
+      expect(parsed, isNotEmpty);
+      for (final item in parsed) {
+        expect(item.type, isIn(['NCL', 'HTML']));
+      }
+      expect(parsed.any((e) => e.type == 'NCL'), isTrue);
+      expect(parsed.any((e) => e.type == 'HTML'), isTrue);
     });
 
     test('parseCatalog returns empty list for invalid or empty input', () {
@@ -75,44 +103,7 @@ void main() {
       expect(examples.first.description, equals('Test Example'));
     });
 
-    test('loadCatalogExamples loads from temporary folder via GingaCC',
-        () async {
-      final tempDir = Directory.systemTemp.createTempSync('ginga_cat_test_');
-      addTearDown(() {
-        if (tempDir.existsSync()) {
-          tempDir.deleteSync(recursive: true);
-        }
-      });
-
-      File('${tempDir.path}/catalog.json').writeAsStringSync(sampleCatalogJson);
-      catalogExamplesBaseUrl = tempDir.uri.toString();
-
-      final gingacc = GingaCC();
-      final examples = await loadCatalogExamples(gingacc: gingacc);
-      expect(examples.length, equals(3));
-      expect(examples.map((e) => e.key),
-          containsAll(['video', 'sbtvd', 'minimal']));
-    });
-
-    test('loadExampleContent loads content from temporary folder via GingaCC',
-        () async {
-      const sampleContent = '<ncl><body/></ncl>';
-      final tempDir = Directory.systemTemp.createTempSync('ginga_ex_test_');
-      addTearDown(() {
-        if (tempDir.existsSync()) {
-          tempDir.deleteSync(recursive: true);
-        }
-      });
-
-      File('${tempDir.path}/video.ncl').writeAsStringSync(sampleContent);
-      catalogExamplesBaseUrl = tempDir.uri.toString();
-
-      final gingacc = GingaCC();
-      final content = await loadExampleContent('video.ncl', gingacc: gingacc);
-      expect(content, equals(sampleContent));
-    });
-
-    test('loadCatalogExamples and loadExampleContent fetch over HTTP',
+    test('loadCatalogExamples and loadExampleContent fetch over HTTP URL',
         () async {
       final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
       addTearDown(() async {
@@ -136,7 +127,9 @@ void main() {
       catalogExamplesBaseUrl = 'http://127.0.0.1:${server.port}/examples';
       final gingacc = GingaCC();
       final examples = await loadCatalogExamples(gingacc: gingacc);
-      expect(examples.length, equals(3));
+      expect(examples.length, equals(4));
+      expect(examples.map((e) => e.key),
+          containsAll(['video', 'sbtvd', 'html_demo', 'minimal']));
 
       final content = await loadExampleContent('video.ncl', gingacc: gingacc);
       expect(content, equals('<ncl id="http_video"/>'));

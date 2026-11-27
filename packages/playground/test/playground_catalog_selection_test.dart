@@ -189,7 +189,7 @@ void main() {
     });
 
     testWidgets(
-        'opens catalog left sidebar list organized by category and supports item click, category filtering, and keyboard navigation',
+        'opens full-screen WinUI gallery catalog with left sandwich category menu, search, and keyboard navigation',
         (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1280, 800);
       tester.view.devicePixelRatio = 1.0;
@@ -212,6 +212,8 @@ void main() {
       File('${tempDir.path}/lua/zip_list/main.ncl')
         ..parent.createSync(recursive: true)
         ..writeAsStringSync('<ncl id="luazip"><body/></ncl>');
+      File('${tempDir.path}/image.html')
+          .writeAsStringSync('<html><body>html</body></html>');
       catalogExamplesBaseUrl = tempDir.uri.toString();
 
       final gingacc = GingaCC();
@@ -220,27 +222,38 @@ void main() {
         const CatalogExample(
           key: 'video360',
           mainFile: 'video360/main.ncl360',
+          type: 'NCL',
           category: 'video 360',
           description: 'Interactive 360 presentation',
         ),
         const CatalogExample(
           key: 'video',
           mainFile: 'video.ncl',
+          type: 'NCL',
           category: 'general',
           description: 'Video presentation example',
         ),
         const CatalogExample(
           key: 'image',
           mainFile: 'image.ncl',
+          type: 'NCL',
           category: 'general',
           description: 'Image presentation example',
         ),
         const CatalogExample(
           key: 'lua_zip_list',
           mainFile: 'lua/zip_list/main.ncl',
+          type: 'NCL',
           category: 'lua',
           description: 'Lua zip helper example',
           otherEditableFiles: ['main.lua'],
+        ),
+        const CatalogExample(
+          key: 'image_html',
+          mainFile: 'image.html',
+          type: 'HTML',
+          category: 'general',
+          description: 'HTML layout image example',
         ),
       ];
 
@@ -263,25 +276,72 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('catalog_grid_dialog')), findsOneWidget);
-      expect(find.byKey(const Key('monaco_editor_text_field')), findsOneWidget);
+      expect(find.byKey(const Key('monaco_editor_text_field')), findsNothing);
       final editorRect = tester.getRect(find.byType(PlaygroundEditor));
       final catalogRect =
           tester.getRect(find.byKey(const Key('catalog_grid_dialog')));
-      final textFieldRect =
-          tester.getRect(find.byKey(const Key('monaco_editor_text_field')));
       expect(catalogRect.left, equals(editorRect.left));
-      expect(catalogRect.right, lessThan(editorRect.right));
-      expect(textFieldRect.left, greaterThanOrEqualTo(catalogRect.right));
+      expect(catalogRect.right, equals(editorRect.right));
+
+      final paneRectExpanded =
+          tester.getRect(find.byKey(const Key('catalog_category_pane')));
+      final contentRect =
+          tester.getRect(find.byKey(const Key('catalog_content_area')));
+      expect(paneRectExpanded.left, equals(catalogRect.left));
+      expect(paneRectExpanded.right, lessThanOrEqualTo(contentRect.left));
+      expect(paneRectExpanded.width, equals(220.0));
+      expect(find.byKey(const Key('catalog_nav_toggle')), findsNothing);
+
       final videoItemRect =
           tester.getRect(find.byKey(const Key('catalog_option_video')));
       final imageItemRect =
           tester.getRect(find.byKey(const Key('catalog_option_image')));
-      expect(videoItemRect.left, equals(imageItemRect.left));
-      expect(imageItemRect.top, greaterThan(videoItemRect.top));
+      expect(imageItemRect.left, greaterThan(videoItemRect.left));
+      expect(imageItemRect.top, equals(videoItemRect.top));
       expect(find.text('Application Catalog'), findsOneWidget);
+      expect(find.byKey(const Key('catalog_type_header_NCL')), findsOneWidget);
+      expect(find.byKey(const Key('catalog_type_header_HTML')), findsOneWidget);
+      final nclHeaderRect =
+          tester.getRect(find.byKey(const Key('catalog_type_header_NCL')));
+      final htmlHeaderRect =
+          tester.getRect(find.byKey(const Key('catalog_type_header_HTML')));
+      expect(nclHeaderRect.top, lessThan(htmlHeaderRect.top));
       expect(find.text('VIDEO 360'), findsOneWidget);
-      expect(find.text('GENERAL'), findsOneWidget);
       expect(find.text('LUA'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('catalog_type_chip_HTML')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('catalog_option_image_html')), findsOneWidget);
+      expect(find.byKey(const Key('catalog_option_video')), findsNothing);
+
+      await tester.tap(find.byKey(const Key('catalog_type_chip_NCL')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('catalog_option_video')), findsOneWidget);
+      expect(find.byKey(const Key('catalog_option_image_html')), findsNothing);
+
+      await tester.tap(find.byKey(const Key('catalog_category_chip_all')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('catalog_option_image_html')), findsOneWidget);
+
+      await tester.enterText(
+        find.byKey(const Key('catalog_search_input')),
+        'zip',
+      );
+      await tester.pumpAndSettle();
+      expect(
+          find.byKey(const Key('catalog_option_lua_zip_list')), findsOneWidget);
+      expect(find.byKey(const Key('catalog_option_video')), findsNothing);
+
+      await tester.enterText(
+        find.byKey(const Key('catalog_search_input')),
+        'nonexistent_query',
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('No examples match "nonexistent_query"'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('catalog_search_clear')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('catalog_option_video')), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('catalog_category_chip_lua')));
       await tester.pumpAndSettle();

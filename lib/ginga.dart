@@ -95,6 +95,7 @@ class GingaState extends State<Ginga> {
   late final bool _showCatalogSelector;
   String? _lastAppliedConfigJson;
   String? _lastAppliedAppPath;
+  bool _isPlaygroundCatalogOpen = false;
   bool _isPlayerCatalogOpen = false;
   List<CatalogExample> _playerCatalogExamples = [];
   String? _selectedPlayerCatalogExample;
@@ -720,7 +721,9 @@ class GingaState extends State<Ginga> {
       if (currentFocus?.context?.widget is EditableText) {
         return false;
       }
-      if (_playgroundKey.currentState?.isCatalogOpen == true) {
+      if (_isPlaygroundCatalogOpen ||
+          _isPlayerCatalogOpen ||
+          _playgroundKey.currentState?.isCatalogOpen == true) {
         return false;
       }
       String? nclKey;
@@ -833,7 +836,10 @@ class GingaState extends State<Ginga> {
     if (_gingacc.config.enablePlayground) {
       await _playgroundKey.currentState?.toggleCatalog();
       if (mounted) {
-        setState(() {});
+        setState(() {
+          _isPlaygroundCatalogOpen =
+              _playgroundKey.currentState?.isCatalogOpen ?? false;
+        });
       }
       return;
     }
@@ -936,7 +942,7 @@ class GingaState extends State<Ginga> {
     final editorState = _playgroundKey.currentState;
     final isPlayground = _gingacc.config.enablePlayground;
     final isCatalogOpen = isPlayground
-        ? (editorState?.isCatalogOpen == true)
+        ? _isPlaygroundCatalogOpen
         : _isPlayerCatalogOpen;
     final isDebugging = editorState?.isDebugging == true;
     final isDebugPaused = editorState?.isPaused == true;
@@ -1019,7 +1025,7 @@ class GingaState extends State<Ginga> {
                     const SizedBox(width: 14),
                     _buildTopBarButton(
                       key: const Key('catalog_select'),
-                      icon: Icons.view_list_rounded,
+                      icon: Icons.grid_view_rounded,
                       label: 'Catalog',
                       isActive: isCatalogOpen,
                       onPressed: _toggleTopBarCatalog,
@@ -1585,98 +1591,130 @@ class GingaState extends State<Ginga> {
                   children: [
                     if (!isOverlay) _buildTopMenuBar(context),
                     Expanded(
-                      child: _gingacc.config.enablePlayground
-                          ? Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Expanded(
-                                  flex: 1,
-                                  child: RepaintBoundary(
-                                    child: KeyedSubtree(
-                                      key: const Key('flutter_monaco_widget'),
-                                      child: PlaygroundEditor(
-                                        key: _playgroundKey,
-                                        showTopBar: false,
-                                        content: _mainAppContent ?? '',
-                                        filePath: _gingacc.config.appSrc,
-                                        gingacc: _gingacc,
-                                        isRunning: _isRunning,
-                                        showCatalogSelector:
-                                            _showCatalogSelector,
-                                        onCatalogExampleSelected:
-                                            (selectedFile) async {
-                                          final srcDevices =
-                                              extractRemoteDevicesFromSrc(
-                                                  selectedFile);
-                                          if (srcDevices.isNotEmpty) {
-                                            await _ensureRemoteDevicesOpened(
-                                                srcDevices);
-                                          }
-                                          final appPath =
-                                              resolveCatalogExampleUrl(
-                                                  selectedFile);
-                                          updateGingaBrowserUrl(
-                                            selectedFile,
-                                            resolvedAppUrl: appPath,
-                                          );
-                                          await _applyPlaygroundConfig(
-                                            appPath,
-                                            resetIfMissing: true,
-                                            fromCatalog: true,
-                                          );
-                                        },
-                                        onCatalogOpenChanged: (_) {
-                                          setState(() {});
-                                        },
-                                        onContentChanged: (newText) {
-                                          _mainAppContent = newText;
-                                          if (mounted) {
-                                            setState(() {});
-                                          }
-                                        },
-                                        onRun: _runFromPlayground,
-                                        onAddRemoteDevice:
-                                            _addRemoteDeviceFromPlayground,
-                                        onStop: _stopFromPlayground,
-                                        onDebug: _runFromPlayground,
-                                        onContinue: () {
-                                          resume();
-                                        },
-                                        onReload: _runFromPlayground,
-                                        initialBreakpoints:
-                                            _gingacc.config.breakpoints,
-                                        onBreakpointsChanged: (newBps) {
-                                          setBreakpoints(newBps);
-                                          if (mounted) {
-                                            setState(() {});
-                                          }
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  flex: 1,
-                                  child: RepaintBoundary(
-                                    child: _buildPlayerArea(context),
-                                  ),
-                                ),
-                              ],
-                            )
-                          : LayoutBuilder(
-                              builder: (context, constraints) {
-                                final sidebarWidth = constraints.maxWidth >= 600
-                                    ? 270.0
-                                    : (constraints.maxWidth * 0.42)
-                                        .clamp(160.0, 270.0);
-                                return Row(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    if (_isPlayerCatalogOpen)
-                                      SizedBox(
-                                        width: sidebarWidth,
-                                        child: AppCatalogView(
+                      child: Builder(
+                        builder: (context) {
+                          final isCatalogOpen = _gingacc.config.enablePlayground
+                              ? _isPlaygroundCatalogOpen
+                              : _isPlayerCatalogOpen;
+                          return Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Offstage(
+                                offstage: isCatalogOpen,
+                                child: _gingacc.config.enablePlayground
+                                    ? Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          Expanded(
+                                            flex: 1,
+                                            child: RepaintBoundary(
+                                              child: KeyedSubtree(
+                                                key: const Key(
+                                                    'flutter_monaco_widget'),
+                                                child: PlaygroundEditor(
+                                                  key: _playgroundKey,
+                                                  showTopBar: false,
+                                                  embedCatalog: false,
+                                                  content:
+                                                      _mainAppContent ?? '',
+                                                  filePath:
+                                                      _gingacc.config.appSrc,
+                                                  gingacc: _gingacc,
+                                                  isRunning: _isRunning,
+                                                  showCatalogSelector:
+                                                      _showCatalogSelector,
+                                                  onCatalogExampleSelected:
+                                                      (selectedFile) async {
+                                                    final srcDevices =
+                                                        extractRemoteDevicesFromSrc(
+                                                            selectedFile);
+                                                    if (srcDevices.isNotEmpty) {
+                                                      await _ensureRemoteDevicesOpened(
+                                                          srcDevices);
+                                                    }
+                                                    final appPath =
+                                                        resolveCatalogExampleUrl(
+                                                            selectedFile);
+                                                    updateGingaBrowserUrl(
+                                                      selectedFile,
+                                                      resolvedAppUrl: appPath,
+                                                    );
+                                                    await _applyPlaygroundConfig(
+                                                      appPath,
+                                                      resetIfMissing: true,
+                                                      fromCatalog: true,
+                                                    );
+                                                  },
+                                                  onCatalogOpenChanged: (open) {
+                                                    if (mounted) {
+                                                      setState(() {
+                                                        _isPlaygroundCatalogOpen =
+                                                            open;
+                                                      });
+                                                    }
+                                                  },
+                                                  onContentChanged: (newText) {
+                                                    _mainAppContent = newText;
+                                                    if (mounted) {
+                                                      setState(() {});
+                                                    }
+                                                  },
+                                                  onRun: _runFromPlayground,
+                                                  onAddRemoteDevice:
+                                                      _addRemoteDeviceFromPlayground,
+                                                  onStop: _stopFromPlayground,
+                                                  onDebug: _runFromPlayground,
+                                                  onContinue: () {
+                                                    resume();
+                                                  },
+                                                  onReload: _runFromPlayground,
+                                                  initialBreakpoints: _gingacc
+                                                      .config.breakpoints,
+                                                  onBreakpointsChanged:
+                                                      (newBps) {
+                                                    setBreakpoints(newBps);
+                                                    if (mounted) {
+                                                      setState(() {});
+                                                    }
+                                                  },
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            flex: 1,
+                                            child: RepaintBoundary(
+                                              child: _buildPlayerArea(context),
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : _buildPlayerArea(context),
+                              ),
+                              if (isCatalogOpen)
+                                Positioned.fill(
+                                  child: _gingacc.config.enablePlayground
+                                      ? AppCatalogView(
+                                          key: const Key('catalog_grid_dialog'),
+                                          examples: _playgroundKey.currentState
+                                                  ?.catalogExamples ??
+                                              const [],
+                                          selectedExample: _playgroundKey
+                                                  .currentState
+                                                  ?.selectedExample ??
+                                              _gingacc.config.appSrc,
+                                          onSelected: (selected) async {
+                                            await _playgroundKey.currentState
+                                                ?.selectCatalogExample(
+                                                    selected);
+                                          },
+                                          onClose: () {
+                                            _playgroundKey.currentState
+                                                ?.closeCatalog();
+                                          },
+                                        )
+                                      : AppCatalogView(
                                           key: const Key('catalog_grid_dialog'),
                                           examples: _playerCatalogExamples,
                                           selectedExample:
@@ -1689,14 +1727,11 @@ class GingaState extends State<Ginga> {
                                             });
                                           },
                                         ),
-                                      ),
-                                    Expanded(
-                                      child: _buildPlayerArea(context),
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
                     ),
                   ],
                 ),

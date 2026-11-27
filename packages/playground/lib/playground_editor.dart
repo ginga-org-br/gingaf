@@ -127,6 +127,7 @@ class PlaygroundEditor extends StatefulWidget {
   final ValueChanged<String>? onCatalogExampleSelected;
   final ValueChanged<bool>? onCatalogOpenChanged;
   final bool showTopBar;
+  final bool embedCatalog;
 
   const PlaygroundEditor({
     super.key,
@@ -153,6 +154,7 @@ class PlaygroundEditor extends StatefulWidget {
     this.onCatalogExampleSelected,
     this.onCatalogOpenChanged,
     this.showTopBar = true,
+    this.embedCatalog = true,
   });
 
   @override
@@ -420,10 +422,11 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
       _matchSelectedExample();
     } else if (effectiveShowCatalogSelector) {
       _initCatalog();
-    } else if (_controller.text.isEmpty &&
-        widget.filePath != null &&
-        widget.filePath!.isNotEmpty) {
-      _loadStandaloneFile(widget.filePath!);
+    } else if (widget.filePath != null && widget.filePath!.isNotEmpty) {
+      if (_controller.text.isEmpty) {
+        _loadStandaloneFile(widget.filePath!);
+      }
+      _initCatalog();
     }
 
     try {
@@ -470,8 +473,17 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
       setState(() {
         _catalogExamples = examples;
         _matchSelectedExample();
+        if (_activeFilePath != null &&
+            _controller.text.isNotEmpty &&
+            !_fileContents.containsKey(_activeFilePath!)) {
+          _fileContents[_activeFilePath!] = _controller.text;
+        }
       });
-      if (_catalogExamples.isNotEmpty && _controller.text.isEmpty) {
+      final matchedInCatalog = _selectedExample != null &&
+          _catalogExamples.any((e) => e.mainFile == _selectedExample);
+      if (_catalogExamples.isNotEmpty &&
+          _controller.text.isEmpty &&
+          (effectiveShowCatalogSelector || matchedInCatalog)) {
         final targetExample =
             _selectedExample ?? _catalogExamples.first.mainFile;
         selectCatalogExample(targetExample);
@@ -784,10 +796,15 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
   void stopSession() => _handleStop();
 
   void _handleRun() {
+    final wasCatalogOpen = _isCatalogOpen;
     setState(() {
+      _isCatalogOpen = false;
       _internalRunning = true;
       _isDebugging = false;
     });
+    if (wasCatalogOpen) {
+      widget.onCatalogOpenChanged?.call(false);
+    }
     if (widget.onRun != null) {
       widget.onRun!();
     } else if (widget.onReload != null) {
@@ -801,9 +818,14 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
 
   void _handleDebug() {
     if (!canDebug) return;
+    final wasCatalogOpen = _isCatalogOpen;
     setState(() {
+      _isCatalogOpen = false;
       _internalRunning = true;
     });
+    if (wasCatalogOpen) {
+      widget.onCatalogOpenChanged?.call(false);
+    }
     startDebugging();
     widget.onDebug?.call();
   }
@@ -880,12 +902,17 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
     return count > 0 ? count : 1;
   }
 
+  void closeCatalog() {
+    if (!_isCatalogOpen) return;
+    setState(() {
+      _isCatalogOpen = false;
+    });
+    widget.onCatalogOpenChanged?.call(false);
+  }
+
   Future<void> toggleCatalog() async {
     if (_isCatalogOpen) {
-      setState(() {
-        _isCatalogOpen = false;
-      });
-      widget.onCatalogOpenChanged?.call(false);
+      closeCatalog();
       return;
     }
     if (_catalogExamples.isEmpty) {
@@ -933,7 +960,7 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    Icons.view_list_rounded,
+                    Icons.grid_view_rounded,
                     size: 14,
                     color: Color(0xFFCCCCCC),
                   ),
@@ -1341,30 +1368,20 @@ class PlaygroundEditorState extends State<PlaygroundEditor> {
           Expanded(
             child: LayoutBuilder(
               builder: (context, outerConstraints) {
-                final sidebarWidth = outerConstraints.maxWidth >= 560
-                    ? 260.0
-                    : (outerConstraints.maxWidth * 0.42).clamp(160.0, 260.0);
+                if (widget.embedCatalog && _isCatalogOpen) {
+                  return AppCatalogView(
+                    key: const Key('catalog_grid_dialog'),
+                    examples: _catalogExamples,
+                    selectedExample: _selectedExample,
+                    onSelected: (selected) async {
+                      await selectCatalogExample(selected);
+                    },
+                    onClose: closeCatalog,
+                  );
+                }
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (_isCatalogOpen)
-                      SizedBox(
-                        width: sidebarWidth,
-                        child: AppCatalogView(
-                          key: const Key('catalog_grid_dialog'),
-                          examples: _catalogExamples,
-                          selectedExample: _selectedExample,
-                          onSelected: (selected) async {
-                            await selectCatalogExample(selected);
-                          },
-                          onClose: () {
-                            setState(() {
-                              _isCatalogOpen = false;
-                            });
-                            widget.onCatalogOpenChanged?.call(false);
-                          },
-                        ),
-                      ),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
